@@ -331,11 +331,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   display: none;
 }
 .sim-root .panel-accent{ 
-  background-color: var(--paper-0) !important;
+  background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
-  border:1px solid var(--border-soft) !important;
-  border-top:3px solid var(--accent-terracotta) !important;
+  border: 0 !important;
 }
 .sim-root .spp-sect{
   background: var(--paper-0);
@@ -7102,33 +7101,119 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .generator-comparison th:first-child{text-align:left}
 .sim-root .generator-comparison button{min-height:44px;background:var(--paper-0);color:var(--ink-900);border:1px solid var(--border-strong);cursor:pointer}
 
-/* Editorial continuity with website.css and home-hero.css. Retain DS-2026
-   typography, semantic status colours and the operational grid. */
-.sim-root .home-header-cockpit { border-bottom:1px solid var(--border-hairline); padding-bottom:24px; }
-.sim-root .home-shift-title { font-family:var(--font-editorial); font-weight:500; color:var(--brand-primary); text-wrap:balance; }
+/* Minimalism: grouping by space and type, without decorative card layers.
+   Inputs, selection, focus rings and semantic alerts retain their contracts. */
+html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
+  background-image: none;
+}
+.sim-root { background-color: var(--surface-page); }
+.sim-root .panel,
+.sim-root .spp-sect {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 24px 0;
+  margin-bottom: 48px;
+}
+.sim-root .sec {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 24px;
+}
+.sim-root .home-cockpit {
+  --font-serif: var(--font-sans);
+  gap: 32px;
+}
+.sim-root .home-header-cockpit {
+  border: 0;
+  padding: 24px 0 0;
+}
+.sim-root .home-shift-title {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
 .sim-root .home-primary-column > .sdp-band--ahora,
-.sim-root .home-lots-shell { border-radius:0; padding:0; background:transparent; box-shadow:none; }
+.sim-root .home-lots-shell {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .sim-root .home-shift-core,
 .sim-root .home-pending-panel,
 .sim-root .home-session-panel,
 .sim-root .home-overview,
-.sim-root .home-followup-tools { border-radius:0; border:0; border-top:1px solid var(--border-hairline); background:transparent; box-shadow:none; }
+.sim-root .home-followup-tools {
+  border: 0;
+  border-radius: 0;
+  padding: 24px 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-primary-column,
+.sim-root .home-followup { gap: 32px; }
 .sim-root .home-panel-heading h2,
 .sim-root .home-session-panel h2,
 .sim-root .home-overview h2,
-.sim-root .home-followup-tools h2 { font-family:var(--font-editorial); font-weight:500; color:var(--brand-primary); }
+.sim-root .home-followup-tools h2 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.sim-root .home-quick-actions-strip { gap: 16px; }
 .sim-root .home-quick-action,
 .sim-root .home-quick-action.is-jornada,
-.sim-root .home-quick-action.is-primary { border-radius:var(--radius-sm); border:1px solid var(--border-hairline); background:var(--surface-panel); box-shadow:none; }
+.sim-root .home-quick-action.is-primary {
+  border: 1px solid var(--border-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .sim-root .home-quick-action.is-jornada,
-.sim-root .home-quick-action.is-primary { border-color:var(--brand-primary); background:var(--surface-recessed); color:var(--text-primary); }
-.sim-root .home-quick-action.is-jornada .home-action-arrow,
-.sim-root .home-quick-action.is-primary .home-action-arrow { color:var(--brand-primary); background:transparent; }
-.sim-root .home-quick-action:hover { border-color:var(--brand-primary); background:var(--surface-recessed); color:var(--text-primary); }
-.sim-root .home-quick-action.is-jornada:hover,
-.sim-root .home-quick-action.is-primary:hover { background:var(--surface-panel); color:var(--text-primary); }
-.sim-root .home-dashboard-switch { border-bottom:1px solid var(--border-hairline); padding-bottom:16px; }
-.sim-root .home-dashboard-switch button { border:1px solid transparent; background:transparent; font-weight:400; }
-.sim-root .home-dashboard-switch button[aria-pressed="true"] { border-color:var(--brand-primary); background:var(--brand-primary); color:var(--text-inverse); }
-.sim-root .home-tools-grid button { border-top:1px solid var(--border-hairline); background:var(--surface-recessed); }
-.sim-root .home-tools-grid button:hover { background:var(--surface-panel); }
+.sim-root .home-quick-action.is-primary { border-color: var(--text-primary); }
+.sim-root .home-action-arrow { background: transparent; }
+.sim-root .home-quick-action:hover { background: var(--surface-recessed); }
+.sim-root .home-dashboard-switch {
+  border: 0;
+  gap: 24px;
+  margin-bottom: 0;
+}
+.sim-root .home-dashboard-switch button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding-inline: 0;
+  background: transparent;
+  color: var(--text-metadata);
+  font-weight: 400;
+}
+.sim-root .home-dashboard-switch button[aria-pressed="true"] {
+  border-color: var(--text-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.sim-root .home-tools-grid { gap: 24px; }
+.sim-root .home-tools-grid button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0;
+}
+.sim-root .home-tools-grid button:hover { background: var(--surface-recessed); }
+@media (min-width: 961px) {
+  .sim-root .home-cockpit { padding-block: 24px; }
+  .sim-root .home-primary-column,
+  .sim-root .home-followup { gap: 48px; }
+}
+@media (max-width: 560px) {
+  .sim-root .home-cockpit { gap: 24px; padding-inline: 16px; }
+  .sim-root .home-header-cockpit { padding-top: 8px; }
+  .sim-root .home-shift-core { padding-top: 8px; }
+  .sim-root .home-quick-actions-strip { gap: 8px; }
+}
