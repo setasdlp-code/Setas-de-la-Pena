@@ -9,6 +9,8 @@
 
   let nativeAdapter = null;
   let lastTransaction = null;
+  let registration = 0;
+  const snapshotRecipe = rows => (rows || []).map(row => ({ ...row }));
 
   // Se lee al validar: mass-balance.js carga después de este archivo en el runtime protegido.
   const balanceTolerance = () => {
@@ -21,7 +23,7 @@
 
   const engine = () => globalThis.SetasPeritoScenarios;
 
-  const getRecipe = () => (nativeAdapter?.getRecipe ? nativeAdapter.getRecipe() : []);
+  const getRecipe = () => snapshotRecipe(nativeAdapter?.getRecipe ? nativeAdapter.getRecipe() : []);
   const getLockedIds = () => (nativeAdapter?.getLockedIds ? new Set(nativeAdapter.getLockedIds() || []) : new Set());
   const getState = () => ({
     recipe: getRecipe(),
@@ -57,6 +59,10 @@
     const validationError = validateRecipe(targetRecipe, restoringDraft);
     if (validationError) return { ok: false, message: validationError, adapter: nativeAdapter ? 'native' : null };
     if (!nativeAdapter?.applyRecipe) return { ...NO_ADAPTER };
+    const adapter = nativeAdapter;
+    const activeRegistration = registration;
+    // Match the shape accepted by validation without rescaling percentages.
+    const target = targetRecipe.map(row => ({ ...row, id: row.id.trim(), p: Number(row.p ?? row.pct) }));
     const before = getRecipe(names);
 
     const distanceFn = engine()?.recipeDistance;
@@ -65,7 +71,7 @@
     }
     const guardLockedIds = getLockedIds(names);
     const beforeMap = Object.fromEntries(before.map(r => [r.id, r.p]));
-    const targetMap = Object.fromEntries((targetRecipe || []).map(r => [r.id, Number(r.p) || 0]));
+    const targetMap = Object.fromEntries(target.map(r => [r.id, r.p]));
     for (const id of guardLockedIds) {
       if (Math.abs((beforeMap[id] || 0) - (targetMap[id] || 0)) > 0.15) {
         return { ok: false, message: `${names[id] || id} está fijado; la receta propuesta ya no es aplicable.` };
@@ -74,13 +80,18 @@
 
     let result;
     try {
-      const res = await nativeAdapter.applyRecipe(targetRecipe, options);
-      if (res === true) result = { ok: true, recipe: targetRecipe || getRecipe(names), adapter: 'native' };
-      else if (res && typeof res === 'object' && res.ok !== false) result = { ok: true, recipe: res.recipe || targetRecipe || getRecipe(names), adapter: 'native' };
+      const res = await adapter.applyRecipe(target, options);
+      if (res === true) result = { ok: true, recipe: snapshotRecipe(target), adapter: 'native' };
+      else if (res && typeof res === 'object' && res.ok !== false) result = { ok: true, recipe: snapshotRecipe(res.recipe || target), adapter: 'native' };
       else if (res && typeof res === 'object' && res.ok === false) result = { ok: false, message: res.message || 'El adaptador nativo rechazó la receta.', adapter: 'native' };
       else result = { ok: false, message: 'El adaptador nativo no devolvió un resultado válido.', adapter: 'native' };
     } catch (err) {
       result = { ok: false, message: err?.message || 'Falló el adaptador nativo.', adapter: 'native' };
+    }
+
+    // An async result cannot install history in another Formulador session.
+    if (registration !== activeRegistration) {
+      return { ok: false, code: 'adapter_changed', message: 'El Formulador cambió mientras se aplicaba la receta. Recalcular antes de continuar.', adapter: nativeAdapter ? 'native' : null };
     }
 
     if (!result.ok) {
@@ -88,7 +99,7 @@
     }
 
     if (options.recordHistory !== false) {
-      lastTransaction = { before, after: result.recipe || getRecipe(names), names, at: Date.now() };
+      lastTransaction = { before: snapshotRecipe(before), after: snapshotRecipe(result.recipe), names: { ...names }, at: Date.now() };
     }
     return result;
   };
@@ -116,7 +127,15 @@
       throw new Error('SetasFormulatorAPI.registerNativeAdapter requiere getRecipe() y applyRecipe().');
     }
     nativeAdapter = adapter;
-    return () => { if (nativeAdapter === adapter) nativeAdapter = null; };
+    const ownRegistration = ++registration;
+    lastTransaction = null;
+    return () => {
+      if (registration === ownRegistration) {
+        nativeAdapter = null;
+        registration++;
+        lastTransaction = null;
+      }
+    };
   };
 
   globalThis.SetasFormulatorAPI = {
