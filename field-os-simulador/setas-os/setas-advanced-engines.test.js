@@ -204,10 +204,10 @@ test('perito-workbench-core.js y el Workbench Perito & Optimizador unificado', (
   assert.match(jsx, /engineMorphRecipes/);
   assert.match(jsx, /Generador de Recetas/);
   assert.match(jsx, /workbenchMode/);
-  assert.match(jsx, /perito-standalone-panel/);
+  assert.match(jsx, /id="bl-perito"/);
   assert.match(jsx, /perito-morph-panel/);
 
   assert.match(js, /SetasPeritoWorkbench/);
-  assert.match(js, /perito-standalone-panel/);
+  assert.match(js, /bl-perito/);
   assert.match(js, /perito-morph-panel/);
 });

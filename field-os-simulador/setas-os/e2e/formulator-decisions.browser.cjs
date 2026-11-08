@@ -119,12 +119,10 @@ const root=path.resolve(__dirname,'..');
   await expect(next).toHaveText('Corregir receta');
   await next.click();
   assert.ok(await page.evaluate(()=>!!document.activeElement.closest('#bl-perito')));
-  await page.getByRole('tab',{name:'Generador de Recetas',exact:true}).click();
-  const workbench=page.locator('[data-perito-variant="workbench"]');
-  await expect(workbench).toBeVisible();
-  await workbench.getByRole('button',{name:'Corregir receta',exact:true}).click();
-  assert.ok(await page.evaluate(()=>!!document.activeElement.closest('[data-perito-variant="workbench"]')));
-  console.log('PASS critical recipes route to recommendations in both Formulador and workbench.');
+  await page.getByRole('tab',{name:'Escenarios',exact:true}).click();
+  await expect(page.locator('#bl-perito')).toHaveCount(0);
+  await expect(page.locator('#gen-panel')).toBeVisible();
+  console.log('PASS critical recipes route to the single diagnosis; scenarios remain a separate exploration.');
 
   // An impossible budget must explain the cost rejection, not invent a
   // supplementation cause. Changing the budget invalidates the old result.
@@ -154,12 +152,9 @@ const root=path.resolve(__dirname,'..');
   await page.close();
   console.log('PASS actual rejection reasons, fresh candidates with own targets, stale-result invalidation and mobile reflow.');
   const unconfirmed=await open([{id:'paja_trigo',p:100}],[],false);
-  await unconfirmed.getByRole('tab',{name:'Generador de Recetas',exact:true}).click();
+  await unconfirmed.getByRole('tab',{name:'Escenarios',exact:true}).click();
   await expect(unconfirmed.getByRole('button',{name:'Calcular',exact:true})).toBeDisabled();
-  await unconfirmed.getByRole('button',{name:'Diagnóstico',exact:true}).click();
-  await unconfirmed.locator('[data-perito-variant="workbench"]').getByRole('button',{name:'Elegir especie',exact:true}).click();
-  await expect(unconfirmed.locator('#generator-species-select')).toBeFocused();
-  await unconfirmed.locator('#generator-species-select').selectOption('p_ostreatus_gris');
+  await unconfirmed.locator('#form-species-context-select').selectOption('p_ostreatus_gris');
   await expect(unconfirmed.getByRole('button',{name:'Calcular',exact:true})).toBeEnabled();
   await unconfirmed.close();
   assert.deepEqual(errors,[]);
