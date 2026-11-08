@@ -228,3 +228,125 @@ test('validateRecipe usa la tolerancia única de balance (±0.5)', () => {
   assert.equal(api.validateRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40.4 }]), null);
   assert.match(api.validateRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40.6 }]), /±0\.5%/);
 });
+
+test('recipe reads are detached snapshots, not a writable handle to native state', () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const initial = [{ id: 'paja_trigo', p: 100 }];
+  const adapter = makeFakeAdapter(initial);
+  const unregister = api.registerNativeAdapter(adapter);
+  try {
+    for (const snapshot of [api.getRecipe(), api.getState().recipe]) {
+      snapshot[0].p = 25;
+      snapshot.push({ id: 'kikuyo', p: 75 });
+      assert.deepEqual(adapter.getRecipe(), [{ id: 'paja_trigo', p: 100 }]);
+    }
+  } finally { unregister(); }
+});
+
+test('apply owns its input and result so external edits cannot mutate the native recipe', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const adapter = makeFakeAdapter([{ id: 'paja_trigo', p: 100 }]);
+  const unregister = api.registerNativeAdapter(adapter);
+  try {
+    const target = [{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }];
+    const result = await api.applyRecipe(target);
+    assert.equal(result.ok, true);
+    target[0].p = 5;
+    target.push({ id: 'salvado_trigo', p: 55 });
+    assert.deepEqual(adapter.getRecipe(), [{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }]);
+    result.recipe[0].p = 10;
+    assert.deepEqual(adapter.getRecipe(), [{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }]);
+    assert.equal((await api.undoRecipe()).ok, true);
+    assert.deepEqual(adapter.getRecipe(), [{ id: 'paja_trigo', p: 100 }]);
+  } finally { unregister(); }
+});
+
+test('undo keeps its own before and after snapshots', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const initial = [{ id: 'paja_trigo', p: 100 }];
+  let recipe = initial;
+  const unregister = api.registerNativeAdapter({
+    getRecipe: () => recipe,
+    applyRecipe: async rows => {
+      recipe = rows.map(row => ({ ...row }));
+      return { recipe: rows.map(row => ({ ...row })) };
+    },
+  });
+  try {
+    const result = await api.applyRecipe([{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }]);
+    initial[0].p = 20;
+    result.recipe[0].p = 10;
+    const undo = await api.undoRecipe();
+    assert.equal(undo.ok, true, undo.message);
+    assert.deepEqual(recipe, [{ id: 'paja_trigo', p: 100 }]);
+  } finally { unregister(); }
+});
+
+test('unregister clears the departing adapter undo history', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const unregister = api.registerNativeAdapter(makeFakeAdapter([{ id: 'paja_trigo', p: 100 }]));
+  try {
+    assert.equal((await api.applyRecipe([{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }])).ok, true);
+    assert.equal(api.canUndo(), true);
+  } finally { unregister(); }
+  assert.equal(api.canUndo(), false);
+});
+
+test('replacing an adapter cannot import its history, and old cleanup cannot erase new history', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const target = [{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }];
+  const unregisterA = api.registerNativeAdapter(makeFakeAdapter([{ id: 'paja_trigo', p: 100 }]));
+  let unregisterB;
+  try {
+    await api.applyRecipe(target);
+    const adapterB = makeFakeAdapter(target);
+    unregisterB = api.registerNativeAdapter(adapterB);
+    assert.equal(api.canUndo(), false);
+    assert.equal((await api.undoRecipe()).ok, false);
+    assert.equal(adapterB.applyCalls, 0);
+    await api.applyRecipe([{ id: 'paja_trigo', p: 70 }, { id: 'kikuyo', p: 30 }]);
+    unregisterA();
+    assert.equal(api.canUndo(), true);
+    assert.equal((await api.undoRecipe()).ok, true);
+    assert.deepEqual(adapterB.getRecipe(), target);
+  } finally { unregisterA(); unregisterB?.(); }
+});
+
+test('a late async apply cannot create undo history in a later registration, even reusing the adapter object', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  for (const reuseAdapter of [false, true]) {
+    let recipe = [{ id: 'paja_trigo', p: 100 }];
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    const adapterA = { getRecipe: () => recipe, applyRecipe: async rows => { await gate; recipe = rows; return { recipe }; } };
+    const unregisterA = api.registerNativeAdapter(adapterA);
+    let unregisterB;
+    try {
+      const target = [{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }];
+      const pending = api.applyRecipe(target);
+      unregisterA();
+      const adapterB = reuseAdapter ? adapterA : makeFakeAdapter(target);
+      unregisterB = api.registerNativeAdapter(adapterB);
+      release();
+      const result = await pending;
+      assert.equal(result.ok, false, 'completion belongs to an expired registration');
+      assert.equal(api.canUndo(), false);
+      assert.deepEqual(adapterB.getRecipe(), target);
+    } finally { release(); unregisterA(); unregisterB?.(); }
+  }
+});
+
+test('accepted pct aliases and trimmed ids become numeric p rows without rescaling or moving a lock', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const adapter = makeFakeAdapter([{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40 }]);
+  adapter._setLockedIds(new Set(['paja_trigo']));
+  const unregister = api.registerNativeAdapter(adapter);
+  try {
+    const target = [{ id: ' paja_trigo ', pct: '60' }, { id: 'kikuyo', pct: 40.4 }];
+    assert.equal(api.validateRecipe(target), null);
+    const result = await api.applyRecipe(target);
+    assert.equal(result.ok, true, result.message);
+    assert.deepEqual(adapter.getRecipe().map(({ id, p }) => ({ id, p })), [{ id: 'paja_trigo', p: 60 }, { id: 'kikuyo', p: 40.4 }]);
+    assert.deepEqual(target, [{ id: ' paja_trigo ', pct: '60' }, { id: 'kikuyo', pct: 40.4 }]);
+  } finally { unregister(); }
+});

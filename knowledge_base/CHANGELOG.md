@@ -29,6 +29,19 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 | Tipo | Descripción |
 |---|---|
 | `[KB]` | Incorporado DOC-0144 (`09_research/tendencias_cultivo_shiitake_2026-11-08.md`): investigación verificada de tendencias de cultivo de shiitake (10 hallazgos, 7 refutados, fuentes R1–R12). Novedad: luz LED azul tenue tras incubación oscura. Abre SH16–SH17; resumen consultivo en la ficha de *L. edodes*; indexado en INDEX y literature_index. Sin cambios en SOP, receta, setpoints, tablas sincronizadas ni Setas OS. |
+| `[KB]` | Integrada la revisión de evidencia sobre acacia y nogal para shiitake (`docs/research/acacia_nogal_shiitake_research_2026-11-07.md`). No hay ensayos publicados de *L. edodes* en *A. mangium*, *A. decurrens*, *A. melanoxylon*, *A. mearnsii*, *Juglans* (incl. *J. neotropica*) ni *Cordia alliodora*; el 22,4 % de BE en «acacia» de Chang 2016 no se puede atribuir a shiitake, y la advertencia de extensión contra el nogal es para troncos y sin datos. Actualizadas AB10 y AB11 (siguen abiertas); nueva AB20 (nogal); notas en substrate_library y en la receta del microlote. Sin cambios en catálogo, piloto, SOP ni decisiones. |
+
+### 2026-11-07
+
+| Tipo | Descripción |
+|---|---|
+| `[BIZ]` | Actualizada la oferta de pellet LINUXPBX (MCO4419677338 / MCO2123989000) en `07_business/procurement_cost_registry.md`: $9.000/1 kg observado, acacia/cerezo predeterminados y retamo bajo solicitud. Precio `observed_market`; composición, fabricante, aditivos y desempeño biológico pendientes. Registradas preguntas de validación; sin compra, contacto al vendedor ni cambios de receta, SOP o Setas OS. |
+
+### 2026-11-06
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Actualizado DOC-0129 (retamo espinoso) con una segunda pasada de investigación, ahora también sobre melena de león. Añade: tesis de la Universidad Distrital (2016) con *P. pulmonarius* al 30 % de retamo sin inhibición; perfil UHPLC-MS de biomasa procesada (SDA 2020: fenólicos, flavonoides y saponinas, sin alcaloides); flujo legal de chip leñoso sin semilla (CERESA). Corrige las cifras de Pesenti 2017 (celulosa 47,5 %, hemicelulosa 22,2 %, extractivos 6,7 %) y añade la germinación de Tighe-Neira 2014. Marca como no confirmada la Res. CAR 469 de 2009 y como no aplicable en Tenjo la Res. SDA 7615 de 2009. Nueva pregunta HE09; SH11 ajustada; fila de retamo en la ficha de *H. erinaceus*; nota en substrate_library. Detalle en `docs/research/retamo_hericium_shiitake_deep_research_2026-11-06.md`. Sin cambios en catálogo, piloto, SOP ni decisiones. |
 
 ### 2026-11-05
 

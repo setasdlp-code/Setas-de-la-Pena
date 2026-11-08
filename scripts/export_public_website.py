@@ -15,7 +15,7 @@ ROUTES = {'index.html': 'home.html', 'design-system.html': 'index.html'}
 CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html'}
 SPECIES_PAGES = {f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}
 CLEAN.update(SPECIES_PAGES)
-PUBLIC_PAGES = {'/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html'}
+PUBLIC_PAGES = {'/setas': 'setas.html', '/cocina': 'cocina.html', '/tecnicas': 'tecnicas.html', '/cultivo': 'cultivo.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html'}
 CLEAN.update(PUBLIC_PAGES)
 COMMERCIAL = {'index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', '404.html', *SPECIES_PAGES.values(), *PUBLIC_PAGES.values()}
 SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'design-system.html', 'manual.html', 'despensa.html', 'fichas.html',

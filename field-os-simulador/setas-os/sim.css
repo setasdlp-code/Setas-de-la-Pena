@@ -331,11 +331,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   display: none;
 }
 .sim-root .panel-accent{ 
-  background-color: var(--paper-0) !important;
+  background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
-  border:1px solid var(--border-soft) !important;
-  border-top:3px solid var(--accent-terracotta) !important;
+  border: 0 !important;
 }
 .sim-root .spp-sect{
   background: var(--paper-0);
@@ -7101,3 +7100,155 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .generator-comparison th,.sim-root .generator-comparison td{padding:4px 8px;border:1px solid var(--border-soft);text-align:right;white-space:nowrap}
 .sim-root .generator-comparison th:first-child{text-align:left}
 .sim-root .generator-comparison button{min-height:44px;background:var(--paper-0);color:var(--ink-900);border:1px solid var(--border-strong);cursor:pointer}
+
+/* Minimalism: grouping by space and DS-2026 type, without decorative card layers.
+   Inputs, selection, focus rings and semantic alerts retain their contracts. */
+html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
+  background-image: none;
+}
+.sim-root { background-color: var(--surface-page); }
+.sim-root .panel,
+.sim-root .spp-sect {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 24px 0;
+  margin-bottom: 48px;
+}
+.sim-root .sec {
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 24px;
+}
+.sim-root .home-cockpit {
+  gap: 32px;
+}
+.sim-root .home-header-cockpit {
+  border: 0;
+  padding: 24px 0 0;
+}
+.sim-root .home-shift-title {
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+.sim-root .home-primary-column > .sdp-band--ahora,
+.sim-root .home-lots-shell {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-shift-core,
+.sim-root .home-pending-panel,
+.sim-root .home-session-panel,
+.sim-root .home-overview,
+.sim-root .home-followup-tools {
+  border: 0;
+  border-radius: 0;
+  padding: 24px 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-primary-column,
+.sim-root .home-followup { gap: 32px; }
+.sim-root .home-panel-heading h2,
+.sim-root .home-session-panel h2,
+.sim-root .home-overview h2,
+.sim-root .home-followup-tools h2 {
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.sim-root .home-quick-actions-strip { gap: 16px; }
+.sim-root .home-quick-action,
+.sim-root .home-quick-action.is-jornada,
+.sim-root .home-quick-action.is-primary {
+  border: 1px solid var(--border-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-quick-action.is-jornada,
+.sim-root .home-quick-action.is-primary { border-color: var(--text-primary); }
+.sim-root .home-action-arrow { background: transparent; }
+.sim-root .home-quick-action:hover { background: var(--surface-recessed); }
+.sim-root .home-dashboard-switch {
+  border: 0;
+  gap: 24px;
+  margin-bottom: 0;
+}
+.sim-root .home-dashboard-switch button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding-inline: 0;
+  background: transparent;
+  color: var(--text-metadata);
+  font-weight: 400;
+}
+.sim-root .home-dashboard-switch button[aria-pressed="true"] {
+  border-color: var(--text-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.sim-root .home-tools-grid { gap: 24px; }
+.sim-root .home-tools-grid button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0;
+}
+.sim-root .home-tools-grid button:hover { background: var(--surface-recessed); }
+@media (min-width: 961px) {
+  .sim-root .home-cockpit { padding-block: 24px; }
+  .sim-root .home-primary-column,
+  .sim-root .home-followup { gap: 48px; }
+}
+@media (max-width: 560px) {
+  .sim-root .home-cockpit { gap: 24px; padding-inline: 16px; }
+  .sim-root .home-header-cockpit { padding-top: 8px; }
+  .sim-root .home-shift-core { padding-top: 8px; }
+  .sim-root .home-quick-actions-strip { gap: 8px; }
+}
+
+/* One Formulador: shared context and a single level of task navigation. */
+.sim-root .formulator-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0 12px;flex-wrap:wrap}
+.sim-root .formulator-heading h2{margin:4px 0 6px;font:700 clamp(1.5rem,3vw,2.1rem)/1.12 var(--font-display);letter-spacing:-.025em;color:var(--ink-900);text-wrap:balance}
+.sim-root .formulator-heading p,.sim-root .formulator-view-intro{margin:0;color:var(--text-secondary);font:var(--text-sm)/1.5 var(--font-body);max-width:65ch}
+.sim-root .formulator-draft-status{font:var(--text-xs)/1.5 var(--font-mono);color:var(--text-secondary)}
+.sim-root .formular-mode-wrapper .form-species-context{display:grid;margin-bottom:12px}
+.sim-root .formular-mode-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
+.sim-root .formular-mode-btn{min-width:0;min-height:48px;justify-content:center}
+.sim-root .formular-mode-btn:focus-visible{outline:2px solid var(--accent-olive);outline-offset:-3px}
+.sim-root .formulator-view-intro{margin:12px 0 16px}
+@media(max-width:560px){
+ .sim-root .formulator-heading{padding:12px 10px;gap:6px}
+ .sim-root .formulator-heading p{font-size:var(--text-xs)}
+ .sim-root .formular-mode-wrapper .form-species-context{grid-template-columns:minmax(0,1fr);padding:10px;gap:8px}
+ .sim-root .formular-mode-btn{padding:10px 4px;font-size:var(--text-xs);gap:5px;white-space:normal}
+ .sim-root .formulator-view-intro{padding:0 10px}
+}
+
+.sim-root .formular-mode-wrapper .form-species-context{background:var(--paper-0);color:var(--ink-900);border-color:var(--border-hairline);border-left-color:var(--accent-olive)}
+.sim-root .formular-mode-wrapper .form-species-context :is(.form-species-kicker,.form-species-picker>span,.form-species-origin-toggle>span){color:var(--text-secondary)}
+.sim-root .formular-mode-wrapper .form-species-identity strong{color:var(--ink-900)}
+.sim-root .formular-mode-wrapper .form-species-identity em{color:var(--text-secondary)}
+.sim-root .formular-mode-wrapper .form-species-picker select{background:var(--paper-0);color:var(--ink-900);border-color:var(--border-strong)}
+.sim-root .formular-mode-wrapper .form-species-origin-toggle button{background:var(--paper-0);color:var(--ink-900);border-color:var(--border-strong)}
+.sim-root .formular-mode-wrapper .form-species-origin-toggle button.is-active{background:var(--accent-olive);color:var(--paper-0);border-color:var(--accent-olive)}
+
+.sim-root .formular-mode-wrapper .form-species-origin-toggle button:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px}
+
+.sim-root .formular-mode-wrapper{grid-template-columns:minmax(0,1fr)}
+.sim-root .formular-mode-wrapper .form-species-context{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);width:100%;box-sizing:border-box}
+.sim-root .formular-mode-wrapper .form-species-context>*{min-width:0}
+@media(max-width:700px){
+ .sim-root .formular-mode-wrapper .form-species-context{grid-template-columns:minmax(0,1fr)}
+ .sim-root .formular-mode-wrapper .form-species-identity{display:none}
+}

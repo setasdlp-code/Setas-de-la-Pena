@@ -8,7 +8,7 @@ const { chromium } = require(path.join(root, 'field-os-simulador/setas-os/node_m
 const output = process.env.SETAS_EXPORT_AUDIT_DIR || '/workspace/reports/cloudflare-setas';
 const publicDir = process.env.SETAS_EXPORT_DIR || path.join(output, 'public');
 const base = process.env.SETAS_EXPORT_BASE_URL || 'http://127.0.0.1:4188/';
-const files = ['setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'index.html', 'home.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'manual.html', 'typography.html',
+const files = ['setas.html', 'cocina.html', 'tecnicas.html', 'cultivo.html', 'restaurantes.html', 'mundo-micelar.html', 'index.html', 'home.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'manual.html', 'typography.html',
   'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html',
   '08_brand/ds-2026/mockups/market/17-culinary-market.html',
   '08_brand/ds-2026/brand-kit/index.html'];
@@ -39,7 +39,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         for (const link of links) {
           const url = new URL(link);
           if (!url.href.startsWith(base)) continue;
-          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/setas':'setas.html', '/cocina':'cocina.html', '/restaurantes':'restaurantes.html', '/mundo-micelar':'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
+          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/setas':'setas.html', '/cocina':'cocina.html', '/tecnicas':'tecnicas.html', '/cultivo':'cultivo.html', '/restaurantes':'restaurantes.html', '/mundo-micelar':'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
           const target = path.join(publicDir, cleanFiles[url.pathname] || decodeURIComponent(url.pathname));
           assert.ok(fs.existsSync(target), link);
           if (url.hash && target.endsWith('.html')) assert.ok(fs.readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), link);
@@ -65,7 +65,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#print-kit').isVisible(), true);
     report.checks.push({ type: 'canonical-brand-manual', result: 'passed', firma: 'original' });
     await page.goto(base + 'home.html?pairing=bricolage#para-chefs');
-    await page.locator('#para-chefs a[href*="/recetas"]').click();
+    await page.locator('#para-chefs').getByRole('link', { name: 'Explorar las técnicas ↗', exact: true }).click();
+    assert.equal(await page.locator('#tecnicas .knowledge-art').count(), 4);
+    await page.goto(base + 'setas?pairing=bricolage#del-cultivo', { waitUntil: 'networkidle' });
+    assert.equal(await page.locator('#del-cultivo .knowledge-art').count(), 4);
+    await page.goto(base + 'recetas?pairing=bricolage&purpose=restaurante#receta-arepa', { waitUntil: 'networkidle' });
     await page.locator('#receta-arepa input[value="3"]').check();
     await page.locator('#receta-arepa .recipe-cta a').click();
     await page.waitForLoadState('networkidle');

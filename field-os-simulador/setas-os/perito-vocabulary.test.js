@@ -28,9 +28,9 @@ test('la Mesa del Perito no usa jerga de implementación en inglés ni "optimiza
   }
 });
 
-test('usa los nombres del dominio: Mesa del Perito, Diagnóstico, Escenarios, Comparar recetas', () => {
+test('usa los nombres del dominio: Receta, Escenarios y Comparar', () => {
   for (const label of [
-    '>Setas OS · Perito<', '>Mesa del Perito</h1>', '/> Diagnóstico', '/> Escenarios', '/> Comparar recetas',
+    '<span>Receta</span>', '<span>Escenarios</span>', '<span>Comparar</span>',
     'Comparar y mezclar recetas', 'Mezcla gradual entre dos recetas', '>Score de la mezcla<',
     'Excluir de las sugerencias del Perito',
   ]) {
@@ -41,5 +41,5 @@ test('usa los nombres del dominio: Mesa del Perito, Diagnóstico, Escenarios, Co
 test('los identificadores internos no cambian (estado, clases y pruebas existentes)', () => {
   assert.match(jsx, /workbenchMode==='optimizador'/);
   assert.match(jsx, /perito-morph-panel/);
-  assert.match(jsx, /perito-standalone-panel/);
+  assert.doesNotMatch(jsx, /perito-standalone-panel|perito-workbench-modes/);
 });

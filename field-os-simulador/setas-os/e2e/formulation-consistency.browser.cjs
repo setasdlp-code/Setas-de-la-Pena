@@ -33,7 +33,7 @@ const root = path.resolve(__dirname, '..');
       }, compatible);
       await page.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=formular`);
       await page.waitForFunction(() => window.SetasFormulatorAPI?.adapterType() === 'native');
-      const panel = page.getByRole('tabpanel', { name: /Mesa de Mezcla/ });
+      const panel = page.getByRole('tabpanel', { name: /Receta/ });
       await panel.getByRole('button', { name: 'Formular con Stock', exact: true }).click();
       if (compatible) {
         await expect.poll(() => page.evaluate(() => window.SetasFormulatorAPI.getRecipe())).toEqual([{ id: 'paja_trigo', p: 100 }]);
