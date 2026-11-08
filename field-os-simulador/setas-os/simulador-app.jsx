@@ -13072,7 +13072,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
           {cameras.length>0?<div className="climate-module-grid" data-testid="salas-grid">
             {cameras.map(c=>{
-              const roomId=CAMERA_TO_ROOM[c.id]||selectedClimateRoom;
+              const configuredRoomId=c.room_id || c.roomId || c.id;
+              const roomId=Object.hasOwn(ROOMS_CONFIG,configuredRoomId) ? configuredRoomId : (Object.hasOwn(CAMERA_TO_ROOM,c.id) ? CAMERA_TO_ROOM[c.id] : null);
               const cardLive = liveTelemetry.roomLive(roomId);
               const cardSample = (cardLive && cardLive.sample) || {};
               const cardHasLive = ['temperature_c','rh_pct','co2_ppm'].some(metric => Number.isFinite(cardSample[metric]));
@@ -13085,11 +13086,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 ? roomBagsList.filter(b=>b.estado!=='descartada'&&b.estado!=='contaminada').length
                 : roomBatches.reduce((sum,l)=>sum+(parseInt(l.numBolsas,10)||0),0);
               const roomBagsTotal = roomBagsList.length || roomBatches.reduce((sum,l)=>sum+(parseInt(l.numBolsas,10)||0),0);
-              return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
+              return <button key={c.id} type="button" data-testid="sensor-module-card" data-room-id={roomId || undefined} disabled={!roomId} className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
                 <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
                 <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
-                <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
-                {!cardHasLive&&<span className="climate-module-reference">Referencia de modelo · sin lectura de sonda</span>}
+                <span className="climate-module-readings">
+                  {[['temperature_c','Temp.','°C'],['rh_pct','HR','%'],['co2_ppm','CO₂',' ppm']].map(([metric,label,unit])=>(
+                    <span key={metric} data-metric={metric}><small>{label}</small>
+                      <strong>{Number.isFinite(cardSample[metric]) ? `${cardSample[metric]}${unit}` : '—'}</strong>
+                      {Number.isFinite(cardSample[metric])
+                        ? <ClimateMetricProvenance metric={metric} roomLive={cardLive}/>
+                        : <span className="sdp-provenance">Sin lectura</span>}
+                    </span>
+                  ))}
+                </span>
+                {!cardHasLive&&<span className="climate-module-reference">{roomId ? 'Sin telemetría conectada · sin lectura' : 'Módulo sin sala de sensores asignada'}</span>}
                 <span className="climate-module-batches">{roomBatches.length} lote{roomBatches.length===1?'':'s'} · {roomBagsActive}/{roomBagsTotal} bolsas</span>
                 <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
                 {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}

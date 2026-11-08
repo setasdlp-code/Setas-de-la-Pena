@@ -1,0 +1,76 @@
+# Telemetry-only package; include in the existing ESP32 configuration.
+# Requires room_temp and room_humidity IDs with timestamp capture callbacks.
+# CO2 is optional: include esphome-mhz19.package.yaml only on its assigned node.
+# No relays, setpoints, or actuator commands are added.
+# Secret files and TLS CA certificates belong outside the repository.
+substitutions:
+  sensor_device_id: "setas-node-01"
+
+http_request:
+  id: setas_publisher_http
+  timeout: 10s
+  verify_ssl: true
+  # For a private CA, configure ca_certificate_path here with its PEM file.
+
+time:
+  - platform: sntp
+    id: setas_publish_clock
+    timezone: UTC
+
+# Capture observation time when each sensor publishes, not on HTTP receipt.
+globals:
+  - id: setas_temp_at
+    type: std::string
+    restore_value: false
+  - id: setas_rh_at
+    type: std::string
+    restore_value: false
+  - id: setas_co2_at
+    type: std::string
+    restore_value: false
+  - id: setas_co2_value
+    type: float
+    restore_value: false
+    initial_value: "NAN"
+
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            and:
+              - wifi.connected:
+              - lambda: return id(setas_publish_clock).utcnow().is_valid();
+          then:
+            - http_request.post:
+                url: !secret setas_publisher_url
+                request_headers:
+                  Content-Type: application/json
+                  X-Setas-Device: ${sensor_device_id}
+                  Authorization: !secret setas_publisher_authorization
+                json: |-
+                  root["device_id"] = "${sensor_device_id}";
+                  root["observed_at"] = id(setas_publish_clock).utcnow().strftime("%Y-%m-%dT%H:%M:%SZ");
+                  auto readings = root["readings"].to<JsonArray>();
+                  auto add = [&](const char *metric, float value, const std::string &at) {
+                    if (!at.empty() && std::isfinite(value)) {
+                      auto point = readings.add<JsonObject>();
+                      point["metric"] = metric;
+                      point["value"] = value;
+                      point["observed_at"] = at;
+                    }
+                  };
+                  add("temperature_c", id(room_temp).state, id(setas_temp_at));
+                  add("rh_pct", id(room_humidity).state, id(setas_rh_at));
+                  add("co2_ppm", id(setas_co2_value), id(setas_co2_at));
+                  // Keep false unless compensation is configured in firmware.
+                  root["co2_pressure_compensated"] = false;
+                on_response:
+                  then:
+                    - lambda: |-
+                        if (response->status_code != 200) ESP_LOGW("setas_publish", "Publisher rejected sample (HTTP %d)", response->status_code);
+                on_error:
+                  then:
+                    - logger.log:
+                        level: WARN
+                        format: "Publisher unavailable; sample was not acknowledged"

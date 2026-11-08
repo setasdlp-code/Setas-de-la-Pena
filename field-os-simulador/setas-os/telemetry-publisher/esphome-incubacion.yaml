@@ -1,0 +1,20 @@
+# Proposed node identity/allocation; not proof of physical installation.
+# Room assignment is enforced by the gateway private devices file.
+substitutions:
+  sensor_device_id: setas-incubacion-01
+packages:
+  node: !include esphome-node-base.package.yaml
+  publishing: !include esphome-publish.package.yaml
+sensor:
+  - platform: sht4x
+    i2c_id: setas_sensor_bus
+    address: 0x44
+    temperature:
+      id: room_temp
+      on_value: !include esphome-capture-temp.yaml
+      name: "${sensor_device_id} temperature"
+    humidity:
+      id: room_humidity
+      on_value: !include esphome-capture-rh.yaml
+      name: "${sensor_device_id} humidity"
+    update_interval: 60s

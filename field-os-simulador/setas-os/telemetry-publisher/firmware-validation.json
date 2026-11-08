@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-08",
+  "esphomeVersion": "2026.10.2",
+  "espIdfVersion": "5.5.6",
+  "environment": "isolated Python venv; synthetic secrets; publisher.invalid endpoint",
+  "results": [
+    {
+      "profile": "esphome-martha.yaml",
+      "configuration": "passed",
+      "firmwareCompilation": "passed",
+      "otaBinaryBytes": 903136,
+      "otaBinarySha256": "dd95c2ec0ab7d9adaa01967c48f6d163e3dd5ca3652626747eb010b54cb675ac"
+    },
+    {
+      "profile": "esphome-cloudlab.yaml",
+      "configuration": "passed",
+      "firmwareCompilation": "passed",
+      "otaBinaryBytes": 916160,
+      "otaBinarySha256": "5293af88e5003e81d9dfe0b41053173cb7b8e2fbeeb5ff922ef153a468a26401"
+    },
+    {
+      "profile": "esphome-incubacion.yaml",
+      "configuration": "passed",
+      "firmwareCompilation": "passed",
+      "otaBinaryBytes": 903376,
+      "otaBinarySha256": "d2cd9780fced25f5e28939ce066b47c9fd84f153d70840cdfd6e0bc06dee8bfc"
+    }
+  ],
+  "physicalCommissioning": "not_performed",
+  "productionWrites": "none",
+  "flashing": "not_performed",
+  "warning": "Validation-only binaries contain synthetic credentials and are not deployment artifacts."
+}

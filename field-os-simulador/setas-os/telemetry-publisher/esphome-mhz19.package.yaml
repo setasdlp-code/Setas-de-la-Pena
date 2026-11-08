@@ -1,0 +1,25 @@
+# Optional add-on for the ONE MH-Z19C recorded in equipment.yaml.
+# Proposed allocation: Cloudlab. Pinout/power/identity require bench confirmation.
+# Included only alongside esphome-publish.package.yaml.
+uart:
+  id: setas_co2_uart
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+  baud_rate: 9600
+sensor:
+  - platform: mhz19
+    id: setas_mhz19
+    uart_id: setas_co2_uart
+    co2:
+      id: room_co2
+      name: "${sensor_device_id} CO2 raw"
+      on_value:
+        then:
+          - lambda: |-
+              auto t = id(setas_publish_clock).utcnow();
+              id(setas_co2_value) = x;
+              id(setas_co2_at) = t.is_valid() && std::isfinite(x) ? t.strftime("%Y-%m-%dT%H:%M:%SZ") : "";
+    automatic_baseline_calibration: false
+    update_interval: 60s
+# No multiply/altitude filter here: the app bridge owns the correction.
+# The shared publisher sends co2_pressure_compensated=false and preserves raw data.

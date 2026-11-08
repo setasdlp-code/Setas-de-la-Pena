@@ -201,6 +201,18 @@
    */
   const parseFirestoreRoomDoc = (roomId, data = {}) => {
     if (!data || typeof data !== 'object') return null;
+    // Publisher snapshots retain observation time/device per metric. Replaying
+    // a room snapshot must not make old CO2 fresh when only temperature changed.
+    if (data.metric_readings && typeof data.metric_readings === 'object') {
+      const readings = Object.entries(data.metric_readings)
+        .filter(([metric, point]) => SERIES_METRICS.includes(metric) && point && Number.isFinite(point.value))
+        .map(([metric, point]) => Object.assign({}, point, { metric }));
+      return readings.length ? readings.map(point => ({
+        room_id: roomId, device_id: point.device_id || `firestore-${roomId}`,
+        observed_at: point.observed_at, source: point.source || 'firestore_snapshot',
+        readings: [point],
+      })) : null;
+    }
     const observedAt = data.timestamp_local
       || (data.created_at && typeof data.created_at.toDate === 'function' ? data.created_at.toDate().toISOString() : null)
       || (data.last_updated && typeof data.last_updated.toDate === 'function' ? data.last_updated.toDate().toISOString() : null);
@@ -359,9 +371,16 @@
         );
 
         if (entry.series[finalReading.metric]) entry.series[finalReading.metric].push(stamp, finalReading.value);
-        entry.latest[finalReading.metric] = finalReading;
-        entry.sample[finalReading.metric] = finalReading.value;
-        entry.sample.observed_at = finalReading.observed_at;
+        // Replayed history belongs in the series, but must not replace a
+        // newer observation in the module card or threshold-engine sample.
+        const previous = entry.latest[finalReading.metric];
+        const previousStamp = previous && Date.parse(previous.observed_at);
+        if (!Number.isFinite(previousStamp) || stamp >= previousStamp) {
+          entry.latest[finalReading.metric] = finalReading;
+          entry.sample[finalReading.metric] = finalReading.value;
+        }
+        const sampleStamp = Date.parse(entry.sample.observed_at);
+        if (!Number.isFinite(sampleStamp) || stamp >= sampleStamp) entry.sample.observed_at = finalReading.observed_at;
         entry.lastUpdateAt = at;
         entry.sources[source] = at;
 
@@ -446,7 +465,7 @@
       // Firestore: el mapa completo { [roomId]: doc } de `subscribeToLiveClimate`.
       onSnapshot: (roomsMap) => {
         const packets = Object.entries(roomsMap || {})
-          .map(([roomId, data]) => parseFirestoreRoomDoc(roomId, data))
+          .flatMap(([roomId, data]) => parseFirestoreRoomDoc(roomId, data) || [])
           .filter(Boolean);
         if (!packets.length) return;
         markData(link, ingest(packets, { source: 'firestore' }).length);

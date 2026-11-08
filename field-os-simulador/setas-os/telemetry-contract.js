@@ -44,6 +44,7 @@
       quality_reasons: [...new Set(reasons)],
       calibration_id: raw.calibration_id || null,
       source: raw.source || 'measured',
+      co2_pressure_compensated: raw.co2_pressure_compensated === true,
       received_at: normalizeTimestamp(raw.received_at),
     };
   };
