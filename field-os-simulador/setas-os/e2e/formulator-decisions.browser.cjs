@@ -45,6 +45,28 @@ const root=path.resolve(__dirname,'..');
   await balance.close();
   console.log('PASS precise balance preserves fixed values and can be undone.');
 
+  const ownership=await open([{id:'paja_trigo',p:100}]);
+  const untouched=await ownership.evaluate(()=>{
+   const snapshot=SetasFormulatorAPI.getRecipe();
+   snapshot[0].p=1;
+   return SetasFormulatorAPI.getRecipe();
+  });
+  assert.deepEqual(untouched,[{id:'paja_trigo',p:100}]);
+  assert.equal(await ownership.evaluate(async()=>{
+   const target=[{id:' paja_trigo ',pct:80},{id:'salvado_trigo',pct:20}];
+   const result=await SetasFormulatorAPI.applyRecipe(target);
+   target[0].pct=1;
+   if(result.ok) result.recipe[0].p=2;
+   return result.ok;
+  }),true);
+  await expect.poll(()=>ownership.evaluate(()=>SetasFormulatorAPI.getRecipe().map(({id,p})=>({id,p}))))
+   .toEqual([{id:'paja_trigo',p:80},{id:'salvado_trigo',p:20}]);
+  await expect(ownership.locator('.rec-pct-input').first()).toHaveValue('80');
+  assert.equal((await ownership.evaluate(()=>SetasFormulatorAPI.undoRecipe())).ok,true);
+  await expect.poll(()=>ownership.evaluate(()=>SetasFormulatorAPI.getRecipe())).toEqual([{id:'paja_trigo',p:100}]);
+  await ownership.close();
+  console.log('PASS native recipe snapshots, canonical input and undo preserve actual React state.');
+
   const fixed=await open([{id:'aserrin_eucalipto',p:80},{id:'salvado_trigo',p:10}],['aserrin_eucalipto','salvado_trigo']);
   await fixed.getByTestId('formulator-next-action').click();
   await expect(fixed.getByRole('dialog')).toContainText('Todos los porcentajes están fijados');
