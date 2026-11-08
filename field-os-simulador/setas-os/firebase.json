@@ -33,7 +33,8 @@
       "docs/**",
       "__harness.html",
       "probe-callable.js",
-      "field-event-mock-transport.js"
+      "field-event-mock-transport.js",
+      "telemetry-publisher/**"
     ]
   },
   "functions": {

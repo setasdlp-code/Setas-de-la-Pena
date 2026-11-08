@@ -1,0 +1,5 @@
+# Include under the sensor child's on_value key.
+then:
+  - lambda: |-
+      auto t = id(setas_publish_clock).utcnow();
+      id(setas_temp_at) = t.is_valid() && std::isfinite(x) ? t.strftime("%Y-%m-%dT%H:%M:%SZ") : "";

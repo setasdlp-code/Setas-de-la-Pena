@@ -1,0 +1,107 @@
+{
+  "status": "proposed_uncommissioned",
+  "reviewedOn": "2026-11-08",
+  "source": "knowledge_base/metadata/equipment.yaml",
+  "topology": {
+    "homeAssistant": {
+      "equipmentId": "EQ-HUB-RPI4-001",
+      "status": "retain_existing_assignment"
+    },
+    "publisher": {
+      "equipmentId": "EQ-SBC-RPI-ZERO2W-001",
+      "status": "proposed_linux_gateway_not_installed",
+      "runtime": "Node.js 22, HTTPS, approved Application Default Credentials"
+    }
+  },
+  "nodes": [
+    {
+      "deviceId": "setas-martha-01",
+      "roomId": "martha_01",
+      "profile": "esphome-martha.yaml",
+      "allocations": [
+        [
+          "EQ-MCU-ESP32-001",
+          1
+        ],
+        [
+          "EQ-SENSOR-SHT3X-001",
+          1
+        ],
+        [
+          "EQ-ENCLOSURE-TICONN-IP67-001",
+          1
+        ]
+      ]
+    },
+    {
+      "deviceId": "setas-cloudlab-01",
+      "roomId": "cloudlab_844",
+      "profile": "esphome-cloudlab.yaml",
+      "allocations": [
+        [
+          "EQ-MCU-ESP32-001",
+          1
+        ],
+        [
+          "EQ-SENSOR-SHT3X-001",
+          1
+        ],
+        [
+          "EQ-SENSOR-MHZ19C-001",
+          1
+        ],
+        [
+          "EQ-ENCLOSURE-TICONN-IP67-001",
+          1
+        ]
+      ]
+    },
+    {
+      "deviceId": "setas-incubacion-01",
+      "roomId": "incubacion_01",
+      "profile": "esphome-incubacion.yaml",
+      "allocations": [
+        [
+          "EQ-MCU-ESP32-001",
+          1
+        ],
+        [
+          "EQ-SENSOR-SHT45-BREAKOUT-001",
+          1
+        ]
+      ],
+      "commissioningBlockers": [
+        "Protected probe enclosure/membrane not established in inventory",
+        "Third electronics enclosure not established in inventory"
+      ]
+    }
+  ],
+  "referenceOnly": [
+    [
+      "EQ-SENSOR-INKBIRD-TH2-001",
+      2
+    ],
+    [
+      "EQ-SENSOR-SHT45-KLANATA-001",
+      1
+    ]
+  ],
+  "unallocatedSensors": [
+    [
+      "EQ-SENSOR-SHT45-BREAKOUT-001",
+      1
+    ]
+  ],
+  "excluded": [
+    "EXC-SCD30-AMAZON-001",
+    "EXC-INKBIRD-ICC500T-S01-001"
+  ],
+  "unverified": [
+    "DS18B20 ownership, quantity and fixed addresses",
+    "Node serial numbers/MAC addresses and physical assignment",
+    "Publisher host OS, storage, PSU, LAN name/IP and TLS trust",
+    "ESP32/MH-Z19C power supplies and AC Infinity TRRS pinout",
+    "Klanata room assignment conflict between registry and current operations"
+  ],
+  "co2Strategy": "MH-Z19C raw/ABC disabled; existing live bridge compensates once; preserve raw history"
+}

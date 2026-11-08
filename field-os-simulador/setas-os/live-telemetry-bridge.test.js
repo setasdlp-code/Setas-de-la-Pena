@@ -466,3 +466,26 @@ test('getHealthReport expone la salud determinística de la sala en vivo', () =>
   assert.equal(snap.rooms.martha_01.health.overallStatus, 'healthy');
   bridge.stop();
 });
+
+test('firmware CO2 compensation survives flat and readings-array packets end to end', () => {
+  const clock = makeClock();
+  const packet = { room_id: 'martha_01', device_id: 'scd30', observed_at: new Date(clock.now()).toISOString(), co2_pressure_compensated: true };
+  for (const body of [{ co2_ppm: 600 }, { readings: [{ metric: 'co2_ppm', value: 600 }] }]) {
+    const bridge = createLiveTelemetryBridge({ now: clock.now });
+    bridge.ingest({ ...packet, ...body }, { source: 'websocket' });
+    assert.equal(bridge.getSample('martha_01').co2_ppm, 600);
+  }
+  const bridge = createLiveTelemetryBridge({ now: clock.now });
+  bridge.ingest({ ...packet, readings: [{ metric: 'co2_ppm', value: 600, co2_pressure_compensated: false }] }, { source: 'websocket' });
+  assert.ok(bridge.getSample('martha_01').co2_ppm > 600, 'an explicit per-reading raw flag overrides the packet flag');
+});
+
+test('replayed history cannot replace the latest observation in a module sample', () => {
+  const clock = makeClock();
+  const bridge = createLiveTelemetryBridge({ now: clock.now });
+  const packet = { room_id: 'martha_01', device_id: 'sht31', observed_at: new Date(clock.now()).toISOString(), rh_pct: 85 };
+  bridge.ingest(packet, { source: 'websocket' });
+  bridge.ingest({ ...packet, observed_at: new Date(clock.now() - 3600000).toISOString(), rh_pct: 80 }, { source: 'firestore' });
+  assert.equal(bridge.getSample('martha_01').rh_pct, 85);
+  assert.equal(bridge.getSnapshot().rooms.martha_01.latest.rh_pct.observed_at, packet.observed_at);
+});

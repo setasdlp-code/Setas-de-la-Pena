@@ -157,6 +157,7 @@
             observed_at: item.observed_at || observedAt,
             calibration_id: item.calibration_id || calibrationId,
             source: item.source || source,
+            co2_pressure_compensated: item.co2_pressure_compensated == null ? packet.co2_pressure_compensated === true : item.co2_pressure_compensated === true,
             quality: item.quality || 'valid'
           };
           const norm = telemetryContract ? telemetryContract.normalizeTelemetry(base) : base;
@@ -192,6 +193,7 @@
           observed_at: observedAt,
           calibration_id: calibrationId,
           source,
+          co2_pressure_compensated: packet.co2_pressure_compensated === true,
           quality: 'valid'
         };
         const norm = telemetryContract ? telemetryContract.normalizeTelemetry(base) : base;
