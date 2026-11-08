@@ -196,6 +196,16 @@
 
 .minimal-public .knowledge-art { display: block; width: min(100%, 248px); height: 224px; margin: 0 0 24px; object-fit: contain; }
 
+.minimal-public .cultivation-overview { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: center; gap: 40px; margin-bottom: 48px; }
+.minimal-public .cultivation-overview .knowledge-heading { margin-bottom: 0; }
+.minimal-public .cultivation-chamber { margin: 0; text-align: center; }
+.minimal-public .cultivation-chamber img { display: block; width: 100%; max-width: 320px; height: auto; margin-inline: auto; }
+.minimal-public .cultivation-chamber figcaption { margin-top: 16px; }
+@media (max-width: 700px) {
+  .minimal-public .cultivation-overview { grid-template-columns: 1fr; gap: 24px; margin-bottom: 40px; }
+  .minimal-public .cultivation-chamber img { max-width: 240px; }
+}
+
 .minimal-public .technique-chapters { display: flex; flex-wrap: wrap; gap: 16px 32px; margin-top: 24px; }
 .minimal-public .technique-entry { padding-block: 32px 56px; }
 .minimal-public .technique-entry h2 { font: 500 32px/1.2 var(--font-editorial); margin-bottom: 16px; }

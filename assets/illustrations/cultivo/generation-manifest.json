@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-08",
+  "generator": "Built-in image_gen",
+  "source": "knowledge_base/metadata/equipment.yaml",
+  "style_reference": "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+  "limitations": "Editorial interpretations from inventory model names and specifications, not exact product photographs. Batch record scene is conceptual. No completed integration or validated cycle claimed.",
+  "assets": [
+    {
+      "name": "temperatura-humedad",
+      "prompt": "Use case: illustration-story. Generate ONE square standalone asset for Setas de la Peña public cultivation website. MATCH the recipe illustration at the reference path: rich opaque hand-painted gouache, coarse expressive layered pigment strokes, slightly rustic artisanal cookbook style, warm ochre reflected light, deep earthy shadows, realistic object volume painted rather than photographic or vector. Transparent background, isolated silhouette, no ground rectangle, generous margin on every edge, three-quarter elevated view. Retain actual equipment material colors: charcoal plastics, silver metal, green PCB and blue relays, harmonized by warm brushwork. No labels, no headings, no logos, no invented numerical readings, no infographic, no watermark. Inventory-grounded subject: Inkbird IBS-TH2 Plus Bluetooth temperature humidity logger, compact white rounded rectangular sensor body WITHOUT LCD, with its black lead ending in an external stainless steel cylindrical probe. Beside it a second slim wired AC Infinity SHT3x temperature humidity probe, neatly curled cables. Do not invent digital display readings.",
+      "file": "temperatura-humedad-gouache.png"
+    },
+    {
+      "name": "humedad-renovacion-aire",
+      "prompt": "Use case: illustration-story. Generate ONE square standalone asset for Setas de la Peña public cultivation website. MATCH the recipe illustration at the reference path: rich opaque hand-painted gouache, coarse expressive layered pigment strokes, slightly rustic artisanal cookbook style, warm ochre reflected light, deep earthy shadows, realistic object volume painted rather than photographic or vector. Transparent background, isolated silhouette, no ground rectangle, generous margin on every edge, three-quarter elevated view. Retain actual equipment material colors: charcoal plastics, silver metal, green PCB and blue relays, harmonized by warm brushwork. No labels, no headings, no logos, no invented numerical readings, no infographic, no watermark. Inventory-grounded subject: AC Infinity CloudForge T7 15 litre plant humidifier: tall dark charcoal rectangular reservoir with rounded corners and a black flexible corrugated mist delivery hose rising from its lid; beside it an AC Infinity CLOUDLINE H4 inline duct extractor, short black cylindrical inline housing, round 4-inch duct opening and mounting bracket. Real grow equipment, NOT a domestic tabletop diffuser. Separate units, not falsely connected. Small soft mist wisp from hose.",
+      "file": "humedad-renovacion-aire-gouache.png"
+    },
+    {
+      "name": "medicion-co2",
+      "prompt": "Use case: illustration-story. Generate ONE square standalone asset for Setas de la Peña public cultivation website. MATCH the recipe illustration at the reference path: rich opaque hand-painted gouache, coarse expressive layered pigment strokes, slightly rustic artisanal cookbook style, warm ochre reflected light, deep earthy shadows, realistic object volume painted rather than photographic or vector. Transparent background, isolated silhouette, no ground rectangle, generous margin on every edge, three-quarter elevated view. Retain actual equipment material colors: charcoal plastics, silver metal, green PCB and blue relays, harmonized by warm brushwork. No labels, no headings, no logos, no invented numerical readings, no infographic, no watermark. Inventory-grounded subject: EC Buying MH-Z19C NDIR carbon dioxide sensor MODULE, close up: small gold brass colored rectangular metal optical chamber on a compact green printed circuit board with white multipin connector and short loose multicolor jumper leads. Bare electronic module, NO consumer monitor enclosure, NO LCD, NO SCD30, NO display.",
+      "file": "medicion-co2-gouache.png"
+    },
+    {
+      "name": "control-modulos",
+      "prompt": "Use case: illustration-story. Generate ONE square standalone asset for Setas de la Peña public cultivation website. MATCH the recipe illustration at the reference path: rich opaque hand-painted gouache, coarse expressive layered pigment strokes, slightly rustic artisanal cookbook style, warm ochre reflected light, deep earthy shadows, realistic object volume painted rather than photographic or vector. Transparent background, isolated silhouette, no ground rectangle, generous margin on every edge, three-quarter elevated view. Retain actual equipment material colors: charcoal plastics, silver metal, green PCB and blue relays, harmonized by warm brushwork. No labels, no headings, no logos, no invented numerical readings, no infographic, no watermark. Inventory-grounded subject: ACEIRMC ESP32-WROOM-32 black development board with silver radio shield and twin rows of header pins, next to a TICONN IP67 rectangular light gray electronics junction enclosure with lid set beside it. A separate Hosyond TWO-channel relay board with two blue relay blocks, a few short loose Dupont jumper leads. Components laid out ready for modular assembly, not an invented validated wiring schematic. No dashboard or cloud.",
+      "file": "control-modulos-gouache.png"
+    },
+    {
+      "name": "preparacion-sustrato",
+      "prompt": "Use case: illustration-story. Generate ONE square standalone asset for Setas de la Peña public cultivation website. MATCH the recipe illustration at the reference path: rich opaque hand-painted gouache, coarse expressive layered pigment strokes, slightly rustic artisanal cookbook style, warm ochre reflected light, deep earthy shadows, realistic object volume painted rather than photographic or vector. Transparent background, isolated silhouette, no ground rectangle, generous margin on every edge, three-quarter elevated view. Retain actual equipment material colors: charcoal plastics, silver metal, green PCB and blue relays, harmonized by warm brushwork. No labels, no headings, no logos, no invented numerical readings, no infographic, no watermark. Inventory-grounded subject: All American 1941X pressure sterilizer, tall large satin cast aluminum cylindrical vessel, thick metal lid secured with six black screw-down clamping knobs around rim, top black handle, small round analog dial gauge with unreadable face and small valve, black side handles. Upright tall 41 quart proportions, not a shallow kitchen pressure cooker. Closed idle sterilizer beside one compact sealed brown sawdust substrate bag. No steam, no flames, no claimed validation.",
+      "file": "preparacion-sustrato-gouache.png"
+    },
+    {
+      "name": "registro-lote",
+      "prompt": "Conceptual batch traceability still life, NOT an inventory claim: open cream paper notebook with faint abstract handwritten lines, pencil, three small blank paper batch tags, one sealed brown sawdust substrate bag with filter patch, and a few oyster mushrooms. No fake readable data, no QR code, no electronic device invented.",
+      "revision": "Revision: remove electronic board; keep notebook, pencil, mushrooms, substrate bag and batch tags unchanged.",
+      "file": "registro-lote-gouache.png"
+    },
+    {
+      "name": "cloudlab-844",
+      "file": "cloudlab-844-gouache.png",
+      "prompt": "Create one additional standalone illustration in the SAME gouache style as this recipe illustration reference, for the Setas de la Peña cultivation equipment series. Subject ONLY: AC Infinity CLOUDLAB 844 indoor grow tent, inventory EQ-CHAMBER-CLOUDLAB844-001, dimensions 122 cm wide x 122 cm deep x 203 cm tall. Show the full tall cuboid black charcoal fabric grow tent in three-quarter elevated view, with square footprint, sturdy straight frame, black fabric seams, zippered front door partly unzipped and folded aside revealing reflective silver textured interior. Include round duct sleeve ports near upper side and a small lower mesh intake flap. Empty interior: no plants, no mushrooms, no racks, no hanging lamps or invented installations. This is a mushroom cultivation chamber equipment illustration, not a photograph or engineering schematic. Match recipe image's rich opaque hand-painted gouache, visible dry brush texture, layered warm ochre light on materials, earthy shadows and handcrafted editorial quality. Keep tent black charcoal and lining silver with warm reflections. Center isolated entire object with generous transparent margin, no background, no floor rectangle, no people, no labels, no dimensions, no text, no logos, no watermark. Do not include food from reference.",
+      "equipment_id": "EQ-CHAMBER-CLOUDLAB844-001"
+    }
+  ],
+  "web_delivery": {
+    "format": "WebP",
+    "quality": 84,
+    "method": 6,
+    "transparent": true
+  }
+}
