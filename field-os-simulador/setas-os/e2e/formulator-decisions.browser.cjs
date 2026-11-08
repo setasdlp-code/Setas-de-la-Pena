@@ -44,6 +44,18 @@ const root=path.resolve(__dirname,'..');
   await empty.close();
   console.log('PASS empty recipe accepts a catalog ingredient.');
 
+  const keyboard=await open([]);
+  await keyboard.getByRole('button',{name:'Catálogo',exact:true}).first().click();
+  const keyboardAdd=keyboard.getByRole('button',{name:'Agregar Paja de trigo a la receta',exact:true});
+  await keyboardAdd.focus();
+  await expect(keyboardAdd).toBeFocused();
+  await keyboardAdd.press('Enter');
+  await expect(keyboard.locator('#bl-receta .rec-pct-input')).toHaveValue('10');
+  await expect(keyboard.locator('.sim-live-dashboard')).toContainText('Paja de trigo');
+  await expect(keyboardAdd).toHaveCount(0);
+  await keyboard.close();
+  console.log('PASS keyboard activation adds a catalog ingredient exactly once.');
+
   const initial=[{id:'aserrin_eucalipto',p:13.3333},{id:'paja_trigo',p:1},{id:'cascarilla_arroz',p:1},{id:'salvado_trigo',p:1}];
   const balance=await open(initial,['aserrin_eucalipto']);
   await balance.getByTestId('formulator-next-action').click();
