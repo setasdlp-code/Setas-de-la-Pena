@@ -163,7 +163,22 @@ test.describe('desktop navigation contract', () => {
     const catalogBtn = origin.getByRole('button', { name: 'Catálogo', exact: true });
     await catalogBtn.click();
     await expect(catalogBtn).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
+    const addNavigation = [];
+    const trackNavigation = request => {
+      if (request.isNavigationRequest()) addNavigation.push(new URL(request.url()).pathname);
+    };
+    page.on('request', trackNavigation);
+    try {
+      await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
+    } catch (error) {
+      console.log('Ingredient-add diagnostic', JSON.stringify({
+        navigations: addNavigation,
+        recipe: await recipe.innerText({ timeout: 2000 }).catch(() => 'unresponsive'),
+      }));
+      throw error;
+    } finally {
+      page.off('request', trackNavigation);
+    }
     await expect(liveSummary).toBeVisible();
     await expect(liveSummary).toContainText('Paja de trigo');
     // Editing lives in the recipe summary — the panel below has no row list.
