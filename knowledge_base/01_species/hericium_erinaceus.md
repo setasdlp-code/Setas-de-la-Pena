@@ -3,7 +3,7 @@ title: Hericium erinaceus — Lion's Mane / Melena de León
 document_id: DOC-0006
 category: species
 load_priority: selective
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 confidence: medium
 primary_sources:
   - Friedman 2015 (paper_003)
@@ -150,6 +150,7 @@ Una señal visual no identifica por sí sola la causa. Cambiar una variable prin
 | Cascarilla de arroz como aireante | Hipótesis | Densidad, retención de agua, compactación y BE |
 | Bagazo cervecero | Hipótesis de suplemento | Secado/proceso, proteína, variabilidad y riesgo de contaminación |
 | Borra de café | Experimental | Composición, pH, contaminación, mezcla y tratamiento térmico |
+| Retamo espinoso (*Ulex europaeus*) | No recomendado; sin evidencia | Rico en fenólicos y flavonoides; riesgo por sensibilidad a polifenoles (Atila 2019). Solo prueba en placa antes de cualquier bolsa (DOC-0129, HE09) |
 
 No se mantienen rangos universales de BE. La eficiencia biológica debe calcularse con masa seca inicial documentada.
 
