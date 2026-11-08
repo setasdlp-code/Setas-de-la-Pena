@@ -1,8 +1,5 @@
 'use strict';
-// Un solo panel del Perito: el Formulador (#bl-perito) y la Mesa del Perito
-// (subpestaña Generador) muestran el mismo veredicto, las mismas tarjetas y la
-// misma cuadrícula de métricas, sin la barra resumen duplicada ni el texto
-// "sin mutar mesa" junto a botones que sí cambian la receta.
+// Un solo Formulador: Receta con diagnóstico, Escenarios y Comparar.
 // Run: node e2e/perito-panel-unified.browser.cjs
 const fs=require('node:fs');
 const path=require('node:path');
@@ -53,37 +50,48 @@ const root=path.resolve(__dirname,'..');
   const buttons=await form.locator('button').allTextContents();
   assert.ok(buttons.findIndex(t=>/Auto-mejorar/.test(t))<buttons.findIndex(t=>/Asistente IA/.test(t)),buttons.join(' | '));
 
-  await page.locator('#formular-tab-generador').click();
-  // Vocabulario del dominio en la Mesa del Perito (sin "Workbench", "Optimizador Generativo" ni "Morphing").
-  await expect(page.getByRole('heading',{name:'Mesa del Perito',level:1})).toBeVisible();
-  for(const mode of ['Escenarios','Comparar recetas']) await expect(page.getByRole('button',{name:new RegExp(`^${mode}`)})).toBeVisible();
-  await page.getByRole('button',{name:'Diagnóstico',exact:true}).click();
-  const wb=page.locator('.perito-standalone-panel');
-  await expect(wb.locator('.perito-item').first()).toBeVisible();
-  assert.equal(await wb.getAttribute('data-perito-variant'),'workbench');
-  const b=await read(wb);
-  assert.equal(b.score,a.score,'mismo veredicto en ambos lugares');
-  assert.deepEqual(b.labels,a.labels,'mismas tarjetas en el mismo orden');
-  assert.deepEqual(b.metrics,a.metrics,'misma cuadrícula de métricas');
-  assert.doesNotMatch(b.text,/sin mutar mesa|Sugerencias Inteligentes/i);
-  assert.match(b.text,/Contexto Físico y Capacidad de Proceso/i);
-  assert.equal(await page.locator('#bl-perito').count(),0,'el id del Formulador no se duplica en la Mesa del Perito');
-  await page.getByRole('button',{name:/^Comparar recetas/}).click();
-  await expect(page.locator('.perito-morph-panel')).toContainText('Comparar y mezclar recetas');
-  await page.getByRole('button',{name:'Diagnóstico',exact:true}).click();
-
-  // Aplicar desde la Mesa del Perito cambia la receta y se refleja al volver.
-  const before=await page.evaluate(()=>window.SetasFormulatorAPI.getRecipe());
-  await wb.locator('.pi-apply:not([disabled])').first().click();
-  await expect.poll(()=>page.evaluate(()=>window.SetasFormulatorAPI.getRecipe())).not.toEqual(before);
-  const after=await read(wb);
-  await page.locator('#formular-tab-mesa').click();
-  await expect(page.locator('#bl-perito .perito-item').first()).toBeVisible();
-  assert.equal((await read(page.locator('#bl-perito'))).score,after.score);
-
+  const original=await page.evaluate(()=>window.SetasFormulatorAPI.getRecipe());
+  const species=page.locator('#form-species-context-select');
+  await page.getByRole('tab',{name:'Escenarios',exact:true}).click();
+  await expect(page.locator('#gen-panel')).toBeVisible();
+  await expect(species).toHaveValue('p_ostreatus_gris');
+  await expect(page.locator('#bl-perito')).toHaveCount(0);
+  await expect(page.locator('.perito-workbench-modes')).toHaveCount(0);
+  await expect(page.getByRole('tab',{selected:true})).toHaveText('Escenarios');
+  await page.getByRole('tab',{name:'Comparar',exact:true}).click();
+  await expect(page.locator('.perito-morph-panel')).toBeVisible();
+  await expect(page.locator('#gen-panel')).toHaveCount(0);
+  assert.deepEqual(await page.evaluate(()=>window.SetasFormulatorAPI.getRecipe()),original,'navigation preserves draft');
+  // Roving focus wraps all three destinations and keeps the panel in sync.
+  await page.getByRole('tab',{name:'Comparar',exact:true}).press('ArrowRight');
+  await expect(page.getByRole('tab',{name:'Receta',exact:false})).toBeFocused();
+  await expect(form).toBeVisible();
+  assert.equal((await read(form)).score,a.score);
+  await page.locator('#formular-tab-mesa').press('End');
+  await expect(page.locator('#formular-tab-comparar')).toBeFocused();
+  await expect(page.locator('.perito-morph-panel')).toBeVisible();
+  await page.locator('#formular-tab-comparar').press('Home');
+  await expect(page.locator('#formular-tab-mesa')).toBeFocused();
+  // Apply and undo stay with the same active recipe and single diagnosis.
+  await form.locator('.pi-apply:not([disabled])').first().click();
+  await expect.poll(()=>page.evaluate(()=>window.SetasFormulatorAPI.getRecipe())).not.toEqual(original);
+  await form.getByRole('button',{name:/Deshacer \(/}).click();
+  assert.deepEqual(await page.evaluate(()=>window.SetasFormulatorAPI.getRecipe()),original);
+  for(const [width,height] of [[1366,900],[390,844],[320,568]]){
+    await page.setViewportSize({width,height});
+    for(const id of ['mesa','generador','comparar']){
+      await page.locator('#formular-tab-'+id).click();
+      await expect(species).toBeVisible();
+      assert.equal(await page.getByRole('tab',{selected:true}).count(),1);
+      assert.ok(await page.locator('.formular-mode-nav').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'navigation fits '+width);
+      assert.ok(await page.locator('.formular-mode-btn').evaluateAll(els=>els.every(el=>el.getBoundingClientRect().height>=44)));
+    }
+    await page.locator('#formular-tab-mesa').click();
+    await page.screenshot({path:`/tmp/setas-formulator-consolidated-${width}.png`,fullPage:false});
+  }
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.locator('#bl-perito').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'el panel no debe desbordar en móvil');
   assert.deepEqual(errors,[]);
-  console.log(`PASS: Formulador y Mesa del Perito muestran el mismo veredicto (${a.score}), ${a.labels.length} tarjetas y ${a.metrics.length} métricas; sin barra duplicada; aplicar desde la Mesa se refleja en el Formulador.`);
+  console.log('PASS: one diagnosis, three destinations, shared species, draft preservation, apply/undo, keyboard navigation and responsive controls.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

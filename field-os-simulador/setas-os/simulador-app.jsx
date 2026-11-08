@@ -7381,7 +7381,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
-  const [workbenchMode,setWorkbenchMode]=useState('all');
+  const [workbenchMode,setWorkbenchMode]=useState('optimizador');
   const [morphTargetRecipe,setMorphTargetRecipe]=useState(null);
   const [morphAlpha,setMorphAlpha]=useState(0.5);
   const peritoWorkerRef=useRef(null);
@@ -7401,11 +7401,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       setTimeout(()=>document.querySelector('#bl-receta .rec-pct-input')?.focus(),250);
     },0);
   };
-  const openBuilderSubTab=(next,{focusTab=false}={})=>{
+  const openBuilderSubTab=(next,{focusTab=false,mode='optimizador'}={})=>{
     setBuilderSubTab(next);
+    if(next==='generador'){setWorkbenchMode(mode);setShowOptimizer(true);}
     focusFormTop();
     if(focusTab){
-      requestAnimationFrame(()=>document.getElementById(next==='formular'?'formular-tab-mesa':'formular-tab-generador')?.focus());
+      requestAnimationFrame(()=>document.getElementById(next==='formular'?'formular-tab-mesa':mode==='morphing'?'formular-tab-comparar':'formular-tab-generador')?.focus());
     }
   };
   useEffect(()=>{
@@ -7416,8 +7417,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const onBuilderTabKeyDown=e=>{
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
     e.preventDefault();
-    const next=e.key==='Home'||e.key==='ArrowLeft'?'formular':'generador';
-    openBuilderSubTab(next,{focusTab:true});
+    const tabs=['formular-tab-mesa','formular-tab-generador','formular-tab-comparar'];
+    const index=tabs.indexOf(e.currentTarget.id);
+    const next=e.key==='Home'?0:e.key==='End'?2:(index+(e.key==='ArrowRight'?1:2))%3;
+    openBuilderSubTab(next===0?'formular':'generador',{focusTab:true,mode:next===2?'morphing':'optimizador'});
   };
   const [loadedFlash,setLoadedFlash]=useState(false);
   const [cmpFecha,setCmpFecha]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
@@ -8778,24 +8781,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setAutoImproveResult({recipeKey:recipeKeyOf(res.recipe),steps:res.steps,before:res.before,after:res.after});
   };
   const autoImproveSummary=autoImproveResult&&autoImproveResult.recipeKey===recipeKeyOf(recipe)?autoImproveResult:null;
-  // ── Panel del Perito: una sola implementación ──
-  // Antes el Formulador (#bl-perito) y la Mesa del Perito (subpestaña
-  // Generador, .perito-standalone-panel) tenían dos copias del mismo panel
-  // —encabezado, métricas, medidores y tarjetas— que ya diferían en textos,
-  // métricas y orden. Ahora ambos renderizan esto; la variante solo agrega lo
-  // propio de cada lugar: siguiente paso del flujo, crear prueba, gráficos y
-  // evaluación técnica en el Formulador; factor restrictivo y contexto físico
-  // de Tenjo en la Mesa del Perito. La "barra resumen" que repetía score, EB y
-  // costo justo debajo de las métricas se retiró: el costo por kg de hongo
-  // quedó como segunda línea de la métrica de costo.
+  // El diagnóstico pertenece a la receta activa; Escenarios y Comparar comparten su estado.
   const peritoItemKeys=list=>{const seen=new Map();return list.map(it=>{const base=`${it.priority}|${it.icon}|${it.label}`;const n=seen.get(base)||0;seen.set(base,n+1);return n?`${base}#${n}`:base;});};
-  const renderPeritoPanel=(variant)=>{
-    const isWorkbench=variant==='workbench';
-    if(!an) return isWorkbench?(
-      <section className="panel perito-standalone-panel" data-perito-variant={variant} style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
-        <div className="os-provenance-notice">Agregar ingredientes en la Mesa de Mezcla para ver el diagnóstico del Perito.</div>
-      </section>
-    ):null;
+  const renderPeritoPanel=()=>{
+    if(!an) return null;
     const hasPer=recipe.length>0;
     const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
     const criticals=items.filter(s=>s.priority==='critical');
@@ -8806,16 +8795,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
     const cur=sp?Math.min(an.cn,max):0;
     const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
-    const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
-    const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
-    const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
-    const wrapDeep=(summary,node)=>!isWorkbench
-      ?<details className="perito-deep-details" data-testid="perito-deep-details"><summary className="summary-tap">{summary}</summary>{node}</details>
-      :node;
-    const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
+    const restrictiveFactor=(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null));
+    const reqPsi=(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03));
+    const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+    const wrapDeep=(summary,node)=><details className="perito-deep-details" data-testid="perito-deep-details"><summary className="summary-tap">{summary}</summary>{node}</details>;
+    const onMorph=tgt=>{setMorphTargetRecipe(tgt);openBuilderSubTab('generador',{mode:'morphing'});};
     const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
     return(
-      <section className={`panel print-panel${isWorkbench?' perito-standalone-panel':''}`} id={isWorkbench?undefined:'bl-perito'} data-perito-variant={variant} aria-label="Perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:isWorkbench?24:12,transition:'background .3s,border-color .3s',...(isWorkbench?{padding:20,borderRadius:'var(--r-md)'}:{})}}>
+      <section className="panel print-panel" id="bl-perito" data-perito-variant="formulador" aria-label="Perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
         {/* ── ENCABEZADO: score, veredicto y acciones (Auto-mejorar primero, asistente IA al final) ── */}
         {hasPer&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
@@ -8832,7 +8819,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                           {an.trichoderma&&<div style={{color:'var(--status-error)',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
                           {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
                         </div>
-              {isWorkbench&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4}}>Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})</div>}
+
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
                         {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
@@ -8841,7 +8828,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
-              {!isWorkbench&&<>
+              {<>
                         {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
@@ -8858,7 +8845,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         </div>}
         {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
 
-        {isWorkbench&&<>
+        {wrapDeep('Factor restrictivo y capacidad de proceso',<>
                   {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
                     <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--sim-r-sm)',background:restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 8%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 30%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
@@ -8908,7 +8895,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                     </div>
                   </div>
 
-        </>}
+        </>)}
 
         {wrapDeep(`Métricas del modelo · C:N ${an.cn>0?an.cn.toFixed(1)+':1':'—'} · N ${an.avgN>0?an.avgN.toFixed(2)+'%':'—'} · EB ${ebForecast?ebForecast.low+'–'+ebForecast.high:an.eb.toFixed(0)}%`,<>
         <div className="mgrid" style={{marginBottom:12}}>
@@ -8976,7 +8963,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'var(--status-ok)'}}>Todos los parámetros en rango</span>}
                         {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 25%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplicar una sugerencia a la vez</b> — cada cambio recalcula. <b>Auto-mejorar</b> lo automatiza.</div>}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplicar una sugerencia a la vez</b> — cada cambio recalcula. <b>Auto-mejorar</b> lo automatiza.</div>}
             {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
             {tips.length>0&&<details open={!phoneCompact} style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
@@ -8984,7 +8971,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           </>
         )}
 
-        {!isWorkbench&&wrapDeep(`Evaluación técnica y gráficos · ${dg.sugs.length} nota${dg.sugs.length===1?'':'s'}`,<>
+        {wrapDeep(`Evaluación técnica y gráficos · ${dg.sugs.length} nota${dg.sugs.length===1?'':'s'}`,<>
                   {/* ── CHARTS TOGGLE + CHARTS ── */}
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
                     <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
@@ -10427,9 +10414,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const formNextLabel=formNextState==='species'?'Elegir especie':formNextState==='balance'?'Balancear 100%':formNextState==='review'?'Corregir receta':'Preparar lote';
   const runFormNextAction=()=>{
     if(formNextState==='species'){
-      if(builderSubTab==='generador'){setWorkbenchMode('all');setShowOptimizer(true);}
+      if(builderSubTab==='generador'){setWorkbenchMode('optimizador');setShowOptimizer(true);}
       focusFormTop();
-      requestAnimationFrame(()=>(document.getElementById('form-species-context-select')||document.getElementById('generator-species-select'))?.focus());
+      requestAnimationFrame(()=>(document.getElementById('form-species-context-select'))?.focus());
       return;
     }
     if(formNextState==='balance'){
@@ -10437,7 +10424,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     if(formNextState==='review'){
-      const panel=document.getElementById('bl-perito')||document.querySelector('[data-perito-variant="workbench"]');
+      const panel=document.getElementById('bl-perito');
       panel?.scrollIntoView({behavior:'smooth',block:'start'});
       const target=panel?.querySelector('.perito-item button')||panel;
       if(target){if(!target.hasAttribute('tabindex')&&target===panel)target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
@@ -14216,7 +14203,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const getSurfaceMode = (t) => {
     if (t === 'clima') return 'control';
-    if (t === 'perito' || (t === 'formular' && typeof workbenchMode !== 'undefined' && workbenchMode === 'perito')) return 'control';
+    if (t === 'perito') return 'control';
     if (t === 'catalogo') return 'archive';
     if (t === 'market') return 'culinary';
     return 'field';
@@ -15359,6 +15346,34 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&(
           <div className="formular-mode-wrapper">
+            <header className="formulator-heading">
+              <p>Editar la mezcla, explorar alternativas y revisar con Perito antes de preparar.</p>
+              <span className="formulator-draft-status">{recipe.length?`${recipe.length} ingredientes · Borrador autoguardado`:'Comenzar una receta'}</span>
+            </header>
+          <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
+            <div className="form-species-identity">
+              <span className="form-species-kicker">Especie activa</span>
+              <div>
+                <strong id="form-species-context-title">{hasPickedSpecies?(sp?.name||'Especie activa'):'Seleccionar una especie'}</strong>
+                <em>{hasPickedSpecies?(sp?.scientific||'Sin clasificar'):'La evaluación se adapta a sus objetivos biológicos.'}</em>
+              </div>
+            </div>
+            <label className="form-species-picker" htmlFor="form-species-context-select">
+              <span>Cambiar especie</span>
+              <select id="form-species-context-select" name="formSpeciesContext" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                <option value="" disabled>Elegir especie…</option>
+                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+              </select>
+            </label>
+            <div className="form-species-origin-toggle">
+              <span>Origen de ingredientes</span>
+              <div role="group" aria-label="Origen de ingredientes en la receta activa">
+                <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+              </div>
+            </div>
+
+          </section>
             <nav className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
               <button
                 type="button"
@@ -15371,7 +15386,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('formular')}>
                 <AppIcon name="sprout" size={13} />
-                <span>Mesa de Mezcla</span>
+                <span>Receta</span>
                 {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
               </button>
               <button
@@ -15379,13 +15394,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 role="tab"
                 id="formular-tab-generador"
                 aria-controls="formular-panel-generador"
-                aria-selected={builderSubTab==='generador'}
-                tabIndex={builderSubTab==='generador'?0:-1}
-                className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
+                aria-selected={builderSubTab==='generador'&&workbenchMode==='optimizador'}
+                tabIndex={builderSubTab==='generador'&&workbenchMode==='optimizador'?0:-1}
+                className={`formular-mode-btn${builderSubTab==='generador'&&workbenchMode==='optimizador'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
                 <AppIcon name="wand" size={13} />
-                <span>Generador de Recetas</span>
+                <span>Escenarios</span>
+              </button>
+              <button type="button" role="tab" id="formular-tab-comparar" aria-controls="formular-panel-generador"
+                aria-selected={builderSubTab==='generador'&&workbenchMode==='morphing'} tabIndex={builderSubTab==='generador'&&workbenchMode==='morphing'?0:-1}
+                className={`formular-mode-btn${builderSubTab==='generador'&&workbenchMode==='morphing'?' is-active':''}`}
+                onKeyDown={onBuilderTabKeyDown} onClick={()=>openBuilderSubTab('generador',{mode:'morphing'})}>
+                <AppIcon name="scale" size={13}/><span>Comparar</span>
               </button>
             </nav>
             {/* Co-Formulación queda fuera del camino principal (Mejor con Bodega):
@@ -15468,33 +15489,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='formular'&&builderSubTab==='formular'&&recipe.length===0&&(
-          <section className="form-mobile-start" data-testid="form-mobile-start" aria-labelledby="form-mobile-start-title">
-            <header>
-              <span>Inicio rápido</span>
-              <strong id="form-mobile-start-title">Configurar y empezar la receta</strong>
-            </header>
-            <label className="form-mobile-start-field" htmlFor="form-mobile-species-select">
-              <span>1 · Especie</span>
-              <select id="form-mobile-species-select" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
-                <option value="" disabled>Elegir especie…</option>
-                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
-              </select>
-            </label>
-            <div className="form-mobile-start-field">
-              <span>2 · Origen</span>
-              <div className="form-mobile-origin-options" role="group" aria-label="Origen de ingredientes para inicio rápido">
-                <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
-                <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
-              </div>
-            </div>
-            <div className="form-mobile-start-actions" aria-label="Método para comenzar">
-              <button type="button" className="is-primary" onClick={focusIngredientCatalog}>Elegir insumos</button>
-              <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
-            </div>
-          </section>
-        )}
-
         {tab==='formular'&&builderSubTab==='formular'&&recipe.length>0&&(
           <section className={`form-production-command is-${formNextState}`} aria-label="Siguiente paso de producción">
             <button
@@ -15521,32 +15515,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='formular'&&(
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
-          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
+          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta activa actualizada</div>}
 
-          <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
-            <div className="form-species-identity">
-              <span className="form-species-kicker">Especie activa</span>
-              <div>
-                <strong id="form-species-context-title">{hasPickedSpecies?(sp?.name||'Especie activa'):'Seleccionar una especie'}</strong>
-                <em>{hasPickedSpecies?(sp?.scientific||'Sin clasificar'):'La evaluación se adapta a sus objetivos biológicos.'}</em>
-              </div>
-            </div>
-            <label className="form-species-picker" htmlFor="form-species-context-select">
-              <span>Cambiar especie</span>
-              <select id="form-species-context-select" name="formSpeciesContext" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
-                <option value="" disabled>Elegir especie…</option>
-                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
-              </select>
-            </label>
-            <div className="form-species-origin-toggle">
-              <span>Origen de ingredientes</span>
-              <div role="group" aria-label="Origen de ingredientes en la receta activa">
-                <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
-                <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
-              </div>
-            </div>
 
-          </section>
 
           {hasPickedSpecies&&<MejorConBodegaPanel
             sKey={sKey} spp={searchSPP} ingredients={optimizerINGS} invLotes={invLotes} stockMap={stockMap}
@@ -16186,7 +16157,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   })()}
                 </div>
               ):<p className="form-review-empty">Agregar ingredientes para revisar la receta. La revisión se actualiza con cada cambio.</p>}
-              {renderPeritoPanel('formulador')}
+              {renderPeritoPanel()}
               <details className="review-details" data-testid="form-review-gauges">
                 <summary>Medidores y comparación del modelo</summary>
                 <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats} forecast={ebForecast}/>
@@ -16541,49 +16512,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&builderSubTab==='generador'&&(
-          <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
-            {/* ── MESA DEL PERITO: encabezado y modos ── */}
-            <div className="workbench-top-bar" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,margin:'12px 0 16px',flexWrap:'wrap',paddingBottom:12,borderBottom:'1.5px solid var(--border-soft)'}}>
-              <div>
-                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Perito</div>
-                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--sim-text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Mesa del Perito</h1>
-              </div>
-              <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <button type="button" className="btn sm" onClick={()=>openBuilderSubTab('formular')}>← Volver a Mesa de Mezcla</button>
-              </div>
-            </div>
-
-            <div className="seg-row perito-workbench-modes" style={{marginBottom:18,display:'flex',gap:6,background:'var(--paper-200)',padding:4,borderRadius:'var(--sim-r-sm)',flexWrap:'wrap'}}>
-              <button
-                type="button"
-                className={`seg${workbenchMode==='all'?' on':''}`}
-                onClick={()=>setWorkbenchMode('all')}>
-                <AppIcon name="globe" size={13} style={{marginRight:4}} /> Vista Integral
-              </button>
-              <button
-                type="button"
-                className={`seg${workbenchMode==='perito'?' on':''}`}
-                onClick={()=>setWorkbenchMode('perito')}>
-                <AppIcon name="scan" size={13} style={{marginRight:4}} /> Diagnóstico
-              </button>
-              <button
-                type="button"
-                className={`seg${workbenchMode==='optimizador'?' on':''}`}
-                onClick={()=>setWorkbenchMode('optimizador')}>
-                <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Escenarios
-              </button>
-              <button
-                type="button"
-                className={`seg${workbenchMode==='morphing'?' on':''}`}
-                onClick={()=>setWorkbenchMode('morphing')}>
-                <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparar recetas {morphTargetRecipe?'(1 activa)':''}
-              </button>
-            </div>
-
-            {/* ── SECCIÓN 1: DIAGNÓSTICO DEL PERITO (misma implementación que el Formulador) ── */}
-            {['all','perito'].includes(workbenchMode)&&renderPeritoPanel('workbench')}
+          <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby={workbenchMode==='morphing'?'formular-tab-comparar':'formular-tab-generador'}>
+            <p className="formulator-view-intro">{workbenchMode==='morphing'?'Comparar una alternativa con la receta activa. Los cambios se aplican solo al cargar la mezcla.':'Explorar alternativas para la especie activa. Calcular no reemplaza la receta; elegir una opción para cargarla.'}</p>
             {/* ── SECCIÓN 2: COMPARADOR & MORPHING DE RECETAS ── */}
-            {['all','morphing'].includes(workbenchMode)&&(()=>{
+            {workbenchMode==='morphing'&&(()=>{
               const activeCandidate = morphTargetRecipe || (optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe) || [];
               const hasCandidate = activeCandidate && activeCandidate.length > 0;
               const hasBase = recipe && recipe.length > 0;
@@ -16734,12 +16666,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             })()}
 
             {/* ── SECCIÓN 3: GENERADOR DE RECETAS (OPTIMIZADOR) ── */}
-            {['all','optimizador'].includes(workbenchMode)&&(
+            {workbenchMode==='optimizador'&&(
             <section id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" aria-busy={optRunning} style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50)'}}>
-                <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Automejora · Generador de recetas</h2>
+                <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Generador de Recetas</h2>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                  <button type="button" className="tog" onClick={()=>openBuilderSubTab('formular')}>← Mesa de Mezcla</button>
+                  <button type="button" className="tog" onClick={()=>openBuilderSubTab('formular')}>← Volver a Receta</button>
                   <button type="button" className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
                 </div>
               </div>
@@ -16759,24 +16691,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div>
                           <div style={{marginBottom:16}}>
                             <div className="generator-origin-control">
-                              <div className="form-species-origin-toggle">
-                                <span>Origen de ingredientes</span>
-                                <div role="group" aria-label="Origen de ingredientes del generador">
-                                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
-                                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
-                                </div>
-                              </div>
                               <p>{lockedIds.length?`${lockedIds.length} porcentaje${lockedIds.length===1?'':'s'} fijado${lockedIds.length===1?'':'s'} de la receta activa: la búsqueda debe conservarlos.`:'Buscar una nueva composición. Fijar porcentajes en la Mesa de Mezcla para conservarlos.'}</p>
                             </div>
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
-                              <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <label htmlFor="generator-species-select" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</label>
-                                <select id="generator-species-select" value={hasPickedSpecies?optTarget:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
-                                  <option value="" disabled>Elegir especie…</option>
-                                  {Object.entries(SPP).map(([key,species])=><option key={key} value={key}>{species.name}</option>)}
-                                </select>
-                              </div>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
                                 <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Insumos · COP/kg seco máximo</label>
                                 <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
@@ -16919,7 +16837,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Planificar lote</button>
-                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);openBuilderSubTab('generador',{mode:'morphing'});}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>
                                       <div className="generator-candidate-context" data-testid="generator-candidate-context">

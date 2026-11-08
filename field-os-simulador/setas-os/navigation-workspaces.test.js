@@ -169,10 +169,10 @@ test('loading a saved recipe from Recetario notifies the shell instead of desync
   assert.match(loadR[0], /goTab\('formular'\)/);
 });
 
-test('Formular V2 separates Mesa and Generator without undefined replacement helpers', () => {
+test('Formular separates Recipe, Scenarios and Compare without undefined replacement helpers', () => {
   const modeNav = jsx.match(/<nav className="formular-mode-nav" role="tablist"[\s\S]*?<\/nav>/);
   assert.ok(modeNav, 'Formular mode tablist not found');
-  assert.equal((modeNav[0].match(/role="tab"/g) || []).length, 2, 'only Mesa and Generator are tabs');
+  assert.equal((modeNav[0].match(/role="tab"/g) || []).length, 3, 'Recipe, Scenarios and Compare are the only tabs');
   assert.match(modeNav[0], /id="formular-tab-mesa"[\s\S]*?aria-controls="formular-panel-mesa"/);
   assert.match(modeNav[0], /id="formular-tab-generador"[\s\S]*?aria-controls="formular-panel-generador"/);
   assert.doesNotMatch(modeNav[0], /coform|Co-Formulación/, 'Co-Formulación is a toggle, not a third tab without a panel');
@@ -208,7 +208,8 @@ test('mobile production flow resets scroll and exposes one progressive next acti
   assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':formCriticals\.length\?'review':'produce'/);
   assert.match(jsx, /data-testid="formulator-next-action"/);
   assert.match(jsx, /data-testid="formulator-review-recipe"[\s\S]*onClick=\{focusActiveRecipe\}/);
-  assert.match(jsx, /data-testid="form-mobile-start"[\s\S]*id="form-mobile-species-select"[\s\S]*Elegir insumos[\s\S]*Usar generador/);
+  assert.match(jsx, /id="form-species-context-select"/);
+  assert.doesNotMatch(jsx, /id="form-mobile-species-select"|id="generator-species-select"/);
   assert.match(jsx, /form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}/);
   assert.match(jsx, /setSKey\(sKey\);setRecipe\(invResult\.recipe\);openBuilderSubTab\('formular'\)/);
   assert.match(css, /\.form-production-command\{[\s\S]*position:sticky;[\s\S]*top:0;[\s\S]*z-index:var\(--z-sticky-panel\)/);
