@@ -169,7 +169,11 @@ test.describe('desktop navigation contract', () => {
     };
     page.on('request', trackNavigation);
     try {
-      await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
+      // noWaitAfter: en CI (sesión real de Firebase) el clic se completa y el ingrediente
+      // se agrega (la receta muestra 10.0%), pero Playwright se queda en «waiting for
+      // scheduled navigations to finish» hasta agotar el timeout, sin ninguna petición de
+      // navegación. El efecto se verifica con las aserciones de abajo, no con esa espera.
+      await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click({ noWaitAfter: true });
     } catch (error) {
       console.log('Ingredient-add diagnostic', JSON.stringify({
         navigations: addNavigation,
