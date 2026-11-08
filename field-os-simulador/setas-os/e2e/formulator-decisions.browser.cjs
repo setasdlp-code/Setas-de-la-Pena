@@ -4,6 +4,7 @@ const path=require('node:path');
 const http=require('node:http');
 const assert=require('node:assert/strict');
 const {chromium,expect}=require('@playwright/test');
+const {expectDesktopWorkspace,expectDesktopIngredientScroll,expectMobileWorkspace}=require('./formulator-layout-contract.cjs');
 const root=path.resolve(__dirname,'..');
 
 (async()=>{
@@ -44,6 +45,36 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(await balance.evaluate(()=>SetasFormulatorAPI.getRecipe()),initial);
   await balance.close();
   console.log('PASS precise balance preserves fixed values and can be undone.');
+
+  const layoutProbe=await open([{id:'paja_trigo',p:100}]);
+  await layoutProbe.getByRole('button',{name:'Catálogo',exact:true}).first().click();
+  await layoutProbe.getByTestId('form-review-gauges').locator('summary').click();
+  await expectDesktopWorkspace(layoutProbe);
+  await expectDesktopIngredientScroll(layoutProbe);
+  // Negative controls: the shared contract must reject actual regressions,
+  // rather than merely stop checking the old single-column assumptions.
+  const stacked=await layoutProbe.addStyleTag({content:'.sim-root .builder-wrap .form-recipe-workspace{grid-template-columns:1fr!important;grid-template-areas:"active-head" "ingredients" "review"!important}'});
+  try { await assert.rejects(()=>expectDesktopWorkspace(layoutProbe)); }
+  finally { await stacked.evaluate(el=>el.remove()); }
+  const unbounded=await layoutProbe.addStyleTag({content:'.sim-root .form-recipe-workspace>.builder-left{overflow:visible!important}'});
+  try { await assert.rejects(()=>expectDesktopIngredientScroll(layoutProbe)); }
+  finally { await unbounded.evaluate(el=>el.remove()); }
+  const roleHeaders=layoutProbe.locator('.role-group-hdr');
+  const firstRole=roleHeaders.nth(0);
+  const secondRole=roleHeaders.nth(1);
+  await firstRole.click();
+  await expect(firstRole).toHaveAttribute('aria-expanded','false');
+  await expect(secondRole).toHaveAttribute('aria-expanded','true');
+  await secondRole.click();
+  await expect(firstRole).toHaveAttribute('aria-expanded','false');
+  await expect(secondRole).toHaveAttribute('aria-expanded','false');
+  await firstRole.click();
+  await expect(firstRole).toHaveAttribute('aria-expanded','true');
+  await expect(secondRole).toHaveAttribute('aria-expanded','false');
+  await layoutProbe.setViewportSize({width:390,height:844});
+  await expectMobileWorkspace(layoutProbe);
+  await layoutProbe.close();
+  console.log('PASS desktop columns, bounded sidebar wheel scroll, independent groups and mobile page flow.');
 
   const ownership=await open([{id:'paja_trigo',p:100}]);
   const untouched=await ownership.evaluate(()=>{

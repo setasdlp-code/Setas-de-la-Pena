@@ -2,6 +2,7 @@
 const { skipIfAuthUnavailable } = require('./auth-policy.cjs');
 
 const { test, expect } = require('@playwright/test');
+const { expectDesktopWorkspace, expectDesktopIngredientScroll } = require('./formulator-layout-contract.cjs');
 
 const APP = '/Setas%20OS%20v5.dc.html';
 
@@ -152,15 +153,7 @@ test.describe('desktop navigation contract', () => {
     // Perito y las herramientas avanzadas ya no tienen cabecera propia: viven en el panel unificado.
     await expect(review).toContainText('Revisión y preparación');
 
-    const layoutBefore = await page.evaluate(() => {
-      const rect = sel => document.querySelector(sel).getBoundingClientRect();
-      const e = rect('#recipe-live-evaluation');
-      const i = rect('#bl-ingredientes');
-      const r = rect('#formulator-review');
-      return { evaluationTop:e.top, ingredientsTop:i.top, reviewTop:r.top };
-    });
-    expect(layoutBefore.ingredientsTop).toBeGreaterThan(layoutBefore.evaluationTop);
-    expect(layoutBefore.reviewTop).toBeLessThan(layoutBefore.evaluationTop);
+    await expectDesktopWorkspace(page);
 
     // A fresh workspace has no physical inventory. Recipe exploration must
     // explicitly use the catalog instead of relying on seeded Bodega stock.
@@ -205,7 +198,7 @@ test.describe('desktop navigation contract', () => {
     expect(sticky.speciesPosition).toBe('relative');
   });
 
-  test('ingredient groups use the workspace scroll and collapse independently', async ({ page }) => {
+  test('ingredient groups use the bounded desktop sidebar and collapse independently', async ({ page }) => {
     test.setTimeout(45000);
     await openApp(page);
     await workspaceButton(page, 'formular').click();
@@ -214,21 +207,7 @@ test.describe('desktop navigation contract', () => {
 
     const list = page.locator('#bl-ingredientes .ing-list');
     await expect(list).toBeVisible();
-    const scrollContract = await list.evaluate(el => {
-      const style = getComputedStyle(el);
-      const left = el.closest('.builder-left');
-      return {
-        listOverflowY: style.overflowY,
-        listMaxHeight: style.maxHeight,
-        listClientHeight: el.clientHeight,
-        listScrollHeight: el.scrollHeight,
-        leftOverflowY: left ? getComputedStyle(left).overflowY : null,
-      };
-    });
-    expect(scrollContract.listOverflowY).toBe('visible');
-    expect(scrollContract.listMaxHeight).toBe('none');
-    expect(scrollContract.listScrollHeight).toBeLessThanOrEqual(scrollContract.listClientHeight + 1);
-    expect(scrollContract.leftOverflowY).toBe('visible');
+    await expectDesktopIngredientScroll(page);
 
     const headers = page.locator('.role-group-hdr');
     const headerCount = await headers.count();
