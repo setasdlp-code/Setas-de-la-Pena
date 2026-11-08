@@ -3,7 +3,7 @@ title: Lentinula edodes — Shiitake
 document_id: DOC-0007
 category: species
 load_priority: selective
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-08
 confidence: high
 primary_sources:
   - Chang & Miles 2004 (book_007, cap. 13)
@@ -195,6 +195,7 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 - ¿Cuál es el ciclo validado del autoclave con esa carga?
 - ¿Qué perfil térmico real presentan las cámaras de Tenjo?
 - ¿Las cepas L54/L4055 siguen disponibles comercialmente en Colombia?
+- ¿Una fuente de luz azul tenue tras la incubación oscura acorta el ciclo con la cepa del proyecto en Tenjo? (SH16; DOC-0144, H5.)
 - ¿Algún productor nacional distinto de Fungiilab (Siecha, Nutrisetas, Los Fungis) entrega spawn con cepa identificada? Candidatos y cuestionario en `../09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md` (DOC-0132, sin verificar; nada de ese reporte se promueve a esta ficha).
 
 # References
@@ -207,6 +208,15 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 - Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Zied, D. C., & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms: Technology and Applications*. Wiley-Blackwell.
+
+## Tendencias verificadas 2023–2026 (consultivo)
+
+`../09_research/tendencias_cultivo_shiitake_2026-11-08.md` (DOC-0144) resume diez hallazgos verificados por votación adversarial. Ninguno modifica tablas sincronizadas, receta ni SOP:
+
+- **Luz:** LED azul (450–460 nm, ~4 μmol/m²/s) tras 60 d de oscuridad acortó la fase previa a inducción de 120 a 100 d con rendimiento igual o mayor (Kim et al. 2024, Tier 1, estudio único, cultivares coreanos). El pardeamiento respondió mejor a luz muy tenue (~1,5 μmol/m²/s; nota corta 2018, confianza baja). Registrar la luz en el batch log; ensayo solo con cepa caracterizada (SH16).
+- **Sustrato:** madera dura + 20 % salvado sigue siendo la referencia (acacia negra 97 % y roble 92 % BE, peso fresco). Tusa de maíz y bagazo con gallinaza sustituyeron parte del aserrín con BE igual o mayor en sus ensayos (SH17). No hay C:N óptimo único; el carbón de eucalipto no mejoró el rendimiento.
+- **Proceso y sanidad:** la pasteurización por aire caliente (75–100 °C) permitió colonizar, pero sin datos de rendimiento; se mantiene 121 °C. Las cepas comerciales resisten poco a *Trichoderma* in vitro.
+- **Brechas:** sin evidencia verificada sobre choque frío, remojo, fase popcorn, IoT o mercado.
 
 ## Procesamiento: jerky (consultivo)
 

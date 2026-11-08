@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-08
 confidence: high
 primary_sources:
   - Internal records
@@ -54,6 +54,8 @@ La auditoría documental de pendientes del 2026-08-29 confirmó que SH01–SH06 
 | SH13 | ¿Cuál es el precio B2B, el mínimo de pedido y el plazo de cada candidato para 5, 15 y 30 kg de spawn? | Cotización con fecha | Media |
 | SH14 | ¿Se puede ampliar o rediseñar el lote de 30 bloques para comparar un segundo proveedor sin perder el control del piloto? | Decisión del propietario sobre tamaño y capacidad del autoclave de 39 L | Media |
 | SH15 | ¿Qué requisitos, costo y plazo tiene importar micelio de *L. edodes* al país? | Respuesta de Cuarentena Vegetal del ICA; texto y vigencia de las resoluciones citadas | Baja (solo si fallan los nacionales) |
+| SH16 | ¿La luz LED azul tenue (~450–460 nm, ~4 μmol/m²/s) tras la incubación oscura acorta el ciclo o mejora el pardeamiento y el rendimiento con la cepa del proyecto a 10–20 °C? | Luz registrada en batch log desde el lote 1; contraste exploratorio de un factor con cepa caracterizada (DOC-0144, H5–H6) | Media (posterior al lote 1) |
+| SH17 | ¿La sustitución parcial del aserrín/pellet por tusa de maíz o bagazo mantiene la BE en Tenjo, y en qué rango de C:N? | Ensayo posterior al lote 1 con C:N, masa seca y denominador de BE registrados (DOC-0144, H2–H3) | Baja (fuera del piloto) |
 
 ## Evidencia consultiva para SH01–SH04/SH07/SH08 — 2026-11-05
 
@@ -260,3 +262,7 @@ Una pregunta se cierra únicamente cuando existe:
 ## Evidencia consultiva añadida — 2026-11-05
 
 `09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138) sintetiza un informe externo sobre jerky de shiitake, melena de león y orellana: variables de proceso, rangos culinarios Tier 3, conservación conservadora (refrigerado 1–2 semanas) y diagnóstico de fallas. Abre AB17–AB19; no cierra preguntas ni modifica DEC-022.
+
+## Evidencia consultiva añadida — 2026-11-08
+
+`09_research/tendencias_cultivo_shiitake_2026-11-08.md` (DOC-0144) abre SH16 (luz) y SH17 (sustitución por tusa/bagazo). Aporta evidencia indirecta a SH02/SH07 (la cepa domina la BE), SH05 (pasteurización sin validar en rendimiento; mantener 121 °C) y SH08 (otro caso de BE declarada en base seca y calculada en base húmeda). No cierra preguntas.

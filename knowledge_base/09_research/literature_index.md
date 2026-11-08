@@ -3,11 +3,12 @@ title: Índice de Literatura
 document_id: DOC-0043
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-08
 confidence: high
 primary_sources:
   - literature_database.md
 related_documents:
+  - tendencias_cultivo_shiitake_2026-11-08.md
   - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - instalacion_bioseguridad_2026-11-04/informe.md
   - literature_database.md
@@ -267,3 +268,7 @@ La incorporación amplía ARK-028/030 y añade ARK-031. Los escenarios reproduci
 | [Bibliografía y registro de verificación](instalacion_bioseguridad_2026-11-04/bibliografia.md) | Fuentes primarias y oficiales, Tier, representación leída y accesos fallidos | Distingue texto completo, resumen y aplicabilidad local pendiente; no promueve parámetros a SOP |
 
 Ver `09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138): síntesis consultiva de un informe externo sobre jerky de shiitake, melena de león y orellana. Fuentes registradas por nombre sin URL ni DOI (marcadores de cita rotos en el original): Penn State Extension, NCHFP y Catálogo de Hongos de Colombia (Tier 2); estudio mecánico-sensorial de *H. erinaceus* 2026 y literatura de sabor de *L. edodes* / *P. ostreatus* (Tier 1 según el informe, por verificar); Mushroom Council, Alan Bergo, FreshCap, Helsieni y Wild Vegan Flower (Tier 3). Uso público: receta casera; DEC-022 sin cambios.
+
+## Investigación consultiva — tendencias de cultivo de shiitake, 2026-11-08
+
+Ver `09_research/tendencias_cultivo_shiitake_2026-11-08.md` (DOC-0144): diez hallazgos verificados por votación adversarial y siete afirmaciones refutadas sobre sustratos, C:N, luz, cepas, *Trichoderma* y tratamiento térmico. Fuentes R1–R12 (identificadores locales): artículos revisados por pares de 2015–2025 (Tier 1, mayormente estudio único), una propuesta SARE en curso y un registro EAFIT de 2007. Novedad para la KB: la luz azul tenue como variable de ciclo y pardeamiento (SH16). No promueve parámetros a SOP.

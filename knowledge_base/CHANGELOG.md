@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-08
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-08
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporado DOC-0144 (`09_research/tendencias_cultivo_shiitake_2026-11-08.md`): investigación verificada de tendencias de cultivo de shiitake (10 hallazgos, 7 refutados, fuentes R1–R12). Novedad: luz LED azul tenue tras incubación oscura. Abre SH16–SH17; resumen consultivo en la ficha de *L. edodes*; indexado en INDEX y literature_index. Sin cambios en SOP, receta, setpoints, tablas sincronizadas ni Setas OS. |
 
 ### 2026-11-05
 
