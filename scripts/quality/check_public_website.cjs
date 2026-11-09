@@ -779,7 +779,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await techniquesPage.locator('.knowledge-art').count(), 4);
     await visit(techniquesPage, 'cultivo');
     assert.equal(await techniquesPage.locator('#primary-nav a[aria-current="page"]').textContent(), 'Cultivo');
-    assert.equal(await techniquesPage.locator('.cultivation-system article').count(), 6);
+    assert.equal(await techniquesPage.locator('#sistema .cultivation-story').count(), 1);
+    assert.equal(await techniquesPage.locator('#sistema h2').textContent(), 'Tecnología al servicio del cultivo.');
+    assert.equal(await techniquesPage.locator('#sistema h3, #sistema article').count(), 0);
+    assert.equal(await techniquesPage.locator('#sistema .cultivation-ensemble img').count(), 7);
+    assert.match(await techniquesPage.locator('#sistema .cultivation-status').textContent(), /Estamos en preproducción/);
     assert.equal(await techniquesPage.locator('#del-cultivo .knowledge-art').count(), 4);
     await visit(techniquesPage, 'cocina#tecnicas');
     assert.equal(await techniquesPage.locator('#tecnicas a[href="/tecnicas"]').count(), 1);
