@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: c1d7011ac274252ae386412063509f8a58fbdbd8c243b29b9221bf3368daf78e
+// source-hash: 6bfbac579a3c1b0da792e9a5f72b979b2dec90101d8a53c3e879f2ad5daf92e4
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -7441,7 +7441,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "c1d7011ac274" : null;
+    const appVersion = true ? "6bfbac579a3c" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -8504,7 +8504,11 @@ BATCH (${numBags}×${kgBag} kg):
           style: INP,
           placeholder: "$/kg"
         }
-      ) : r.pp != null ? `$${Math.round(r.pp).toLocaleString("es-CO")}/kg` : "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Proveedor", style: { color: "var(--ink-500)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", minWidth: 130 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockProvider-${r.id}`, "aria-label": `Proveedor de ${r.name}`, value: editingRowData.proveedorId, onChange: (e) => setEditingRowData((p) => ({ ...p, proveedorId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Sin especificar"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre))) : r.prov?.nombre || "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Alerta mínima", style: { minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
+      ) : (
+        // pp===0: ningún lote con existencias tiene precio registrado;
+        // no es un insumo gratis.
+        /* @__PURE__ */ React.createElement("span", { style: r.pp === 0 ? { color: "var(--status-attention-text)" } : void 0 }, r.pp > 0 ? `$${Math.round(r.pp).toLocaleString("es-CO")}/kg` : r.pp === 0 ? "Sin precio" : "—")
+      )), /* @__PURE__ */ React.createElement("td", { "data-label": "Proveedor", style: { color: "var(--ink-500)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", minWidth: 130 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockProvider-${r.id}`, "aria-label": `Proveedor de ${r.name}`, value: editingRowData.proveedorId, onChange: (e) => setEditingRowData((p) => ({ ...p, proveedorId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Sin especificar"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre))) : r.prov?.nombre || "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Alerta mínima", style: { minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
         "input",
         {
           name: `stockAlert-${r.id}`,

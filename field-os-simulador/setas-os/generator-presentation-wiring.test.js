@@ -44,3 +44,7 @@ test('el shell y el arnés cargan generator-presentation.js antes del bundle', (
   assert.ok(mod > 0, '__harness.html debe cargar generator-presentation.js');
   assert.ok(mod < harness.indexOf('<script src="simulador-app.js">'), 'debe cargarse antes de simulador-app.js');
 });
+
+test('Bodega no muestra $0/kg para insumos sin precio', () => {
+  assert.match(jsx, /r\.pp>0\?`\$\$\{Math\.round\(r\.pp\)\.toLocaleString\('es-CO'\)\}\/kg`:r\.pp===0\?'Sin precio':'—'/);
+});

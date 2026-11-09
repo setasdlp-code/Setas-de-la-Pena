@@ -10679,7 +10679,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           placeholder="$/kg"
                                         />
                                       ):(
-                                        r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
+                                        // pp===0: ningún lote con existencias tiene precio registrado;
+                                        // no es un insumo gratis.
+                                        <span style={r.pp===0?{color:'var(--status-attention-text)'}:undefined}>{r.pp>0?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:r.pp===0?'Sin precio':'—'}</span>
                                       )}
                                     </td>
                                     {/* PROVEEDOR */}
