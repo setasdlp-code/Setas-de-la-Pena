@@ -70,3 +70,8 @@ test('generatorHeadline distingue viables de bloqueados', () => {
   assert.equal(P.generatorHeadline({ viable: 5, blocked: 0, profileLabel: 'Rescate' }),
     '5 Escenarios viables para Rescate.');
 });
+
+test('generatorHeadline sin ninguna combinación no habla de «No ejecutar»', () => {
+  assert.equal(P.generatorHeadline({ viable: 0, blocked: 0, profileLabel: 'Rescate' }),
+    'Sin combinaciones válidas para Rescate.');
+});

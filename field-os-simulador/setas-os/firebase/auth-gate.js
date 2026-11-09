@@ -114,6 +114,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../perito-context.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Presentación de Escenarios del generador (duplicados, «No ejecutar»,
+  // búsquedas vacías). simulador-app.js lo lee al cargarse.
+  "../generator-presentation.js",
   // Vista "Mejor con Bodega" del Formulador; lee SetasPeritoScenarios y
   // SetasEconomy en cada llamada, no al cargar.
   "../formulador-best.js",

@@ -121,13 +121,14 @@ test('el render de evidencia usa el resultado de describePeritoEvidence sin asum
 
 // ── orden de ranking intacto: el bloque de evidencia no reordena optResults ─
 test('el panel de evidencia se inserta sin tocar la línea que produce el orden de ranking', () => {
-  assert.match(
-    jsx,
-    /byProfile\[pk\]=\(out\.ranked\|\|\[\]\)\.slice\(0,12\)\.map\(c=>\s*\n\s*hybridOptimizerRow\(c,optTarget,optimizerINGS,stockMap,pk\)\s*\n\s*\);/,
-    'la línea que arma byProfile[pk] a partir de out.ranked debe quedar exactamente igual',
-  );
+  // byProfile[pk] sale de out.ranked solo con transformaciones de presentación
+  // (generator-presentation.js: colapsar casi duplicados y poner primero los
+  // viables según el veredicto del propio Perito). La evidencia no entra ahí.
+  const rowsMatch = jsx.match(/const genRows=SetasGeneratorPresentationApi\.collapseNearDuplicates\(\(out\.ranked\|\|\[\]\)\.slice\(0,12\)\.map\(c=>\s*\n\s*hybridOptimizerRow\(c,optTarget,optimizerINGS,stockMap,pk,invLotes\)\s*\n\s*\)\);\s*\n\s*const genParts=SetasGeneratorPresentationApi\.partitionRows\(genRows\);\s*\n\s*byProfile\[pk\]=\[\.\.\.genParts\.viable,\.\.\.genParts\.blocked\];/);
+  assert.ok(rowsMatch, 'byProfile[pk] debe armarse desde out.ranked solo con collapseNearDuplicates + partitionRows');
+  assert.doesNotMatch(rowsMatch[0], /evidence|Evidence|historical/, 'la evidencia no puede intervenir en el orden de byProfile[pk]');
   const panelIdx = jsx.indexOf('const evi=describePeritoEvidence(optResults');
-  const mapIdx = jsx.indexOf('{optResults[optProfile].map((r,i)=>{');
+  const mapIdx = jsx.indexOf('{(()=>{const genCards=optResults[optProfile].map((r,i)=>{');
   assert.ok(panelIdx > 0 && mapIdx > panelIdx, 'el panel de evidencia debe preceder al map sin envolverlo ni reordenarlo');
   const between = jsx.slice(panelIdx, mapIdx);
   assert.doesNotMatch(between, /\.sort\(|\.reverse\(|\.slice\(/, 'nada entre el panel y el map puede reordenar/recortar optResults[optProfile]');

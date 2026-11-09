@@ -75,6 +75,7 @@
   };
 
   const generatorHeadline = ({ viable = 0, blocked = 0, profileLabel = '' } = {}) => {
+    if (viable === 0 && blocked === 0) return `Sin combinaciones válidas para ${profileLabel}.`;
     if (viable === 0) {
       return `Sin Escenario viable para ${profileLabel}: las ${blocked} combinaciones encontradas están marcadas «No ejecutar».`;
     }
