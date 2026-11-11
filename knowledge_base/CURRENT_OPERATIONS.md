@@ -3,7 +3,7 @@ title: Estado Operacional Actual — Setas de la Peña
 document_id: DOC-0051
 category: meta
 load_priority: always
-last_updated: 2026-11-03
+last_updated: 2026-11-11
 last_reviewed: 2026-11-03
 ---
 
@@ -24,6 +24,13 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 
 ---
 
+
+### Reconciliación de sensores — 2026-11-11
+
+El propietario presentó fotografías y declaró **dos sondas metálicas Klanata (modelo SHT45 por verificar), dos SCD30 (cantidad comunicada; la foto del empaque por sí sola no identifica ambas unidades), un MH-Z19C (etiqueta visible) y dos SHT45 breakout (fotografiados)**. La declaración actualiza el conteo reportado; no constituye prueba de calibración, pinout, funcionalidad ni instalación. La exclusión histórica `EXC-SCD30-AMAZON-001` corresponde a un pedido anterior no entregado y no debe utilizarse para descartar automáticamente las dos unidades ahora declaradas. Ver [plan de asignación a tres módulos](05_equipment/asignacion_sensores_tres_modulos_2026-11-11.md).
+
+CLOUDLAB 844 es la carpa y CloudForge T7 el humidificador; Martha Tent es la segunda carpa. Se conserva **DEC-002**: SHT3x como primario de T/HR para fructificación hasta comparación/calificación; Klanata como referencia candidata. El SHT45 breakout es sensor de aire de la incubadora. No se han energizado ni comisionado nuevos sensores mediante esta actualización. 
+
 ## HARDWARE — ESTADO HOY (Inventario Físico en Tenjo)
 
 | Ítem | Cantidad | Estado | Ubicación / Rol |
@@ -33,11 +40,11 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 | AC Infinity CloudForge T7 (15 L) | 1 | Operacional | Tenjo — Humidificador principal CLOUDLAB 844 |
 | VIVOSUN AeroStream H05 (5 L) | 1 | Operacional (manual) | Tenjo — Humidificador auxiliar Martha Tent (sensor HR descartado) |
 | AC Infinity Cloudline H4 4" (IP65) | 2 | Operacionales | Tenjo — Extracción y FAE principal |
-| Klanata SHT45 (sonda inox IP67, I²C) | 1 | Disponible | Tenjo — Sensor principal T/HR dentro de CLOUDLAB 844 |
+| Klanata SHT45 (sonda metálica; identidad exacta por verificar) | 2 reportadas | Sin prueba eléctrica | Reserva provisional: una por cada carpa, como referencia secundaria; asignación pendiente de validación |
 | Sensirion SHT3x (sondas AC Infinity) | 2 | Operacionales | Tenjo — Sensores secundarios T/HR |
-| Sensirion SHT45 Breakouts | 2 | Disponibles | Tenjo — Monitoreo para incubadora y banco de pruebas |
+| Sensirion SHT45 Breakouts | 2 confirmados en fotos | No conectados / sin prueba | Incubadora: 1 para aire; 1 reserva de banco |
 | EC Buying MH-Z19C (NDIR CO₂) | 1 | Disponible | Tenjo — Sensor CO₂ con ABC=OFF y factor 1.369 para 2600 m |
-| Sensirion SCD30 (NDIR CO₂) | 2 | Disponibles | Tenjo — Sensores CO₂ referencia (compensación altitud 2600m) |
+| Sensirion SCD30 (NDIR CO₂) | 2 reportados | Identidad y funcionamiento pendientes de confirmar | Reserva provisional: CLOUDLAB 844 y Martha, uno por carpa, sin control automático aprobado |
 | Inkbird IBS-TH2 Plus | 2 | Operacionales | Tenjo — Termohigrómetros Bluetooth para verificación cruzada |
 | ESP32-WROOM-32 ACEIRMC | 3 | Operacionales | Tenjo — Controladores de borde ESPHome |
 | Vilros Raspberry Pi 4 Model B (4GB kit) | 1 | Disponible | Tenjo — Servidor central Home Assistant OS + MQTT |
