@@ -1,5 +1,8 @@
 # Repository hardware reconciliation and sensor allocation
 
+> **Actualización 2026-11-11:** los conteos y asignaciones que siguen describen una reconciliación histórica realizada el 8 de noviembre. El propietario reportó posteriormente 2 sondas Klanata posibles SHT45, 2 SCD30 y confirmó visualmente el MH-Z19C y 2 breakouts SHT45. El plan vigente de redistribución provisional para incubadora, CLOUDLAB 844 y Martha Tent está en [`knowledge_base/05_equipment/asignacion_sensores_tres_modulos_2026-11-11.md`](../../../knowledge_base/05_equipment/asignacion_sensores_tres_modulos_2026-11-11.md). No cambiar las fuentes primarias de control ni el firmware por esta nota.
+
+
 Date: 2026-11-08. Engineering design, proposed and uncommissioned.
 No physical inventory was performed, equipment bought, firmware flashed,
 credentials provisioned, or Knowledge Base documents edited.
