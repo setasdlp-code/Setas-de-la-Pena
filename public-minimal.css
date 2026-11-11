@@ -196,14 +196,21 @@
 
 .minimal-public .knowledge-art { display: block; width: min(100%, 248px); height: 224px; margin: 0 0 24px; object-fit: contain; }
 
-.minimal-public .cultivation-overview { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: center; gap: 40px; margin-bottom: 48px; }
-.minimal-public .cultivation-overview .knowledge-heading { margin-bottom: 0; }
-.minimal-public .cultivation-chamber { margin: 0; text-align: center; }
-.minimal-public .cultivation-chamber img { display: block; width: 100%; max-width: 320px; height: auto; margin-inline: auto; }
-.minimal-public .cultivation-chamber figcaption { margin-top: 16px; }
-@media (max-width: 700px) {
-  .minimal-public .cultivation-overview { grid-template-columns: 1fr; gap: 24px; margin-bottom: 40px; }
-  .minimal-public .cultivation-chamber img { max-width: 240px; }
+.minimal-public .cultivation-overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 5vw, 80px); }
+.minimal-public .cultivation-story .knowledge-heading { margin-bottom: 24px; }
+.minimal-public .cultivation-story p { max-width: 60ch; margin-block: 0 20px; }
+.minimal-public .cultivation-story .cultivation-status { margin-bottom: 0; }
+.minimal-public .cultivation-ensemble { min-width: 0; margin: 0; }
+.minimal-public .cultivation-equipment { display: grid; grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, 120px); align-items: center; gap: 16px; }
+.minimal-public .cultivation-equipment img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.minimal-public .cultivation-equipment .cultivation-equipment-main { grid-row: 1 / 4; }
+.minimal-public .cultivation-ensemble figcaption { max-width: 40ch; margin: 24px auto 0; text-align: center; }
+@media (max-width: 900px) {
+  .minimal-public .cultivation-overview { grid-template-columns: 1fr; }
+  .minimal-public .cultivation-ensemble { width: min(100%, 560px); margin-inline: auto; }
+}
+@media (max-width: 400px) {
+  .minimal-public .cultivation-equipment { grid-template-rows: repeat(3, 88px); gap: 12px; }
 }
 
 .minimal-public .technique-chapters { display: flex; flex-wrap: wrap; gap: 16px 32px; margin-top: 24px; }
