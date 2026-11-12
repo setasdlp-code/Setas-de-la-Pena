@@ -221,7 +221,29 @@
     try { entries.forEach(([key,value])=>storage.setItem(key,JSON.stringify(value))); }
     catch(error) { before.forEach(([key,value])=>{try{value===null?storage.removeItem(key):storage.setItem(key,value);}catch{}}); throw error; }
   };
-  const api = { economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture };
+  // Lectura manual de temperatura de SUPERFICIE de una bolsa (termómetro
+  // infrarrojo). No es temperatura de núcleo: sirve para comparar bolsa contra
+  // aire, bolsa contra bolsa y visita contra visita (DEC-023). Se agrega al
+  // historial de la bolsa; nunca reemplaza una lectura anterior.
+  const SURFACE_READING_LIMIT = 200;
+  const appendSurfaceReading = (bolsa, { tempC, airC = null, at, operador } = {}) => {
+    const surface = captureNumber(tempC);
+    if (!Number.isFinite(surface) || surface < -10 || surface > 80) return { ok: false, error: 'Superficie: ingresar una temperatura entre -10 y 80 °C.' };
+    const hasAir = airC !== null && airC !== undefined && String(airC).trim() !== '';
+    const air = hasAir ? captureNumber(airC) : null;
+    if (hasAir && (!Number.isFinite(air) || air < -10 || air > 60)) return { ok: false, error: 'Aire: ingresar una temperatura entre -10 y 60 °C o dejar vacío.' };
+    const when = new Date(at || Date.now());
+    if (isNaN(when.getTime())) return { ok: false, error: 'Fecha de lectura inválida.' };
+    const reading = {
+      tempC: surface, airC: air,
+      deltaC: air === null ? null : Math.round((surface - air) * 10) / 10,
+      at: when.toISOString(), operador: String(operador || 'operario_local'),
+      metodo: 'infrarrojo_superficie',
+    };
+    const previous = Array.isArray(bolsa && bolsa.lecturasSuperficie) ? bolsa.lecturasSuperficie : [];
+    return { ok: true, reading, lecturasSuperficie: [...previous, reading].slice(-SURFACE_READING_LIMIT) };
+  };
+  const api = { appendSurfaceReading, economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasBitacora = api;
 })();

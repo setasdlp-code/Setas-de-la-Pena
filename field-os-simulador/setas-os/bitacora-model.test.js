@@ -131,3 +131,22 @@ test('isFechaColValida acepta vacío, rechaza anteriores a inoculación y fechas
   assert.equal(isFechaColValida('2026-01-05', '2026-01-10'), false);
   assert.equal(isFechaColValida('no-es-una-fecha', '2026-01-10'), false);
 });
+
+test('appendSurfaceReading agrega lecturas de superficie sin reemplazar el historial', () => {
+  const { appendSurfaceReading } = require('./bitacora-model.js');
+  const first = appendSurfaceReading({ id: 'b1' }, { tempC: '23.4', airC: '22', at: '2026-11-12T15:00:00Z', operador: 'ana' });
+  assert.equal(first.ok, true);
+  assert.deepEqual(first.reading, { tempC: 23.4, airC: 22, deltaC: 1.4, at: '2026-11-12T15:00:00.000Z', operador: 'ana', metodo: 'infrarrojo_superficie' });
+  const second = appendSurfaceReading({ id: 'b1', lecturasSuperficie: first.lecturasSuperficie }, { tempC: 24, at: '2026-11-13T15:00:00Z' });
+  assert.equal(second.lecturasSuperficie.length, 2);
+  assert.equal(second.reading.airC, null);
+  assert.equal(second.reading.deltaC, null, 'sin aire no se inventa una diferencia');
+  assert.equal(second.reading.operador, 'operario_local');
+});
+
+test('appendSurfaceReading rechaza valores vacíos, no numéricos o fuera de rango', () => {
+  const { appendSurfaceReading } = require('./bitacora-model.js');
+  for (const tempC of ['', 'abc', null, 120, -40]) assert.equal(appendSurfaceReading({}, { tempC }).ok, false);
+  assert.equal(appendSurfaceReading({}, { tempC: 22, airC: 'x' }).ok, false);
+  assert.equal(appendSurfaceReading({}, { tempC: 22, at: 'no-fecha' }).ok, false);
+});

@@ -22,6 +22,64 @@ function BagObservationEditor({bolsa,onSave}) {
   </div>;
 }
 
+// Lectura manual de superficie por bolsa (termómetro infrarrojo). Es un dato
+// comparativo, no temperatura de núcleo; el historial solo crece.
+function BagSurfaceEditor({bolsa,onSave,operador}) {
+  const [temp,setTemp]=useState('');
+  const [air,setAir]=useState('');
+  const [error,setError]=useState('');
+  const lecturas=Array.isArray(bolsa.lecturasSuperficie)?bolsa.lecturasSuperficie:[];
+  const last=lecturas[lecturas.length-1]||null;
+  const save=()=>{
+    const result=window.SetasBitacora.appendSurfaceReading(bolsa,{tempC:temp,airC:air,operador});
+    if(!result.ok){setError(result.error);return;}
+    if(!onSave(bolsa.id,{lecturasSuperficie:result.lecturasSuperficie},{silent:true})){setError('No se pudo guardar. Los valores siguen aquí; reintentar.');return;}
+    setTemp('');setAir('');setError('');
+  };
+  return <div className="bag-observation-editor bag-surface-editor" data-testid={`bag-surface-${bolsa.codigo}`}>
+    <span data-testid="bag-surface-last">{last?`${last.tempC} °C${last.deltaC===null?'':` · ${last.deltaC>=0?'+':''}${last.deltaC} °C vs aire`} · ${new Date(last.at).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'})} · ${lecturas.length} lectura${lecturas.length===1?'':'s'}`:'Sin lecturas de superficie'}</span>
+    <div>
+      <input name={`bagSurfaceTemp-${bolsa.id}`} aria-label={`Temperatura de superficie de la bolsa ${bolsa.codigo} en grados Celsius`} type="number" inputMode="decimal" step="0.1" placeholder="Superficie °C" value={temp} autoComplete="off" onChange={e=>{setTemp(e.target.value);setError('');}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}}}/>
+      <input name={`bagSurfaceAir-${bolsa.id}`} aria-label={`Temperatura del aire junto a la bolsa ${bolsa.codigo} en grados Celsius, opcional`} type="number" inputMode="decimal" step="0.1" placeholder="Aire °C (opcional)" value={air} autoComplete="off" onChange={e=>{setAir(e.target.value);setError('');}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}}}/>
+    </div>
+    {error&&<span role="alert">{error}</span>}
+    {temp!==''&&<div><button type="button" className="inv-btn inv-btn-pri" onClick={save} aria-label={`Registrar superficie de ${bolsa.codigo}`}>Registrar</button></div>}
+  </div>;
+}
+
+// Lecturas por nodo dentro de una sala: cada sensor conserva su valor, su
+// posición declarada y su antigüedad. La diferencia entre posiciones solo usa
+// lecturas vigentes.
+function RoomDeviceReadings({roomLive}) {
+  const devices=Object.values((roomLive&&roomLive.devices)||{});
+  if(!devices.length) return null;
+  const metrics=[['temperature_c','T°','°C'],['rh_pct','HR','%'],['co2_ppm','CO₂',' ppm']];
+  const fmt=(value,unit)=>`${Math.round(value*10)/10}${unit}`;
+  const spread=(roomLive&&roomLive.spread)||{};
+  return <div data-testid="room-device-readings" style={{margin:'12px 0',overflowX:'auto'}}>
+    <table className="inv-table" style={{fontSize:13}}>
+      <caption style={{textAlign:'left',fontWeight:700,padding:'4px 0'}}>Lecturas por sensor</caption>
+      <thead><tr><th scope="col">Sensor</th><th scope="col">Posición</th>{metrics.map(([m,l])=><th key={m} scope="col">{l}</th>)}</tr></thead>
+      <tbody>
+        {devices.map(d=><tr key={d.id} data-device-id={d.id}>
+          <th scope="row" style={{fontFamily:'var(--font-mono)',fontWeight:400}}>{d.id}</th>
+          <td>{d.position||'Sin declarar'}</td>
+          {metrics.map(([m,,u])=>{
+            const r=d.latest[m];
+            if(!r) return <td key={m} data-metric={m}>—</td>;
+            const stale=d.freshMetrics[m]!==true;
+            return <td key={m} data-metric={m} data-freshness={stale?'stale':'fresh'}>{fmt(r.value,u)}{stale&&<span style={{display:'block',fontSize:11,color:'var(--ink-2)'}}>antigua · {liveAgeLabel(d.metricAgeMs[m])}</span>}</td>;
+          })}
+        </tr>)}
+        {devices.length>1&&<tr data-testid="room-device-spread">
+          <th scope="row" colSpan={2}>Diferencia entre posiciones</th>
+          {metrics.map(([m,,u])=><td key={m} data-metric={m}>{spread[m]?fmt(spread[m].delta,u):'—'}</td>)}
+        </tr>}
+      </tbody>
+    </table>
+  </div>;
+}
+
 function ReadinessEvidenceForm({check,onSave}) {
   const [form,setForm]=useState({requirementId:check.id,status:'unknown',reviewer:check.record?.reviewer||'',reference:check.record?.reference||'',notes:'',details:{}});
   const [error,setError]=useState('');
@@ -13334,6 +13392,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
             Hay métricas sin lectura de sonda. Los valores del modelo y sus cálculos son referencias; no confirman las condiciones actuales de la sala.
           </p>
         )}
+        {/* Ninguna banda está validada localmente: se dice de dónde sale la vigente. */}
+        <p role="note" data-testid="climate-bands-provisional" data-band-origin={cycleTargetsApi&&cycleTargetsApi.activeCycleForRoom(roomCycles,selectedClimateRoom,cycleClock)?'cycle':'room'} style={{fontSize:13,color:'var(--ink-1)'}}>
+          {cycleTargetsApi&&cycleTargetsApi.activeCycleForRoom(roomCycles,selectedClimateRoom,cycleClock)
+            ?'Bandas provisionales: vienen del ciclo activo de la sala y aún no están validadas con lotes propios. Las alertas contra ellas son orientativas.'
+            :'Bandas provisionales: son las fijas de la sala, sin especificación de lote aprobada. Las alertas contra ellas son orientativas.'}
+        </p>
+        <RoomDeviceReadings roomLive={roomLive}/>
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
           <div className="climate-kpi-card sdp-tele">
@@ -13350,10 +13415,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             <div className="climate-kpi-sub">
               <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C</span>
-              {Number.isFinite(currentMetrics.subTemp)?<>
+              {Number.isFinite(currentMetrics.subTemp)&&climateMetricProvenance({metric:'substrate_temperature_c',roomLive,injected}).kind!=='model'?<>
                 <span>Sustrato: {currentMetrics.subTemp}°C</span>
                 <ClimateMetricProvenance metric="substrate_temperature_c" roomLive={roomLive} injected={injected}/>
-              </>:<span data-testid="climate-substrate-missing">Sustrato: sin lectura</span>}
+              </>:<span data-testid="climate-substrate-missing">Sustrato: sin lectura · sin sensor de núcleo</span>}
             </div>
           </div>
 
@@ -14061,7 +14126,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="inv-section">
                     <table className="inv-table bolsas-table">
-                      <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th><th scope="col" style={{textAlign:'center'}}>Etiqueta</th></tr></thead>
+                      <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Superficie (infrarrojo)</th><th scope="col">Foto</th><th scope="col">Cosechas</th><th scope="col" style={{textAlign:'center'}}>Etiqueta</th></tr></thead>
                       <tbody>{bolsas.map(bolsa=>{
                         const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
                         const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
@@ -14081,6 +14146,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             ))}
                             <td data-label="Observaciones">
                               <BagObservationEditor bolsa={bolsa} onSave={updateBitBolsa}/>
+                            </td>
+                            <td data-label="Superficie (infrarrojo)">
+                              <BagSurfaceEditor bolsa={bolsa} onSave={updateBitBolsa} operador={window.SetasFirebase?.auth?.currentUser?.uid||'operario_local'}/>
                             </td>
                             <td data-label="Foto" style={{textAlign:'center'}}>
                               {bolsa.foto
