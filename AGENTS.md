@@ -70,7 +70,7 @@ Structure, UI, and plumbing may change freely. These may not change as a side ef
 | Change | Requirement |
 | --- | --- |
 | Add or correct a catalog entry (species, ingredient) with a cited source | Unit tests and `python3 scripts/quality/check_kb_sync.py`; cite the source in the PR |
-| Change `analyze()`, C:N or mass-balance math, EB prediction, scoring weights, or ranking | Explicit task scope and `npm run perito:regression` with its output in the PR. With no field corpus the change is unvalidated: say so and get human approval |
+| Change `analyze()`, C:N or mass-balance math, EB prediction, scoring weights, or ranking | Explicit task scope; `npm run perito:regression` and `npm run perito:drift` with their output in the PR. Drift on reference recipes shows what moved, not whether it is right. With no field corpus the change is unvalidated: say so and get human approval |
 | Change confidence caps, evidence semantics, or provenance classes | Human approval and an ADR (`docs/adr/0004`, `0006`, `0007`) |
 
 ### Validation

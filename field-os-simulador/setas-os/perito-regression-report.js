@@ -394,4 +394,7 @@ if (require.main === module) {
   process.exitCode = main(process.argv.slice(2));
 }
 
-module.exports = { parseArgs, extractLiteral, loadProductionCatalog, buildDelta, main, EXIT, NO_CORPUS_MSG };
+module.exports = {
+  parseArgs, extractLiteral, loadProductionCatalog, loadProductionAnalyze, materializeBaseline, resolveRev,
+  buildDelta, main, EXIT, NO_CORPUS_MSG,
+};

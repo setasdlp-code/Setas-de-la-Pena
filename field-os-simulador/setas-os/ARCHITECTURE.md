@@ -137,6 +137,10 @@ Dos reglas al tocarlos:
      `scoring.js` o al ranking: `npm run perito:regression` con su salida adjunta
      al PR. Sin corpus de campo el comando sale con código 1; el cambio queda
      declarado como no validado y requiere aprobación humana, no se da por bueno.
+   - En ambos casos, `npm run perito:drift -- --baseline=main` muestra qué
+     recetas de referencia (`PRESETS`) cambiaron de EB, C:N, score o status
+     respecto a la base. No valida nada —ninguna tiene EB medida—; hace visible
+     el efecto del cambio.
 
    Ver `docs/agents/ground-truth-corpus.md`.
 
