@@ -178,6 +178,8 @@
     if (!recipe) throw new Error('buildProductionSnapshot requiere una receta');
     if (!at) throw new Error('buildProductionSnapshot requiere at');
     const { recipeId, version } = recipeIdentity(recipe);
+    const freezeTree=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freezeTree);Object.freeze(value);}return value;};
+    const prediction=recipe.predictionSnapshot?freezeTree(JSON.parse(JSON.stringify(recipe.predictionSnapshot))):null;
     const ingredients = (recipe.recipe || recipe.ingredients || []).map(row => Object.freeze({
       id: row.id ?? row.ingredienteId ?? null,
       pct: parseFloat(row.p ?? row.pct) || 0,
@@ -185,6 +187,7 @@
 
     return Object.freeze({
       schema: 'setas.recipe-snapshot.v1',
+      ...(prediction?{predictionSnapshot:prediction}:{}),
       recipeId,
       version,
       status: recipe.status ?? null,
