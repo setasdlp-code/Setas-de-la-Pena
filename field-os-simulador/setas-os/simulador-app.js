@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 88c60a23ac1c8a5bd4f00e4637c1ed1ffa3402c57ad1f03e509f6f8680a23a50
+// source-hash: 2314e8f77beb6a58d1b0a3d17cbca1a53ca00879ee11cb026cb4613f56a1cc02
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -228,6 +228,10 @@ async function downloadPrototypeBackup(prefix) {
   try {
     if (window.SetasFieldEventQueue) db = await window.SetasFieldEventQueue.initializeQueue();
     const data = await SetasPrototype.backup(localStorage, { db, accountId: window.SetasFirebase?.auth?.currentUser?.uid || null });
+    const photoStore = window.SetasBagPhotos ? window.SetasBagPhotos.createStore() : null;
+    if (photoStore && photoStore.available && data.collections && data.collections.sdp_bit_bolsas) {
+      data.collections.sdp_bit_bolsas = window.SetasBagPhotos.withPhotos(data.collections.sdp_bit_bolsas, await photoStore.getAll());
+    }
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
@@ -355,131 +359,131 @@ function BioCheck() {
   )))));
 }
 const DEFAULT_EXTRACTION_FACTORS = {
-  p_ostreatus_gris: {
-    name: "Orellana Gris",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Doble)",
-        yield_factor: 0.12,
-        cost_per_liter_solvent: 18e3,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 48,
-        optimal_temp_c: 25,
-        notes: "Extracción clásica para polisacáridos y compuestos fenólicos."
+  "p_ostreatus_gris": {
+    "name": "Orellana Gris",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Doble)",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 18e3,
+        "optimal_alcohol_pct": 70,
+        "optimal_time_hrs": 48,
+        "optimal_temp_c": 25,
+        "notes": "Extracción clásica para polisacáridos y compuestos fenólicos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Caliente",
-        yield_factor: 0.15,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3,
-        optimal_temp_c: 85,
-        notes: "Máxima extracción de beta-glucanos solubles en agua."
+      "acuosa": {
+        "name": "Decocción Acuosa Caliente",
+        "yield_factor": 0.15,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3,
+        "optimal_temp_c": 85,
+        "notes": "Máxima extracción de beta-glucanos solubles en agua."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.18,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 60,
-        optimal_time_hrs: 0.75,
-        optimal_temp_c: 45,
-        notes: "Rendimiento acelerado por cavitación acústica."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.18,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 60,
+        "optimal_time_hrs": 0.75,
+        "optimal_temp_c": 45,
+        "notes": "Rendimiento acelerado por cavitación acústica."
       }
     }
   },
-  shiitake: {
-    name: "Shiitake",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
-        yield_factor: 0.14,
-        cost_per_liter_solvent: 18e3,
-        optimal_alcohol_pct: 65,
-        optimal_time_hrs: 72,
-        optimal_temp_c: 25,
-        notes: "Equilibrio entre lentinano soluble y lípidos bioactivos."
+  "shiitake": {
+    "name": "Shiitake",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
+        "yield_factor": 0.14,
+        "cost_per_liter_solvent": 18e3,
+        "optimal_alcohol_pct": 65,
+        "optimal_time_hrs": 72,
+        "optimal_temp_c": 25,
+        "notes": "Equilibrio entre lentinano soluble y lípidos bioactivos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Fraccionada",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 4,
-        optimal_temp_c: 90,
-        notes: "Extracción térmica prolongada para polisacáridos estructurales."
+      "acuosa": {
+        "name": "Decocción Acuosa Fraccionada",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 4,
+        "optimal_temp_c": 90,
+        "notes": "Extracción térmica prolongada para polisacáridos estructurales."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.2,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 55,
-        optimal_time_hrs: 1,
-        optimal_temp_c: 50,
-        notes: "Mayor rendimiento con menor degradación térmica de compuestos activos."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 55,
+        "optimal_time_hrs": 1,
+        "optimal_temp_c": 50,
+        "notes": "Mayor rendimiento con menor degradación térmica de compuestos activos."
       }
     }
   },
-  lions_mane: {
-    name: "Melena de León",
-    methods: {
-      hidroalcoholica: {
-        name: "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
-        yield_factor: 0.11,
-        cost_per_liter_solvent: 2e4,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 96,
-        optimal_temp_c: 25,
-        notes: "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
+  "lions_mane": {
+    "name": "Melena de León",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
+        "yield_factor": 0.11,
+        "cost_per_liter_solvent": 2e4,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 96,
+        "optimal_temp_c": 25,
+        "notes": "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
       },
-      acuosa: {
-        name: "Decocción Acuosa (Beta-glucanos)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3.5,
-        optimal_temp_c: 88,
-        notes: "Enfoque inmunomodulador rico en beta-glucanos."
+      "acuosa": {
+        "name": "Decocción Acuosa (Beta-glucanos)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3.5,
+        "optimal_temp_c": 88,
+        "notes": "Enfoque inmunomodulador rico en beta-glucanos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 24e3,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 1.2,
-        optimal_temp_c: 45,
-        notes: "Preserva diterpenos termosensibles de Hericium."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.16,
+        "cost_per_liter_solvent": 24e3,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 1.2,
+        "optimal_temp_c": 45,
+        "notes": "Preserva diterpenos termosensibles de Hericium. Etanol 80%: óptimo publicado para erinacina A (Valu et al. 2020, diseño Box-Behnken); el 70% anterior era un compromiso de amplio espectro, incoherente con tener un brazo acuoso separado para beta-glucanos."
       }
     }
   },
-  reishi: {
-    name: "Reishi Rojo",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
-        yield_factor: 0.09,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 80,
-        optimal_time_hrs: 120,
-        optimal_temp_c: 28,
-        notes: "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
+  "reishi": {
+    "name": "Reishi Rojo",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
+        "yield_factor": 0.09,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 120,
+        "optimal_temp_c": 28,
+        "notes": "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
       },
-      acuosa: {
-        name: "Decocción Tradicional 2h",
-        yield_factor: 0.1,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 2.5,
-        optimal_temp_c: 95,
-        notes: "Tónico amargo adaptogénico rico en polisacáridos."
+      "acuosa": {
+        "name": "Decocción Tradicional 2h",
+        "yield_factor": 0.1,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 2.5,
+        "optimal_temp_c": 88,
+        "notes": "Tónico amargo adaptogénico rico en polisacáridos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 25e3,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 1.5,
-        optimal_temp_c: 50,
-        notes: "Ruptura de paredes leñosas para máxima biodisponibilidad."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 25e3,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 1.5,
+        "optimal_temp_c": 50,
+        "notes": "Ruptura de paredes leñosas para máxima biodisponibilidad."
       }
     }
   }
@@ -748,7 +752,7 @@ function LabExtraction() {
       }
     },
     "+ Registrar Lote de Laboratorio"
-  ))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 } }, "Proyección de Rendimiento & Costos"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Extracto Seco Estimado"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" } }, yieldGrams, " g"), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "Tasa: ", yieldPct, "% s/biomasa")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Costo por Gramo"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--ink-900)", fontFamily: "var(--font-mono, monospace)" } }, "$", costPerGramExtract.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "COP / g extracto puro"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" } }, "Desglose de Costo Operativo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Biomasa fúngica (", biomassGrams, " g):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(biomassCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Solvente & Insumos (", solventLiters, " L):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(solventCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong)", paddingTop: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Costo Total Lote:"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent-terracotta)", fontFamily: "var(--font-mono, monospace)" } }, "$", totalCost.toLocaleString("es-CO"), " COP"))), factors[speciesKey]?.methods[methodKey]?.notes && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "info", size: 12, style: { marginRight: 4 } }), " ", factors[speciesKey].methods[methodKey].notes)))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" } }, "Lotes de Extracción Registrados (", batches.length, ")")), batches.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" } }, "No hay lotes de extracción registrados en almacenamiento local. Configurar los parámetros arriba para generar el primero.") : /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "2px solid var(--border-strong)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "ID Lote"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Método"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Biomasa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Extracto"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Costo Total"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "center" } }, "Acciones"))), /* @__PURE__ */ React.createElement("tbody", null, batches.map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, style: { borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" } }, b.id, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 } }, new Date(b.timestamp).toLocaleDateString("es-CO"))), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, b.speciesName || b.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", background: "var(--paper-200)", padding: "2px 6px", borderRadius: 4 } }, b.methodName || b.methodKey)), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, b.biomassGrams, " g"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" } }, b.yieldGrams, " g (", b.yieldPct, "%)"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, "$", (b.totalCost || 0).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center" } }, /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 } }, "Proyección de Rendimiento & Costos"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Extracto Seco Estimado"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" } }, yieldGrams, " g"), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "Tasa: ", yieldPct, "% s/biomasa"), /* @__PURE__ */ React.createElement("span", { "data-testid": "extraction-unverified", style: { display: "block", fontSize: "0.75rem", color: "var(--accent-terracotta-dark)", marginTop: 4 } }, "Factor de rendimiento y costo de solvente sin fuente verificada: referencia, no una medición de esta finca.")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Costo por Gramo"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--ink-900)", fontFamily: "var(--font-mono, monospace)" } }, "$", costPerGramExtract.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "COP / g extracto puro"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" } }, "Desglose de Costo Operativo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Biomasa fúngica (", biomassGrams, " g):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(biomassCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Solvente & Insumos (", solventLiters, " L):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(solventCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong)", paddingTop: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Costo Total Lote:"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent-terracotta)", fontFamily: "var(--font-mono, monospace)" } }, "$", totalCost.toLocaleString("es-CO"), " COP"))), factors[speciesKey]?.methods[methodKey]?.notes && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "info", size: 12, style: { marginRight: 4 } }), " ", factors[speciesKey].methods[methodKey].notes)))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" } }, "Lotes de Extracción Registrados (", batches.length, ")")), batches.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" } }, "No hay lotes de extracción registrados en almacenamiento local. Configurar los parámetros arriba para generar el primero.") : /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "2px solid var(--border-strong)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "ID Lote"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Método"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Biomasa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Extracto"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Costo Total"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "center" } }, "Acciones"))), /* @__PURE__ */ React.createElement("tbody", null, batches.map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, style: { borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" } }, b.id, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 } }, new Date(b.timestamp).toLocaleDateString("es-CO"))), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, b.speciesName || b.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", background: "var(--paper-200)", padding: "2px 6px", borderRadius: 4 } }, b.methodName || b.methodKey)), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, b.biomassGrams, " g"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" } }, b.yieldGrams, " g (", b.yieldPct, "%)"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, "$", (b.totalCost || 0).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => setSelectedQrBatch(b),
@@ -5313,6 +5317,71 @@ function SimuladorShell(props) {
   useEffect(() => {
     bitBolsasEditRef.current = bitBolsas;
   }, [bitBolsas]);
+  const bagPhotoStoreRef = useRef(null);
+  if (bagPhotoStoreRef.current === null) bagPhotoStoreRef.current = typeof window !== "undefined" && window.SetasBagPhotos ? window.SetasBagPhotos.createStore() : false;
+  const [bagPhotos, setBagPhotos] = useState({});
+  useEffect(() => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return;
+    let alive = true;
+    store.getAll().then((saved2) => {
+      if (alive) setBagPhotos((prev) => ({ ...saved2, ...prev }));
+    }).catch(() => {
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useEffect(() => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return;
+    const { inline } = window.SetasBagPhotos.splitInlinePhotos(bitBolsas);
+    if (!Object.keys(inline).length) return;
+    let alive = true;
+    store.putMany(inline).then(() => {
+      if (!alive) return;
+      setBagPhotos((prev) => ({ ...prev, ...inline }));
+      const upd = bitBolsasEditRef.current.map((b) => {
+        if (!b || !inline[b.id] || b.foto !== inline[b.id]) return b;
+        const { foto, ...rest } = b;
+        return rest;
+      });
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+      } catch (e) {
+        return;
+      }
+      bitBolsasEditRef.current = upd;
+      setBitBolsas(upd);
+    }).catch(() => {
+    });
+    return () => {
+      alive = false;
+    };
+  }, [bitBolsas]);
+  const saveBagPhoto = (bolsaId, dataUrl) => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return Promise.resolve(updateBitBolsa(bolsaId, { foto: dataUrl }));
+    return store.putMany({ [bolsaId]: dataUrl }).then(() => {
+      setBagPhotos((prev) => ({ ...prev, [bolsaId]: dataUrl }));
+      return true;
+    });
+  };
+  const removeBagPhoto = (bolsa) => {
+    const store = bagPhotoStoreRef.current;
+    const drop = () => setBagPhotos((prev) => {
+      if (!(bolsa.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[bolsa.id];
+      return next;
+    });
+    if (bolsa.foto) updateBitBolsa(bolsa.id, { foto: null });
+    if (!store || !store.available) {
+      drop();
+      return Promise.resolve();
+    }
+    return store.removeMany([bolsa.id]).then(drop);
+  };
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTasks, setBitTasks] = useState([]);
   const [roomEvents, setRoomEvents] = useState([]);
@@ -7457,7 +7526,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     runLanzamientoProduccion();
   });
-  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Eliminar fotos de bolsas antiguas (clic sobre la foto para quitarla) y volver a intentar." });
+  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar." });
   const encolarSync = ({ type, key, args }) => {
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!syncQueueApi) {
@@ -7484,7 +7553,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "88c60a23ac1c" : null;
+    const appVersion = true ? "2314e8f77beb" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7709,6 +7778,17 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
       return upd;
     });
+    if (bagPhotoStoreRef.current && bagPhotoStoreRef.current.available && bolsaIds.length) {
+      publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(() => {
+      }));
+      setBagPhotos((prev) => {
+        const next = { ...prev };
+        bolsaIds.forEach((id) => {
+          delete next[id];
+        });
+        return next;
+      });
+    }
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.loteId !== loteId);
       try {
@@ -9506,8 +9586,9 @@ BATCH (${numBags}×${kgBag} kg):
     const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
     const selectedCamera = cameras.find((c) => c.id === room.cameraId) || cameras[0] || null;
     const CAMERA_TO_ROOM = { incub: "incubacion_01", martha: "martha_01", cloudlab: "cloudlab_844" };
-    const lotesEnSala = bitLotes.filter((l) => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || !l.sala && selectedClimateRoom === "martha_01") && !["completado", "descartado"].includes(l.estado));
-    const mainLote = lotesEnSala[0] || bitLotes[0];
+    const lotesEnSala = roomStateApi ? roomStateApi.lotesInRoom(bitLotes, selectedClimateRoom) : [];
+    const lotesSinSala = roomStateApi ? roomStateApi.lotesWithoutRoom(bitLotes) : [];
+    const mainLote = lotesEnSala[0] || null;
     const activeSpeciesInRoom = Array.from(new Set(
       lotesEnSala.map((l) => l.especie || l.speciesKey || l.sKey).filter(Boolean)
     ));
@@ -9972,7 +10053,7 @@ BATCH (${numBags}×${kgBag} kg):
       const roomBagsActive = roomBagsList.length ? roomBagsList.filter((b) => b.estado !== "descartada" && b.estado !== "contaminada").length : roomBatches.reduce((sum, l) => sum + (parseInt(l.numBolsas, 10) || 0), 0);
       const roomBagsTotal = roomBagsList.length || roomBatches.reduce((sum, l) => sum + (parseInt(l.numBolsas, 10) || 0), 0);
       return /* @__PURE__ */ React.createElement("button", { key: c.id, type: "button", "data-testid": "sensor-module-card", "data-room-id": roomId || void 0, disabled: !roomId, className: `climate-module-card ${roomId === selectedClimateRoom ? "on" : ""}`, onClick: () => setSelectedClimateRoom(roomId), "aria-pressed": roomId === selectedClimateRoom }, /* @__PURE__ */ React.createElement("span", { className: "climate-module-top" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { background: c.estadoAccent } }), c.name), /* @__PURE__ */ React.createElement("b", null, c.estadoLabel)), /* @__PURE__ */ React.createElement("span", { className: "climate-module-meta" }, "Zona ", c.zona, " · ", c.sppName, " · ", c.count, " activos"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-readings" }, [["temperature_c", "Temp.", "°C"], ["rh_pct", "HR", "%"], ["co2_ppm", "CO₂", " ppm"]].map(([metric, label, unit]) => /* @__PURE__ */ React.createElement("span", { key: metric, "data-metric": metric }, /* @__PURE__ */ React.createElement("small", null, label), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(cardSample[metric]) ? `${cardSample[metric]}${unit}` : "—"), Number.isFinite(cardSample[metric]) ? /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric, roomLive: cardLive }) : /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sin lectura")))), !cardHasLive && /* @__PURE__ */ React.createElement("span", { className: "climate-module-reference" }, roomId ? "Sin telemetría conectada · sin lectura" : "Módulo sin sala de sensores asignada"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, roomBatches.length, " lote", roomBatches.length === 1 ? "" : "s", " · ", roomBagsActive, "/", roomBagsTotal, " bolsas"), /* @__PURE__ */ React.createElement("span", { className: "climate-occupancy" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { width: `${c.occupancy}%`, background: c.estadoAccent } })), /* @__PURE__ */ React.createElement("b", null, c.occupancy, "% ocupado")), c.hasLiveAlert && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert" }, c.liveAlertNote));
-    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude), roomLive && roomLive.health && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: roomLive.health.overallStatus === "healthy" ? "var(--status-ok)" : roomLive.health.overallStatus === "stale" ? "var(--ink-2)" : "var(--accent-terracotta)" } }, "SALUD: ", roomLive.health.overallStatus.toUpperCase()), roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d]) => /* @__PURE__ */ React.createElement("span", { key: devId }, devId, ": ", /* @__PURE__ */ React.createElement("strong", { style: { color: d.status === "healthy" ? "var(--status-ok)" : "var(--ink-1)" } }, d.status.toUpperCase()))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
+    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude), lotesSinSala.length > 0 && /* @__PURE__ */ React.createElement("div", { "data-testid": "climate-lotes-sin-sala", role: "status", style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--accent-terracotta-dark)", marginTop: 4 } }, lotesSinSala.length === 1 ? "1 lote activo sin sala asignada" : `${lotesSinSala.length} lotes activos sin sala asignada`, " (", lotesSinSala.map((l) => l.codigo || l.id).join(", "), "): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora."), roomLive && roomLive.health && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: roomLive.health.overallStatus === "healthy" ? "var(--status-ok)" : roomLive.health.overallStatus === "stale" ? "var(--ink-2)" : "var(--accent-terracotta)" } }, "SALUD: ", roomLive.health.overallStatus.toUpperCase()), roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d]) => /* @__PURE__ */ React.createElement("span", { key: devId }, devId, ": ", /* @__PURE__ */ React.createElement("strong", { style: { color: d.status === "healthy" ? "var(--status-ok)" : "var(--ink-1)" } }, d.status.toUpperCase()))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -10441,10 +10522,13 @@ BATCH (${numBags}×${kgBag} kg):
       const cosBolsa = bitCosechas.filter((c) => c.bolsaId === bolsa.id);
       const totalBolsa = cosBolsa.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
       const est = EB[bolsa.estado] || EB[""];
-      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Superficie (infrarrojo)" }, /* @__PURE__ */ React.createElement(BagSurfaceEditor, { bolsa, onSave: updateBitBolsa, operador: window.SetasFirebase?.auth?.currentUser?.uid || "operario_local" })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => updateBitBolsa(bolsa.id, { foto: null }), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
+      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Superficie (infrarrojo)" }, /* @__PURE__ */ React.createElement(BagSurfaceEditor, { bolsa, onSave: updateBitBolsa, operador: window.SetasFirebase?.auth?.currentUser?.uid || "operario_local" })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bagPhotos[bolsa.id] || bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => removeBagPhoto(bolsa).catch(() => setNoticeDlg({ title: "No se pudo quitar la foto", msg: "Intentar de nuevo." })), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bagPhotos[bolsa.id] || bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
         const f = e.target.files?.[0];
         if (!f) return;
-        compressImageToDataURL(f).then((dataUrl) => updateBitBolsa(bolsa.id, { foto: dataUrl })).catch(() => setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Probar con otra imagen." }));
+        compressImageToDataURL(f).catch(() => {
+          setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Probar con otra imagen." });
+          return null;
+        }).then((dataUrl) => dataUrl && saveBagPhoto(bolsa.id, dataUrl).catch(() => setNoticeDlg({ title: "No se pudo guardar la foto", msg: "El almacenamiento del navegador no aceptó la foto. La bolsa y sus datos no cambiaron." })));
         e.target.value = "";
       } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Cosechas" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)" } }, totalBolsa > 0 ? (totalBolsa / 1e3).toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "aria-label": `Registrar cosecha para la bolsa ${bolsa.codigo}`, onClick: () => {
         openHarvestCapture({ bolsaId: bolsa.id, loteId: bitActiveLoteId, codigo: bolsa.codigo, flush: cosBolsa.length + 1, fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0], pesoFresco: "", calidad: "", observaciones: "" });
@@ -12832,7 +12916,7 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, r.spec)
       ))), (() => {
         const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
-        const targetRoomBatches = bitLotes.filter((l) => (l.sala === f.sala || l.ubicacion === f.sala || !l.sala && f.sala === "martha_01") && !["completado", "descartado"].includes(l.estado));
+        const targetRoomBatches = typeof window !== "undefined" && window.SetasRoomState ? window.SetasRoomState.lotesInRoom(bitLotes, f.sala) : [];
         const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map((l) => l.especie || l.speciesKey).filter(Boolean)));
         const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
         const coCultAssignOpt = assignedSpeciesList.length > 1 ? typeof engineOptimizeChamberSetpoints === "function" ? engineOptimizeChamberSetpoints(assignedSpeciesList) : typeof SetasCoCultivation !== "undefined" && typeof SetasCoCultivation.optimizeChamberSetpoints === "function" ? SetasCoCultivation.optimizeChamberSetpoints(assignedSpeciesList) : null : null;

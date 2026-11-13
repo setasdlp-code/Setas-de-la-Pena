@@ -110,6 +110,8 @@ const PROTECTED_APP_SCRIPTS = [
   "../room-cycle.js",
   "../room-cycle-targets.js",
   "../room-state.js",
+  // Fotos de bolsas en IndexedDB (fuera de la cuota de localStorage).
+  "../bag-photo-store.js",
   "../provenance.js",
   "../perito-context.js",
   "../recipe-optimizer.js",
