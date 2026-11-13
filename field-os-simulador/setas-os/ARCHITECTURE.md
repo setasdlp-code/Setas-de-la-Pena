@@ -130,10 +130,15 @@ Dos reglas al tocarlos:
    forma perezosa. En `firebase/auth-gate.js` y en `__harness.html` el catálogo va
    primero. Invertirlos no rompe Node (hay `require`) pero deja la app en blanco en
    el navegador. `substrate-modules.test.js` lo verifica.
-2. **Compuerta empírica.** Cualquier cambio a `substrate-analysis.js`,
-   `substrate-catalog.js` o `scoring.js` exige `npm run perito:regression` con el
-   delta de `meanAbsErrorEB` adjunto al PR. Ver
-   `docs/agents/ground-truth-corpus.md`.
+2. **Compuerta empírica.** Depende del tipo de cambio (`AGENTS.md` §4):
+   - Alta o corrección de una entrada de `substrate-catalog.js` con fuente citada:
+     tests unitarios y `python3 scripts/quality/check_kb_sync.py`. No exige corpus.
+   - Cambio a `substrate-analysis.js` (`analyze()`), a los pesos o cortes de
+     `scoring.js` o al ranking: `npm run perito:regression` con su salida adjunta
+     al PR. Sin corpus de campo el comando sale con código 1; el cambio queda
+     declarado como no validado y requiere aprobación humana, no se da por bueno.
+
+   Ver `docs/agents/ground-truth-corpus.md`.
 
 Para probar funciones puras que todavía viven en el JSX, `test-support/jsx-extract.js`
 sigue existiendo, pero ya resuelve por `require()` todo lo que se extrajo. Cada
