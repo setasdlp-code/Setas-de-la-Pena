@@ -1,115 +1,159 @@
 # Perito: predicción de EB para shiitake y medición en el piloto
 
-Fecha: 2026-11-12. Estado: borrador para aprobación de Sebastián.
-Rama: `claude/blissful-lamport-4d1o3k`.
+Fecha: 2026-11-12. Revisión 2: 2026-11-13, tras la auditoría de diseño del 2026-11-13.
+Estado: borrador para aprobación de Sebastián. Rama: `claude/blissful-lamport-4d1o3k`.
 
 Convención: **[Decisión]** la tomó Sebastián. **[Mi decisión]** la tomé yo al redactar y debe revisarse. Toda confianza citada nombra su escala (ADR-0007).
 
+## 0. Qué cambió respecto a la revisión 1
+
+La auditoría devolvió el diseño. Verifiqué sus referencias de código contra esta rama y son correctas. Consecuencias:
+
+| Revisión 1 | Revisión 2 | Motivo |
+|---|---|---|
+| Cambiar C:N del roble en el catálogo | No se cambia en producción; queda como hipótesis H-B evaluada en memoria | El catálogo es compartido: mueve melena (+29 puntos de EB en un preset), nameko (−18) y reishi (+4) sin evidencia. Sube el error del único punto del mismo material de 14,8 a 32,6 |
+| Eximir a shiitake del castigo de aireación | No se cambia en producción; hipótesis H-A, acotada a madera | F-19 trata lignina, no intercambio gaseoso. La exención por especie alcanzaría también café, cartón y afrecho |
+| CV de shiitake 0,18 → 0,25 | Eliminado | Ese CV alimenta una banda que la UI no muestra. La banda visible sale de `buildUncertainty` (`scoring.js`). La justificación era incorrecta: los dos estudios no usan la misma fórmula |
+| Guardar `an.ebLow/ebHigh` en el lote | Guardar el pronóstico mostrado | La banda de `analyze()` difiere de la visible |
+| Conjunto de literatura como criterio de aceptación | Benchmark exploratorio, sin poder de aprobación | Cuatro tratamientos, dos estudios; elegir por su error es selección de modelo sobre el mismo conjunto |
+
+Corrección propia: en la revisión 1 afirmé que el Perito recomienda 30 % de salvado. Es inexacto. Una receta manual con 30 % puntúa más (71) que la de 20 % (67), pero la búsqueda del Perito limita el suplemento a `supplementation_max` (`hybridRoleCaps`) y no puede proponerla.
+
 ## 1. Intención
 
-El piloto de shiitake empieza de cero, sin lotes reales. El Perito debe llegar a ese piloto sin recomendar algo que contradiga la receta de referencia, y el piloto debe dejar medido cuánto acierta el Perito.
+El piloto de shiitake empieza de cero. Con la evidencia disponible, ningún ajuste numérico al modelo es defendible: los cambios probados mejoran el promedio y empeoran casos concretos. Esta ronda deja al Perito capaz de formular la receta real, declara lo que no sabe, y hace que el piloto mida su acierto con un contrato de pronóstico único.
 
-**[Decisión]** Sebastián autorizó (2026-11-12) una excepción a la regla "sin corpus de campo no se cambia la EB" (`agronomic-claims`, ADR-0004), limitada a shiitake y validada contra literatura.
+**[Decisión]** Sebastián autorizó (2026-11-12) una excepción a la regla "sin corpus de campo no se cambia la EB", limitada a shiitake. Esta revisión no la usa para cambiar números; queda disponible para cuando H-A o H-B cumplan sus condiciones (§5.3).
 
-## 2. Estado actual (medido en `main` @ `c031be2`)
+## 2. Estado actual
 
-`analyze()` + `scoreRecipe()` con autoclave, roble / salvado de trigo / CaCO₃ 1 %:
+`analyze()` + `scoreRecipe()` con autoclave, roble / salvado / CaCO₃ 1 %:
 
-| Salvado | EB predicha | Puntaje | Componente `yield` |
+| Salvado | EB central | Banda visible | Puntaje |
 |---|---|---|---|
-| 20 % (fórmula de referencia) | 45,6 % (banda 35–56) | 67 | 0 |
-| 30 % (supera `supplementation_max` 20) | 70,6 % (banda 47–94) | 71 | 41 |
+| 20 % (fórmula de referencia) | 46 % | 31–61 | 67 |
+| 30 % (supera `supplementation_max`) | 71 % | 56–86 | 71 |
 
-Defectos:
+- La fórmula de referencia predice por debajo de `eb_baseline` (50).
+- La receta DOC-0127 no se puede formular: faltan pellets de madera dura y cal hidratada en `INGS`.
+- El lote guarda solo `recipeRef.eb`, sin banda, origen ni versión.
 
-1. **La fórmula de referencia predice por debajo de `eb_baseline` (50).** Mediciones publicadas para roble + 20 % salvado: 59,7 % (El Sebaaly 2024) y 92,4 % (Zhou 2025). Ambas quedan fuera de la banda 35–56.
-2. **El Perito puntúa mejor 30 % de salvado que 20 %**, por encima del máximo que el propio catálogo declara seguro.
-3. **Causa A, aireación.** `aerF = 0,85` cuando `densaP > 60 && airP < 10`. El bloque de aserrín es el sustrato normal del shiitake. Ya existe el precedente F-19, que exime a shiitake y reishi del factor de digestibilidad.
-4. **Causa B, C:N del roble.** El catálogo usa N 0,1 %, C:N 500, y su nota lo marca como dudoso. Con ese valor la fórmula de referencia da C:N 76, fuera del rango de la especie (35–70), y `cF = 0`.
-5. **La receta real del microlote no se puede representar.** DOC-0127 usa pellets de madera dura y cal hidratada Ca(OH)₂; ninguno existe en `INGS`.
-6. **La banda es estrecha para lo que se sabe.** CV base 18 %. Dos estudios con la misma fórmula difieren entre 59,7 % y 92,4 %, y la cepa del piloto no está identificada (DEC-019).
-7. **El lote guarda solo el punto predicho** (`recipeRef.eb`), sin banda ni versión del modelo. No se puede saber después con qué modelo se predijo.
+Resultados de la auditoría (variantes en memoria, 4 puntos de literatura, puntos de EB):
+
+| Variante | Error medio | Error máximo | Dentro de banda de `analyze()` |
+|---|---:|---:|---:|
+| Actual | 26,01 | 46,32 | 0/4 |
+| Solo aireación | 17,76 | 38,18 | 2/4 |
+| Solo roble | 13,66 | 18,77 | 2/4 |
+| Aireación + roble | 11,60 | 32,61 | 3/4 |
 
 ## 3. Objetivos, no objetivos, anti-objetivos
 
 **Objetivos**
-- La fórmula de referencia de shiitake no puntúa por debajo de una variante que excede `supplementation_max`.
-- El error contra el conjunto de literatura baja y se reporta antes y después.
-- La receta DOC-0127 se puede formular en el Formulador.
-- Cada lote congela la predicción del Perito al crearse y la compara con la cosecha real.
+- La receta DOC-0127 se formula con su fórmula y denominador exactos, y su EB se muestra como condicionada a supuestos no verificados.
+- Cada lote conserva el pronóstico que el usuario vio, con origen y versión, y lo compara con el resultado final elegible.
+- Las hipótesis H-A y H-B se pueden evaluar de forma repetible, por tratamiento y por estudio, sin tocar producción.
+- El Perito declara en pantalla que su estimación para shiitake en bloque de madera no está validada.
 
 **No objetivos**
-- Otras especies. El castigo de aireación también afecta a melena, nameko, reishi y enoki en aserrín; queda anotado como seguimiento.
-- Cambiar pesos de `scoring.js`, la selección de Escenarios o `historyCalibration`.
-- Promover confianza: la escala A sigue con tope `medium`; la escala B no cambia de criterio.
+- Cambiar valores de `INGS` o `SPP` existentes, `analyze()`, pesos de `scoring.js`, Escenarios o `historyCalibration`.
+- Otras especies.
 - Editar `knowledge_base/`.
 
 **Anti-objetivos**
-- Ajustar parámetros libres hasta minimizar el error contra cuatro puntos de literatura. Cada cambio debe tener justificación propia, independiente del conjunto.
-- Que el conjunto de literatura satisfaga la compuerta de `perito:regression`. Esa compuerta sigue fallando sin corpus de campo.
-- Presentar un valor de literatura como medido en Tenjo.
+- Que el benchmark de literatura apruebe un cambio o satisfaga `perito:regression`.
+- Un error medio calculado sobre los casos que sobraron tras descartar otros en silencio.
+- Presentar un pH calculado como medido, o un valor de literatura como medido en Tenjo.
 
 ## 4. Enfoques considerados
 
-| Enfoque | Qué hace | Por qué sí o no |
-|---|---|---|
-| 1. Corregir el modelo contra literatura | Arregla las causas A y B y la banda | Evita que el piloto arranque con una recomendación defectuosa. Evidencia débil (2 estudios) |
-| 2. Solo medir en el piloto | Congela predicciones y espera cosechas | No mejora nada hasta dentro de 90–150 días |
-| 3. Ambos | 1 + 2 | **[Decisión]** Elegido por Sebastián |
+| Enfoque | Estado |
+|---|---|
+| 1. Corregir el modelo contra literatura | Pospuesto. La auditoría mostró que la evidencia no distingue entre variantes sin dañar otros casos |
+| 2. Medir en el piloto | Se hace |
+| 3. Ambos | **[Decisión]** elegido el 2026-11-12. **[Mi decisión]** la parte 1 se reduce a hipótesis evaluables hasta tener datos propios |
+
+Alternativa que Sebastián puede elegir en vez de esta revisión: ampliar explícitamente el alcance y aceptar el cambio de roble para todas las especies que lo usan. Exige criterios de aceptación por especie que hoy no tienen evidencia.
 
 ## 5. Diseño
 
-### 5.1 Conjunto de referencia de literatura
+### 5.1 Insumos para formular DOC-0127
 
-- Archivo nuevo `literature-eb-benchmark.json`, separado de `ground-truth-fixtures.json`. Cada entrada: `sKey`, `recipe`, `ebReported`, `source`, `tier`, `strain`, `flushes`, `ebBasis`, `notes`.
-- Entradas iniciales, solo las que la KB ya cita con receta reconstruible:
-  - El Sebaaly 2024: roble 80 / salvado 20 → 59,7 %; eucalipto 80 / salvado 20 → 65,0 %; eucalipto 40 / roble 40 / salvado 20 → 74,1 %. Tier 1, un estudio.
-  - Zhou 2025: roble 78 / salvado 20 / yeso 1,5 / cal 0,5 → 92,42 %. Tier 2, una cepa, cinco oleadas.
-- Script nuevo `perito-literature-benchmark.js`: reutiliza `evaluateFixture` y `summarizeFixtureRun` de `ground-truth-regression.js` y el extractor de catálogo de `perito-regression-report.js`. Reporta error absoluto medio, error máximo y cuántos puntos caen dentro de la banda `ebLow–ebHigh`. Acepta `--baseline=<rev>`.
-- El reporte rotula la salida como "literatura, no campo". No escribe ni lee `ground-truth-fixtures.json`.
-- **[Mi decisión]** Los cuatro puntos son una comprobación de cordura, no una calibración. No se excluye ninguno por quedar lejos.
+- `pellets_madera_dura`: `base_carbono`, `cs: ['shiitake']`, humedad 8 % (supuesto de DOC-0127). C, N y C:N copiados de `aserrin_roble` como proxy. Nota y etiqueta visibles: "Proxy sin verificar; especie de madera por confirmar". Se agrega a `DENSOS`.
+- `cal_hidratada`: `aditivo_ph`, C 0, N 0, humedad 0, pH propio 12,4.
+- Preset "Shiitake — microlote pellets v1 (DOC-0127)": pellets 79,21 / salvado 19,80 / cal 0,99, con nota del denominador original (80/20 de base seca + 1 % de cal sobre esa base).
+- Cuando una receta contiene un insumo marcado como proxy, o un `aditivo_ph` con shiitake, el Formulador rotula la EB como "condicionada a supuestos no verificados" y el pH como "calculado, no medido".
+- **[Mi decisión]** `phF` no se toca. Con 1 % de cal el pH ponderado da ~4,9, casi igual que con carbonato; el efecto sobre la EB es menor que el redondeo. La limitación del promedio lineal queda declarada en la nota.
 
-### 5.2 Cambios al modelo (solo shiitake)
+### 5.2 Benchmark exploratorio de literatura
 
-1. **Aireación.** `aerF = 1` para `shiitake`. Justificación: sustrato estándar de la especie; mismo criterio que F-19.
-2. **Roble.** `aserrin_roble`: N 0,1 → 0,48; C 50 → 53,8; C:N 500 → 112 (El Sebaaly 2024, Tier 1, n = 1). Se registra en la nota del insumo como provisional y con `provenance`.
-   - **[Mi decisión]** Contradice la conclusión de `ingredientes_cn_verificacion_2026-10-09.md` ("no basta para cambiar"). Lo propongo porque 500 no tiene fuente alguna y 112 tiene una medición. Efecto esperado: la fórmula de referencia pasa a C:N ≈ 55 y N ≈ 0,95, cerca del ideal de la especie, y el máximo de puntaje se mueve a ~20 % de salvado.
-   - Riesgo: la EB puntual de la fórmula de referencia sube a ~94 %, el extremo alto de la literatura. Sobrepredice a El Sebaaly (59,7 %).
-   - `aserrin_roble` también lo usan melena, reishi y nameko: sus predicciones cambian. Se reporta el delta por especie antes de fusionar.
-3. **Banda.** CV base de shiitake 0,18 → 0,25 mediante un campo `eb_cv` opcional en `SPP` (las demás especies conservan 0,18).
-   - **[Mi decisión]** 0,25 cubre la dispersión entre los dos estudios para la misma fórmula (59,7–92,4 alrededor de 76 es ±21 %). Ensanchar es la dirección conservadora.
-4. **Insumos nuevos en `INGS`.**
-   - `pellets_madera_dura`: `base_carbono`, compatible solo con shiitake, humedad 8 %. C, N y C:N copiados de `aserrin_roble`, marcados "sin verificar; especie de madera por confirmar". Etiqueta visible "Valor sin verificar".
-   - `cal_hidratada`: `aditivo_ph`, C 0, N 0, humedad 0. pH propio 12,4 (solución saturada de Ca(OH)₂).
-   - **[Mi decisión]** El pH de mezcla que resulte es una media ponderada, no una medición; DOC-0127 exige medirlo. No se toca el factor `phF`.
-5. **Versión del modelo.** Constante `EB_MODEL_VERSION` exportada por `substrate-analysis.js`, que se incrementa con cada cambio a `analyze()` o a valores de catálogo que muevan la EB.
+- Archivo `literature-eb-benchmark.json`, separado de `ground-truth-fixtures.json`. Por entrada: `id`, `sKey`, `recipe`, `ebReported`, `study`, `source` (cita con tabla o página), `tier`, `strain`, `flushes`, `ebBasis`, `process`, `verification` (`full_text` | `abstract_only`), `notes`.
+- Entradas:
+  - El Sebaaly 2024: roble 80/20 → 59,7; eucalipto 80/20 → 65,0; eucalipto/roble/salvado 40/40/20 → 74,1. Tier 1, un estudio.
+  - Zhou 2025: roble 78/20/1,5/0,5 → 92,42. `verification: abstract_only`. La KB registra que no se leyó el texto completo; la base de la EB y la identidad de la "cal" no están confirmadas. Se lista pero no entra en las métricas hasta verificarse.
+- Script `perito-literature-benchmark.js`:
+  - Adaptador explícito en memoria `ebReported → ebReal` para reutilizar `evaluateFixture`. No lee ni escribe el corpus de campo.
+  - Evalúa la versión actual y variantes nombradas aplicadas en memoria (§5.3).
+  - Reporta por tratamiento y por estudio: EB central, error, y si el valor publicado cae en la banda visible (`buildUncertainty`). También el error medio y máximo por variante.
+  - Sale con código no cero si falta el archivo, está vacío, hay un resultado no finito, o hay entradas no evaluadas sin la opción explícita que las acepte.
+  - Encabezado fijo en la salida: "Benchmark exploratorio de literatura. No valida ni aprueba cambios."
 
-Lo que no cambia: `cn_optimal`, `n_optimal`, `eb_baseline`, `eb_optimal` y `supplementation_max` de shiitake; pesos y umbrales de `scoring.js`.
+### 5.3 Hipótesis registradas (sin efecto en producción)
 
-### 5.3 Criterio de aceptación del modelo
+| Hipótesis | Variante en memoria | Condición para proponerla a producción |
+|---|---|---|
+| H-A | `aerF = 1` para shiitake cuando la fracción densa es solo madera (aserrín o pellets) | Lotes del piloto con resultado final elegible, o sustento publicado sobre intercambio gaseoso en bloques de madera |
+| H-B | Roble con N 0,48 %, C 53,8 % | Análisis de laboratorio de C y N del material real del piloto. Si se aplica al catálogo, criterios de aceptación para cada especie que use el insumo |
 
-- El error absoluto medio del conjunto de literatura baja respecto a `main`. Se reportan también el error máximo y la cobertura de banda.
-- Para roble + salvado con autoclave, el puntaje de 20 % es mayor o igual al de 25 %, 30 % y 35 %.
-- La receta DOC-0127 (pellets 79,2 / salvado 19,8 / cal 1,0) se analiza sin ingredientes incompatibles.
-- Si el cambio 2 (roble) empeora el error medio o no corrige el orden de puntajes, no se fusiona y se reporta.
+Límites aceptables de deterioro, fijados antes de evaluar: ningún tratamiento del benchmark puede empeorar más de 5 puntos de EB respecto a la versión actual, y ningún preset de otra especie puede moverse más de 5 puntos sin evidencia propia. Con estos límites, H-B y H-A + H-B no pasan hoy.
 
-### 5.4 Predicción congelada por lote
+### 5.4 Declaración en el Perito
 
-- Al crear un lote desde el Formulador se guarda `prediccionPerito`: `{ eb, ebLow, ebHigh, modelVersion, sKey, registradaEn }`. Va junto a `recipeRef`, que no cambia.
-- Es inmutable: `updateBitLote` no la sobrescribe si ya existe.
-- `calcLoteStats` añade `prediccion: { eb, ebLow, ebHigh, modelVersion, errorAbs, dentroDeBanda }`. `errorAbs` y `dentroDeBanda` son `null` hasta que exista EB real elegible (mismo criterio de `historical-calibration.js`).
-- El detalle del lote muestra: "Predicho 54 % (41–68) · modelo v2 · Real —" y, con cosecha, el error y si cayó dentro de la banda.
-- Lotes anteriores sin `prediccionPerito` muestran "sin predicción registrada"; no se reconstruye a posteriori.
-- **[Mi decisión]** El campo viaja con el documento del lote. Si las reglas de Firestore validan campos con `hasOnly`, el cambio de reglas va por el subagente `firestore-rules-author` y lo despliega un humano.
+Para shiitake, junto a la EB: "Estimación no validada para bloques de madera: la fórmula de referencia queda fuera del rango C:N del catálogo. Usar para comparar, no como rendimiento esperado." Texto fijo, sin cambio de puntaje.
+
+### 5.5 Contrato de pronóstico por lote
+
+Un solo contrato: se guarda el pronóstico mostrado (`recipeEBForecast`), no la banda interna de `analyze()`.
+
+```
+pronostico: {
+  central, low, high,          // lo que vio el usuario
+  confianzaEB,                 // escala B
+  origen,                      // 'theoretical' | con historial, y n del historial
+  ebTeorica,                   // an.eb, rotulada como modelo teórico
+  modelVersion,                // EB_MODEL_VERSION
+  huellaReceta,                // hash de receta + valores efectivos (effectiveINGS/effectiveSPP) de sus insumos
+  supuestos,                   // insumos proxy, pH calculado
+  capturadoEn
+}
+```
+
+- Dos capturas, cada una de escritura única:
+  - `pronosticoPlan`: al crear el lote desde el Formulador.
+  - `pronosticoEjecucion`: al registrar la preparación, con la receta realmente pesada. Si la huella coincide con la del plan, se copia.
+- La comparación con el resultado usa `pronosticoEjecucion` y, si no existe, `pronosticoPlan`, indicando cuál.
+- Escritura única en dos capas: `updateBitLote` rechaza reemplazos, y la regla de `bitacora_lotes` exige que un pronóstico existente no cambie. El cambio de reglas va por el subagente `firestore-rules-author` y lo despliega un humano. Hasta ese despliegue, la garantía es solo del cliente y así se documenta.
+- `calcLoteStats` añade `pronostico: { ..., errorAbs, dentroDeBanda, base }`. `errorAbs` y `dentroDeBanda` son `null` hasta que exista resultado final elegible según `historical-calibration.js`. Una cosecha parcial no cuenta; un cero requiere cierre confirmado.
+- Lotes anteriores muestran "sin pronóstico registrado". No se reconstruye.
+- `EB_MODEL_VERSION` se exporta desde `substrate-analysis.js`.
 
 ## 6. Verificación
 
-- `npm run test:unit` y `node build.js` tras tocar `simulador-app.jsx`.
-- Tests nuevos: exención de aireación, orden de puntajes 20/25/30/35, receta DOC-0127, banda de shiitake, inmutabilidad de `prediccionPerito`, script de literatura (corpus ausente o vacío → salida no cero).
-- `perito:regression` sigue saliendo con código 1 (sin corpus). Se reporta como bloqueado, no como aprobado.
-- Skill `kb-sync` después de tocar el catálogo.
+- `npm run test:unit`; `node build.js` tras tocar `simulador-app.jsx`.
+- Tests nuevos:
+  - El pronóstico capturado es igual al mostrado, al crear el lote y tras recargar.
+  - Un segundo intento de escritura no reemplaza el pronóstico.
+  - `pronosticoEjecucion` difiere del plan cuando cambia la receta pesada.
+  - Resultado parcial no produce `errorAbs`.
+  - DOC-0127 se analiza sin incompatibles y con los rótulos de supuestos.
+  - El benchmark falla con archivo ausente, vacío, resultado no finito o entradas no evaluadas.
+  - Ninguna EB de presets existentes cambia (comparación contra `main`).
+- Reglas: `npm run test:rules` con el caso de escritura única.
+- `perito:regression` sigue saliendo con código 1. Se reporta como bloqueado.
+- Skill `kb-sync` tras tocar el catálogo.
 
 ## 7. Queda al constructor
 
-- Nombre exacto de los campos en la UI y ubicación de la línea de predicción en el detalle del lote.
-- Si el extractor de catálogo se comparte como módulo o se importa desde `perito-regression-report.js`.
+- Ubicación exacta de la línea de pronóstico en el detalle del lote y del aviso en el Perito.
+- Algoritmo de `huellaReceta`.
+- Si el extractor de catálogo se comparte como módulo.
