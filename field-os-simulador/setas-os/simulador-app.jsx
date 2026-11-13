@@ -186,6 +186,12 @@ async function downloadPrototypeBackup(prefix){
   try{
     if(window.SetasFieldEventQueue)db=await window.SetasFieldEventQueue.initializeQueue();
     const data=await SetasPrototype.backup(localStorage,{db,accountId:window.SetasFirebase?.auth?.currentUser?.uid||null});
+    // Las fotos de bolsas viven en IndexedDB: se reinyectan para que el
+    // respaldo siga llevándolas. Al restaurar, la migración las devuelve allí.
+    const photoStore=window.SetasBagPhotos?window.SetasBagPhotos.createStore():null;
+    if(photoStore&&photoStore.available&&data.collections&&data.collections.sdp_bit_bolsas){
+      data.collections.sdp_bit_bolsas=window.SetasBagPhotos.withPhotos(data.collections.sdp_bit_bolsas,await photoStore.getAll());
+    }
     const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download=prefix+new Date().toISOString().slice(0,10)+'.json';a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -324,132 +330,134 @@ function BioCheck() {
 }
 
 // --- Lab Extraction Component & Helpers ---
+// Copia de extraction-factors.json, que es la fuente (la audita
+// scripts/quality/check_kb_sync.py). lab-extraction.test.js falla si difieren.
 const DEFAULT_EXTRACTION_FACTORS = {
-  p_ostreatus_gris: {
-    name: "Orellana Gris",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Doble)",
-        yield_factor: 0.12,
-        cost_per_liter_solvent: 18000,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 48,
-        optimal_temp_c: 25,
-        notes: "Extracción clásica para polisacáridos y compuestos fenólicos."
+  "p_ostreatus_gris": {
+    "name": "Orellana Gris",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Doble)",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 18000,
+        "optimal_alcohol_pct": 70,
+        "optimal_time_hrs": 48,
+        "optimal_temp_c": 25,
+        "notes": "Extracción clásica para polisacáridos y compuestos fenólicos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Caliente",
-        yield_factor: 0.15,
-        cost_per_liter_solvent: 2000,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3,
-        optimal_temp_c: 85,
-        notes: "Máxima extracción de beta-glucanos solubles en agua."
+      "acuosa": {
+        "name": "Decocción Acuosa Caliente",
+        "yield_factor": 0.15,
+        "cost_per_liter_solvent": 2000,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3,
+        "optimal_temp_c": 85,
+        "notes": "Máxima extracción de beta-glucanos solubles en agua."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.18,
-        cost_per_liter_solvent: 22000,
-        optimal_alcohol_pct: 60,
-        optimal_time_hrs: 0.75,
-        optimal_temp_c: 45,
-        notes: "Rendimiento acelerado por cavitación acústica."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.18,
+        "cost_per_liter_solvent": 22000,
+        "optimal_alcohol_pct": 60,
+        "optimal_time_hrs": 0.75,
+        "optimal_temp_c": 45,
+        "notes": "Rendimiento acelerado por cavitación acústica."
       }
     }
   },
-  shiitake: {
-    name: "Shiitake",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
-        yield_factor: 0.14,
-        cost_per_liter_solvent: 18000,
-        optimal_alcohol_pct: 65,
-        optimal_time_hrs: 72,
-        optimal_temp_c: 25,
-        notes: "Equilibrio entre lentinano soluble y lípidos bioactivos."
+  "shiitake": {
+    "name": "Shiitake",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
+        "yield_factor": 0.14,
+        "cost_per_liter_solvent": 18000,
+        "optimal_alcohol_pct": 65,
+        "optimal_time_hrs": 72,
+        "optimal_temp_c": 25,
+        "notes": "Equilibrio entre lentinano soluble y lípidos bioactivos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Fraccionada",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 2000,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 4,
-        optimal_temp_c: 90,
-        notes: "Extracción térmica prolongada para polisacáridos estructurales."
+      "acuosa": {
+        "name": "Decocción Acuosa Fraccionada",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 2000,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 4,
+        "optimal_temp_c": 90,
+        "notes": "Extracción térmica prolongada para polisacáridos estructurales."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.20,
-        cost_per_liter_solvent: 22000,
-        optimal_alcohol_pct: 55,
-        optimal_time_hrs: 1,
-        optimal_temp_c: 50,
-        notes: "Mayor rendimiento con menor degradación térmica de compuestos activos."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 22000,
+        "optimal_alcohol_pct": 55,
+        "optimal_time_hrs": 1,
+        "optimal_temp_c": 50,
+        "notes": "Mayor rendimiento con menor degradación térmica de compuestos activos."
       }
     }
   },
-  lions_mane: {
-    name: "Melena de León",
-    methods: {
-      hidroalcoholica: {
-        name: "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
-        yield_factor: 0.11,
-        cost_per_liter_solvent: 20000,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 96,
-        optimal_temp_c: 25,
-        notes: "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
+  "lions_mane": {
+    "name": "Melena de León",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
+        "yield_factor": 0.11,
+        "cost_per_liter_solvent": 20000,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 96,
+        "optimal_temp_c": 25,
+        "notes": "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
       },
-      acuosa: {
-        name: "Decocción Acuosa (Beta-glucanos)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 2000,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3.5,
-        optimal_temp_c: 88,
-        notes: "Enfoque inmunomodulador rico en beta-glucanos."
+      "acuosa": {
+        "name": "Decocción Acuosa (Beta-glucanos)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 2000,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3.5,
+        "optimal_temp_c": 88,
+        "notes": "Enfoque inmunomodulador rico en beta-glucanos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 24000,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 1.2,
-        optimal_temp_c: 45,
-        notes: "Preserva diterpenos termosensibles de Hericium."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.16,
+        "cost_per_liter_solvent": 24000,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 1.2,
+        "optimal_temp_c": 45,
+        "notes": "Preserva diterpenos termosensibles de Hericium. Etanol 80%: óptimo publicado para erinacina A (Valu et al. 2020, diseño Box-Behnken); el 70% anterior era un compromiso de amplio espectro, incoherente con tener un brazo acuoso separado para beta-glucanos."
       }
     }
   },
-  reishi: {
-    name: "Reishi Rojo",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
-        yield_factor: 0.09,
-        cost_per_liter_solvent: 22000,
-        optimal_alcohol_pct: 80,
-        optimal_time_hrs: 120,
-        optimal_temp_c: 28,
-        notes: "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
+  "reishi": {
+    "name": "Reishi Rojo",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
+        "yield_factor": 0.09,
+        "cost_per_liter_solvent": 22000,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 120,
+        "optimal_temp_c": 28,
+        "notes": "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
       },
-      acuosa: {
-        name: "Decocción Tradicional 2h",
-        yield_factor: 0.10,
-        cost_per_liter_solvent: 2000,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 2.5,
-        optimal_temp_c: 95,
-        notes: "Tónico amargo adaptogénico rico en polisacáridos."
+      "acuosa": {
+        "name": "Decocción Tradicional 2h",
+        "yield_factor": 0.1,
+        "cost_per_liter_solvent": 2000,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 2.5,
+        "optimal_temp_c": 88,
+        "notes": "Tónico amargo adaptogénico rico en polisacáridos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 25000,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 1.5,
-        optimal_temp_c: 50,
-        notes: "Ruptura de paredes leñosas para máxima biodisponibilidad."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 25000,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 1.5,
+        "optimal_temp_c": 50,
+        "notes": "Ruptura de paredes leñosas para máxima biodisponibilidad."
       }
     }
   }
@@ -814,6 +822,12 @@ function LabExtraction() {
                 </span>
                 <span style={{ display: "block", fontSize: "0.8rem", color: "var(--ink-600)" }}>
                   Tasa: {yieldPct}% s/biomasa
+                </span>
+                {/* Ningún factor de rendimiento ni costo de solvente tiene fuente en
+                    knowledge_base/ (ver scripts/quality/check_kb_sync.py): se muestran
+                    como referencia sin verificar, nunca como rendimiento medido. */}
+                <span data-testid="extraction-unverified" style={{ display: "block", fontSize: "0.75rem", color: "var(--accent-terracotta-dark)", marginTop: 4 }}>
+                  Factor de rendimiento y costo de solvente sin fuente verificada: referencia, no una medición de esta finca.
                 </span>
               </div>
 
@@ -7335,6 +7349,52 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [bitBolsas,setBitBolsas]=useState([]);
   const bitBolsasEditRef=useRef(bitBolsas);
   useEffect(()=>{bitBolsasEditRef.current=bitBolsas;},[bitBolsas]);
+  // Fotos de bolsas: viven en IndexedDB (bag-photo-store.js), fuera de la cuota
+  // de ~5 MB de localStorage que comparten lotes, bolsas y la cola de sync.
+  // bagPhotos es { bolsaId: dataUrl }. Sin IndexedDB (modo privado) se conserva
+  // el comportamiento anterior: la foto queda en línea en la bolsa.
+  const bagPhotoStoreRef=useRef(null);
+  if(bagPhotoStoreRef.current===null) bagPhotoStoreRef.current=(typeof window!=='undefined'&&window.SetasBagPhotos)?window.SetasBagPhotos.createStore():false;
+  const [bagPhotos,setBagPhotos]=useState({});
+  useEffect(()=>{
+    const store=bagPhotoStoreRef.current;if(!store||!store.available) return;
+    let alive=true;
+    store.getAll().then(saved=>{if(alive) setBagPhotos(prev=>({...saved,...prev}));}).catch(()=>{});
+    return ()=>{alive=false;};
+  },[]);
+  // Migración: toda foto que llegue en línea (datos previos, un respaldo
+  // restaurado) pasa a IndexedDB y solo después de guardarla se quita de la
+  // bolsa. Si el guardado falla, la foto sigue en línea: nunca se pierde.
+  useEffect(()=>{
+    const store=bagPhotoStoreRef.current;if(!store||!store.available) return;
+    const {inline}=window.SetasBagPhotos.splitInlinePhotos(bitBolsas);
+    if(!Object.keys(inline).length) return;
+    let alive=true;
+    store.putMany(inline).then(()=>{
+      if(!alive) return;
+      setBagPhotos(prev=>({...prev,...inline}));
+      const upd=bitBolsasEditRef.current.map(b=>{
+        if(!b||!inline[b.id]||b.foto!==inline[b.id]) return b;
+        const {foto,...rest}=b;return rest;
+      });
+      try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){return;}
+      bitBolsasEditRef.current=upd;
+      setBitBolsas(upd);
+    }).catch(()=>{});
+    return ()=>{alive=false;};
+  },[bitBolsas]);
+  const saveBagPhoto=(bolsaId,dataUrl)=>{
+    const store=bagPhotoStoreRef.current;
+    if(!store||!store.available) return Promise.resolve(updateBitBolsa(bolsaId,{foto:dataUrl}));
+    return store.putMany({[bolsaId]:dataUrl}).then(()=>{setBagPhotos(prev=>({...prev,[bolsaId]:dataUrl}));return true;});
+  };
+  const removeBagPhoto=bolsa=>{
+    const store=bagPhotoStoreRef.current;
+    const drop=()=>setBagPhotos(prev=>{if(!(bolsa.id in prev)) return prev;const next={...prev};delete next[bolsa.id];return next;});
+    if(bolsa.foto) updateBitBolsa(bolsa.id,{foto:null});
+    if(!store||!store.available){drop();return Promise.resolve();}
+    return store.removeMany([bolsa.id]).then(drop);
+  };
   const [bitCosechas,setBitCosechas]=useState([]);
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
@@ -9638,7 +9698,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     runLanzamientoProduccion();
   });
 
-  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Eliminar fotos de bolsas antiguas (clic sobre la foto para quitarla) y volver a intentar.'});
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
   // guardado local y la confirmación de la interfaz ya ocurrieron antes de
   // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
@@ -9864,6 +9924,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
     setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    // Las fotos de las bolsas borradas salen también de IndexedDB.
+    if(bagPhotoStoreRef.current&&bagPhotoStoreRef.current.available&&bolsaIds.length){
+      publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(()=>{}));
+      setBagPhotos(prev=>{const next={...prev};bolsaIds.forEach(id=>{delete next[id];});return next;});
+    }
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
     if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
     // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
@@ -12547,8 +12612,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const CAMERA_TO_ROOM={incub:'incubacion_01',martha:'martha_01',cloudlab:'cloudlab_844'};
 
     // Obtener lotes activos alojados en esta sala
-    const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
-    const mainLote = lotesEnSala[0] || bitLotes[0];
+    // Un lote sin sala no se atribuye a ninguna (antes caía en martha_01 y, con la
+    // sala vacía, se tomaba el primer lote de la Bitácora): las bandas de clima se
+    // evaluaban contra una especie que podía no estar en la sala.
+    const lotesEnSala = roomStateApi ? roomStateApi.lotesInRoom(bitLotes, selectedClimateRoom) : [];
+    const lotesSinSala = roomStateApi ? roomStateApi.lotesWithoutRoom(bitLotes) : [];
+    const mainLote = lotesEnSala[0] || null;
     const activeSpeciesInRoom = Array.from(new Set(
       lotesEnSala.map(l => l.especie || l.speciesKey || l.sKey).filter(Boolean)
     ));
@@ -13217,6 +13286,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)',marginTop:2}}>
               Nodo IoT: <code>{room.device}</code> · Sensores: {room.sensors} · Altitud: {room.altitude}
             </div>
+            {lotesSinSala.length>0 && (
+              <div data-testid="climate-lotes-sin-sala" role="status" style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--accent-terracotta-dark)',marginTop:4}}>
+                {lotesSinSala.length===1?'1 lote activo sin sala asignada':`${lotesSinSala.length} lotes activos sin sala asignada`} ({lotesSinSala.map(l=>l.codigo||l.id).join(', ')}): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora.
+              </div>
+            )}
             {roomLive && roomLive.health && (
               <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)',marginTop:4}}>
                 <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-ok)':roomLive.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
@@ -14172,9 +14246,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <BagSurfaceEditor bolsa={bolsa} onSave={updateBitBolsa} operador={window.SetasFirebase?.auth?.currentUser?.uid||'operario_local'}/>
                             </td>
                             <td data-label="Foto" style={{textAlign:'center'}}>
-                              {bolsa.foto
-                                ?<button type="button" className="inv-photo-remove" onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} aria-label={`Quitar foto de la bolsa ${bolsa.codigo}`} title="Quitar foto"><img src={bolsa.foto} alt="" aria-hidden="true" width="28" height="28"/></button>
-                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Probar con otra imagen.'}));e.target.value='';}}/></label>}
+                              {(bagPhotos[bolsa.id]||bolsa.foto)
+                                ?<button type="button" className="inv-photo-remove" onClick={()=>removeBagPhoto(bolsa).catch(()=>setNoticeDlg({title:'No se pudo quitar la foto',msg:'Intentar de nuevo.'}))} aria-label={`Quitar foto de la bolsa ${bolsa.codigo}`} title="Quitar foto"><img src={bagPhotos[bolsa.id]||bolsa.foto} alt="" aria-hidden="true" width="28" height="28"/></button>
+                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).catch(()=>{setNoticeDlg({title:'No se pudo procesar la foto',msg:'Probar con otra imagen.'});return null;}).then(dataUrl=>dataUrl&&saveBagPhoto(bolsa.id,dataUrl).catch(()=>setNoticeDlg({title:'No se pudo guardar la foto',msg:'El almacenamiento del navegador no aceptó la foto. La bolsa y sus datos no cambiaron.'})));e.target.value='';}}/></label>}
                             </td>
                             <td data-label="Cosechas">
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
@@ -19283,7 +19357,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   {(() => {
                     const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
-                    const targetRoomBatches = bitLotes.filter(l => (l.sala === f.sala || l.ubicacion === f.sala || (!l.sala && f.sala === 'martha_01')) && !['completado','descartado'].includes(l.estado));
+                    const targetRoomBatches = (typeof window!=='undefined' && window.SetasRoomState) ? window.SetasRoomState.lotesInRoom(bitLotes, f.sala) : [];
                     const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map(l => l.especie || l.speciesKey).filter(Boolean)));
                     const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
                     const coCultAssignOpt = assignedSpeciesList.length > 1
