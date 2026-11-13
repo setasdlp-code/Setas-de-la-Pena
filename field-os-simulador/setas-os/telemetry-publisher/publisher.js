@@ -9,6 +9,8 @@ function validateDevices(devices) {
   if (!devices || typeof devices !== 'object' || Array.isArray(devices) || !Object.keys(devices).length) throw new Error('Device assignments are required');
   for (const [id, device] of Object.entries(devices)) {
     if (!/^[a-zA-Z0-9_-]{1,80}$/.test(id) || !device || !ROOMS.has(device.roomId) || typeof device.token !== 'string' || device.token.length < 32) throw new Error('Invalid device assignment: use an allowed room and a token of at least 32 characters');
+    // Optional mounting position inside the room (e.g. "altura bloques"). Declared by the operator, never inferred.
+    if (device.position !== undefined && (typeof device.position !== 'string' || !/^[\p{L}\p{N} _.,\-]{1,40}$/u.test(device.position))) throw new Error('Invalid device position: use up to 40 letters, digits, spaces or . , _ -');
   }
   return devices;
 }
@@ -29,6 +31,7 @@ function createFirestorePublisher({ db, serverTimestamp }) {
         source: 'esp32_hardware', quality: 'valid',
         co2_pressure_compensated: reading.co2_pressure_compensated === true,
       };
+      if (reading.position) point.position = reading.position;
       if (points.has(historyId) && JSON.stringify(points.get(historyId)) !== JSON.stringify(point)) throw conflict();
       points.set(historyId, point);
     }
@@ -41,19 +44,28 @@ function createFirestorePublisher({ db, serverTimestamp }) {
         return { ref, point, existing: await tx.get(ref) };
       }));
       for (const { point, existing } of history) {
-        if (existing.exists && Object.entries(point).some(([key, value]) => existing.data()[key] !== value)) throw conflict();
+        // Position is descriptive metadata: relabelling a node must not turn a retry into a conflict.
+        if (existing.exists && Object.entries(point).some(([key, value]) => key !== 'position' && existing.data()[key] !== value)) throw conflict();
       }
       const additions = history.filter(row => !row.existing.exists);
       if (!additions.length) return;
       const previous = snap.exists ? snap.data() : {};
       const metrics = { ...(previous.metric_readings || {}) };
+      // Per-device snapshot: two nodes in one room must not overwrite each other.
+      // `metric_readings` stays as the room headline for older readers.
+      const deviceReadings = {};
+      for (const [id, entry] of Object.entries(previous.device_readings || {})) deviceReadings[id] = { ...entry, metrics: { ...(entry.metrics || {}) } };
       for (const { point, ref } of additions) {
         tx.set(ref, { ...point, received_at: serverTimestamp() });
         const { room_id, ...metricPoint } = point;
         const oldTime = Date.parse(metrics[point.metric]?.observed_at);
         if (!Number.isFinite(oldTime) || Date.parse(point.observed_at) >= oldTime) metrics[point.metric] = metricPoint;
+        const dev = deviceReadings[point.device_id] || (deviceReadings[point.device_id] = { metrics: {} });
+        dev.position = point.position || null;
+        const devOld = Date.parse(dev.metrics[point.metric]?.observed_at);
+        if (!Number.isFinite(devOld) || Date.parse(point.observed_at) >= devOld) dev.metrics[point.metric] = metricPoint;
       }
-      tx.set(roomRef, { room_id: roomId, metric_readings: metrics, last_updated: serverTimestamp() }, { merge: true });
+      tx.set(roomRef, { room_id: roomId, metric_readings: metrics, device_readings: deviceReadings, last_updated: serverTimestamp() }, { merge: true });
     });
   };
 }
@@ -85,7 +97,8 @@ function createPublisherHandler({ devices, publish, now = Date.now }) {
       if (!packet.observed_at || !Number.isFinite(Date.parse(packet.observed_at))) return reply(422, { error: 'observation_time_required' });
       const entries = Array.isArray(packet.readings) ? packet.readings.map(item => item?.value) : Object.entries(packet).filter(([key]) => Object.hasOwn(METRIC_ALIASES, key)).map(([, value]) => value);
       if (!entries.length || entries.some(value => typeof value !== 'number' || !Number.isFinite(value))) return reply(422, { error: 'numeric_measurements_required' });
-      const readings = adaptESP32Payload({ ...packet, room_id: device.roomId, device_id: deviceId, source: 'esp32_hardware' });
+      // Position comes from the gateway's private assignment, never from the node's own packet.
+      const readings = adaptESP32Payload({ ...packet, readings: Array.isArray(packet.readings) ? packet.readings.map(item => ({ ...item, position: undefined })) : packet.readings, room_id: device.roomId, device_id: deviceId, position: device.position || null, source: 'esp32_hardware' });
       if (!readings.length || readings.some(r => validateTelemetry(r).length || r.quality !== 'valid' || Date.parse(r.observed_at) > now() + 60000)) return reply(422, { error: 'invalid_measurements' });
       try { await publish(readings); } catch (err) {
         if (err.code === 'observation_conflict') return reply(409, { error: 'observation_conflict', retryable: false });

@@ -156,6 +156,7 @@
             unit: item.unit,
             observed_at: item.observed_at || observedAt,
             calibration_id: item.calibration_id || calibrationId,
+            position: item.position || packet.position || null,
             source: item.source || source,
             co2_pressure_compensated: item.co2_pressure_compensated == null ? packet.co2_pressure_compensated === true : item.co2_pressure_compensated === true,
             quality: item.quality || 'valid'
@@ -192,6 +193,7 @@
           value: val,
           observed_at: observedAt,
           calibration_id: calibrationId,
+          position: packet.position || null,
           source,
           co2_pressure_compensated: packet.co2_pressure_compensated === true,
           quality: 'valid'

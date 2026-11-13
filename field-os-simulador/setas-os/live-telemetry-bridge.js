@@ -67,7 +67,9 @@
   const SERIES_METRICS = ['temperature_c', 'rh_pct', 'co2_ppm', 'substrate_temperature_c'];
   const DEFAULT_SERIES_CAPACITY = 288;   // 24 h a una muestra cada 5 min
   const DEFAULT_SERIES_WINDOW_MS = 24 * 60 * 60 * 1000;
-  const DEFAULT_FRESH_MS = 90 * 1000;    // un transporte sin datos por más de esto deja de ser "fresco"
+  // Los nodos publican cada 60 s. Con 90 s un solo paquete perdido marcaba la
+  // sala como vencida; 180 s tolera uno perdido y sigue avisando al segundo.
+  const DEFAULT_FRESH_MS = 180 * 1000;   // un transporte sin datos por más de esto deja de ser "fresco"
   const DEFAULT_BACKOFF_MS = 2000;
   const DEFAULT_MAX_BACKOFF_MS = 60000;
   const DEFAULT_STABLE_AFTER_MS = 60000; // una conexión que dura esto se considera sana
@@ -203,10 +205,27 @@
     if (!data || typeof data !== 'object') return null;
     // Publisher snapshots retain observation time/device per metric. Replaying
     // a room snapshot must not make old CO2 fresh when only temperature changed.
-    if (data.metric_readings && typeof data.metric_readings === 'object') {
-      const readings = Object.entries(data.metric_readings)
-        .filter(([metric, point]) => SERIES_METRICS.includes(metric) && point && Number.isFinite(point.value))
+    const hasMetricMap = data.metric_readings && typeof data.metric_readings === 'object';
+    const hasDeviceMap = data.device_readings && typeof data.device_readings === 'object';
+    if (hasMetricMap || hasDeviceMap) {
+      const usable = ([metric, point]) => SERIES_METRICS.includes(metric) && point && Number.isFinite(point.value);
+      const readings = Object.entries(hasMetricMap ? data.metric_readings : {})
+        .filter(usable)
         .map(([metric, point]) => Object.assign({}, point, { metric }));
+      // Snapshot por dispositivo: cada nodo conserva su lectura y su posición.
+      // Lo que también esté en `metric_readings` se deduplica en `ingest`.
+      Object.entries(hasDeviceMap ? data.device_readings : {}).forEach(([deviceId, entry]) => {
+        if (!entry || typeof entry.metrics !== 'object' || !entry.metrics) return;
+        Object.entries(entry.metrics).filter(usable).forEach(([metric, point]) => {
+          readings.push(Object.assign({}, point, { metric, device_id: point.device_id || deviceId, position: entry.position || point.position || null }));
+        });
+      });
+      // La misma observación suele estar en ambos mapas; gana la última
+      // (la del dispositivo, que trae posición).
+      const unique = new Map();
+      readings.forEach(point => unique.set(`${point.device_id}:${point.metric}@${point.observed_at}`, point));
+      readings.length = 0;
+      unique.forEach(point => readings.push(point));
       return readings.length ? readings.map(point => ({
         room_id: roomId, device_id: point.device_id || `firestore-${roomId}`,
         observed_at: point.observed_at, source: point.source || 'firestore_snapshot',
@@ -302,6 +321,7 @@
             return acc;
           }, {}),
           latest: {},           // metric -> reading normalizada
+          devices: {},          // device_id -> { position, latest: { metric -> reading } }
           sample: {},           // shape plano para el motor de anomalías
           lastUpdateAt: null,
           sources: {},          // kind -> timestamp de última entrega
@@ -379,6 +399,13 @@
           entry.latest[finalReading.metric] = finalReading;
           entry.sample[finalReading.metric] = finalReading.value;
         }
+        // Vista por dispositivo: la sala puede tener varios nodos en posiciones
+        // distintas y cada uno conserva su última lectura por métrica.
+        const dev = entry.devices[finalReading.device_id] || (entry.devices[finalReading.device_id] = { position: null, latest: {} });
+        if (finalReading.position) dev.position = finalReading.position;
+        const devPrev = dev.latest[finalReading.metric];
+        const devPrevStamp = devPrev && Date.parse(devPrev.observed_at);
+        if (!Number.isFinite(devPrevStamp) || stamp >= devPrevStamp) dev.latest[finalReading.metric] = finalReading;
         const sampleStamp = Date.parse(entry.sample.observed_at);
         if (!Number.isFinite(sampleStamp) || stamp >= sampleStamp) entry.sample.observed_at = finalReading.observed_at;
         entry.lastUpdateAt = at;
@@ -630,8 +657,33 @@
           metricAgeMs[metric] = ageMs;
           freshMetrics[metric] = ageMs != null && ageMs <= freshMs;
         });
+        const ageOf = (reading) => {
+          const t = reading && Date.parse(reading.observed_at);
+          return Number.isFinite(t) ? Math.max(0, at - t) : null;
+        };
+        const devices = {};
+        Object.entries(entry.devices).forEach(([deviceId, dev]) => {
+          const ages = {}; const fresh = {};
+          Object.entries(dev.latest).forEach(([metric, reading]) => {
+            ages[metric] = ageOf(reading);
+            fresh[metric] = ages[metric] != null && ages[metric] <= freshMs;
+          });
+          devices[deviceId] = { id: deviceId, position: dev.position, latest: Object.assign({}, dev.latest), metricAgeMs: ages, freshMetrics: fresh };
+        });
+        // Diferencia entre posiciones: solo con lecturas vigentes de dos o más
+        // nodos. Una lectura vencida no entra: compararía momentos distintos.
+        const spread = {};
+        SERIES_METRICS.forEach((metric) => {
+          const values = Object.values(devices).filter(d => d.freshMetrics[metric]).map(d => d.latest[metric].value);
+          if (values.length >= 2) {
+            const min = Math.min.apply(null, values); const max = Math.max.apply(null, values);
+            spread[metric] = { min, max, delta: max - min, count: values.length };
+          }
+        });
         rooms[roomId] = {
           id: roomId,
+          devices,
+          spread,
           sample: getSample(roomId),
           health: getHealthReport(roomId),
           ageMs: entry.lastUpdateAt != null ? at - entry.lastUpdateAt : null,

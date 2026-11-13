@@ -48,7 +48,10 @@ const root=path.resolve(__dirname,'..');
    await expect(page.locator('.stock-critical-card')).not.toContainText('Paja de cebada');
    await page.goto(url+'?view=clima');
    const prov=metric=>page.getByTestId('climate-provenance-'+metric);
-   for(const m of ['temperature_c','rh_pct','co2_ppm','substrate_temperature_c']){
+   // A core temperature nobody measures is declared missing, never shown as a model number.
+   await expect(page.getByTestId('climate-substrate-missing')).toContainText('sin sensor de núcleo');
+   await expect(prov('substrate_temperature_c')).toHaveCount(0);
+   for(const m of ['temperature_c','rh_pct','co2_ppm']){
     await expect(prov(m)).toHaveAttribute('data-provenance','model');
     await expect(prov(m)).toContainText('Modelo · sin lectura');
    }
@@ -76,7 +79,8 @@ const root=path.resolve(__dirname,'..');
    await page.evaluate(()=>window.__publishClimate({martha_01:{co2_ppm:600,timestamp_local:new Date().toISOString()}}));
    await page.clock.runFor(2100);
    await expect(prov('co2_ppm')).toHaveAttribute('data-freshness','fresh');
-   await page.clock.runFor(94000);
+   // Freshness window is 180 s (nodes publish every 60 s; one lost packet is tolerated).
+   await page.clock.runFor(184000);
    await page.evaluate(()=>window.__publishClimate({martha_01:{temperature_c:19,timestamp_local:new Date().toISOString()}}));
    await page.clock.runFor(2100);
    await expect(prov('temperature_c')).toHaveAttribute('data-freshness','fresh');
