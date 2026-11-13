@@ -115,6 +115,23 @@ score/status cambiados vs ded5724 (1):
 Esto avisa, no falla por sí solo: cambiar el score suele ser el objetivo. Lo que no
 vale es cambiarlo sin darse cuenta.
 
+## Sin corpus: reporte de deriva
+
+Mientras no exista corpus, `perito-regression-report.js` sale 1 y no dice nada
+sobre el cambio. Para ver al menos qué movió:
+
+```bash
+node field-os-simulador/setas-os/perito-drift-report.js --baseline=main
+```
+
+Corre los `PRESETS` de `substrate-catalog.js` por el modelo del árbol de trabajo y
+el de la base, y lista las recetas cuyo EB, C:N, score o status cambió. Sale 0
+haya o no deriva (`--fail-on-drift` → 2).
+
+**No es validación y no sustituye la compuerta.** Los presets no tienen `ebReal`:
+el reporte dice que la salida se movió, no si ahora acierta más. Adjúntalo al PR
+junto al exit 1 de la regresión; no lo presentes como "regresión pasada".
+
 ## Qué NO toca este skill
 
 El runner es **solo un llamador**. No modifica `ground-truth-regression.js` ni su

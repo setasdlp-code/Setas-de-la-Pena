@@ -46,13 +46,20 @@ else
   echo "corpus:  AUSENTE — cambios a analyze()/scoring.js/perito-scenarios.js no son verificables"
 fi
 
+# Dependencias: sin node_modules, unos tests unitarios fallan con "Cannot find
+# module" (yaml, fake-indexeddb). Es entorno, no producto; decirlo evita leerlo
+# como regresión.
+if [ -f "$APP/package.json" ] && [ ! -d "$APP/node_modules" ]; then
+  echo "deps:    node_modules AUSENTE — correr 'npm ci' en field-os-simulador/setas-os antes de los tests"
+fi
+
 # Gates de navegador: fallan por build de Chromium desalineado, no por código.
 if [ -n "$SETAS_CHROMIUM_EXECUTABLE" ] && [ -x "$SETAS_CHROMIUM_EXECUTABLE" ]; then
   echo "gates:   Chromium vía SETAS_CHROMIUM_EXECUTABLE"
 else
-  shell_bin=$(ls -d /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell 2>/dev/null | head -1)
+  shell_bin=$(ls -d /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell /opt/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell 2>/dev/null | head -1)
   if [ -n "$shell_bin" ]; then
-    echo "gates:   si 'npm run test:gates' falla por ejecutable ausente:"
+    echo "gates:   si 'npm run test:gates' o 'test:browser' fallan por ejecutable ausente:"
     echo "         export SETAS_CHROMIUM_EXECUTABLE=$shell_bin"
   fi
 fi
