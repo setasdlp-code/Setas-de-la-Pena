@@ -24,6 +24,7 @@
 //   { "lotes": [...], "cosechas": [...] }        ← export directo
 //   { "bitLotes": [...], "bitCosechas": [...] }  ← nombres del estado de React
 //   { "data": { "lotes": [...], "cosechas": [...] } }
+//   respaldo descargado desde la app (setas.prototype-backup.v1)
 // Cada lote necesita `recipeRef: { sKey, recipe: [{id, p}] }`, `peseSeco`,
 // `lifecycleState` cerrado, y cosechas con `id` + `pesoFresco`. Los que no lo
 // tengan no se descartan en silencio: salen listados con su razón.
@@ -104,13 +105,16 @@ const extractBitacora = (payload, file) => {
   if (!root || typeof root !== 'object') {
     throw new Error(`${file}: se esperaba un objeto con lotes y cosechas`);
   }
-  const lotes = root.lotes || root.bitLotes;
-  const cosechas = root.cosechas || root.bitCosechas;
+  // Respaldo descargado desde la app ("Descargar respaldo"): las colecciones
+  // vienen bajo sus claves de localStorage.
+  const backup = root.collections && typeof root.collections === 'object' ? root.collections : {};
+  const lotes = root.lotes || root.bitLotes || backup.sdp_bit_lotes;
+  const cosechas = root.cosechas || root.bitCosechas || backup.sdp_bit_cosechas;
   if (!Array.isArray(lotes) || !Array.isArray(cosechas)) {
     const keys = Object.keys(root).join(', ') || '(vacío)';
     throw new Error(
       `${file}: faltan los arreglos de lotes y cosechas. Claves encontradas: ${keys}. ` +
-      'Se aceptan {lotes,cosechas}, {bitLotes,bitCosechas} o {data:{lotes,cosechas}}.'
+      'Se aceptan {lotes,cosechas}, {bitLotes,bitCosechas}, {data:{lotes,cosechas}} o el respaldo descargado desde la app.'
     );
   }
   return { lotes, cosechas };
