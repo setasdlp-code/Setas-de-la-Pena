@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 9a0e81af72c5ef039a42e1d5752e32ab50fd7825ad4d3fc4637a46595c765694
+// source-hash: 2785e09fefab215057c58e127cc6f269db157ae22ee9b4706b93c14b1782ae6f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -308,131 +308,131 @@ function BioCheck() {
   )))));
 }
 const DEFAULT_EXTRACTION_FACTORS = {
-  p_ostreatus_gris: {
-    name: "Orellana Gris",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Doble)",
-        yield_factor: 0.12,
-        cost_per_liter_solvent: 18e3,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 48,
-        optimal_temp_c: 25,
-        notes: "Extracción clásica para polisacáridos y compuestos fenólicos."
+  "p_ostreatus_gris": {
+    "name": "Orellana Gris",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Doble)",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 18e3,
+        "optimal_alcohol_pct": 70,
+        "optimal_time_hrs": 48,
+        "optimal_temp_c": 25,
+        "notes": "Extracción clásica para polisacáridos y compuestos fenólicos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Caliente",
-        yield_factor: 0.15,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3,
-        optimal_temp_c: 85,
-        notes: "Máxima extracción de beta-glucanos solubles en agua."
+      "acuosa": {
+        "name": "Decocción Acuosa Caliente",
+        "yield_factor": 0.15,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3,
+        "optimal_temp_c": 85,
+        "notes": "Máxima extracción de beta-glucanos solubles en agua."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.18,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 60,
-        optimal_time_hrs: 0.75,
-        optimal_temp_c: 45,
-        notes: "Rendimiento acelerado por cavitación acústica."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.18,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 60,
+        "optimal_time_hrs": 0.75,
+        "optimal_temp_c": 45,
+        "notes": "Rendimiento acelerado por cavitación acústica."
       }
     }
   },
-  shiitake: {
-    name: "Shiitake",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
-        yield_factor: 0.14,
-        cost_per_liter_solvent: 18e3,
-        optimal_alcohol_pct: 65,
-        optimal_time_hrs: 72,
-        optimal_temp_c: 25,
-        notes: "Equilibrio entre lentinano soluble y lípidos bioactivos."
+  "shiitake": {
+    "name": "Shiitake",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
+        "yield_factor": 0.14,
+        "cost_per_liter_solvent": 18e3,
+        "optimal_alcohol_pct": 65,
+        "optimal_time_hrs": 72,
+        "optimal_temp_c": 25,
+        "notes": "Equilibrio entre lentinano soluble y lípidos bioactivos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Fraccionada",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 4,
-        optimal_temp_c: 90,
-        notes: "Extracción térmica prolongada para polisacáridos estructurales."
+      "acuosa": {
+        "name": "Decocción Acuosa Fraccionada",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 4,
+        "optimal_temp_c": 90,
+        "notes": "Extracción térmica prolongada para polisacáridos estructurales."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.2,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 55,
-        optimal_time_hrs: 1,
-        optimal_temp_c: 50,
-        notes: "Mayor rendimiento con menor degradación térmica de compuestos activos."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 55,
+        "optimal_time_hrs": 1,
+        "optimal_temp_c": 50,
+        "notes": "Mayor rendimiento con menor degradación térmica de compuestos activos."
       }
     }
   },
-  lions_mane: {
-    name: "Melena de León",
-    methods: {
-      hidroalcoholica: {
-        name: "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
-        yield_factor: 0.11,
-        cost_per_liter_solvent: 2e4,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 96,
-        optimal_temp_c: 25,
-        notes: "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
+  "lions_mane": {
+    "name": "Melena de León",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
+        "yield_factor": 0.11,
+        "cost_per_liter_solvent": 2e4,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 96,
+        "optimal_temp_c": 25,
+        "notes": "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
       },
-      acuosa: {
-        name: "Decocción Acuosa (Beta-glucanos)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3.5,
-        optimal_temp_c: 88,
-        notes: "Enfoque inmunomodulador rico en beta-glucanos."
+      "acuosa": {
+        "name": "Decocción Acuosa (Beta-glucanos)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3.5,
+        "optimal_temp_c": 88,
+        "notes": "Enfoque inmunomodulador rico en beta-glucanos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 24e3,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 1.2,
-        optimal_temp_c: 45,
-        notes: "Preserva diterpenos termosensibles de Hericium."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.16,
+        "cost_per_liter_solvent": 24e3,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 1.2,
+        "optimal_temp_c": 45,
+        "notes": "Preserva diterpenos termosensibles de Hericium. Etanol 80%: óptimo publicado para erinacina A (Valu et al. 2020, diseño Box-Behnken); el 70% anterior era un compromiso de amplio espectro, incoherente con tener un brazo acuoso separado para beta-glucanos."
       }
     }
   },
-  reishi: {
-    name: "Reishi Rojo",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
-        yield_factor: 0.09,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 80,
-        optimal_time_hrs: 120,
-        optimal_temp_c: 28,
-        notes: "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
+  "reishi": {
+    "name": "Reishi Rojo",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
+        "yield_factor": 0.09,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 120,
+        "optimal_temp_c": 28,
+        "notes": "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
       },
-      acuosa: {
-        name: "Decocción Tradicional 2h",
-        yield_factor: 0.1,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 2.5,
-        optimal_temp_c: 95,
-        notes: "Tónico amargo adaptogénico rico en polisacáridos."
+      "acuosa": {
+        "name": "Decocción Tradicional 2h",
+        "yield_factor": 0.1,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 2.5,
+        "optimal_temp_c": 88,
+        "notes": "Tónico amargo adaptogénico rico en polisacáridos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 25e3,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 1.5,
-        optimal_temp_c: 50,
-        notes: "Ruptura de paredes leñosas para máxima biodisponibilidad."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 25e3,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 1.5,
+        "optimal_temp_c": 50,
+        "notes": "Ruptura de paredes leñosas para máxima biodisponibilidad."
       }
     }
   }
@@ -7502,7 +7502,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "9a0e81af72c5" : null;
+    const appVersion = true ? "2785e09fefab" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
