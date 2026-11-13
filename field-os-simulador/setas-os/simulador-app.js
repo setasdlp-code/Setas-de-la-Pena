@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: ba716994db280c3c1992f260192c1a1c7d6ccc8812dbfd0f18df4c11594b1d8c
+// source-hash: 83624cdd4a3a478048f21acc700540d408e6aee36c7f0cf02da0a98655352d54
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -177,6 +177,10 @@ async function downloadPrototypeBackup(prefix) {
   try {
     if (window.SetasFieldEventQueue) db = await window.SetasFieldEventQueue.initializeQueue();
     const data = await SetasPrototype.backup(localStorage, { db, accountId: window.SetasFirebase?.auth?.currentUser?.uid || null });
+    const photoStore = window.SetasBagPhotos ? window.SetasBagPhotos.createStore() : null;
+    if (photoStore && photoStore.available && data.collections && data.collections.sdp_bit_bolsas) {
+      data.collections.sdp_bit_bolsas = window.SetasBagPhotos.withPhotos(data.collections.sdp_bit_bolsas, await photoStore.getAll());
+    }
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
@@ -5262,6 +5266,71 @@ function SimuladorShell(props) {
   useEffect(() => {
     bitBolsasEditRef.current = bitBolsas;
   }, [bitBolsas]);
+  const bagPhotoStoreRef = useRef(null);
+  if (bagPhotoStoreRef.current === null) bagPhotoStoreRef.current = typeof window !== "undefined" && window.SetasBagPhotos ? window.SetasBagPhotos.createStore() : false;
+  const [bagPhotos, setBagPhotos] = useState({});
+  useEffect(() => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return;
+    let alive = true;
+    store.getAll().then((saved2) => {
+      if (alive) setBagPhotos((prev) => ({ ...saved2, ...prev }));
+    }).catch(() => {
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useEffect(() => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return;
+    const { inline } = window.SetasBagPhotos.splitInlinePhotos(bitBolsas);
+    if (!Object.keys(inline).length) return;
+    let alive = true;
+    store.putMany(inline).then(() => {
+      if (!alive) return;
+      setBagPhotos((prev) => ({ ...prev, ...inline }));
+      const upd = bitBolsasEditRef.current.map((b) => {
+        if (!b || !inline[b.id] || b.foto !== inline[b.id]) return b;
+        const { foto, ...rest } = b;
+        return rest;
+      });
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+      } catch (e) {
+        return;
+      }
+      bitBolsasEditRef.current = upd;
+      setBitBolsas(upd);
+    }).catch(() => {
+    });
+    return () => {
+      alive = false;
+    };
+  }, [bitBolsas]);
+  const saveBagPhoto = (bolsaId, dataUrl) => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return Promise.resolve(updateBitBolsa(bolsaId, { foto: dataUrl }));
+    return store.putMany({ [bolsaId]: dataUrl }).then(() => {
+      setBagPhotos((prev) => ({ ...prev, [bolsaId]: dataUrl }));
+      return true;
+    });
+  };
+  const removeBagPhoto = (bolsa) => {
+    const store = bagPhotoStoreRef.current;
+    const drop = () => setBagPhotos((prev) => {
+      if (!(bolsa.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[bolsa.id];
+      return next;
+    });
+    if (bolsa.foto) updateBitBolsa(bolsa.id, { foto: null });
+    if (!store || !store.available) {
+      drop();
+      return Promise.resolve();
+    }
+    return store.removeMany([bolsa.id]).then(drop);
+  };
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTasks, setBitTasks] = useState([]);
   const [roomEvents, setRoomEvents] = useState([]);
@@ -7406,7 +7475,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     runLanzamientoProduccion();
   });
-  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Eliminar fotos de bolsas antiguas (clic sobre la foto para quitarla) y volver a intentar." });
+  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar." });
   const encolarSync = ({ type, key, args }) => {
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!syncQueueApi) {
@@ -7433,7 +7502,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "ba716994db28" : null;
+    const appVersion = true ? "83624cdd4a3a" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7658,6 +7727,17 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
       return upd;
     });
+    if (bagPhotoStoreRef.current && bagPhotoStoreRef.current.available && bolsaIds.length) {
+      publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(() => {
+      }));
+      setBagPhotos((prev) => {
+        const next = { ...prev };
+        bolsaIds.forEach((id) => {
+          delete next[id];
+        });
+        return next;
+      });
+    }
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.loteId !== loteId);
       try {
@@ -10391,10 +10471,13 @@ BATCH (${numBags}×${kgBag} kg):
       const cosBolsa = bitCosechas.filter((c) => c.bolsaId === bolsa.id);
       const totalBolsa = cosBolsa.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
       const est = EB[bolsa.estado] || EB[""];
-      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => updateBitBolsa(bolsa.id, { foto: null }), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
+      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bagPhotos[bolsa.id] || bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => removeBagPhoto(bolsa).catch(() => setNoticeDlg({ title: "No se pudo quitar la foto", msg: "Intentar de nuevo." })), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bagPhotos[bolsa.id] || bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
         const f = e.target.files?.[0];
         if (!f) return;
-        compressImageToDataURL(f).then((dataUrl) => updateBitBolsa(bolsa.id, { foto: dataUrl })).catch(() => setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Probar con otra imagen." }));
+        compressImageToDataURL(f).catch(() => {
+          setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Probar con otra imagen." });
+          return null;
+        }).then((dataUrl) => dataUrl && saveBagPhoto(bolsa.id, dataUrl).catch(() => setNoticeDlg({ title: "No se pudo guardar la foto", msg: "El almacenamiento del navegador no aceptó la foto. La bolsa y sus datos no cambiaron." })));
         e.target.value = "";
       } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Cosechas" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)" } }, totalBolsa > 0 ? (totalBolsa / 1e3).toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "aria-label": `Registrar cosecha para la bolsa ${bolsa.codigo}`, onClick: () => {
         openHarvestCapture({ bolsaId: bolsa.id, loteId: bitActiveLoteId, codigo: bolsa.codigo, flush: cosBolsa.length + 1, fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0], pesoFresco: "", calidad: "", observaciones: "" });

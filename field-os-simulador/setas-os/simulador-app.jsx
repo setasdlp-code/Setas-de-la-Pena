@@ -128,6 +128,12 @@ async function downloadPrototypeBackup(prefix){
   try{
     if(window.SetasFieldEventQueue)db=await window.SetasFieldEventQueue.initializeQueue();
     const data=await SetasPrototype.backup(localStorage,{db,accountId:window.SetasFirebase?.auth?.currentUser?.uid||null});
+    // Las fotos de bolsas viven en IndexedDB: se reinyectan para que el
+    // respaldo siga llevándolas. Al restaurar, la migración las devuelve allí.
+    const photoStore=window.SetasBagPhotos?window.SetasBagPhotos.createStore():null;
+    if(photoStore&&photoStore.available&&data.collections&&data.collections.sdp_bit_bolsas){
+      data.collections.sdp_bit_bolsas=window.SetasBagPhotos.withPhotos(data.collections.sdp_bit_bolsas,await photoStore.getAll());
+    }
     const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download=prefix+new Date().toISOString().slice(0,10)+'.json';a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -7276,6 +7282,52 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [bitBolsas,setBitBolsas]=useState([]);
   const bitBolsasEditRef=useRef(bitBolsas);
   useEffect(()=>{bitBolsasEditRef.current=bitBolsas;},[bitBolsas]);
+  // Fotos de bolsas: viven en IndexedDB (bag-photo-store.js), fuera de la cuota
+  // de ~5 MB de localStorage que comparten lotes, bolsas y la cola de sync.
+  // bagPhotos es { bolsaId: dataUrl }. Sin IndexedDB (modo privado) se conserva
+  // el comportamiento anterior: la foto queda en línea en la bolsa.
+  const bagPhotoStoreRef=useRef(null);
+  if(bagPhotoStoreRef.current===null) bagPhotoStoreRef.current=(typeof window!=='undefined'&&window.SetasBagPhotos)?window.SetasBagPhotos.createStore():false;
+  const [bagPhotos,setBagPhotos]=useState({});
+  useEffect(()=>{
+    const store=bagPhotoStoreRef.current;if(!store||!store.available) return;
+    let alive=true;
+    store.getAll().then(saved=>{if(alive) setBagPhotos(prev=>({...saved,...prev}));}).catch(()=>{});
+    return ()=>{alive=false;};
+  },[]);
+  // Migración: toda foto que llegue en línea (datos previos, un respaldo
+  // restaurado) pasa a IndexedDB y solo después de guardarla se quita de la
+  // bolsa. Si el guardado falla, la foto sigue en línea: nunca se pierde.
+  useEffect(()=>{
+    const store=bagPhotoStoreRef.current;if(!store||!store.available) return;
+    const {inline}=window.SetasBagPhotos.splitInlinePhotos(bitBolsas);
+    if(!Object.keys(inline).length) return;
+    let alive=true;
+    store.putMany(inline).then(()=>{
+      if(!alive) return;
+      setBagPhotos(prev=>({...prev,...inline}));
+      const upd=bitBolsasEditRef.current.map(b=>{
+        if(!b||!inline[b.id]||b.foto!==inline[b.id]) return b;
+        const {foto,...rest}=b;return rest;
+      });
+      try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){return;}
+      bitBolsasEditRef.current=upd;
+      setBitBolsas(upd);
+    }).catch(()=>{});
+    return ()=>{alive=false;};
+  },[bitBolsas]);
+  const saveBagPhoto=(bolsaId,dataUrl)=>{
+    const store=bagPhotoStoreRef.current;
+    if(!store||!store.available) return Promise.resolve(updateBitBolsa(bolsaId,{foto:dataUrl}));
+    return store.putMany({[bolsaId]:dataUrl}).then(()=>{setBagPhotos(prev=>({...prev,[bolsaId]:dataUrl}));return true;});
+  };
+  const removeBagPhoto=bolsa=>{
+    const store=bagPhotoStoreRef.current;
+    const drop=()=>setBagPhotos(prev=>{if(!(bolsa.id in prev)) return prev;const next={...prev};delete next[bolsa.id];return next;});
+    if(bolsa.foto) updateBitBolsa(bolsa.id,{foto:null});
+    if(!store||!store.available){drop();return Promise.resolve();}
+    return store.removeMany([bolsa.id]).then(drop);
+  };
   const [bitCosechas,setBitCosechas]=useState([]);
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
@@ -9559,7 +9611,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     runLanzamientoProduccion();
   });
 
-  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Eliminar fotos de bolsas antiguas (clic sobre la foto para quitarla) y volver a intentar.'});
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
   // guardado local y la confirmación de la interfaz ya ocurrieron antes de
   // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
@@ -9785,6 +9837,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
     setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    // Las fotos de las bolsas borradas salen también de IndexedDB.
+    if(bagPhotoStoreRef.current&&bagPhotoStoreRef.current.available&&bolsaIds.length){
+      publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(()=>{}));
+      setBagPhotos(prev=>{const next={...prev};bolsaIds.forEach(id=>{delete next[id];});return next;});
+    }
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
     if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
     // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
@@ -14092,9 +14149,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <BagObservationEditor bolsa={bolsa} onSave={updateBitBolsa}/>
                             </td>
                             <td data-label="Foto" style={{textAlign:'center'}}>
-                              {bolsa.foto
-                                ?<button type="button" className="inv-photo-remove" onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} aria-label={`Quitar foto de la bolsa ${bolsa.codigo}`} title="Quitar foto"><img src={bolsa.foto} alt="" aria-hidden="true" width="28" height="28"/></button>
-                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Probar con otra imagen.'}));e.target.value='';}}/></label>}
+                              {(bagPhotos[bolsa.id]||bolsa.foto)
+                                ?<button type="button" className="inv-photo-remove" onClick={()=>removeBagPhoto(bolsa).catch(()=>setNoticeDlg({title:'No se pudo quitar la foto',msg:'Intentar de nuevo.'}))} aria-label={`Quitar foto de la bolsa ${bolsa.codigo}`} title="Quitar foto"><img src={bagPhotos[bolsa.id]||bolsa.foto} alt="" aria-hidden="true" width="28" height="28"/></button>
+                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).catch(()=>{setNoticeDlg({title:'No se pudo procesar la foto',msg:'Probar con otra imagen.'});return null;}).then(dataUrl=>dataUrl&&saveBagPhoto(bolsa.id,dataUrl).catch(()=>setNoticeDlg({title:'No se pudo guardar la foto',msg:'El almacenamiento del navegador no aceptó la foto. La bolsa y sus datos no cambiaron.'})));e.target.value='';}}/></label>}
                             </td>
                             <td data-label="Cosechas">
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
