@@ -75,6 +75,14 @@ const report = { checks: [], errors: [] };
       if(status===404) assert.match(await response.text(),/No encontramos esta página/);
       assert.equal(response.headers()['x-robots-tag'],'noindex, nofollow');
     }
+    for (const slug of ['shiitake', 'melena-de-leon', 'eryngii']) {
+      for (const suffix of ['', '.html']) {
+        const response = await context.request.get(base + 'especies/' + slug + suffix);
+        assert.equal(response.status(), 200);
+        assert.equal(response.headers()['x-robots-tag'], undefined);
+        assert.ok(!/<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(await response.text()));
+      }
+    }
     for (const retired of ['proyecto', 'proyecto.html']) {
       const response = await context.request.get(base + retired + '?pairing=bricolage', {maxRedirects: 0});
       assert.equal(response.status(), 301);
