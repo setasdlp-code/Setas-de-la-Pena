@@ -47,6 +47,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../substrate-catalog.js",
   "../substrate-analysis.js",
   "../substrate-diagnosis.js",
+  // Datos y generadores de texto extraídos del JSX; sin dependencias de carga.
+  "../species-editorial.js",
+  "../iot-firmware.js",
   "../scoring.js",
   "../bitacora-model.js",
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada
