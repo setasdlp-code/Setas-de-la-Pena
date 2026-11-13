@@ -12468,8 +12468,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const CAMERA_TO_ROOM={incub:'incubacion_01',martha:'martha_01',cloudlab:'cloudlab_844'};
 
     // Obtener lotes activos alojados en esta sala
-    const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
-    const mainLote = lotesEnSala[0] || bitLotes[0];
+    // Un lote sin sala no se atribuye a ninguna (antes caía en martha_01 y, con la
+    // sala vacía, se tomaba el primer lote de la Bitácora): las bandas de clima se
+    // evaluaban contra una especie que podía no estar en la sala.
+    const lotesEnSala = roomStateApi ? roomStateApi.lotesInRoom(bitLotes, selectedClimateRoom) : [];
+    const lotesSinSala = roomStateApi ? roomStateApi.lotesWithoutRoom(bitLotes) : [];
+    const mainLote = lotesEnSala[0] || null;
     const activeSpeciesInRoom = Array.from(new Set(
       lotesEnSala.map(l => l.especie || l.speciesKey || l.sKey).filter(Boolean)
     ));
@@ -13138,6 +13142,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)',marginTop:2}}>
               Nodo IoT: <code>{room.device}</code> · Sensores: {room.sensors} · Altitud: {room.altitude}
             </div>
+            {lotesSinSala.length>0 && (
+              <div data-testid="climate-lotes-sin-sala" role="status" style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--accent-terracotta-dark)',marginTop:4}}>
+                {lotesSinSala.length===1?'1 lote activo sin sala asignada':`${lotesSinSala.length} lotes activos sin sala asignada`} ({lotesSinSala.map(l=>l.codigo||l.id).join(', ')}): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora.
+              </div>
+            )}
             {roomLive && roomLive.health && (
               <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)',marginTop:4}}>
                 <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-ok)':roomLive.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
@@ -19193,7 +19202,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   {(() => {
                     const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
-                    const targetRoomBatches = bitLotes.filter(l => (l.sala === f.sala || l.ubicacion === f.sala || (!l.sala && f.sala === 'martha_01')) && !['completado','descartado'].includes(l.estado));
+                    const targetRoomBatches = (typeof window!=='undefined' && window.SetasRoomState) ? window.SetasRoomState.lotesInRoom(bitLotes, f.sala) : [];
                     const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map(l => l.especie || l.speciesKey).filter(Boolean)));
                     const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
                     const coCultAssignOpt = assignedSpeciesList.length > 1

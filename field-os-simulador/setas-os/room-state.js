@@ -67,6 +67,22 @@
     return lote.lifecycleState || 'inoculated';
   };
 
+  /** Sala declarada del lote, en cualquiera de sus tres alias legados; null si no tiene. */
+  const loteRoomId = lote => (lote && (lote.sala || lote.ubicacion || lote.roomId)) || null;
+  const isLoteActive = lote => !!lote && !TERMINAL_LOTE_STATES.includes(resolveLoteState(lote));
+
+  /**
+   * Lotes activos físicamente en una sala. Un lote sin sala NO se atribuye a
+   * ninguna: asumir una por defecto haría evaluar el clima de esa sala contra
+   * la especie de un lote que quizá no está ahí.
+   */
+  const lotesInRoom = (lotes, roomId) =>
+    (Array.isArray(lotes) ? lotes : []).filter(l => isLoteActive(l) && loteRoomId(l) === roomId);
+
+  /** Lotes activos sin sala asignada: pendientes de que el operario los ubique. */
+  const lotesWithoutRoom = lotes =>
+    (Array.isArray(lotes) ? lotes : []).filter(l => isLoteActive(l) && !loteRoomId(l));
+
   /** Reusa el vocabulario de etiquetas de batch-sheet.js; si no está cargado, muestra el código crudo. */
   const stateLabelFor = state => {
     const batchSheet = batchSheetRef();
@@ -348,6 +364,8 @@
     TELEMETRY_STALE_MIN,
     buildRoomState,
     buildRoomBoard,
+    lotesInRoom,
+    lotesWithoutRoom,
   };
 
   if (isNode) module.exports = api;
