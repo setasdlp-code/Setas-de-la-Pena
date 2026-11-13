@@ -24,6 +24,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-11-12
+
+| Tipo | Descripción |
+|---|---|
+| `[DECISION]` | DEC-023: la incubadora piloto se instrumenta por ahora sin sondas de núcleo ni mapa DS18B20. Aire continuo con SHT45 breakout protegido, Inkbird como testigo y superficies con termómetro infrarrojo en cada visita. Riesgo aceptado para el microlote de cuatro bolsas; no cambia protecciones físicas, firmware ni consignas. Se revisa antes de la carga de 30 bloques. |
+
 ### 2026-11-08
 
 | Tipo | Descripción |

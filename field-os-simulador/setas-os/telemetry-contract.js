@@ -43,6 +43,8 @@
       quality,
       quality_reasons: [...new Set(reasons)],
       calibration_id: raw.calibration_id || null,
+      // Dónde está montado el sensor dentro de la sala (declarado, no medido).
+      position: typeof raw.position === 'string' && raw.position.trim() ? raw.position.trim().slice(0, 40) : null,
       source: raw.source || 'measured',
       co2_pressure_compensated: raw.co2_pressure_compensated === true,
       received_at: normalizeTimestamp(raw.received_at),

@@ -729,6 +729,46 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 
 ---
 
+## DEC-023 — Incubadora piloto sin sondas de núcleo por ahora (riesgo aceptado)
+
+**Fecha:** 2026-11-12
+**Estado:** Activa
+**Área:** Automatización / Producción
+
+**Problema:** `04_facility/incubation.md`, `05_equipment/environmental_control.md`, la asignación de sensores del 2026-11-11 y `esphome/incubadora_piloto.yaml` piden sondas DS18B20 para el mapa térmico y el núcleo de un bloque indicador. El inventario no confirma ninguna sonda en propiedad y el propietario considera su costo demasiado alto para esta etapa. Sin una decisión escrita, el microlote de cuatro bolsas quedaría bloqueado por un requisito que no se va a cumplir pronto, o se operaría contradiciendo los documentos.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Comprar las sondas antes de instrumentar la incubadora | Cumple los documentos tal como están; detecta calor interno entre visitas | Costo que el propietario no asume ahora; retrasa la instrumentación |
+| Operar sin núcleo: aire continuo y superficies medidas a mano | Usa equipo ya disponible más un termómetro infrarrojo; la incubadora se instrumenta ya | El calor interno del bloque no se observa; nada vigila las superficies entre visitas |
+
+**Decisión:** Por ahora la incubadora piloto se instrumenta sin sondas de núcleo ni mapa térmico DS18B20. Se mide:
+
+- aire a la altura de la carga, de forma continua, con un SHT45 breakout protegido (nodo `setas-incubacion-01`, sala `incubacion_01`);
+- aire en un segundo punto con un Inkbird, como testigo independiente con registro manual;
+- superficies con termómetro infrarrojo en cada visita: un punto marcado por bolsa y parches fijos de cinta mate sobre acero, juntas, apoyos de madera y piso, porque el metal desnudo y el Mylar falsean la lectura.
+
+Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bolsa, visita contra visita), no temperaturas de núcleo. Se registran por bloque con fecha, hora y operador.
+
+**Lo que esta decisión no cambia:**
+
+- Las protecciones físicas independientes (termostato de corte, fusible térmico, detección de ventilador detenido, diferencial) y la revisión eléctrica previa a cualquier prueba con tensión siguen siendo obligatorias. El infrarrojo no sustituye ninguna.
+- `esphome/incubadora_piloto.yaml` sigue siendo de banco. Exige cuatro DS18B20 y trata la ausencia de núcleo como alarma; debe adaptarse a control por aire y revisarse antes de usarse. Esta decisión no modifica firmware.
+- No se inventan lecturas de núcleo ni de sustrato. En Setas OS y en la ficha del lote el núcleo figura como «sin sensor», no como «en rango».
+- No aprueba consignas ni bandas de incubación.
+
+**Justificación:** Solución más simple aceptable (CANON §16) para una carga de cuatro bolsas separadas, donde el calor acumulado entre bloques es un riesgo menor que con la carga de 30 bloques. La ausencia del dato se declara en lugar de completarse con una estimación (`06_operations/quality_control.md`, Principios).
+
+**Riesgo aceptado:** un sobrecalentamiento interno entre visitas no se detecta. Una colonización lenta o un bloque dañado no podrá atribuirse ni descartarse como efecto térmico; se registra como dato faltante.
+
+**Criterio de revisión:** antes de cargar más de cuatro bolsas o de calificar la incubadora con 30 bloques (DOC-0122/DOC-0123); si una bolsa marca de forma repetida una superficie claramente más caliente que las demás o que el aire; si aparece daño compatible con calor; o si se consigue al menos una sonda para un bloque indicador.
+
+**Documentos afectados:** `05_equipment/asignacion_sensores_tres_modulos_2026-11-11.md`, `09_research/guia_prototipo_incubadora_placas_borrador.md`, `CHANGELOG.md`. Quedan sin modificar, y prevalecen en lo no cubierto aquí, `04_facility/incubation.md`, `05_equipment/environmental_control.md` y `esphome/incubadora_piloto.yaml`.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown

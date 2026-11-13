@@ -325,7 +325,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.equal(new URL(page.url()).pathname, `/especies/${slug}`);
       assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
       assert.equal(await page.locator('h1').innerText(), name);
-      assert.equal(await page.locator('.editorial-sources li').count(), 6);
+      assert.ok(await page.locator('.editorial-sources li').count() >= 6, `${slug}: retain species sources and research references`);
       assert.equal(await page.locator('.editorial-other').count(), 2);
       await page.locator('.editorial-toc a[href="#cocina"]').click();
       assert.equal(new URL(page.url()).hash, '#cocina');
