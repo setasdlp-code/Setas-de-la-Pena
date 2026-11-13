@@ -763,6 +763,12 @@ function LabExtraction() {
                 <span style={{ display: "block", fontSize: "0.8rem", color: "var(--ink-600)" }}>
                   Tasa: {yieldPct}% s/biomasa
                 </span>
+                {/* Ningún factor de rendimiento ni costo de solvente tiene fuente en
+                    knowledge_base/ (ver scripts/quality/check_kb_sync.py): se muestran
+                    como referencia sin verificar, nunca como rendimiento medido. */}
+                <span data-testid="extraction-unverified" style={{ display: "block", fontSize: "0.75rem", color: "var(--accent-terracotta-dark)", marginTop: 4 }}>
+                  Factor de rendimiento y costo de solvente sin fuente verificada: referencia, no una medición de esta finca.
+                </span>
               </div>
 
               <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>

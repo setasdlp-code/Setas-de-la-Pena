@@ -82,3 +82,8 @@ test("Lab Extraction — calculations, yields, costs and component integration",
     assert.match(shellCode, /SIM_WORKSPACE = \{[^}]*bioCheck:'Producción'[^}]*labExtraction:'Producción'/);
   });
 });
+
+test("el Laboratorio de extracción declara que sus factores no tienen fuente verificada", () => {
+  const app = fs.readFileSync(path.join(__dirname, "simulador-app.jsx"), "utf8");
+  assert.match(app, /data-testid="extraction-unverified"[\s\S]{0,300}sin fuente verificada/);
+});
