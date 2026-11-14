@@ -17,6 +17,8 @@ related_documents:
   - 06_operations/production_schedule.md
 ---
 
+> **Estado 2026-11-09:** las secciones 5 (Fase 1–2) y 6 (unit economics) y el KPI de precio fueron construidos sobre *P. djamor* / *P. ostreatus*, retirados del programa activo (DEC-013: *Lentinula edodes* como especie de arranque; ver `economics.md` y `pricing.md`). Se conservan solo como historial y **no deben usarse**. Rigen DEC-020 (margen mínimo 40 % sobre precio neto, solo fresco) y DEC-022 (sin formatos transformados; deshidratado entero condicionado). Los precios de Fase 3 abajo son referencias de mercado fuera de programa, no objetivos. Los precios vigentes son benchmarks de mercado en `09_research/intake/precios_competitivos_shiitake_melena_2026-11-09.md`, no precios aprobados.
+
 # Executive Summary
 Modelo de negocio integral para Setas de la Peña. Define la propuesta de valor, segmentos de cliente, canales, estructura de costos y flujo de ingresos. Incluye unit economics validados con datos de investigación de mercado agosto 2026.
 
@@ -40,7 +42,7 @@ Modelo de negocio integral para Setas de la Peña. Define la propuesta de valor,
 ## 3. Propuesta de Valor
 - Setas gourmet **frescas** (cosechadas < 24h), cultivadas en **Tenjo** con trazabilidad lote-a-lote
 - Producción con **automatización IoT** (ESP32/HA) = consistencia de calidad
-- **Variedades premium** que el mercado masivo no ofrece: Pink Oyster, Lion's Mane, Shiitake
+- **Variedades premium** del programa activo: Shiitake y Lion's Mane (Pink Oyster retirada del programa; ya hay vendedores locales de shiitake y melena, así que el diferenciador es calidad y consistencia)
 - Sin pesticidas, sin transgénicos — proceso documentado y auditable
 - **Marca "Sombra y Silencio"** — posicionamiento premium desde el día 1
 
@@ -48,21 +50,21 @@ Modelo de negocio integral para Setas de la Peña. Define la propuesta de valor,
 
 | Canal | Cómo entrar | Costo de entrada | Margen |
 |-------|-------------|-------------------|--------|
-| Restaurantes B2B | Muestra gratuita al chef (250–500g) + presentación técnica | Bajo (costo producto) | Alto ($22K–35K/kg) |
+| Restaurantes B2B | Muestra gratuita al chef (250–500g) + presentación técnica | Bajo (costo producto) | Alto (sin precio observado de chefs; hipótesis shiitake 55K–65K/kg, ver nota de precios) |
 | Plataformas orgánicas | Inscripción en La Canasta, Sembrando Confianza, Huerta Don Iván | Bajo (registro) | Medio-alto |
-| Mercados campesinos | Inscripción gratuita — Secretaría Desarrollo Económico (portal *Conexión*). RUT + cert. Alcaldía Tenjo | Gratis | Medio ($18K–25K/kg) |
+| Mercados campesinos | Inscripción gratuita — Secretaría Desarrollo Económico (portal *Conexión*). RUT + cert. Alcaldía Tenjo | Gratis | Medio (sin precio observado en mercados campesinos) |
 | D2C / Redes sociales | Instagram + WhatsApp + Rappi/MercadoLibre | Bajo | Medio-alto |
 
 ## 5. Flujo de Ingresos
 
-### Fase 1 — Validación (meses 1–3)
+### Fase 1 — Validación (meses 1–3) — RETIRADO (*P. djamor*, precios sin fuente)
 | Producto | Precio/kg | Volumen semanal | Ingreso semanal |
 |----------|-----------|-----------------|-----------------|
 | P. djamor fresco (Grade A) | $25,000 COP | 8–10 kg | $200K–250K COP |
 | P. djamor fresco (Grade B) | $18,000 COP | 2–3 kg | $36K–54K COP |
 | **Total semanal estimado** | | | **$236K–304K COP** |
 
-### Fase 2 — Escalamiento (meses 4–12, 4 módulos)
+### Fase 2 — Escalamiento (meses 4–12, 4 módulos) — RETIRADO (*P. djamor* / *P. ostreatus*)
 | Producto | Precio/kg | Volumen semanal | Ingreso semanal |
 |----------|-----------|-----------------|-----------------|
 | P. djamor fresco | $28,000 COP promedio | 20–25 kg | $560K–700K COP |
@@ -70,12 +72,13 @@ Modelo de negocio integral para Setas de la Peña. Define la propuesta de valor,
 | **Total semanal estimado** | | | **$780K–1,030K COP** |
 
 ### Fase 3 — Diversificación (año 2+)
-- Lion's Mane fresco: $35K–50K COP/kg
-- Deshidratados: $80K–150K COP/kg
-- Extractos (requiere INVIMA como suplemento dietario): $150K–400K COP/100g
+Referencias de listados 2026-11 (precios de lista, no aprobados; fuente: `09_research/intake/precios_competitivos_shiitake_melena_2026-11-09.md`):
+- Lion's Mane fresco: 106K–180K COP/kg en D2C (n=4, mediana ≈127K)
+- Shiitake seco: 215K–304K COP/kg (≥250 g); sin listados de melena seca
+- Extractos (requiere registro INVIMA como suplemento dietario): cápsulas ×60 ≈82K–84K COP; el rango previo de 150K–400K/100 g no tiene fuente
 - Kits de cultivo doméstico: $35K–60K COP/kit
 
-## 6. Estructura de Costos
+## 6. Estructura de Costos — RETIRADO (basado en *P. djamor*; rehacer con datos del lote 1 de shiitake)
 
 ### Unit Economics — 1 Lote de 10 bloques (1 módulo)
 
@@ -133,7 +136,7 @@ Modelo de negocio integral para Setas de la Peña. Define la propuesta de valor,
 | BE (Biological Efficiency) | Por lote | ≥85% |
 | Tasa de contaminación | Por lote | <10% |
 | Costo variable / kg | Mensual | <$10,000 COP |
-| Precio promedio de venta / kg | Mensual | >$22,000 COP |
+| Precio promedio de venta / kg | Mensual | Por definir (>costo por kg vendible + margen aprobado, según `pricing.md`) |
 | Clientes activos restaurante | Mensual | ≥3 |
 | Yield semanal (kg) | Semanal | ≥8 kg |
 
@@ -142,7 +145,7 @@ Modelo de negocio integral para Setas de la Peña. Define la propuesta de valor,
 | Fase | Categoría INVIMA | Normativa | Claims permitidos |
 |------|-----------------|-----------|-------------------|
 | 1–2 | **Alimento** | Resolución 2674/2013 | Nutricionales: "alto en proteína", "fuente de fibra" |
-| 3+ | **Suplemento dietario** | Decreto 3249/2006 | Funcionales: "apoya el sistema inmune" (con soporte FDA/EFSA/Codex) |
+| 3+ | **Suplemento dietario** | Decreto 3249/2006 (modificado por Decretos 3863/2008 y 272/2009; INVIMA lo citaba como vigente en alertas de oct. y dic. 2025; verificado 2026-11-09 en fuentes secundarias, confirmar con asesor antes de radicar) | Funcionales: "apoya el sistema inmune" (con soporte FDA/EFSA/Codex) |
 
 > ⚠️ **Colombia NO tiene categoría legal de "alimento funcional".** No usar claims de salud hasta tener registro como suplemento dietario.
 

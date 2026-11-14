@@ -19,20 +19,14 @@ test('Setas OS — Hub de Integración IoT de Bajo Costo (ESP32 / Sonoff / Webho
     assert.match(jsx, /Reglas de Automatización/);
   });
 
-  await t.test('Firmware generator supports ESPHome YAML, Arduino C++ (.ino), and cURL test payloads', () => {
+  await t.test('el Hub consume los generadores de firmware desde iot-firmware.js', () => {
+    assert.match(jsx, /require\('\.\/iot-firmware\.js'\)/);
     assert.match(jsx, /generateESPHomeYaml/);
     assert.match(jsx, /generateArduinoIno/);
     assert.match(jsx, /generateCurlPayload/);
-    assert.match(jsx, /esphome/);
-    assert.match(jsx, /sht3xd|scd30|dht|ds18b20/);
+    // El comportamiento de los generadores se prueba en iot-firmware.test.js.
   });
 
-  await t.test('ESPHome firmware never exports fallback or OTA passwords embedded in source', () => {
-    assert.match(jsx, /password: !secret fallback_password/);
-    assert.match(jsx, /password: !secret ota_password/);
-    assert.doesNotMatch(jsx, /password: "setas-recovery"/);
-    assert.doesNotMatch(jsx, /password: "setas-ota-secure"/);
-  });
 
   await t.test('Webhook tester parses and validates incoming payloads with canonical telemetry contract', () => {
     assert.match(jsx, /handleTestWebhook/);

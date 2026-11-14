@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-13
 ---
 
 # CHANGELOG
@@ -23,6 +23,20 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-13
+
+| Tipo | Descripción |
+|---|---|
+| `[ARCH]` | CANON v1.4 (DEC-024): nueva §16.1 de desviación documentada; las reglas de secuencia de §4, §5, §6, §17 y §18 pasan a ser valores por defecto; las decisiones de sensores salen de §7 hacia DEC-002/DEC-003; el registro de decisiones es `DECISIONS.md` (§11, §16). Sin cambios en parámetros, SOP, consignas ni precedencia. |
+| `[ARCH]` | `knowledge_base/AGENTS.md`: contexto a cargar según la tarea y matriz de autorización por clase de cambio. `AGENTS.md` raíz reescrito como contrato neutral de herramienta, con tabla de invariantes científicas. |
+| `[KB]` | `ECC/` y `field_os/` movidos a `archive/`; dejan de ser fuente de verdad y de ejecutarse en la compuerta de calidad. |
+
+### 2026-11-12
+
+| Tipo | Descripción |
+|---|---|
+| `[DECISION]` | DEC-023: la incubadora piloto se instrumenta por ahora sin sondas de núcleo ni mapa DS18B20. Aire continuo con SHT45 breakout protegido, Inkbird como testigo y superficies con termómetro infrarrojo en cada visita. Riesgo aceptado para el microlote de cuatro bolsas; no cambia protecciones físicas, firmware ni consignas. Se revisa antes de la carga de 30 bloques. |
 
 ### 2026-11-08
 

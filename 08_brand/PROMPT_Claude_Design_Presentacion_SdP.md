@@ -63,7 +63,7 @@ Registro **técnico-agronómico & gastronómico de alta gama**: sobrio, honesto,
 7. **El Knowledge System — arquitectura** — El repositorio es el sistema nervioso de la operación. Tres dominios que nunca se mezclan:
    - `knowledge_base/` — conocimiento organizacional validado
    - `operations/` — evidencia operativa primaria (logs, lotes, sensores, experimentos)
-   - `field_os/` — desarrollo de producto de software
+   - `field-os-simulador/setas-os/` — desarrollo de producto de software
    Con orden de autoridad documental explícito: CANON → guías editoriales → flujo de sistema → protocolo de agentes IA → estándar de identificadores → documentos de dominio → documentos operativos.
 
 8. **Dominios de conocimiento** — Doce dominios numerados, presentados como cuadrícula sobria: 00 gobernanza y arquitectura · 01 especies · 02 sustratos · 03 spawn y laboratorio · 04 instalación · 05 equipos · 06 operaciones · 07 negocio · 08 marca · 09 investigación · 10 workflows de IA · 11 fuentes.

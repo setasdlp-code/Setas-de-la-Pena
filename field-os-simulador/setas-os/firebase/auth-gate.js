@@ -47,6 +47,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../substrate-catalog.js",
   "../substrate-analysis.js",
   "../substrate-diagnosis.js",
+  // Datos y generadores de texto extraídos del JSX; sin dependencias de carga.
+  "../species-editorial.js",
+  "../iot-firmware.js",
   "../scoring.js",
   "../bitacora-model.js",
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada
@@ -110,6 +113,8 @@ const PROTECTED_APP_SCRIPTS = [
   "../room-cycle.js",
   "../room-cycle-targets.js",
   "../room-state.js",
+  // Fotos de bolsas en IndexedDB (fuera de la cuota de localStorage).
+  "../bag-photo-store.js",
   "../provenance.js",
   "../perito-context.js",
   "../recipe-optimizer.js",

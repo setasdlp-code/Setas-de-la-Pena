@@ -41,6 +41,8 @@ const MODULES = [
   { path: '../substrate-catalog.js', names: ['SPP', 'INGS', 'CATS', 'PRESETS'] },
   { path: '../substrate-analysis.js', names: ['analyze', 'EB_PENALTY_BALANCE_BAND'] },
   { path: '../substrate-diagnosis.js', names: ['diagnose'] },
+  { path: '../species-editorial.js', names: ['SPP_DIFFICULTY', 'SPP_DETAILS', 'SPECIES_GASTRONOMY', 'SPP_SUBSTRATE_GUIDE', 'SPP_FAMILY', 'SPP_HR', 'SPP_CODE'] },
+  { path: '../iot-firmware.js', names: ['DEFAULT_IOT_NODES', 'generateESPHomeYaml', 'generateArduinoIno', 'generateCurlPayload'] },
 ];
 
 const fromModules = {};

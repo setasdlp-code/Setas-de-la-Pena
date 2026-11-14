@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5581fc40d7dbc3dc5f477baee9f681b04a868bdc991e9bfbb423385402401afa
+// source-hash: 4a5b177b34145dc6c711281b9fec8eadc3401e83096263950bf0cecdd478a5da
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -53,6 +53,57 @@ function BagObservationEditor({ bolsa, onSave }) {
       discard();
     }
   } }), /* @__PURE__ */ React.createElement("span", { id: `bag-observation-status-${bolsa.id}`, role: error ? "alert" : "status" }, error || (dirty ? "Borrador sin guardar" : "Registro local · sincronización independiente")), dirty && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save, "aria-label": `Guardar observaciones de ${bolsa.codigo}` }, error ? "Reintentar" : "Guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: discard, "aria-label": `Cancelar observaciones de ${bolsa.codigo}` }, "Cancelar")));
+}
+function BagSurfaceEditor({ bolsa, onSave, operador }) {
+  const [temp, setTemp] = useState("");
+  const [air, setAir] = useState("");
+  const [error, setError] = useState("");
+  const lecturas = Array.isArray(bolsa.lecturasSuperficie) ? bolsa.lecturasSuperficie : [];
+  const last = lecturas[lecturas.length - 1] || null;
+  const save = () => {
+    const result = window.SetasBitacora.appendSurfaceReading(bolsa, { tempC: temp, airC: air, operador });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    if (!onSave(bolsa.id, { lecturasSuperficie: result.lecturasSuperficie }, { silent: true })) {
+      setError("No se pudo guardar. Los valores siguen aquí; reintentar.");
+      return;
+    }
+    setTemp("");
+    setAir("");
+    setError("");
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "bag-observation-editor bag-surface-editor", "data-testid": `bag-surface-${bolsa.codigo}` }, /* @__PURE__ */ React.createElement("span", { "data-testid": "bag-surface-last" }, last ? `${last.tempC} °C${last.deltaC === null ? "" : ` · ${last.deltaC >= 0 ? "+" : ""}${last.deltaC} °C vs aire`} · ${new Date(last.at).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · ${lecturas.length} lectura${lecturas.length === 1 ? "" : "s"}` : "Sin lecturas de superficie"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("input", { name: `bagSurfaceTemp-${bolsa.id}`, "aria-label": `Temperatura de superficie de la bolsa ${bolsa.codigo} en grados Celsius`, type: "number", inputMode: "decimal", step: "0.1", placeholder: "Superficie °C", value: temp, autoComplete: "off", onChange: (e) => {
+    setTemp(e.target.value);
+    setError("");
+  }, onKeyDown: (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    }
+  } }), /* @__PURE__ */ React.createElement("input", { name: `bagSurfaceAir-${bolsa.id}`, "aria-label": `Temperatura del aire junto a la bolsa ${bolsa.codigo} en grados Celsius, opcional`, type: "number", inputMode: "decimal", step: "0.1", placeholder: "Aire °C (opcional)", value: air, autoComplete: "off", onChange: (e) => {
+    setAir(e.target.value);
+    setError("");
+  }, onKeyDown: (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    }
+  } })), error && /* @__PURE__ */ React.createElement("span", { role: "alert" }, error), temp !== "" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save, "aria-label": `Registrar superficie de ${bolsa.codigo}` }, "Registrar")));
+}
+function RoomDeviceReadings({ roomLive }) {
+  const devices = Object.values(roomLive && roomLive.devices || {});
+  if (!devices.length) return null;
+  const metrics = [["temperature_c", "T°", "°C"], ["rh_pct", "HR", "%"], ["co2_ppm", "CO₂", " ppm"]];
+  const fmt = (value, unit) => `${Math.round(value * 10) / 10}${unit}`;
+  const spread = roomLive && roomLive.spread || {};
+  return /* @__PURE__ */ React.createElement("div", { "data-testid": "room-device-readings", style: { margin: "12px 0", overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { className: "inv-table", style: { fontSize: 13 } }, /* @__PURE__ */ React.createElement("caption", { style: { textAlign: "left", fontWeight: 700, padding: "4px 0" } }, "Lecturas por sensor"), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Sensor"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Posición"), metrics.map(([m, l]) => /* @__PURE__ */ React.createElement("th", { key: m, scope: "col" }, l)))), /* @__PURE__ */ React.createElement("tbody", null, devices.map((d) => /* @__PURE__ */ React.createElement("tr", { key: d.id, "data-device-id": d.id }, /* @__PURE__ */ React.createElement("th", { scope: "row", style: { fontFamily: "var(--font-mono)", fontWeight: 400 } }, d.id), /* @__PURE__ */ React.createElement("td", null, d.position || "Sin declarar"), metrics.map(([m, , u]) => {
+    const r = d.latest[m];
+    if (!r) return /* @__PURE__ */ React.createElement("td", { key: m, "data-metric": m }, "—");
+    const stale = d.freshMetrics[m] !== true;
+    return /* @__PURE__ */ React.createElement("td", { key: m, "data-metric": m, "data-freshness": stale ? "stale" : "fresh" }, fmt(r.value, u), stale && /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11, color: "var(--ink-2)" } }, "antigua · ", liveAgeLabel(d.metricAgeMs[m])));
+  }))), devices.length > 1 && /* @__PURE__ */ React.createElement("tr", { "data-testid": "room-device-spread" }, /* @__PURE__ */ React.createElement("th", { scope: "row", colSpan: 2 }, "Diferencia entre posiciones"), metrics.map(([m, , u]) => /* @__PURE__ */ React.createElement("td", { key: m, "data-metric": m }, spread[m] ? fmt(spread[m].delta, u) : "—"))))));
 }
 function ReadinessEvidenceForm({ check, onSave }) {
   const [form, setForm] = useState({ requirementId: check.id, status: "unknown", reviewer: check.record?.reviewer || "", reference: check.record?.reference || "", notes: "", details: {} });
@@ -177,6 +228,10 @@ async function downloadPrototypeBackup(prefix) {
   try {
     if (window.SetasFieldEventQueue) db = await window.SetasFieldEventQueue.initializeQueue();
     const data = await SetasPrototype.backup(localStorage, { db, accountId: window.SetasFirebase?.auth?.currentUser?.uid || null });
+    const photoStore = window.SetasBagPhotos ? window.SetasBagPhotos.createStore() : null;
+    if (photoStore && photoStore.available && data.collections && data.collections.sdp_bit_bolsas) {
+      data.collections.sdp_bit_bolsas = window.SetasBagPhotos.withPhotos(data.collections.sdp_bit_bolsas, await photoStore.getAll());
+    }
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
@@ -304,131 +359,131 @@ function BioCheck() {
   )))));
 }
 const DEFAULT_EXTRACTION_FACTORS = {
-  p_ostreatus_gris: {
-    name: "Orellana Gris",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Doble)",
-        yield_factor: 0.12,
-        cost_per_liter_solvent: 18e3,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 48,
-        optimal_temp_c: 25,
-        notes: "Extracción clásica para polisacáridos y compuestos fenólicos."
+  "p_ostreatus_gris": {
+    "name": "Orellana Gris",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Doble)",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 18e3,
+        "optimal_alcohol_pct": 70,
+        "optimal_time_hrs": 48,
+        "optimal_temp_c": 25,
+        "notes": "Extracción clásica para polisacáridos y compuestos fenólicos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Caliente",
-        yield_factor: 0.15,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3,
-        optimal_temp_c: 85,
-        notes: "Máxima extracción de beta-glucanos solubles en agua."
+      "acuosa": {
+        "name": "Decocción Acuosa Caliente",
+        "yield_factor": 0.15,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3,
+        "optimal_temp_c": 85,
+        "notes": "Máxima extracción de beta-glucanos solubles en agua."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.18,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 60,
-        optimal_time_hrs: 0.75,
-        optimal_temp_c: 45,
-        notes: "Rendimiento acelerado por cavitación acústica."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.18,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 60,
+        "optimal_time_hrs": 0.75,
+        "optimal_temp_c": 45,
+        "notes": "Rendimiento acelerado por cavitación acústica."
       }
     }
   },
-  shiitake: {
-    name: "Shiitake",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
-        yield_factor: 0.14,
-        cost_per_liter_solvent: 18e3,
-        optimal_alcohol_pct: 65,
-        optimal_time_hrs: 72,
-        optimal_temp_c: 25,
-        notes: "Equilibrio entre lentinano soluble y lípidos bioactivos."
+  "shiitake": {
+    "name": "Shiitake",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
+        "yield_factor": 0.14,
+        "cost_per_liter_solvent": 18e3,
+        "optimal_alcohol_pct": 65,
+        "optimal_time_hrs": 72,
+        "optimal_temp_c": 25,
+        "notes": "Equilibrio entre lentinano soluble y lípidos bioactivos."
       },
-      acuosa: {
-        name: "Decocción Acuosa Fraccionada",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 4,
-        optimal_temp_c: 90,
-        notes: "Extracción térmica prolongada para polisacáridos estructurales."
+      "acuosa": {
+        "name": "Decocción Acuosa Fraccionada",
+        "yield_factor": 0.12,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 4,
+        "optimal_temp_c": 90,
+        "notes": "Extracción térmica prolongada para polisacáridos estructurales."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.2,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 55,
-        optimal_time_hrs: 1,
-        optimal_temp_c: 50,
-        notes: "Mayor rendimiento con menor degradación térmica de compuestos activos."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 55,
+        "optimal_time_hrs": 1,
+        "optimal_temp_c": 50,
+        "notes": "Mayor rendimiento con menor degradación térmica de compuestos activos."
       }
     }
   },
-  lions_mane: {
-    name: "Melena de León",
-    methods: {
-      hidroalcoholica: {
-        name: "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
-        yield_factor: 0.11,
-        cost_per_liter_solvent: 2e4,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 96,
-        optimal_temp_c: 25,
-        notes: "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
+  "lions_mane": {
+    "name": "Melena de León",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
+        "yield_factor": 0.11,
+        "cost_per_liter_solvent": 2e4,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 96,
+        "optimal_temp_c": 25,
+        "notes": "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
       },
-      acuosa: {
-        name: "Decocción Acuosa (Beta-glucanos)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 3.5,
-        optimal_temp_c: 88,
-        notes: "Enfoque inmunomodulador rico en beta-glucanos."
+      "acuosa": {
+        "name": "Decocción Acuosa (Beta-glucanos)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 3.5,
+        "optimal_temp_c": 88,
+        "notes": "Enfoque inmunomodulador rico en beta-glucanos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.16,
-        cost_per_liter_solvent: 24e3,
-        optimal_alcohol_pct: 70,
-        optimal_time_hrs: 1.2,
-        optimal_temp_c: 45,
-        notes: "Preserva diterpenos termosensibles de Hericium."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.16,
+        "cost_per_liter_solvent": 24e3,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 1.2,
+        "optimal_temp_c": 45,
+        "notes": "Preserva diterpenos termosensibles de Hericium. Etanol 80%: óptimo publicado para erinacina A (Valu et al. 2020, diseño Box-Behnken); el 70% anterior era un compromiso de amplio espectro, incoherente con tener un brazo acuoso separado para beta-glucanos."
       }
     }
   },
-  reishi: {
-    name: "Reishi Rojo",
-    methods: {
-      hidroalcoholica: {
-        name: "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
-        yield_factor: 0.09,
-        cost_per_liter_solvent: 22e3,
-        optimal_alcohol_pct: 80,
-        optimal_time_hrs: 120,
-        optimal_temp_c: 28,
-        notes: "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
+  "reishi": {
+    "name": "Reishi Rojo",
+    "methods": {
+      "hidroalcoholica": {
+        "name": "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
+        "yield_factor": 0.09,
+        "cost_per_liter_solvent": 22e3,
+        "optimal_alcohol_pct": 80,
+        "optimal_time_hrs": 120,
+        "optimal_temp_c": 28,
+        "notes": "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
       },
-      acuosa: {
-        name: "Decocción Tradicional 2h",
-        yield_factor: 0.1,
-        cost_per_liter_solvent: 2e3,
-        optimal_alcohol_pct: 0,
-        optimal_time_hrs: 2.5,
-        optimal_temp_c: 95,
-        notes: "Tónico amargo adaptogénico rico en polisacáridos."
+      "acuosa": {
+        "name": "Decocción Tradicional 2h",
+        "yield_factor": 0.1,
+        "cost_per_liter_solvent": 2e3,
+        "optimal_alcohol_pct": 0,
+        "optimal_time_hrs": 2.5,
+        "optimal_temp_c": 88,
+        "notes": "Tónico amargo adaptogénico rico en polisacáridos."
       },
-      ultrasonido: {
-        name: "Extracción Asistida por Ultrasonido (UAE)",
-        yield_factor: 0.13,
-        cost_per_liter_solvent: 25e3,
-        optimal_alcohol_pct: 75,
-        optimal_time_hrs: 1.5,
-        optimal_temp_c: 50,
-        notes: "Ruptura de paredes leñosas para máxima biodisponibilidad."
+      "ultrasonido": {
+        "name": "Extracción Asistida por Ultrasonido (UAE)",
+        "yield_factor": 0.13,
+        "cost_per_liter_solvent": 25e3,
+        "optimal_alcohol_pct": 75,
+        "optimal_time_hrs": 1.5,
+        "optimal_temp_c": 50,
+        "notes": "Ruptura de paredes leñosas para máxima biodisponibilidad."
       }
     }
   }
@@ -697,7 +752,7 @@ function LabExtraction() {
       }
     },
     "+ Registrar Lote de Laboratorio"
-  ))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 } }, "Proyección de Rendimiento & Costos"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Extracto Seco Estimado"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" } }, yieldGrams, " g"), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "Tasa: ", yieldPct, "% s/biomasa")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Costo por Gramo"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--ink-900)", fontFamily: "var(--font-mono, monospace)" } }, "$", costPerGramExtract.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "COP / g extracto puro"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" } }, "Desglose de Costo Operativo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Biomasa fúngica (", biomassGrams, " g):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(biomassCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Solvente & Insumos (", solventLiters, " L):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(solventCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong)", paddingTop: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Costo Total Lote:"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent-terracotta)", fontFamily: "var(--font-mono, monospace)" } }, "$", totalCost.toLocaleString("es-CO"), " COP"))), factors[speciesKey]?.methods[methodKey]?.notes && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "info", size: 12, style: { marginRight: 4 } }), " ", factors[speciesKey].methods[methodKey].notes)))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" } }, "Lotes de Extracción Registrados (", batches.length, ")")), batches.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" } }, "No hay lotes de extracción registrados en almacenamiento local. Configurar los parámetros arriba para generar el primero.") : /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "2px solid var(--border-strong)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "ID Lote"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Método"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Biomasa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Extracto"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Costo Total"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "center" } }, "Acciones"))), /* @__PURE__ */ React.createElement("tbody", null, batches.map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, style: { borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" } }, b.id, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 } }, new Date(b.timestamp).toLocaleDateString("es-CO"))), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, b.speciesName || b.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", background: "var(--paper-200)", padding: "2px 6px", borderRadius: 4 } }, b.methodName || b.methodKey)), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, b.biomassGrams, " g"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" } }, b.yieldGrams, " g (", b.yieldPct, "%)"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, "$", (b.totalCost || 0).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center" } }, /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 } }, "Proyección de Rendimiento & Costos"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Extracto Seco Estimado"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" } }, yieldGrams, " g"), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "Tasa: ", yieldPct, "% s/biomasa"), /* @__PURE__ */ React.createElement("span", { "data-testid": "extraction-unverified", style: { display: "block", fontSize: "0.75rem", color: "var(--accent-terracotta-dark)", marginTop: 4 } }, "Factor de rendimiento y costo de solvente sin fuente verificada: referencia, no una medición de esta finca.")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Costo por Gramo"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--ink-900)", fontFamily: "var(--font-mono, monospace)" } }, "$", costPerGramExtract.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "COP / g extracto puro"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" } }, "Desglose de Costo Operativo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Biomasa fúngica (", biomassGrams, " g):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(biomassCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Solvente & Insumos (", solventLiters, " L):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(solventCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong)", paddingTop: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Costo Total Lote:"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent-terracotta)", fontFamily: "var(--font-mono, monospace)" } }, "$", totalCost.toLocaleString("es-CO"), " COP"))), factors[speciesKey]?.methods[methodKey]?.notes && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "info", size: 12, style: { marginRight: 4 } }), " ", factors[speciesKey].methods[methodKey].notes)))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" } }, "Lotes de Extracción Registrados (", batches.length, ")")), batches.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" } }, "No hay lotes de extracción registrados en almacenamiento local. Configurar los parámetros arriba para generar el primero.") : /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "2px solid var(--border-strong)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "ID Lote"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Método"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Biomasa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Extracto"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Costo Total"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "center" } }, "Acciones"))), /* @__PURE__ */ React.createElement("tbody", null, batches.map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, style: { borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" } }, b.id, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 } }, new Date(b.timestamp).toLocaleDateString("es-CO"))), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, b.speciesName || b.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", background: "var(--paper-200)", padding: "2px 6px", borderRadius: 4 } }, b.methodName || b.methodKey)), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, b.biomassGrams, " g"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" } }, b.yieldGrams, " g (", b.yieldPct, "%)"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, "$", (b.totalCost || 0).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => setSelectedQrBatch(b),
@@ -779,215 +834,8 @@ const resolveLogo = (path = "_standalone_imgs/logo-sdlp.png") => {
   }
   return path;
 };
-const SPP_DIFFICULTY = { p_ostreatus_gris: "Baja", p_ostreatus_blanco: "Baja", p_djamor_rosa: "Media", p_eryngii: "Alta", shiitake: "Alta", lions_mane: "Media", reishi: "Muy alta", enoki: "Alta", nameko: "Media" };
-const SPP_DETAILS = {
-  p_ostreatus_gris: { hechos: [
-    "Con paja de trigo a C:N 40, puede superar el 120% de eficiencia biológica — es decir, produce más peso fresco que el sustrato seco del que parte. Pocos organismos logran esto.",
-    "Tolera hasta un 5% de contaminación visible en bloque sin colapsar la cosecha. Su agresividad colonizadora suprime hongos competidores mejor que cualquier otra orellana.",
-    "Cada 5°C que bajes la temperatura de fructificación (dentro del rango), el sombrero se vuelve un 15–20% más oscuro y la textura más firme. La misma receta, sabor distinto."
-  ] },
-  p_ostreatus_blanco: { hechos: [
-    "Requiere exactamente el mismo rango C:N que la orellana gris, pero responde mucho más al exceso de nitrógeno: sobre C:N 25, las primordias abortan antes de abrirse. El margen de error es más estrecho.",
-    "Su micelio coloniza paja sin pasteurizar más rápido que con pasteurización ácida — una curiosidad contraintuitiva. La flora nativa de la paja fresca no la suprime; la estimula.",
-    "A 24°C de fructificación produce el mayor rendimiento pero el menor sabor. A 18°C produce 20% menos masa pero concentra compuestos aromáticos: vale la pena si vendes a cocineros."
-  ] },
-  p_djamor_rosa: { hechos: [
-    "Es la única orellana que fructifica bien a 28–30°C. Si en verano la sala no baja de 26°C, djamor rosa es la única opción viable — las demás cederán ante el calor.",
-    "Su tasa de spawn óptima es inusualmente alta (18–22%). Bajar a 10% alarga la colonización 8–12 días y el riesgo de contaminación se multiplica por tres en climas cálidos.",
-    "Pierde el color rosa en menos de 6 horas tras la cosecha a temperatura ambiente. Para mantenerlo, cosechar en primordia pequeña y refrigerar de inmediato. El simulador no puede optimizar esto — es post-cosecha pura."
-  ] },
-  p_eryngii: { hechos: [
-    "Es la única seta de este simulador que requiere una fase de inducción de frío obligatoria (4–10°C, 4–7 días) para primordializar. Sin ese choque térmico, el sustrato con receta perfecta no producirá nada.",
-    "C:N óptimo para eryngii: 40–65:1 (ideal 50). Este rango alto significa que el sustrato debe tener más carbono que nitrógeno — sustratos ricos en N (salvado >15%) generan colonización sin fructificación. Dato corregido: el rango anterior 25–35 correspondía a P. ostreatus, no a eryngii.",
-    "Su eficiencia biológica parece baja en papel (40–70%), pero el rendimiento económico por kg supera al shiitake: el pie carnoso pesa el triple que el sombrero de otras especies a igual tamaño."
-  ] },
-  shiitake: { hechos: [
-    "La relación C:N ideal (60–80) es la segunda más alta del catálogo. Añadir salvado de trigo más allá del 10% no mejora el rendimiento — lo destruye: exceso de nitrógeno genera bloque verde en 48 horas.",
-    "El periodo de incubación en aserrín de roble puede ser de 60–90 días. Pero cada día extra de madurez post-colonización antes del choque se traduce en +3–5% de eficiencia biológica. La paciencia tiene retorno medible.",
-    "Produce lentinan principalmente en el cuerpo fructifícola, no en el micelio. Las recetas de alto rendimiento rápido (substrato enriquecido, alta temperatura) producen más masa pero menos lentinan por gramo."
-  ] },
-  lions_mane: { hechos: [
-    "Extremadamente sensible al CO₂: concentraciones superiores a 1000 ppm durante la fructificación producen el elongamiento característico de espinas — bonito visualmente, pero indica estrés y reduce rendimiento un 20–30%.",
-    "Es la especie más sensible al exceso de H₂O en sustrato. Con humedad superior al 68% en la mezcla, el micelio se ahoga antes de colonizar completamente. El rango óptimo de 60–65% es estrecho y no perdona.",
-    "La primera cosecha puede superar el 30% de la masa del bloque — la más concentrada del catálogo. Pero la segunda cosecha cae al 10–15%. No es una especie para ciclos largos; optimiza para primera flush."
-  ] },
-  reishi: { hechos: [
-    "La única especie del catálogo que no se formula con salvado de trigo. El exceso de nitrógeno suprime la síntesis de triterpenoides — los compuestos que hacen valioso al reishi. Más nitrógeno = más masa, menos principio activo.",
-    "Produce el antílago (polvillo esporal) más denso de todas las especies cultivadas: hasta 20g de esporas por bloque. Ese polvo tiene más concentración de triterpenoides que el cuerpo fructifícola. Colectarlo es tan valioso como la cosecha.",
-    "Con aserrín de roble sin enriquecer y temperatura constante de 26°C, el sombrero lacado tarda 45–60 días en completarse. Cada grado extra de temperatura acelera el crecimiento pero reduce la calidad del lacado superficial."
-  ] },
-  enoki: { hechos: [
-    'El enoki "largo y blanco" del supermercado es un artefacto de cultivo en oscuridad con CO₂ elevado. Con buena ventilación en la sala se obtienen sombreros marrones abiertos — igual de comestibles, radicalmente distintos visualmente.',
-    "Fructifica óptimamente a 8–12°C — la temperatura más baja del catálogo. Esto lo hace complementario estacional perfecto: mientras otras especies no fructifican en invierno, enoki llega a su máximo rendimiento.",
-    "La colonización es notablemente lenta (18–25 días a 20°C), pero el sustrato colonizado tolera refrigeración hasta 4 semanas sin perder capacidad. Permite preparar bloques en lote y activarlos según la demanda."
-  ] },
-  nameko: { hechos: [
-    "El mucílago que recubre su sombrero es un polisacárido que el propio hongo sintetiza como protección ante pérdida de agua. Paradoja: a mayor humedad relativa (>92%), produce más mucílago, no menos. Es una señal de bienestar, no de estrés.",
-    "Requiere la mayor humedad relativa del catálogo durante fructificación (90–95%). Por debajo del 88%, las primordias se secan antes de crecer. Un higrometro preciso es equipamiento no-negociable para esta especie.",
-    "Produce consistentemente dos cosechas de calidad similar — inusual. La mayoría de especies caen 30–50% en segunda cosecha. Nameko mantiene el 80–85% del primer rendimiento si el bloque se sumerge en agua fría 12 horas entre flush."
-  ] }
-};
-const SPECIES_GASTRONOMY = {
-  p_ostreatus_gris: {
-    title: "Orellana Gris · Pleurotus ostreatus",
-    botanical: "Lámina I · Basidiomycota · Pleurotaceae",
-    organoleptic: {
-      aroma: "Terroso suave, bosque andino tras la lluvia, sutil aroma a avellana fresca.",
-      flavor: "Umami equilibrado, dulce vegetal ligero con final almendrado.",
-      texture: "Carnosa, aterciopelada y elástica; gran retención de jugos en cocción."
-    },
-    metrics: { umami: 4, meatiness: 5, aromatics: 3, sweetness: 2 },
-    cooking: [
-      { method: "Salteado a fuego vivo", tip: "En sartén de hierro con mantequilla clarificada y sal marina; no tapar para lograr bordes dorados crujientes." },
-      { method: "Pasta fresca & Risottos", tip: "Incorporar al final del salteado con salvia fresca y reducción de vino blanco." }
-    ],
-    pairings: [
-      { category: "Vinos", item: "Chardonnay con crianza en roble o Sauvignon Blanc de altura." },
-      { category: "Quesos", item: "Parmesano Reggiano, queso Paipa añejo o gruyère." },
-      { category: "Hierbas", item: "Salvia, tomillo limonero, ajo negro y estragón." }
-    ],
-    presentation: "Bandeja kraft de 250 g con papel sulfurizado o faja de madera artesanal."
-  },
-  p_djamor: {
-    title: "Orellana Rosada · Pleurotus djamor",
-    botanical: "Lámina II · Basidiomycota · Pleurotaceae",
-    organoleptic: {
-      aroma: "Fresco, ligeramente marino con notas florales y cítricas suaves.",
-      flavor: "Umami brillante, toque mineral que evoca mariscos tiernos (camarón/langostilla).",
-      texture: "Firme, crujiente en láminas finas; tierna y elástica al diente."
-    },
-    metrics: { umami: 3, meatiness: 4, aromatics: 4, sweetness: 3 },
-    cooking: [
-      { method: "Ceviches templados & Carpaccios", tip: "Sellado relámpago de 90 segundos con aceite de oliva y jugo de mandarina o limón mandarino." },
-      { method: "Tacos gourmet & Woks", tip: "Cocción rápida con jengibre fresco, cebolla morada y cilantro cimarrón." }
-    ],
-    pairings: [
-      { category: "Vinos", item: "Vino rosado seco (Garnacha/Pinot Noir) o espumoso Brut." },
-      { category: "Aromáticos", item: "Cilantro cimarrón, ají dulce, ralladura de lima y jengibre." },
-      { category: "Aceites", item: "Aceite de oliva virgen extra monovarietal (Picual/Arbequina)." }
-    ],
-    presentation: "Bandeja kraft de 250 g ventilada; consumo preferente dentro de los 4 días."
-  },
-  shiitake: {
-    title: "Shiitake Roble · Lentinula edodes",
-    botanical: "Lámina III · Basidiomycota · Omphalotaceae",
-    organoleptic: {
-      aroma: "Intenso, sotobosque húmedo, notas de humo noble y corteza de roble.",
-      flavor: "Máxima concentración de ácido glutámico natural y guanilato; umami profundo y persistente.",
-      texture: "Densa, coriácea en pie (ideal para caldos), sombrero suculento y esponjoso."
-    },
-    metrics: { umami: 5, meatiness: 5, aromatics: 5, sweetness: 1 },
-    cooking: [
-      { method: "Glaseado & Confitado", tip: "Cocción lenta en salsa de soya artesanal, mirin y miel de Tenjo hasta reducir a textura laca." },
-      { method: "Fondo Dashi & Reducciones", tip: "Extracción en agua a 65 °C durante 45 minutos para maximizar liberación de ribonucleótidos." }
-    ],
-    pairings: [
-      { category: "Vinos", item: "Tintos de cuerpo medio: Pinot Noir, Nebbiolo o Carmenere." },
-      { category: "Proteínas", item: "Cortes de res madurada, magret de pato o cerdo confitado." },
-      { category: "Caldos", item: "Dashi, caldos concentrados de hueso y ramen de autor." }
-    ],
-    presentation: "Caja de madera noble con puente QR de trazabilidad de sustrato de roble."
-  },
-  lions_mane: {
-    title: "Melena de León · Hericium erinaceus",
-    botanical: "Lámina IV · Basidiomycota · Hericiaceae",
-    organoleptic: {
-      aroma: "Dulce, notas de mantequilla tibia, frutos secos y rocío matutino.",
-      flavor: "Extraordinaria semejanza gustativa con bogavante, langosta o carne de cangrejo real.",
-      texture: "Mullida, tierna, filamentosa que se deshace delicadamente en boca."
-    },
-    metrics: { umami: 4, meatiness: 4, aromatics: 4, sweetness: 4 },
-    cooking: [
-      { method: "Medallones a la plancha", tip: "Cortar en filetes gruesos de 2 cm, prensar suavemente para dorar en mantequilla marrón y ajo confitado." },
-      { method: "Rolls & Guisos marineros", tip: "Deshilachar a mano en hebras e incorporar en brioche tostado con mayonesa de estragón." }
-    ],
-    pairings: [
-      { category: "Vinos", item: "Chardonnay fermentado en barrica, Viognier o Champagne Brut Nature." },
-      { category: "Salsas", item: "Holandesa, bearnesa, mantequilla café de París." },
-      { category: "Botánicos", item: "Flor de sal marina, eneldo fresco y pimienta rosa." }
-    ],
-    presentation: "Caja protectora de madera con lecho de viruta de roble orgánico."
-  },
-  reishi: {
-    title: "Reishi Rojo · Ganoderma lucidum",
-    botanical: "Lámina V · Basidiomycota · Ganodermataceae",
-    organoleptic: {
-      aroma: "Amaderado noble, resina de pino, cuero curtido y tierra profunda.",
-      flavor: "Amargor tónico medicinal elegante con regusto terroso complejo.",
-      texture: "Leñosa no masticable; destinada exclusivamente a extracción hidroalcohólica o decocción."
-    },
-    metrics: { umami: 2, meatiness: 1, aromatics: 5, sweetness: 0 },
-    cooking: [
-      { method: "Doble extracción tónica", tip: "Decocción acuosa de 2 horas seguida de maceración en alcohol neutro de caña al 70%." },
-      { method: "Caldos adaptogénicos", tip: "Infusionar 5 g de láminas secas en caldos de cocción larga con jengibre y cardamomo." }
-    ],
-    pairings: [
-      { category: "Bebidas", item: "Café de especialidad de altura, té negro fermentado (Pu-erh) o mezcal artesanal." },
-      { category: "Chocolates", item: "Cacao colombiano al 75% o 85% de origen Tumaco o Arauca." },
-      { category: "Mieles", item: "Miel cruda de bosque andino y polen de páramo." }
-    ],
-    presentation: "Frasco boticario ámbar de 50 ml con gotero o láminas selladas al vacío."
-  }
-};
-const SPP_SUBSTRATE_GUIDE = {
-  p_ostreatus_gris: [
-    "Base Cóptima: paja de trigo o cebada (C:N 75–85) al 55–70%. Evitar aserín sin compostar — su lignina es inaccesible para esta especie y solo encarece sin aportar.",
-    "Suplemento N: salvado de trigo 15–25% más borra de café 7–12%. Esta combinación baja costo y aporta N progresivo; conviene combinarlos en lugar de usar solo uno de los dos.",
-    "Ajuste de pH obligatorio: carbonato de calcio 2–5% + yeso 2–3%. Sin tamponamiento, la fermentación acidifica el bloque y colapsa la cosecha 2 y 3.",
-    "Evitar superar 25% total de suplementos N (salvado + borra + café juntos). Por encima de ese umbral el riesgo de Trichoderma se dispara, especialmente sin autoclave."
-  ],
-  p_ostreatus_blanco: [
-    "Base C: paja de trigo 50–60%. El blanco tolera menos variación de C:N que el gris — apunta siempre a 28–32 como objetivo final calculado.",
-    "Suplemento N preferido: afrecho de cervecería 12–18%. Libera nitrógeno más lentamente que el salvado puro y reduce el riesgo de contaminación temprana.",
-    "Salvado de trigo máximo 15%. Más allá de ese punto la primordiación falla en blanco aunque el micelio colonice bien — el N alto suprime la formación de sombrero.",
-    "Borra de café: máximo 8–10%. Más acidifica el pH por debajo de 6.0, inhibiendo el desarrollo del sombrero blanco que distingue a esta variedad."
-  ],
-  p_djamor_rosa: [
-    "Base C tropical: bagazo de caña 40–55% + paja de arroz 20–30%. Estas bases tolera la humedad alta que requiere el djamor y son idóneas para clima cálido.",
-    "Suplemento N moderado: salvado de trigo 10–15% o borra de café 10–15%. La especie no requiere N muy alto — C:N objetivo 35–45, no más bajo.",
-    "Tasa de spawn alta (18–22%) es parte de la fórmula. No la intercambión por más suplemento — el spawn agresivo suprime contaminantes mejor que ningún ingrediente.",
-    "Evitar aserín de madera y sustratos lígneos pesados: el djamor rosa es lignínolítico débil y no aprovechará esa fracción, generando sustrato sin colonizar."
-  ],
-  p_eryngii: [
-    "Base C: paja de trigo 35–45% + aserín de roble o álamo 10–18%. La combinación de paja y madera dura da la textura necesaria para el stípite carnoso del eryngii.",
-    "Suplemento N: afrecho de cervecería 18–22% es el más eficiente. El salvado de trigo funciona pero eleva el riesgo de contaminación — si lo usas, no pases del 15%.",
-    "Polvo de hueso 2–4% mejora el desarrollo del pie. El fósforo de liberación lenta favorece la formación del stípite sin subir el N total disponible.",
-    "Cero gallinaza ni estiércol de alta carga N. El eryngii requiere C:N ≥40 — cualquier fuente de N muy alto baja la relación por debajo del mínimo y suprime la fructificación."
-  ],
-  shiitake: [
-    "Base C exclusiva: aserín de madera dura (roble, álamo) 55–70%. La lignina de madera dura es la fuente de carbono que el shiitake degrada con sus enzimas lacasas. Paja sola no funciona.",
-    "Salvado de trigo: máximo 15–18%. Pasado ese punto el bloque verde (Trichoderma) aparece en 48 h incluso con autoclave. Prefiere cascarilla de soya 5–8% como suplemento complementario.",
-    "Yeso agrícola 2–3% es no-negociable: estabiliza pH durante la esterilización y mejora la textura del bloque. Sin yeso, el pH puede subir a 8.5 y el micelio no germina.",
-    "Periodo de colonización largo (60–90 d): no compenses acortando con más suplemento N. Más N = más contaminación, no más velocidad en shiitake."
-  ],
-  lions_mane: [
-    "Master Mix de referencia: aserín de madera dura 50–60% + cascarilla de soya 35–45%. Esta combinación logra EB 150–180%. No reemplazar cascarilla de soya por salvado de trigo en proporciones iguales — son distintos en densidad nutricional.",
-    "Humedad del sustrato seco: apunta a 60–65%, más seco que otras especies. Ingredientes húmedos (borra fresca, pseudotallo de plátano) suben la actividad acuosa y favorecen contaminación.",
-    "Evitar absolutamente aserín de eucalipto. Sus aceites esenciales inhiben el micelio de Hericium de forma directa e irreversible. Usar solo maderas duras neutras: roble, álamo, sauce.",
-    "Afrecho de cervecería 10–15% es un buen suplemento secundario. La cascarilla de soya ya aporta N suficiente — el afrecho suma perfil de aminoácidos sin saturar nitrógeno."
-  ],
-  reishi: [
-    "No usar salvado de trigo como suplemento principal. El exceso de N libre suprime la síntesis de triterpenoides — los compuestos que hacen valioso al reishi. Máximo 8–10% de suplemento N total.",
-    "Base C: aserín de roble 55–65% + corteza de árbol molida 10–15%. La corteza aporta lignina compleja que ralentiza la colonización y estimula la producción de lacasa, necesaria para el lacado del sombrero.",
-    "Cascarilla de soya 8–12% es el suplemento N preferido: nitrógeno de liberación lenta que no dispara contaminación ni suprime la ruta de triterpenoides.",
-    "Evitar ingredientes cálidos o de rápida descomposición (borra de café fresca, pulpa de cacao). El reishi requiere sustrato estático y de baja actividad microbiana durante los 60–90 días de colonización."
-  ],
-  enoki: [
-    "Base C: paja de arroz 30–40% + aserín de álamo o sauce 15–20%. La paja de arroz da la textura ligera que necesita el enoki para colonizar a baja temperatura (5–12°C).",
-    "Suplemento N estrella: afrecho de cervecería 18–25%. Su perfil de aminoácidos estimula el desarrollo de los cuerpos fructíferos alargados que caracterizan al enoki comercial.",
-    "Evitar cartones y papel como base principal: el enoki necesita sustrato estructuralmente firme para colonizar correctamente en frío. La celulosa pura colapsa y ahoga el micelio.",
-    "C:N objetivo muy preciso: 25–30. Cada punto por encima de 30 alarga la colonización (ya de por sí 18–25 días), elevando el riesgo de contaminación en cámara fría."
-  ],
-  nameko: [
-    "Base C: aserín de roble 40–50% + paja de arroz 15–25%. El nameko degrada lignocelulosa más lento que el shiitake — la combinación de madera y paja le da fibras accesibles para arrancar.",
-    "Borra de café 5–8% en la mezcla mejora rendimiento en primera cosecha y reduce el tiempo de colonización. Más del 10% puede inhibir la segunda cosecha — que en nameko es excepcionalmente buena.",
-    "Suplemento N bajo: afrecho de cervecería 10–15% como máximo. La tasa de N ideal es 0.8–1.5% — evita gallinaza, harina de soya o cualquier fuente de N muy alto.",
-    "Yeso 2–3% + carbonato de calcio 2–3% son obligatorios. El nameko necesita pH 5.5–6.5 estable y el yeso mejora la textura del bloque para las dos cosechas de calidad similar."
-  ]
-};
-const SPP_FAMILY = { p_ostreatus_gris: "Pleurotaceae", p_ostreatus_blanco: "Pleurotaceae", p_djamor_rosa: "Pleurotaceae", p_eryngii: "Pleurotaceae", shiitake: "Omphalotaceae", lions_mane: "Hericiaceae", reishi: "Polyporaceae", enoki: "Physalacriaceae", nameko: "Strophariaceae" };
-const SPP_HR = { p_ostreatus_gris: "88–95%", p_ostreatus_blanco: "88–95%", p_djamor_rosa: "85–95%", p_eryngii: "85–95%", shiitake: "80–95%", lions_mane: "85–95%", reishi: "85–95%", enoki: "80–90%", nameko: "85–95%" };
-const SPP_CODE = { p_ostreatus_gris: "SDP-001", p_ostreatus_blanco: "SDP-002", p_djamor_rosa: "SDP-003", p_eryngii: "SDP-004", shiitake: "SDP-005", lions_mane: "SDP-006", reishi: "SDP-007", enoki: "SDP-008", nameko: "SDP-009" };
+const SetasSpeciesEditorialApi = typeof SetasSpeciesEditorial !== "undefined" ? SetasSpeciesEditorial : typeof require !== "undefined" ? require("./species-editorial.js") : null;
+const { SPP_DIFFICULTY, SPP_DETAILS, SPECIES_GASTRONOMY, SPP_SUBSTRATE_GUIDE, SPP_FAMILY, SPP_HR, SPP_CODE } = SetasSpeciesEditorialApi;
 const PUBLIC_TRACE_BASE_URL = "https://setasdlp-code.github.io/Setas-de-la-Pena/public/trace.html";
 const BANDS = { p_ostreatus_gris: "oklch(50% 0.12 25)", p_ostreatus_blanco: "oklch(55% 0.10 28)", p_djamor_rosa: "oklch(48% 0.13 20)", p_eryngii: "oklch(45% 0.09 265)", shiitake: "var(--accent-olive)", lions_mane: "oklch(52% 0.11 35)", reishi: "oklch(42% 0.10 10)", enoki: "oklch(43% 0.08 260)", nameko: "oklch(46% 0.09 95)" };
 const SetasSubstrateCatalogApi = typeof SetasSubstrateCatalog !== "undefined" ? SetasSubstrateCatalog : typeof require !== "undefined" ? require("./substrate-catalog.js") : null;
@@ -1940,243 +1788,8 @@ const PublicTraceabilityModal = ({ loteId, loteCode, lotes = [], cosechas = [], 
     ), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: onClose, style: { fontSize: 11 } }, "Cerrar"))))
   );
 };
-const DEFAULT_IOT_NODES = [
-  {
-    id: "node_martha_01",
-    name: "Nodo Carpa 01 · Fructificación Orellanas",
-    roomId: "martha_01",
-    mcu: "esp32dev",
-    ip: "192.168.1.101",
-    mac: "24:6F:28:B4:72:01",
-    rssi: -58,
-    status: "online",
-    sensors: ["sht3xd", "scd30"],
-    relays: ["ch1_humidifier", "ch2_fae"],
-    lastSeen: "hace 12s",
-    metrics: { temp: 18.2, rh: 89.5, co2: 720, subTemp: 19.1 }
-  },
-  {
-    id: "node_martha_02",
-    name: "Nodo Carpa 02 · Fructificación Shiitake",
-    roomId: "martha_02",
-    mcu: "esp32c3",
-    ip: "192.168.1.102",
-    mac: "24:6F:28:C9:14:02",
-    rssi: -64,
-    status: "online",
-    sensors: ["sht45", "scd30"],
-    relays: ["ch1_humidifier", "ch2_fae"],
-    lastSeen: "hace 18s",
-    metrics: { temp: 17.5, rh: 85, co2: 840, subTemp: 18 }
-  },
-  {
-    id: "node_incubacion",
-    name: "Nodo Incubación · Sala Oscura Térmica",
-    roomId: "incubacion_01",
-    mcu: "sonoff_th16",
-    ip: "192.168.1.105",
-    mac: "E8:DB:84:9A:88:05",
-    rssi: -52,
-    status: "online",
-    sensors: ["dht22", "ds18b20"],
-    relays: ["ch1_humidifier"],
-    lastSeen: "hace 35s",
-    metrics: { temp: 23.4, rh: 72, co2: 2400, subTemp: 24.8 }
-  }
-];
-const generateESPHomeYaml = ({ deviceName = "setas-carpa-01", roomId = "martha_01", mcu = "esp32dev", sensors = ["sht3xd", "scd30"], relays = ["ch1_humidifier", "ch2_fae"], wifiSsid = "SetasPeña_2.4G", wifiPass = "**********", serverHost = "192.168.1.100", serverPort = "8080" }) => {
-  return `# ==============================================================================
-# Setas de la Peña — Tenjo, Cundinamarca (2.587 msnm)
-# ESPHome Telemetry & Actuation Firmware
-# ==============================================================================
-
-substitutions:
-  device_name: "${deviceName}"
-  room_id: "${roomId}"
-  adapter_host: "${serverHost}"
-  adapter_port: "${serverPort}"
-
-esphome:
-  name: \${device_name}
-  friendly_name: "\${device_name} (Tenjo)"
-
-${mcu.includes("esp8266") || mcu.includes("sonoff") ? `esp8266:
-  board: ${mcu.includes("sonoff") ? "esp01_1m" : "d1_mini"}` : `esp32:
-  board: ${mcu}
-  framework:
-    type: arduino`}
-
-wifi:
-  ssid: "${wifiSsid}"
-  password: "${wifiPass}"
-  fast_connect: true
-  ap:
-    ssid: "Setas-Fallback-\${device_name}"
-    # Definir en secrets.yaml durante el aprovisionamiento; no incluir
-    # contraseñas de recuperación en un firmware exportado.
-    password: !secret fallback_password
-
-captive_portal:
-logger:
-  level: INFO
-
-ota:
-  # La clave OTA es única por nodo y vive fuera del firmware versionado.
-  password: !secret ota_password
-
-i2c:
-  sda: ${mcu.includes("esp8266") ? "GPIO4" : "GPIO21"}
-  scl: ${mcu.includes("esp8266") ? "GPIO5" : "GPIO22"}
-  scan: true
-  id: bus_a
-
-sensor:
-${sensors.includes("sht3xd") ? `  - platform: sht3xd
-    i2c_id: bus_a
-    address: 0x44
-    temperature:
-      name: "Temperatura Sala"
-      id: room_temp
-      accuracy_decimals: 1
-    humidity:
-      name: "Humedad Relativa Sala"
-      id: room_humidity
-      accuracy_decimals: 1
-    update_interval: 15s
-` : ""}${sensors.includes("scd30") ? `  - platform: scd30
-    i2c_id: bus_a
-    address: 0x61
-    altitude_compensation: 2587m # Compensación barométrica de Tenjo
-    co2:
-      name: "CO2 NDIR Sala"
-      id: room_co2
-      accuracy_decimals: 0
-    update_interval: 15s
-` : ""}${sensors.includes("ds18b20") ? `  - platform: dallas
-    address: 0x28...
-    name: "Temperatura Sonda Sustrato"
-    id: sub_temp
-    update_interval: 20s
-` : ""}${sensors.includes("dht22") ? `  - platform: dht
-    pin: GPIO14
-    model: DHT22
-    temperature:
-      name: "Temperatura Incubación"
-      id: room_temp
-    humidity:
-      name: "Humedad Incubación"
-      id: room_humidity
-    update_interval: 15s
-` : ""}
-switch:
-${relays.includes("ch1_humidifier") ? `  - platform: gpio
-    pin: ${mcu.includes("esp8266") ? "GPIO12" : "GPIO25"}
-    id: relay_humidifier
-    name: "Relé Humidificador T7 (Ch1)"
-    inverted: false
-` : ""}${relays.includes("ch2_fae") ? `  - platform: gpio
-    pin: ${mcu.includes("esp8266") ? "GPIO13" : "GPIO26"}
-    id: relay_fae
-    name: "Relé Extractor FAE (Ch2)"
-    inverted: false
-` : ""}
-http_request:
-  verify_ssl: false
-
-interval:
-  - interval: 15s
-    then:
-      - http_request.post:
-          url: !lambda |-
-            return "http://" + id(adapter_host) + ":" + id(adapter_port) + "/api/telemetry";
-          headers:
-            Content-Type: application/json
-          json: |-
-            root["room_id"] = "${roomId}";
-            root["observed_at"] = "";
-            root["temperature_c"] = id(room_temp).state;
-            root["rh_pct"] = id(room_humidity).state;
-            ${sensors.includes("scd30") ? 'root["co2_ppm"] = id(room_co2).state;' : ""}
-            ${sensors.includes("ds18b20") ? 'root["substrate_temperature_c"] = id(sub_temp).state;' : ""}
-`;
-};
-const generateArduinoIno = ({ deviceName = "setas-carpa-01", roomId = "martha_01", wifiSsid = "SetasPeña_2.4G", wifiPass = "**********", serverHost = "192.168.1.100", serverPort = "8080" }) => {
-  return `/* ==============================================================================
- * Setas de la Peña — Tenjo, Cundinamarca (2.587 msnm)
- * Sketch Nativo Arduino C++ para Telemetría ESP32 / Setas OS
- * ============================================================================== */
-
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <Wire.h>
-#include <Adafruit_SHT31.h>
-
-const char* ssid = "${wifiSsid}";
-const char* password = "${wifiPass}";
-const char* serverUrl = "http://${serverHost}:${serverPort}/api/telemetry";
-const char* roomId = "${roomId}";
-
-Adafruit_SHT31 sht31 = Adafruit_SHT31();
-
-unsigned long lastSend = 0;
-const unsigned long sendInterval = 15000; // Cada 15s
-
-void setup() {
-  Serial.begin(115200);
-  Wire.begin(21, 22); // I2C SDA=21, SCL=22
-  
-  if (!sht31.begin(0x44)) {
-    Serial.println("Error: Sensor SHT31 no encontrado en 0x44");
-  }
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  Serial.print("Conectando a WiFi en Tenjo...");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\\nWiFi conectado. IP: " + WiFi.localIP().toString());
-}
-
-void loop() {
-  if (millis() - lastSend >= sendInterval) {
-    lastSend = millis();
-    
-    if (WiFi.status() == WL_CONNECTED) {
-      float t = sht31.readTemperature();
-      float h = sht31.readHumidity();
-      
-      if (!isnan(t) && !isnan(h)) {
-        HTTPClient http;
-        http.begin(serverUrl);
-        http.addHeader("Content-Type", "application/json");
-        
-        String jsonPayload = String("{\\"room_id\\":\\"") + roomId + 
-                             "\\",\\"temperature_c\\":" + String(t, 2) + 
-                             ",\\"rh_pct\\":" + String(h, 2) + "}";
-        
-        int httpCode = http.POST(jsonPayload);
-        Serial.println("POST a Setas OS [" + String(httpCode) + "]: " + jsonPayload);
-        http.end();
-      }
-    }
-  }
-}
-`;
-};
-const generateCurlPayload = ({ roomId = "martha_01", temp = 18.2, rh = 89.5, co2 = 720, subTemp = 19, serverHost = "192.168.1.100", serverPort = "8080" }) => {
-  return `curl -X POST "http://${serverHost}:${serverPort}/api/telemetry" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "room_id": "${roomId}",
-    "observed_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
-    "temperature_c": ${temp},
-    "rh_pct": ${rh},
-    "co2_ppm": ${co2},
-    "substrate_temperature_c": ${subTemp}
-  }'`;
-};
+const SetasIotFirmwareApi = typeof SetasIotFirmware !== "undefined" ? SetasIotFirmware : typeof require !== "undefined" ? require("./iot-firmware.js") : null;
+const { DEFAULT_IOT_NODES, generateESPHomeYaml, generateArduinoIno, generateCurlPayload } = SetasIotFirmwareApi;
 const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, firestoreEnabled = true) => {
   try {
     const data = JSON.parse(rawJson);
@@ -5270,6 +4883,71 @@ function SimuladorShell(props) {
   useEffect(() => {
     bitBolsasEditRef.current = bitBolsas;
   }, [bitBolsas]);
+  const bagPhotoStoreRef = useRef(null);
+  if (bagPhotoStoreRef.current === null) bagPhotoStoreRef.current = typeof window !== "undefined" && window.SetasBagPhotos ? window.SetasBagPhotos.createStore() : false;
+  const [bagPhotos, setBagPhotos] = useState({});
+  useEffect(() => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return;
+    let alive = true;
+    store.getAll().then((saved2) => {
+      if (alive) setBagPhotos((prev) => ({ ...saved2, ...prev }));
+    }).catch(() => {
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useEffect(() => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return;
+    const { inline } = window.SetasBagPhotos.splitInlinePhotos(bitBolsas);
+    if (!Object.keys(inline).length) return;
+    let alive = true;
+    store.putMany(inline).then(() => {
+      if (!alive) return;
+      setBagPhotos((prev) => ({ ...prev, ...inline }));
+      const upd = bitBolsasEditRef.current.map((b) => {
+        if (!b || !inline[b.id] || b.foto !== inline[b.id]) return b;
+        const { foto, ...rest } = b;
+        return rest;
+      });
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+      } catch (e) {
+        return;
+      }
+      bitBolsasEditRef.current = upd;
+      setBitBolsas(upd);
+    }).catch(() => {
+    });
+    return () => {
+      alive = false;
+    };
+  }, [bitBolsas]);
+  const saveBagPhoto = (bolsaId, dataUrl) => {
+    const store = bagPhotoStoreRef.current;
+    if (!store || !store.available) return Promise.resolve(updateBitBolsa(bolsaId, { foto: dataUrl }));
+    return store.putMany({ [bolsaId]: dataUrl }).then(() => {
+      setBagPhotos((prev) => ({ ...prev, [bolsaId]: dataUrl }));
+      return true;
+    });
+  };
+  const removeBagPhoto = (bolsa) => {
+    const store = bagPhotoStoreRef.current;
+    const drop = () => setBagPhotos((prev) => {
+      if (!(bolsa.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[bolsa.id];
+      return next;
+    });
+    if (bolsa.foto) updateBitBolsa(bolsa.id, { foto: null });
+    if (!store || !store.available) {
+      drop();
+      return Promise.resolve();
+    }
+    return store.removeMany([bolsa.id]).then(drop);
+  };
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTasks, setBitTasks] = useState([]);
   const [roomEvents, setRoomEvents] = useState([]);
@@ -7414,7 +7092,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     runLanzamientoProduccion();
   });
-  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Eliminar fotos de bolsas antiguas (clic sobre la foto para quitarla) y volver a intentar." });
+  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar." });
   const encolarSync = ({ type, key, args }) => {
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!syncQueueApi) {
@@ -7441,7 +7119,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "5581fc40d7db" : null;
+    const appVersion = true ? "4a5b177b3414" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7666,6 +7344,17 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
       return upd;
     });
+    if (bagPhotoStoreRef.current && bagPhotoStoreRef.current.available && bolsaIds.length) {
+      publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(() => {
+      }));
+      setBagPhotos((prev) => {
+        const next = { ...prev };
+        bolsaIds.forEach((id) => {
+          delete next[id];
+        });
+        return next;
+      });
+    }
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.loteId !== loteId);
       try {
@@ -9467,8 +9156,9 @@ BATCH (${numBags}×${kgBag} kg):
     const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
     const selectedCamera = cameras.find((c) => c.id === room.cameraId) || cameras[0] || null;
     const CAMERA_TO_ROOM = { incub: "incubacion_01", martha: "martha_01", cloudlab: "cloudlab_844" };
-    const lotesEnSala = bitLotes.filter((l) => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || !l.sala && selectedClimateRoom === "martha_01") && !["completado", "descartado"].includes(l.estado));
-    const mainLote = lotesEnSala[0] || bitLotes[0];
+    const lotesEnSala = roomStateApi ? roomStateApi.lotesInRoom(bitLotes, selectedClimateRoom) : [];
+    const lotesSinSala = roomStateApi ? roomStateApi.lotesWithoutRoom(bitLotes) : [];
+    const mainLote = lotesEnSala[0] || null;
     const activeSpeciesInRoom = Array.from(new Set(
       lotesEnSala.map((l) => l.especie || l.speciesKey || l.sKey).filter(Boolean)
     ));
@@ -9933,7 +9623,7 @@ BATCH (${numBags}×${kgBag} kg):
       const roomBagsActive = roomBagsList.length ? roomBagsList.filter((b) => b.estado !== "descartada" && b.estado !== "contaminada").length : roomBatches.reduce((sum, l) => sum + (parseInt(l.numBolsas, 10) || 0), 0);
       const roomBagsTotal = roomBagsList.length || roomBatches.reduce((sum, l) => sum + (parseInt(l.numBolsas, 10) || 0), 0);
       return /* @__PURE__ */ React.createElement("button", { key: c.id, type: "button", "data-testid": "sensor-module-card", "data-room-id": roomId || void 0, disabled: !roomId, className: `climate-module-card ${roomId === selectedClimateRoom ? "on" : ""}`, onClick: () => setSelectedClimateRoom(roomId), "aria-pressed": roomId === selectedClimateRoom }, /* @__PURE__ */ React.createElement("span", { className: "climate-module-top" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { background: c.estadoAccent } }), c.name), /* @__PURE__ */ React.createElement("b", null, c.estadoLabel)), /* @__PURE__ */ React.createElement("span", { className: "climate-module-meta" }, "Zona ", c.zona, " · ", c.sppName, " · ", c.count, " activos"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-readings" }, [["temperature_c", "Temp.", "°C"], ["rh_pct", "HR", "%"], ["co2_ppm", "CO₂", " ppm"]].map(([metric, label, unit]) => /* @__PURE__ */ React.createElement("span", { key: metric, "data-metric": metric }, /* @__PURE__ */ React.createElement("small", null, label), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(cardSample[metric]) ? `${cardSample[metric]}${unit}` : "—"), Number.isFinite(cardSample[metric]) ? /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric, roomLive: cardLive }) : /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sin lectura")))), !cardHasLive && /* @__PURE__ */ React.createElement("span", { className: "climate-module-reference" }, roomId ? "Sin telemetría conectada · sin lectura" : "Módulo sin sala de sensores asignada"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, roomBatches.length, " lote", roomBatches.length === 1 ? "" : "s", " · ", roomBagsActive, "/", roomBagsTotal, " bolsas"), /* @__PURE__ */ React.createElement("span", { className: "climate-occupancy" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { width: `${c.occupancy}%`, background: c.estadoAccent } })), /* @__PURE__ */ React.createElement("b", null, c.occupancy, "% ocupado")), c.hasLiveAlert && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert" }, c.liveAlertNote));
-    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude), roomLive && roomLive.health && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: roomLive.health.overallStatus === "healthy" ? "var(--status-ok)" : roomLive.health.overallStatus === "stale" ? "var(--ink-2)" : "var(--accent-terracotta)" } }, "SALUD: ", roomLive.health.overallStatus.toUpperCase()), roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d]) => /* @__PURE__ */ React.createElement("span", { key: devId }, devId, ": ", /* @__PURE__ */ React.createElement("strong", { style: { color: d.status === "healthy" ? "var(--status-ok)" : "var(--ink-1)" } }, d.status.toUpperCase()))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
+    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude), lotesSinSala.length > 0 && /* @__PURE__ */ React.createElement("div", { "data-testid": "climate-lotes-sin-sala", role: "status", style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--accent-terracotta-dark)", marginTop: 4 } }, lotesSinSala.length === 1 ? "1 lote activo sin sala asignada" : `${lotesSinSala.length} lotes activos sin sala asignada`, " (", lotesSinSala.map((l) => l.codigo || l.id).join(", "), "): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora."), roomLive && roomLive.health && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: roomLive.health.overallStatus === "healthy" ? "var(--status-ok)" : roomLive.health.overallStatus === "stale" ? "var(--ink-2)" : "var(--accent-terracotta)" } }, "SALUD: ", roomLive.health.overallStatus.toUpperCase()), roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d]) => /* @__PURE__ */ React.createElement("span", { key: devId }, devId, ": ", /* @__PURE__ */ React.createElement("strong", { style: { color: d.status === "healthy" ? "var(--status-ok)" : "var(--ink-1)" } }, d.status.toUpperCase()))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -10042,7 +9732,7 @@ BATCH (${numBags}×${kgBag} kg):
       display: "flex",
       alignItems: "center",
       gap: 8
-    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-error)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)" })), /* @__PURE__ */ React.createElement("span", null, al.msg)))), ["temperature_c", "rh_pct", "co2_ppm"].some((metric) => climateMetricProvenance({ metric, roomLive, injected }).kind === "model") && /* @__PURE__ */ React.createElement("p", { role: "status", "data-testid": "climate-model-warning", style: { fontSize: 13, color: "var(--ink-1)" } }, "Hay métricas sin lectura de sonda. Los valores del modelo y sus cálculos son referencias; no confirman las condiciones actuales de la sala."), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "temperature_c", roomLive, injected }), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C"), Number.isFinite(currentMetrics.subTemp) ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", null, "Sustrato: ", currentMetrics.subTemp, "°C"), /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "substrate_temperature_c", roomLive, injected })) : /* @__PURE__ */ React.createElement("span", { "data-testid": "climate-substrate-missing" }, "Sustrato: sin lectura"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "rh_pct", roomLive, injected }), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), (() => {
+    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-error)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)" })), /* @__PURE__ */ React.createElement("span", null, al.msg)))), ["temperature_c", "rh_pct", "co2_ppm"].some((metric) => climateMetricProvenance({ metric, roomLive, injected }).kind === "model") && /* @__PURE__ */ React.createElement("p", { role: "status", "data-testid": "climate-model-warning", style: { fontSize: 13, color: "var(--ink-1)" } }, "Hay métricas sin lectura de sonda. Los valores del modelo y sus cálculos son referencias; no confirman las condiciones actuales de la sala."), /* @__PURE__ */ React.createElement("p", { role: "note", "data-testid": "climate-bands-provisional", "data-band-origin": cycleTargetsApi && cycleTargetsApi.activeCycleForRoom(roomCycles, selectedClimateRoom, cycleClock) ? "cycle" : "room", style: { fontSize: 13, color: "var(--ink-1)" } }, cycleTargetsApi && cycleTargetsApi.activeCycleForRoom(roomCycles, selectedClimateRoom, cycleClock) ? "Bandas provisionales: vienen del ciclo activo de la sala y aún no están validadas con lotes propios. Las alertas contra ellas son orientativas." : "Bandas provisionales: son las fijas de la sala, sin especificación de lote aprobada. Las alertas contra ellas son orientativas."), /* @__PURE__ */ React.createElement(RoomDeviceReadings, { roomLive }), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "temperature_c", roomLive, injected }), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C"), Number.isFinite(currentMetrics.subTemp) && climateMetricProvenance({ metric: "substrate_temperature_c", roomLive, injected }).kind !== "model" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", null, "Sustrato: ", currentMetrics.subTemp, "°C"), /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "substrate_temperature_c", roomLive, injected })) : /* @__PURE__ */ React.createElement("span", { "data-testid": "climate-substrate-missing" }, "Sustrato: sin lectura · sin sensor de núcleo"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "rh_pct", roomLive, injected }), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), (() => {
       const ndirCorr = co2Correction ? { correctedPpm: co2Correction.correctedPpm, baroFactor: co2Correction.baroFactor, deltaPpm: co2Correction.deltaPpm, rawPpm: co2Correction.rawPpm, live: true } : climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745, currentMetrics.temp), { live: false }) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
       return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele", "data-testid": "climate-co2-card", "data-co2-live": ndirCorr.live ? "true" : "false" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "co2_ppm", roomLive, injected }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "ppm compensados"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", ndirCorr.rawPpm, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert ", co2Correction && co2Correction.pressureHpa || liveTelemetry.config.pressureHpa || 745, " hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
     })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Estimado · derivado de T° y HR"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
@@ -10398,14 +10088,17 @@ BATCH (${numBags}×${kgBag} kg):
           }
         }
       }
-    )), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table bolsas-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Código"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Estado"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 25%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 50%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 100%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Observaciones"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Foto"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Cosechas"), /* @__PURE__ */ React.createElement("th", { scope: "col", style: { textAlign: "center" } }, "Etiqueta"))), /* @__PURE__ */ React.createElement("tbody", null, bolsas.map((bolsa) => {
+    )), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table bolsas-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Código"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Estado"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 25%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 50%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 100%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Observaciones"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Superficie (infrarrojo)"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Foto"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Cosechas"), /* @__PURE__ */ React.createElement("th", { scope: "col", style: { textAlign: "center" } }, "Etiqueta"))), /* @__PURE__ */ React.createElement("tbody", null, bolsas.map((bolsa) => {
       const cosBolsa = bitCosechas.filter((c) => c.bolsaId === bolsa.id);
       const totalBolsa = cosBolsa.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
       const est = EB[bolsa.estado] || EB[""];
-      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => updateBitBolsa(bolsa.id, { foto: null }), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
+      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Superficie (infrarrojo)" }, /* @__PURE__ */ React.createElement(BagSurfaceEditor, { bolsa, onSave: updateBitBolsa, operador: window.SetasFirebase?.auth?.currentUser?.uid || "operario_local" })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bagPhotos[bolsa.id] || bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => removeBagPhoto(bolsa).catch(() => setNoticeDlg({ title: "No se pudo quitar la foto", msg: "Intentar de nuevo." })), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bagPhotos[bolsa.id] || bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
         const f = e.target.files?.[0];
         if (!f) return;
-        compressImageToDataURL(f).then((dataUrl) => updateBitBolsa(bolsa.id, { foto: dataUrl })).catch(() => setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Probar con otra imagen." }));
+        compressImageToDataURL(f).catch(() => {
+          setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Probar con otra imagen." });
+          return null;
+        }).then((dataUrl) => dataUrl && saveBagPhoto(bolsa.id, dataUrl).catch(() => setNoticeDlg({ title: "No se pudo guardar la foto", msg: "El almacenamiento del navegador no aceptó la foto. La bolsa y sus datos no cambiaron." })));
         e.target.value = "";
       } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Cosechas" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)" } }, totalBolsa > 0 ? (totalBolsa / 1e3).toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "aria-label": `Registrar cosecha para la bolsa ${bolsa.codigo}`, onClick: () => {
         openHarvestCapture({ bolsaId: bolsa.id, loteId: bitActiveLoteId, codigo: bolsa.codigo, flush: cosBolsa.length + 1, fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0], pesoFresco: "", calidad: "", observaciones: "" });
@@ -12809,7 +12502,7 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, r.spec)
       ))), (() => {
         const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
-        const targetRoomBatches = bitLotes.filter((l) => (l.sala === f.sala || l.ubicacion === f.sala || !l.sala && f.sala === "martha_01") && !["completado", "descartado"].includes(l.estado));
+        const targetRoomBatches = typeof window !== "undefined" && window.SetasRoomState ? window.SetasRoomState.lotesInRoom(bitLotes, f.sala) : [];
         const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map((l) => l.especie || l.speciesKey).filter(Boolean)));
         const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
         const coCultAssignOpt = assignedSpeciesList.length > 1 ? typeof engineOptimizeChamberSetpoints === "function" ? engineOptimizeChamberSetpoints(assignedSpeciesList) : typeof SetasCoCultivation !== "undefined" && typeof SetasCoCultivation.optimizeChamberSetpoints === "function" ? SetasCoCultivation.optimizeChamberSetpoints(assignedSpeciesList) : null : null;

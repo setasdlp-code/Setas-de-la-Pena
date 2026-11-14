@@ -26,12 +26,12 @@ sdp_emails.json
 *.bak
 *.backup
 tmp/
-ECC/reports/
-ECC/data/alerts.jsonl
-ECC/data/current_cycle.json
-ECC/data/sensor_readings.jsonl
-ECC/data/system_state.json
-ECC/data/session_state.json
+archive/ECC/reports/
+archive/ECC/data/alerts.jsonl
+archive/ECC/data/current_cycle.json
+archive/ECC/data/sensor_readings.jsonl
+archive/ECC/data/system_state.json
+archive/ECC/data/session_state.json
 
 # ─────────────────────────────────────────────
 # Independent repositories

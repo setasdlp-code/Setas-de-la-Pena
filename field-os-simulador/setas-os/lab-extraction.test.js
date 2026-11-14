@@ -82,3 +82,24 @@ test("Lab Extraction — calculations, yields, costs and component integration",
     assert.match(shellCode, /SIM_WORKSPACE = \{[^}]*bioCheck:'Producción'[^}]*labExtraction:'Producción'/);
   });
 });
+
+test("el Laboratorio de extracción declara que sus factores no tienen fuente verificada", () => {
+  const app = fs.readFileSync(path.join(__dirname, "simulador-app.jsx"), "utf8");
+  assert.match(app, /data-testid="extraction-unverified"[\s\S]{0,300}sin fuente verificada/);
+});
+
+// extraction-factors.json es la fuente; las copias embebidas no pueden divergir.
+for (const file of ["simulador-app.jsx", "lab-extraction.jsx"]) {
+  test(`${file}: DEFAULT_EXTRACTION_FACTORS es idéntico a extraction-factors.json`, () => {
+    const src = fs.readFileSync(path.join(__dirname, file), "utf8");
+    const start = src.indexOf("{", src.indexOf("DEFAULT_EXTRACTION_FACTORS = {"));
+    let depth = 0, end = start;
+    for (; end < src.length; end++) {
+      if (src[end] === "{") depth++;
+      if (src[end] === "}" && --depth === 0) break;
+    }
+    const embedded = new Function(`return (${src.slice(start, end + 1)});`)();
+    const canonical = JSON.parse(fs.readFileSync(path.join(__dirname, "extraction-factors.json"), "utf8"));
+    assert.deepEqual(embedded, canonical);
+  });
+}

@@ -325,7 +325,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.equal(new URL(page.url()).pathname, `/especies/${slug}`);
       assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
       assert.equal(await page.locator('h1').innerText(), name);
-      assert.equal(await page.locator('.editorial-sources li').count(), 6);
+      assert.ok(await page.locator('.editorial-sources li').count() >= 6, `${slug}: retain species sources and research references`);
       assert.equal(await page.locator('.editorial-other').count(), 2);
       await page.locator('.editorial-toc a[href="#cocina"]').click();
       assert.equal(new URL(page.url()).hash, '#cocina');
@@ -779,7 +779,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await techniquesPage.locator('.knowledge-art').count(), 4);
     await visit(techniquesPage, 'cultivo');
     assert.equal(await techniquesPage.locator('#primary-nav a[aria-current="page"]').textContent(), 'Cultivo');
-    assert.equal(await techniquesPage.locator('.cultivation-system article').count(), 6);
+    assert.equal(await techniquesPage.locator('#sistema .cultivation-story').count(), 1);
+    assert.equal(await techniquesPage.locator('#sistema h2').textContent(), 'Tecnología al servicio del cultivo.');
+    assert.equal(await techniquesPage.locator('#sistema h3, #sistema article').count(), 0);
+    assert.equal(await techniquesPage.locator('#sistema .cultivation-ensemble img').count(), 7);
+    assert.match(await techniquesPage.locator('#sistema .cultivation-status').textContent(), /Estamos en preproducción/);
     assert.equal(await techniquesPage.locator('#del-cultivo .knowledge-art').count(), 4);
     await visit(techniquesPage, 'cocina#tecnicas');
     assert.equal(await techniquesPage.locator('#tecnicas a[href="/tecnicas"]').count(), 1);

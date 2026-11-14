@@ -34,6 +34,11 @@ Example shape only (replace the token before use):
 }
 ```
 
+Each device may also declare an optional `position` (up to 40 plain characters,
+for example `"altura bloques"` or `"salida de niebla"`). It is the operator's
+description of where the sensor is mounted; the gateway attaches it to every
+reading and ignores any position a node sends about itself.
+
 Set these environment variables on the gateway:
 
 - `SETAS_SENSOR_DEVICES_FILE`: absolute path to the private JSON file.
@@ -98,7 +103,12 @@ Each `telemetria_lecturas` document is identified by a SHA-256 hash of
 room/device/metric/observation time; retries do not add duplicate history rows.
 Each `telemetria_salas/{roomId}` contains a `metric_readings` map. Its metric
 entries preserve value, unit, device, source, observation time and CO2 flag.
-New temperature cannot refresh old CO2. Delayed packets are kept in history
+New temperature cannot refresh old CO2. The same document keeps a
+`device_readings` map (`deviceId → { position, metrics }`) so two nodes in one
+room do not overwrite each other; Módulos lists each sensor with its position
+and shows the difference between positions when two or more readings are
+current. `metric_readings` remains the room headline: with several nodes it is
+the most recent reading per metric, whichever node sent it. Delayed packets are kept in history
 but cannot replace newer metric snapshots. The bridge still accepts legacy
 flat room documents; after commissioning this publisher for a room, avoid
 concurrent legacy writers for that room.

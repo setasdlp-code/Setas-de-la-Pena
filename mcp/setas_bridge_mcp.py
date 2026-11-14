@@ -4,7 +4,7 @@ MCP Server — Setas de la Peña — Bridge
 
 Puente de lectura/escritura EN VIVO entre agentes de IA (Claude, ChatGPT,
 Codex, Antigravity, ...) y el repositorio del proyecto: `knowledge_base/`,
-`field_os/`, `field-os-simulador/`, y documentos sueltos en la raíz.
+`field-os-simulador/`, `docs/`, y documentos sueltos en la raíz.
 
 A diferencia de `setas_mcp.py` (datos de cultivo embebidos en el código,
 pensado para consultas rápidas y estables de parámetros de especies), este
@@ -125,7 +125,7 @@ class ChangelogTipo(str, Enum):
 class ReadFileInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
     path: str = Field(
-        description="Ruta relativa a la raíz del repo, p. ej. 'knowledge_base/FARM_BRAIN.md' o 'field_os/README.md'."
+        description="Ruta relativa a la raíz del repo, p. ej. 'knowledge_base/FARM_BRAIN.md' o 'docs/adr/0004-evidence-is-context-not-score.md'."
     )
 
 
@@ -225,7 +225,7 @@ def setas_bridge_list_tools() -> str:
 def setas_bridge_read_file(input: ReadFileInput) -> str:
     """Lee el contenido íntegro y actual de un archivo del repo, en vivo desde
     disco. Usa esto para cargar cualquier documento de knowledge_base/,
-    field_os/, field-os-simulador/ u otros archivos del proyecto (excepto
+    field-os-simulador/, docs/ u otros archivos del proyecto (excepto
     credenciales/secretos, que están bloqueados). Archivos >200KB se truncan
     con una nota explícita."""
     try:
