@@ -122,10 +122,10 @@ test('el render de evidencia usa el resultado de describePeritoEvidence sin asum
 // ── orden de ranking intacto: el bloque de evidencia no reordena optResults ─
 test('el panel de evidencia se inserta sin tocar la línea que produce el orden de ranking', () => {
   // byProfile[pk] sale de out.ranked solo con transformaciones de presentación
-  // (generator-presentation.js: colapsar casi duplicados y poner primero los
-  // viables según el veredicto del propio Perito). La evidencia no entra ahí.
-  const rowsMatch = jsx.match(/const genRows=SetasGeneratorPresentationApi\.collapseNearDuplicates\(\(out\.ranked\|\|\[\]\)\.slice\(0,12\)\.map\(c=>\s*\n\s*hybridOptimizerRow\(c,optTarget,optimizerINGS,stockMap,pk,invLotes\)\s*\n\s*\)\);\s*\n\s*const genParts=SetasGeneratorPresentationApi\.partitionRows\(genRows\);\s*\n\s*byProfile\[pk\]=\[\.\.\.genParts\.viable,\.\.\.genParts\.blocked\];/);
-  assert.ok(rowsMatch, 'byProfile[pk] debe armarse desde out.ranked solo con collapseNearDuplicates + partitionRows');
+  // (generator-presentation.js presentRows: poner primero los viables según el
+  // veredicto del propio Perito y colapsar casi duplicados dentro de cada grupo). La evidencia no entra ahí.
+  const rowsMatch = jsx.match(/byProfile\[pk\]=SetasGeneratorPresentationApi\.presentRows\(\(out\.ranked\|\|\[\]\)\.slice\(0,12\)\.map\(c=>\s*\n\s*hybridOptimizerRow\(c,optTarget,optimizerINGS,stockMap,pk,invLotes\)\s*\n\s*\)\);/);
+  assert.ok(rowsMatch, 'byProfile[pk] debe armarse desde out.ranked solo con presentRows (separar viables y colapsar duplicados)');
   assert.doesNotMatch(rowsMatch[0], /evidence|Evidence|historical/, 'la evidencia no puede intervenir en el orden de byProfile[pk]');
   const panelIdx = jsx.indexOf('const evi=describePeritoEvidence(optResults');
   const mapIdx = jsx.indexOf('{(()=>{const genCards=optResults[optProfile].map((r,i)=>{');

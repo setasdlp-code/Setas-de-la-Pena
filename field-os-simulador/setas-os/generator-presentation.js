@@ -47,6 +47,14 @@
     return { viable, blocked };
   };
 
+  // Orden de pantalla: viables primero y bloqueados después, con los casi
+  // duplicados colapsados DENTRO de cada grupo. Colapsar antes de separar dejaba
+  // que un bloqueado mejor puntuado se comiera a un viable casi idéntico.
+  const presentRows = (rows = [], opts = {}) => {
+    const { viable, blocked } = partitionRows(rows);
+    return [...collapseNearDuplicates(viable, opts), ...collapseNearDuplicates(blocked, opts)];
+  };
+
   // Ids de la receta cuyos lotes activos con existencias tienen todos precio <= 0:
   // el costo de esos insumos no está registrado, no es cero.
   const unpricedIds = (recipe = [], invLotes = []) => (recipe || [])
@@ -88,6 +96,7 @@
     collapseNearDuplicates,
     isViableRow,
     partitionRows,
+    presentRows,
     unpricedIds,
     explainEmptySearch,
     generatorHeadline,

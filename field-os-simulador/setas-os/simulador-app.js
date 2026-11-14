@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6bfbac579a3c1b0da792e9a5f72b979b2dec90101d8a53c3e879f2ad5daf92e4
+// source-hash: 5581fc40d7dbc3dc5f477baee9f681b04a868bdc991e9bfbb423385402401afa
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -7441,7 +7441,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "6bfbac579a3c" : null;
+    const appVersion = true ? "5581fc40d7db" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -11520,11 +11520,9 @@ Click para ver análisis completo`
                 spp: optTargetSPP
               });
               noStock = noStock || !!out.noStock;
-              const genRows = SetasGeneratorPresentationApi.collapseNearDuplicates((out.ranked || []).slice(0, 12).map(
+              byProfile[pk] = SetasGeneratorPresentationApi.presentRows((out.ranked || []).slice(0, 12).map(
                 (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk, invLotes)
               ));
-              const genParts = SetasGeneratorPresentationApi.partitionRows(genRows);
-              byProfile[pk] = [...genParts.viable, ...genParts.blocked];
               const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk, optTargetSPP);
               const stockCount = diag.stockIds;
               byProfile[`_diag_${pk}`] = { stockCount, diag };
@@ -11596,7 +11594,7 @@ Click para ver análisis completo`
         setRecipe(r.recipe);
         setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
         goTab("produccion");
-      } }, "Planificar lote"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "opt-load", style: { background: "var(--slate-800)", borderColor: "var(--slate-900)", color: "var(--paper-50)" }, onClick: () => {
+      }, disabled: !SetasGeneratorPresentationApi.isViableRow(r), title: SetasGeneratorPresentationApi.isViableRow(r) ? void 0 : "Escenario marcado «No ejecutar»: cargarlo en la Mesa para corregirlo antes de planificar." }, "Planificar lote"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "opt-load", style: { background: "var(--slate-800)", borderColor: "var(--slate-900)", color: "var(--paper-50)" }, onClick: () => {
         setMorphTargetRecipe(r.recipe);
         openBuilderSubTab("generador", { mode: "morphing" });
       } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 12, style: { marginRight: 4 } }), " Comparar"))), /* @__PURE__ */ React.createElement("div", { className: "generator-candidate-context", "data-testid": "generator-candidate-context" }, "C:N objetivo ", r.an.sp?.cn_optimal?.min, "–", r.an.sp?.cn_optimal?.max, ":1", " · ", "Humedad objetivo ", r.an.moistureTarget ?? r.an.sp?.moisture?.ideal, "%", " · ", calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp })?.name), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {

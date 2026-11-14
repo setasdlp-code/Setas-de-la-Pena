@@ -16760,14 +16760,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           spp:optTargetSPP,
                                         });
                                         noStock=noStock||!!out.noStock;
-                                        // Casi duplicados colapsados y viables primero: el orden del
-                                        // Perito se conserva dentro de cada grupo, y quien lea [0]
+                                        // Viables primero y casi duplicados colapsados dentro de cada
+                                        // grupo: el orden del Perito se conserva y quien lea [0]
                                         // (mezcla/morphing) recibe el primer Escenario viable.
-                                        const genRows=SetasGeneratorPresentationApi.collapseNearDuplicates((out.ranked||[]).slice(0,12).map(c=>
+                                        byProfile[pk]=SetasGeneratorPresentationApi.presentRows((out.ranked||[]).slice(0,12).map(c=>
                                           hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk,invLotes)
                                         ));
-                                        const genParts=SetasGeneratorPresentationApi.partitionRows(genRows);
-                                        byProfile[pk]=[...genParts.viable,...genParts.blocked];
                                         const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk,optTargetSPP);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
@@ -16861,7 +16859,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
-                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Planificar lote</button>
+                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}} disabled={!SetasGeneratorPresentationApi.isViableRow(r)} title={SetasGeneratorPresentationApi.isViableRow(r)?undefined:'Escenario marcado «No ejecutar»: cargarlo en la Mesa para corregirlo antes de planificar.'}>Planificar lote</button>
                                           <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);openBuilderSubTab('generador',{mode:'morphing'});}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>

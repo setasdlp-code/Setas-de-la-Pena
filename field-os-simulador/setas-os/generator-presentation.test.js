@@ -75,3 +75,17 @@ test('generatorHeadline sin ninguna combinación no habla de «No ejecutar»', (
   assert.equal(P.generatorHeadline({ viable: 0, blocked: 0, profileLabel: 'Rescate' }),
     'Sin combinaciones válidas para Rescate.');
 });
+
+test('presentRows: un bloqueado casi idéntico no se come al viable', () => {
+  const blocked = { recipe: R(['a', 50], ['b', 50]), status: 'critical', safetyStatus: 'approved', score: 60 };
+  const viable = { recipe: R(['a', 50.3], ['b', 49.7]), status: 'good', safetyStatus: 'approved', score: 55 };
+  const out = P.presentRows([blocked, viable]);
+  assert.deepEqual(out.map(r => r.status), ['good', 'critical']);
+});
+
+test('presentRows colapsa duplicados dentro de cada grupo y conserva el orden del Perito', () => {
+  const g = (p, score) => ({ recipe: R(['a', p], ['b', 100 - p]), status: 'good', safetyStatus: 'approved', score });
+  const c = (p, score) => ({ recipe: R(['a', p], ['b', 100 - p]), status: 'critical', safetyStatus: 'approved', score });
+  const out = P.presentRows([c(10, 50), g(60, 78), g(60.2, 77), c(10.1, 49), g(80, 70)]);
+  assert.deepEqual(out.map(r => r.score), [78, 70, 50]);
+});
