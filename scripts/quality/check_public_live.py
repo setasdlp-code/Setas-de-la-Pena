@@ -39,14 +39,15 @@ def main():
         status, headers, body, url = fetch(entry['file'])
         assert status == 200, (entry['file'], status)
         assert hashlib.sha256(body).hexdigest() == entry['sha256'], f"SHA mismatch: {entry['file']}"
-        assert headers.get('x-robots-tag') == 'noindex, nofollow', (entry['file'], headers.get('x-robots-tag'))
+        expected_robots = None if entry['file'] in {'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html'} else 'noindex, nofollow'
+        assert headers.get('x-robots-tag') == expected_robots, (entry['file'], headers.get('x-robots-tag'))
         cache = headers.get('cache-control', '')
         if entry['file'].startswith('_assets/'):
             assert re.search(r'\.[a-f0-9]{12}\.', entry['file']), entry['file']
             assert 'max-age=31536000' in cache and 'immutable' in cache, (entry['file'], cache)
         else:
             assert 'immutable' not in cache, (entry['file'], cache)
-        return {'file': entry['file'], 'status': status, 'sha256': entry['sha256'], 'cacheControl': cache, 'robots': headers['x-robots-tag']}
+        return {'file': entry['file'], 'status': status, 'sha256': entry['sha256'], 'cacheControl': cache, 'robots': headers.get('x-robots-tag')}
 
     public_files = [entry for entry in manifest['files'] if entry['file'] not in {'_headers', '_redirects'}]
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
@@ -57,6 +58,8 @@ def main():
     for route, file in product_routes:
         status, headers, body, url = fetch(route)
         assert status == 200, route
+        expected_robots = None if route.startswith('especies/') else 'noindex, nofollow'
+        assert headers.get('x-robots-tag') == expected_robots, (route, headers.get('x-robots-tag'))
         assert body == (args.artifact / file).read_bytes(), route
         assert 'immutable' not in headers.get('cache-control', ''), route
         if route:
