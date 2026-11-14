@@ -20,7 +20,7 @@ module.exports = defineConfig({
   expect: { timeout: 7_000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['github'], ['list', {printSteps:true}], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env.CI ? [['github'], ['list', {printSteps:true}], ['json', { outputFile: 'e2e-results.json' }], ['html', { open: 'never' }]] : 'list',
   globalSetup: require.resolve('./e2e/global-setup.js'),
   use: {
     baseURL: 'http://127.0.0.1:4173',
