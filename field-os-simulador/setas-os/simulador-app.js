@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5a9a0328dc37055ef015783de211c63038e7f8699223eac1430128522e282fe3
+// source-hash: 83a730d3f165105cbc36718a5311d9e9bcbac97ce1304aafc4f7150383ba6077
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -4868,6 +4868,15 @@ function SimuladorShell(props) {
   const [promptDlg, setPromptDlg] = useState(null);
   const [versionDlg, setVersionDlg] = useState(null);
   const [noticeDlg, setNoticeDlg] = useState(null);
+  const persistLocal = (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      setTimeout(() => setNoticeDlg({ title: "No se pudo guardar", msg: "El navegador no aceptó el cambio (almacenamiento lleno o bloqueado) y se perderá al recargar. Descargar un respaldo, liberar espacio del navegador y volver a intentar." }), 0);
+      return false;
+    }
+  };
   const [bitLotes, setBitLotes] = useState([]);
   const [bitLotesLoaded, setBitLotesLoaded] = useState(false);
   const [metricsLoadError, setMetricsLoadError] = useState(false);
@@ -5188,38 +5197,26 @@ function SimuladorShell(props) {
           return { ...l, cantidadKgDisponible: nuevoDisponible, cantidadKgTotal: Math.max(l.cantidadKgTotal, nuevoDisponible), precioPorKgCOP: pr };
         });
       }
-      try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(updated));
-      } catch (e) {
-      }
+      persistLocal("sdp_lotes", JSON.stringify(updated));
       return updated;
     });
     if (nuevoId) {
       setInvCompras((prev) => {
         const upd = prev.map((c) => ({ ...c, items: c.items.map((it) => it.ingredienteId === ingredienteId ? { ...it, ingredienteId: nuevoId } : it) }));
-        try {
-          localStorage.setItem("sdp_compras", JSON.stringify(upd));
-        } catch (e) {
-        }
+        persistLocal("sdp_compras", JSON.stringify(upd));
         return upd;
       });
     }
     if (proveedorId) {
       const upd = { ...provOverride, [targetId]: proveedorId };
       setProvOverride(upd);
-      try {
-        localStorage.setItem("sdp_prov_override", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_prov_override", JSON.stringify(upd));
     }
     const am = parseFloat(alertaMin);
     if (!isNaN(am) && am >= 0) {
       const upd = { ...alertaConfig, [targetId]: am };
       setAlertaConfig(upd);
-      try {
-        localStorage.setItem("sdp_alertas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_alertas", JSON.stringify(upd));
     }
     setEditingRowId(null);
   };
@@ -5227,16 +5224,13 @@ function SimuladorShell(props) {
     const doDelete = () => {
       setInvLotes((prev) => {
         const upd = prev.map((l) => l.ingredienteId === ingredienteId ? { ...l, activo: false } : l);
-        try {
-          localStorage.setItem("sdp_lotes", JSON.stringify(upd));
-        } catch (e) {
-        }
+        persistLocal("sdp_lotes", JSON.stringify(upd));
         return upd;
       });
       try {
         const pantry = JSON.parse(localStorage.getItem("sdp_pantry") || "{}");
         delete pantry[ingredienteId];
-        localStorage.setItem("sdp_pantry", JSON.stringify(pantry));
+        persistLocal("sdp_pantry", JSON.stringify(pantry));
       } catch (e) {
       }
     };
@@ -5260,10 +5254,7 @@ function SimuladorShell(props) {
           return { ...l, cantidadKgDisponible: Math.round(kg * fraccion * 100) / 100 };
         });
       }
-      try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(updated));
-      } catch (e) {
-      }
+      persistLocal("sdp_lotes", JSON.stringify(updated));
       return updated;
     });
   };
@@ -5294,10 +5285,7 @@ function SimuladorShell(props) {
         const vigentes = ledgerApi ? ledgerApi.expireDue(parsedReservas, Date.now()) : parsedReservas;
         setInvReservas(vigentes);
         if (ledgerApi && JSON.stringify(vigentes) !== JSON.stringify(parsedReservas)) {
-          try {
-            localStorage.setItem("sdp_inv_reservas", JSON.stringify(vigentes));
-          } catch (e) {
-          }
+          persistLocal("sdp_inv_reservas", JSON.stringify(vigentes));
         }
       }
       const sq = localStorage.getItem("sdp_sync_queue");
@@ -5339,10 +5327,7 @@ function SimuladorShell(props) {
         if (cancelled) return;
         syncQueueRef.current = updatedQueue;
         setSyncQueue(updatedQueue);
-        try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
-        } catch (e) {
-        }
+        persistLocal("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
       }
     };
     const drainAll = () => {
@@ -5560,10 +5545,7 @@ function SimuladorShell(props) {
       const next = queueApi.retryStuck(syncQueueRef.current, Date.now());
       syncQueueRef.current = next;
       setSyncQueue(next);
-      try {
-        localStorage.setItem("sdp_sync_queue", queueApi.serialize(next));
-      } catch (e) {
-      }
+      persistLocal("sdp_sync_queue", queueApi.serialize(next));
     } else if (a.type === "goBodega") {
       setInvTab("stock");
       goTab("inventario");
@@ -5956,10 +5938,7 @@ function SimuladorShell(props) {
       if (recetaObj && recetaObj.id) {
         const u = saved.map((s) => s.id === recetaObj.id ? { ...s, esProduccion: true, fechaPromocion: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO") } : s);
         setSaved(u);
-        try {
-          localStorage.setItem("setas_v6", JSON.stringify(u));
-        } catch (e) {
-        }
+        persistLocal("setas_v6", JSON.stringify(u));
       }
       setSKey(targetSKey);
       setRecipe(targetRecipe);
@@ -6017,10 +5996,7 @@ function SimuladorShell(props) {
       const nueva = lifecycle.newVersionFrom(newVersionFor, {}, { actor: fieldOperatorRole, at: (/* @__PURE__ */ new Date()).toISOString() });
       const u = [{ ...nueva, id: Date.now() }, ...saved];
       setSaved(u);
-      try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
-      } catch (e) {
-      }
+      persistLocal("setas_v6", JSON.stringify(u));
       setNewVersionFor(null);
       setSKey(nueva.sKey);
       setRecipe(nueva.recipe);
@@ -6047,10 +6023,7 @@ function SimuladorShell(props) {
       });
       const u = saved.map((s) => s.id === receta.id ? { ...actualizada, id: receta.id } : s);
       setSaved(u);
-      try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
-      } catch (e) {
-      }
+      persistLocal("setas_v6", JSON.stringify(u));
     } catch (err) {
       setNoticeDlg({ title: "No se pudo cambiar el estado", msg: err.message });
     }
@@ -6067,10 +6040,7 @@ function SimuladorShell(props) {
       const receta = saved.find((r) => r.id === id);
       const u = saved.filter((r) => r.id !== id);
       setSaved(u);
-      try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
-      } catch (e) {
-      }
+      persistLocal("setas_v6", JSON.stringify(u));
       if (receta?.firestoreId && window.SetasDB?.deleteReceta) {
         window.SetasDB.deleteReceta(receta.firestoreId).catch((err) => console.warn("No se pudo borrar la receta en Firestore:", err));
       }
@@ -6085,10 +6055,7 @@ function SimuladorShell(props) {
       const ebReal = Math.round(n * 10) / 10;
       const u = saved.map((s) => s.id === id ? { ...s, ebReal, outcome: confirmedOutcome(ebReal) } : s);
       setSaved(u);
-      try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
-      } catch (e) {
-      }
+      persistLocal("setas_v6", JSON.stringify(u));
     } });
   };
   const effectiveINGS = useMemo(() => INGS.map((ing) => {
@@ -7116,7 +7083,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "5a9a0328dc37" : null;
+    const appVersion = true ? "83a730d3f165" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7153,10 +7120,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       if (ledgerApi && !loteEraDescartado) {
         setInvReservas((prev) => {
           const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción descartado", at: (/* @__PURE__ */ new Date()).toISOString() });
-          try {
-            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-          } catch (e) {
-          }
+          persistLocal("sdp_inv_reservas", JSON.stringify(upd));
           return upd;
         });
       }
@@ -7298,10 +7262,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     const lote = cosecha && bitLotes.find((l) => l.id === cosecha.loteId);
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.id !== id);
-      try {
-        localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_bit_cosechas", JSON.stringify(upd));
       return upd;
     });
     encolarSync({ type: "eliminarCosecha", key: "cosecha:" + id, args: [id] });
@@ -7318,27 +7279,18 @@ ${errors.slice(0, 5).join("\n")}` : "");
     if (ledgerApi) {
       setInvReservas((prev) => {
         const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() });
-        try {
-          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-        } catch (e) {
-        }
+        persistLocal("sdp_inv_reservas", JSON.stringify(upd));
         return upd;
       });
     }
     setBitLotes((prev) => {
       const upd = prev.filter((l) => l.id !== loteId);
-      try {
-        localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_bit_lotes", JSON.stringify(upd));
       return upd;
     });
     setBitBolsas((prev) => {
       const upd = prev.filter((b) => b.loteId !== loteId);
-      try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_bit_bolsas", JSON.stringify(upd));
       return upd;
     });
     if (bagPhotoStoreRef.current && bagPhotoStoreRef.current.available && bolsaIds.length) {
@@ -7354,10 +7306,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.loteId !== loteId);
-      try {
-        localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_bit_cosechas", JSON.stringify(upd));
       return upd;
     });
     if (bitActiveLoteId === loteId) {
@@ -7368,10 +7317,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     if (syncQueueApi) {
       setSyncQueue((prev) => {
         const purged = syncQueueApi.purgeKeys(prev, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
-        try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
-        } catch (e) {
-        }
+        persistLocal("sdp_sync_queue", syncQueueApi.serialize(purged));
         return purged;
       });
     }
@@ -7398,14 +7344,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     const cleanup = plan.map((p) => purgeBitLote(p.loteId));
     setBitTasks([]);
-    try {
-      localStorage.setItem("sdp_bit_tasks", "[]");
-    } catch (e) {
-    }
-    try {
-      localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER, (/* @__PURE__ */ new Date()).toISOString());
-    } catch (e) {
-    }
+    persistLocal("sdp_bit_tasks", "[]");
+    persistLocal(SetasPrototype.PILOT_RESET_MARKER, (/* @__PURE__ */ new Date()).toISOString());
     await Promise.all(cleanup);
     await new Promise((r) => setTimeout(r, 300));
     location.reload();
@@ -7454,31 +7394,19 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const toggleLock = (id) => setLockedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   const saveProveedores = (list) => {
     setInvProveedores(list);
-    try {
-      localStorage.setItem("sdp_proveedores", JSON.stringify(list));
-    } catch (e) {
-    }
+    persistLocal("sdp_proveedores", JSON.stringify(list));
   };
   const saveCompras = (list) => {
     setInvCompras(list);
-    try {
-      localStorage.setItem("sdp_compras", JSON.stringify(list));
-    } catch (e) {
-    }
+    persistLocal("sdp_compras", JSON.stringify(list));
   };
   const saveLotes = (list) => {
     setInvLotes(list);
-    try {
-      localStorage.setItem("sdp_lotes", JSON.stringify(list));
-    } catch (e) {
-    }
+    persistLocal("sdp_lotes", JSON.stringify(list));
   };
   const saveMovimientos = (list) => {
     setInvMovimientos(list);
-    try {
-      localStorage.setItem("sdp_movimientos", JSON.stringify(list));
-    } catch (e) {
-    }
+    persistLocal("sdp_movimientos", JSON.stringify(list));
   };
   const readInvOps = () => {
     try {
@@ -7490,10 +7418,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const [invOps, setInvOps] = useState(readInvOps);
   const saveInvOps = (q) => {
     setInvOps(q);
-    try {
-      localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY, JSON.stringify(q));
-    } catch (e) {
-    }
+    persistLocal(SetasInventoryConsumptionApi.QUEUE_KEY, JSON.stringify(q));
   };
   const invSyncRef = useRef({ inFlight: null, again: false });
   const runInventorySync = useCallback(() => {
@@ -7522,10 +7447,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     if (!ledgerApi || !nuevas.length) return;
     setInvReservas((prev) => {
       const upd = ledgerApi.addReservations(prev, nuevas);
-      try {
-        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_inv_reservas", JSON.stringify(upd));
       return upd;
     });
   };
@@ -7544,10 +7466,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       const yaTiene = prev.some((r) => r && r.batchId === loteId && r.status === "held");
       if (yaTiene) return prev;
       const upd = ledgerApi.addReservations(prev, reservas);
-      try {
-        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_inv_reservas", JSON.stringify(upd));
       return upd;
     });
     return true;
@@ -7566,10 +7485,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     setInvMovimientos((prev) => {
       const upd = [...prev, ...r.movimientos];
-      try {
-        localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_movimientos", JSON.stringify(upd));
       return upd;
     });
     const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
@@ -7585,10 +7501,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
           aCerrar = reservas;
         }
         upd = aCerrar.reduce((acc, r2) => ledgerApi.consume(acc, r2.id, { eventId: op.opId, at: nowIso }), upd);
-        try {
-          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-        } catch (e) {
-        }
+        persistLocal("sdp_inv_reservas", JSON.stringify(upd));
         return upd;
       });
     }
@@ -7625,10 +7538,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const hoyBogota = () => inboxApi ? inboxApi.todayBogota() : (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   const saveCorreos = (fn) => setInvCorreos((prev) => {
     const upd = inboxApi ? inboxApi.compactCorreos(fn(prev)) : fn(prev);
-    try {
-      localStorage.setItem("sdp_correos_compra", JSON.stringify(upd));
-    } catch (e) {
-    }
+    persistLocal("sdp_correos_compra", JSON.stringify(upd));
     return upd;
   });
   useEffect(() => {
@@ -8677,10 +8587,7 @@ BATCH (${numBags}×${kgBag} kg):
       descartados.forEach((id) => {
         upd = ledgerApi.releaseForBatch(upd, id, { reason: "Lote de producción descartado", at });
       });
-      try {
-        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-      } catch (e) {
-      }
+      persistLocal("sdp_inv_reservas", JSON.stringify(upd));
       return upd;
     });
   }, [bitLotes]);
@@ -8962,10 +8869,7 @@ BATCH (${numBags}×${kgBag} kg):
       return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "sdp-sync-chip " + (st.stuck > 0 ? "sdp-sync-chip--error" : st.pending > 0 ? "sdp-sync-chip--pending" : "sdp-sync-chip--synced") }, label), remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
-        try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
-        } catch (e) {
-        }
+        persistLocal("sdp_sync_queue", syncQueueApi.serialize(next));
       } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "data-testid": "sync-export-stuck", style: { minHeight: 44 }, onClick: exportarSyncPendientes }, "Exportar"));
     })())));
   };
@@ -9019,10 +8923,7 @@ BATCH (${numBags}×${kgBag} kg):
       return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", className: `sdp-sync sdp-sync--${st.stuck > 0 ? "error" : st.pending > 0 ? "pending" : "synced"}` }, label, remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
-        try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
-        } catch (e) {
-        }
+        persistLocal("sdp_sync_queue", syncQueueApi.serialize(next));
       }, style: { marginLeft: 6 } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "sync-export-stuck", onClick: exportarSyncPendientes, style: { marginLeft: 6, minHeight: 44, minWidth: 44 } }, "Exportar"));
     })()), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-editorial)", fontWeight: 700, fontSize: 20, color: "var(--text-primary)", marginTop: 4 } }, (sheet ? sheet.species : lote.especie) || "Especie sin registrar", (sheet ? sheet.speciesScientific : lote.especieCientifico) && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("i", { style: { fontWeight: 400, fontSize: 14, color: "var(--text-secondary)" } }, sheet ? sheet.speciesScientific : lote.especieCientifico))), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__status", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge sdp-badge--${loteBadge}` }, stateLabel, sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : "")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__meta", style: { gridTemplateColumns: "1fr 1fr", marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Sala"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, roomName || "Sin asignar")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Bolsas activas"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || "—"}`)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Receta"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ""}` : "Sin vincular")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Spawn"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : "Sin vincular"))))), hasExceptions && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks-mobile", style: { marginTop: 14, borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 14 } }, "Excepciones"), isException && /* @__PURE__ */ React.createElement("div", { className: "sdp-badge sdp-badge--quarantine", style: { marginBottom: 8 } }, stateLabel, " · ", state === "quarantine" ? "Sospecha de contaminación" : "Lifecycle detenido"), sheet && sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: `anom-${i}`, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, a.severity === "critical" ? "Crítico" : "Atención")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, a.detail))), sheet && sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: b.code, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, "Bloqueo")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, b.detail))), actions.some((a) => a.action === "inspection" || a.action === "contamination") && /* @__PURE__ */ React.createElement(
       "button",
@@ -9963,10 +9864,7 @@ BATCH (${numBags}×${kgBag} kg):
     return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "var(--status-error)" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
       const next = syncQueueApi.retryStuck(syncQueue, Date.now());
       setSyncQueue(next);
-      try {
-        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
-      } catch (e) {
-      }
+      persistLocal("sdp_sync_queue", syncQueueApi.serialize(next));
     } }, "Reintentar"));
   })())), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setBitNuevoForm((p) => Object.keys(p).length ? p : buildBitNuevoForm());
@@ -10373,10 +10271,7 @@ BATCH (${numBags}×${kgBag} kg):
         st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
           const next = syncQueueApi.retryStuck(syncQueue, Date.now());
           setSyncQueue(next);
-          try {
-            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
-          } catch (e) {
-          }
+          persistLocal("sdp_sync_queue", syncQueueApi.serialize(next));
         }, style: { cursor: "pointer", minHeight: 48, padding: "0 14px", background: "var(--paper-0)", color: "var(--coral-700)", border: "1px solid var(--coral-700)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Reintentar")
       );
     })(), /* @__PURE__ */ React.createElement(

@@ -493,7 +493,7 @@ test('mergeReservas fusiona vía addReservations y persiste en sdp_inv_reservas'
   assert.ok(start > -1);
   const block = source.slice(start, start + 400);
   assert.match(block, /ledgerApi\.addReservations\(prev,nuevas\)/);
-  assert.match(block, /localStorage\.setItem\('sdp_inv_reservas',JSON\.stringify\(upd\)\)/);
+  assert.match(block, /persistLocal\('sdp_inv_reservas',JSON\.stringify\(upd\)\)/);
 });
 
 test('los dos flujos de lanzamiento sólo preguntan por el insumo comprometido, no por el que ya falta en bodega', () => {

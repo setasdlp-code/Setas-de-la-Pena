@@ -6900,6 +6900,17 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
   const [versionDlg,setVersionDlg]=useState(null); // {recipe} — recetario: receta 'approved'/'retired' cargada, ofrece crear versión nueva en vez de editar
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
+  // Escritura local única: devuelve false y avisa si el navegador rechaza el
+  // guardado (cuota llena, modo privado). Antes estas escrituras tenían
+  // catch vacío: la pantalla mostraba el cambio y al recargar desaparecía.
+  // El aviso se difiere porque algunas llamadas ocurren dentro de updaters de setState.
+  const persistLocal=(key,value)=>{
+    try{localStorage.setItem(key,value);return true;}
+    catch(e){
+      setTimeout(()=>setNoticeDlg({title:'No se pudo guardar',msg:'El navegador no aceptó el cambio (almacenamiento lleno o bloqueado) y se perderá al recargar. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'}),0);
+      return false;
+    }
+  };
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
   const [bitLotesLoaded,setBitLotesLoaded]=useState(false);
@@ -7181,27 +7192,27 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:nuevoDisponible,cantidadKgTotal:Math.max(l.cantidadKgTotal,nuevoDisponible),precioPorKgCOP:pr};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      persistLocal('sdp_lotes',JSON.stringify(updated));
       return updated;
     });
     // Reasignar en compras si cambió el tipo
     if(nuevoId){
       setInvCompras(prev=>{
         const upd=prev.map(c=>({...c,items:c.items.map(it=>it.ingredienteId===ingredienteId?{...it,ingredienteId:nuevoId}:it)}));
-        try{localStorage.setItem('sdp_compras',JSON.stringify(upd));}catch(e){}
+        persistLocal('sdp_compras',JSON.stringify(upd));
         return upd;
       });
     }
     // Proveedor override
     if(proveedorId){
       const upd={...provOverride,[targetId]:proveedorId};
-      setProvOverride(upd);try{localStorage.setItem('sdp_prov_override',JSON.stringify(upd));}catch(e){}
+      setProvOverride(upd);persistLocal('sdp_prov_override',JSON.stringify(upd));
     }
     // Alerta mínima
     const am=parseFloat(alertaMin);
     if(!isNaN(am)&&am>=0){
       const upd={...alertaConfig,[targetId]:am};
-      setAlertaConfig(upd);try{localStorage.setItem('sdp_alertas',JSON.stringify(upd));}catch(e){}
+      setAlertaConfig(upd);persistLocal('sdp_alertas',JSON.stringify(upd));
     }
     setEditingRowId(null);
   };
@@ -7210,15 +7221,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const doDelete=()=>{
       setInvLotes(prev=>{
         const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
-        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
+        persistLocal('sdp_lotes',JSON.stringify(upd));
         return upd;
       });
       // Limpiar pantry
       try{
         const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
         delete pantry[ingredienteId];
-        localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
-      }catch(e){}
+        persistLocal('sdp_pantry',JSON.stringify(pantry));
+      }catch(e){/* pantry ilegible: no hay nada que limpiar */}
     };
     setConfirmDlg({title:'Eliminar stock',msg:`¿Eliminar todo el stock de "${nombre}"? Esto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`,danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
@@ -7241,7 +7252,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:Math.round(kg*fraccion*100)/100};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      persistLocal('sdp_lotes',JSON.stringify(updated));
       return updated;
     });
   };
@@ -7274,7 +7285,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const vigentes=ledgerApi?ledgerApi.expireDue(parsedReservas,Date.now()):parsedReservas;
         setInvReservas(vigentes);
         if(ledgerApi&&JSON.stringify(vigentes)!==JSON.stringify(parsedReservas)){
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
+          persistLocal('sdp_inv_reservas',JSON.stringify(vigentes));
         }
       }
       const sq=localStorage.getItem('sdp_sync_queue');
@@ -7339,7 +7350,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(cancelled) return;
         syncQueueRef.current=updatedQueue;
         setSyncQueue(updatedQueue);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
+        persistLocal('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));
       }
     };
 
@@ -7523,7 +7534,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const next=queueApi.retryStuck(syncQueueRef.current,Date.now());
       syncQueueRef.current=next;
       setSyncQueue(next);
-      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
+      persistLocal('sdp_sync_queue',queueApi.serialize(next));
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
@@ -7979,7 +7990,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(recetaObj&&recetaObj.id){
         const u=saved.map(s=>s.id===recetaObj.id?{...s,esProduccion:true,fechaPromocion:new Date().toLocaleDateString('es-CO')}:s);
         setSaved(u);
-        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+        persistLocal('setas_v6',JSON.stringify(u));
       }
       setSKey(targetSKey);
       setRecipe(targetRecipe);
@@ -8024,7 +8035,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const nueva=lifecycle.newVersionFrom(newVersionFor,{},{actor:fieldOperatorRole,at:new Date().toISOString()});
       const u=[{...nueva,id:Date.now()},...saved];
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      persistLocal('setas_v6',JSON.stringify(u));
       setNewVersionFor(null);
       setSKey(nueva.sKey);setRecipe(nueva.recipe);setLockedIds([]);
       openBuilderSubTab('formular');goTab('formular');
@@ -8047,7 +8058,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       });
       const u=saved.map(s=>s.id===receta.id?{...actualizada,id:receta.id}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      persistLocal('setas_v6',JSON.stringify(u));
     }catch(err){ setNoticeDlg({title:'No se pudo cambiar el estado',msg:err.message}); }
   };
   // Protección de UI: solo evita el clic accidental de un operador de campo en
@@ -8062,7 +8073,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const delR=id=>{
     setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
       const receta=saved.find(r=>r.id===id);
-      const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      const u=saved.filter(r=>r.id!==id);setSaved(u);persistLocal('setas_v6',JSON.stringify(u));
       // Sin esto el documento en recetas/ (Firestore) queda huérfano para
       // siempre: no hay UI ni proceso que lo purgue — igual que el bug de
       // Bitácora con public_lotes/. Si la receta se guardó antes de este fix
@@ -8088,7 +8099,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const ebReal=Math.round(n*10)/10;
       const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      persistLocal('setas_v6',JSON.stringify(u));
     }});
   };
 
@@ -9303,7 +9314,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(ledgerApi&&!loteEraDescartado){
         setInvReservas(prev=>{
           const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción descartado',at:new Date().toISOString()});
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          persistLocal('sdp_inv_reservas',JSON.stringify(upd));
           return upd;
         });
       }
@@ -9436,7 +9447,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // pública para siempre — nadie más va a volver a pedir su borrado.
     const cosecha=bitCosechas.find(c=>c.id===id);
     const lote=cosecha&&bitLotes.find(l=>l.id===cosecha.loteId);
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);persistLocal('sdp_bit_cosechas',JSON.stringify(upd));return upd;});
     encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
     // La cola de sync (arriba) es solo bitacora_* — la ficha pública
     // (public_lotes) es una colección aparte que nadie más limpia: sin
@@ -9460,18 +9471,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(ledgerApi){
       setInvReservas(prev=>{
         const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        persistLocal('sdp_inv_reservas',JSON.stringify(upd));
         return upd;
       });
     }
-    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);persistLocal('sdp_bit_lotes',JSON.stringify(upd));return upd;});
+    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);persistLocal('sdp_bit_bolsas',JSON.stringify(upd));return upd;});
     // Las fotos de las bolsas borradas salen también de IndexedDB.
     if(bagPhotoStoreRef.current&&bagPhotoStoreRef.current.available&&bolsaIds.length){
       publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(()=>{}));
       setBagPhotos(prev=>{const next={...prev};bolsaIds.forEach(id=>{delete next[id];});return next;});
     }
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);persistLocal('sdp_bit_cosechas',JSON.stringify(upd));return upd;});
     if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
     // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
     // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
@@ -9483,7 +9494,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(syncQueueApi){
       setSyncQueue(prev=>{
         const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
+        persistLocal('sdp_sync_queue',syncQueueApi.serialize(purged));
         return purged;
       });
     }
@@ -9513,8 +9524,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     catch(e){throw Error('No se pudo descargar el respaldo; no se borró nada. '+(e.message||''));}
     const cleanup=plan.map(p=>purgeBitLote(p.loteId));
     setBitTasks([]);
-    try{localStorage.setItem('sdp_bit_tasks','[]');}catch(e){}
-    try{localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());}catch(e){}
+    persistLocal('sdp_bit_tasks','[]');
+    persistLocal(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());
     await Promise.all(cleanup);
     // Deja que React aplique los cambios encolados (cola de sync, reservas)
     // antes de recargar.
@@ -9564,16 +9575,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 
   // ── v4: helpers persistencia inventario
-  const saveProveedores=list=>{setInvProveedores(list);try{localStorage.setItem('sdp_proveedores',JSON.stringify(list));}catch(e){}};
-  const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
-  const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
-  const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+  const saveProveedores=list=>{setInvProveedores(list);persistLocal('sdp_proveedores',JSON.stringify(list));};
+  const saveCompras=list=>{setInvCompras(list);persistLocal('sdp_compras',JSON.stringify(list));};
+  const saveLotes=list=>{setInvLotes(list);persistLocal('sdp_lotes',JSON.stringify(list));};
+  const saveMovimientos=list=>{setInvMovimientos(list);persistLocal('sdp_movimientos',JSON.stringify(list));};
 
   // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
   // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
   const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
   const [invOps,setInvOps]=useState(readInvOps);
-  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  const saveInvOps=q=>{setInvOps(q);persistLocal(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));};
   // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
   // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
   // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
@@ -9603,7 +9614,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!ledgerApi||!nuevas.length) return;
     setInvReservas(prev=>{
       const upd=ledgerApi.addReservations(prev,nuevas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      persistLocal('sdp_inv_reservas',JSON.stringify(upd));
       return upd;
     });
   };
@@ -9626,7 +9637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const yaTiene=prev.some(r=>r&&r.batchId===loteId&&r.status==='held');
       if(yaTiene) return prev;
       const upd=ledgerApi.addReservations(prev,reservas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      persistLocal('sdp_inv_reservas',JSON.stringify(upd));
       return upd;
     });
     return true;
@@ -9644,7 +9655,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
     setInvMovimientos(prev=>{
       const upd=[...prev,...r.movimientos];
-      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){}
+      persistLocal('sdp_movimientos',JSON.stringify(upd));
       return upd;
     });
     // Libro de reservas: CIERRA las reservas que dejó la planificación, con
@@ -9663,7 +9674,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           aCerrar=reservas;
         }
         upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        persistLocal('sdp_inv_reservas',JSON.stringify(upd));
         return upd;
       });
     }
@@ -9695,7 +9706,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // pueden escribir en el mismo tick.
   const saveCorreos=fn=>setInvCorreos(prev=>{
     const upd=inboxApi?inboxApi.compactCorreos(fn(prev)):fn(prev);
-    try{localStorage.setItem('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
+    persistLocal('sdp_correos_compra',JSON.stringify(upd));
     return upd;
   });
   useEffect(()=>{
@@ -11235,7 +11246,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const at=new Date().toISOString();
       let upd=prev;
       descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      persistLocal('sdp_inv_reservas',JSON.stringify(upd));
       return upd;
     });
   },[bitLotes]);
@@ -11805,7 +11816,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);
-                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                persistLocal('sdp_sync_queue',syncQueueApi.serialize(next));
               }}>Reintentar</button>}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" data-testid="sync-export-stuck" style={{minHeight:44}} onClick={exportarSyncPendientes}>Exportar</button>}
             </div>;
@@ -11905,7 +11916,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {st.stuck>0&&<button type="button" onClick={()=>{
                     const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                     setSyncQueue(next);
-                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                    persistLocal('sdp_sync_queue',syncQueueApi.serialize(next));
                   }} style={{marginLeft:6}}>Reintentar</button>}
                   {st.stuck>0&&<button type="button" data-testid="sync-export-stuck" onClick={exportarSyncPendientes} style={{marginLeft:6,minHeight:44,minWidth:44}}>Exportar</button>}
                 </span>;
@@ -13622,7 +13633,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                       const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                       setSyncQueue(next);
-                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                      persistLocal('sdp_sync_queue',syncQueueApi.serialize(next));
                     }}>Reintentar</button>}
                   </span>;
                 })()}
@@ -14343,7 +14354,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {st.stuck>0&&<button type="button" onClick={()=>{
                           const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                           setSyncQueue(next);
-                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                          persistLocal('sdp_sync_queue',syncQueueApi.serialize(next));
                         }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
                       </span>;
                     })()}
