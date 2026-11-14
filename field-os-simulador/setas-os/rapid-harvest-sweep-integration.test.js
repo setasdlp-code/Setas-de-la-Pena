@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const ROOT = __dirname;
 const JSX_PATH = path.join(ROOT, 'simulador-app.jsx');
 const JS_PATH = path.join(ROOT, 'simulador-app.js');
-const jsx = fs.readFileSync(JSX_PATH, 'utf8');
+const jsx = require('./test-support/jsx-source.js').readJsxSource();
 const js = fs.readFileSync(JS_PATH, 'utf8');
 
 const sweepJournal = require('./sweep-journal.js');

@@ -8,7 +8,7 @@ Este repositorio contiene la implementación canónica y activa de **Setas OS**.
 - Rama de referencia: `main`
 - Raíz de la aplicación: `field-os-simulador/setas-os/`
 - Shell principal actual: `field-os-simulador/setas-os/Setas OS v5.dc.html`
-- Fuente del simulador/formulador: `field-os-simulador/setas-os/simulador-app.jsx`
+- Fuente del simulador/formulador: `field-os-simulador/setas-os/simulador-app.jsx` y `field-os-simulador/setas-os/views/*.jsx` (lista en `jsx-sources.cjs`)
 - Capa Firebase: `field-os-simulador/setas-os/firebase/`
 - Pruebas: `field-os-simulador/setas-os/*.test.js`
 

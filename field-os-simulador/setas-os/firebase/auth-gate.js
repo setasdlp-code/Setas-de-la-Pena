@@ -51,6 +51,8 @@ const PROTECTED_APP_SCRIPTS = [
   // Datos y generadores de texto extraídos del JSX; sin dependencias de carga.
   "../species-editorial.js",
   "../iot-firmware.js",
+  // Usa window.QRMini al llamar, no al cargar.
+  "../thermal-label.js",
   "../scoring.js",
   "../bitacora-model.js",
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada

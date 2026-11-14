@@ -30,7 +30,10 @@ const batchSheet = require('./batch-sheet.js');
 const jsQR = require('./vendor/jsQR.js');
 
 const HERE = __dirname;
-const SIM_APP_JSX = fs.readFileSync(path.join(HERE, 'simulador-app.jsx'), 'utf8');
+// El dibujo de etiquetas vive en thermal-label.js; estos contratos de texto
+// se leen sobre ambos fuentes.
+const SIM_APP_JSX = fs.readFileSync(path.join(HERE, 'simulador-app.jsx'), 'utf8')
+  + '\n' + fs.readFileSync(path.join(HERE, 'thermal-label.js'), 'utf8');
 const TRACE_HTML = fs.readFileSync(path.join(HERE, 'public', 'trace.html'), 'utf8');
 const SHELL_HTML = fs.readFileSync(path.join(HERE, 'Setas OS v5.dc.html'), 'utf8');
 const SW_JS = fs.readFileSync(path.join(HERE, 'sw.js'), 'utf8');

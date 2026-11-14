@@ -73,7 +73,7 @@ test('el bloque de evidencia usa Escenario/Lote/Perito, no "optimizer" ni "gener
 // ── extrae describePeritoEvidence real y lo ejecuta aislado ─────────────────
 const extractHelper = () => {
   const start = jsx.indexOf('const PERITO_EVIDENCE_CONFIDENCE_LABEL=');
-  const end = jsx.indexOf('\n\nconst generateQrSvgDataUrl');
+  const end = jsx.indexOf('\n\n// Vive en thermal-label.js');
   if (start < 0 || end < 0) throw new Error('no se encontró describePeritoEvidence en simulador-app.jsx');
   const code = `${jsx.slice(start, end)}\n;({ describePeritoEvidence, PERITO_EVIDENCE_CONFIDENCE_LABEL })`;
   return vm.runInNewContext(code, {}, { timeout: 1000 });

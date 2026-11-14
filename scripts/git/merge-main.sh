@@ -111,7 +111,7 @@ fi
 # El .jsx se fusionó por la vía normal; si hubiera quedado con marcadores, el
 # build falla y eso es lo correcto — ese conflicto sí es humano.
 if ! (cd "$app_dir" && node build.js); then
-  echo "merge-main: 'node build.js' falló. Revisá simulador-app.jsx." >&2
+  echo "merge-main: 'node build.js' falló. Revisá las fuentes JSX (jsx-sources.cjs)." >&2
   exit 1
 fi
 
@@ -128,7 +128,7 @@ done
 # es el Gate 1 de CI (el bundle); sw.test.js cubre sw.js, que es exactamente lo
 # que la primera versión de este script no verificaba.
 if ! (cd "$app_dir" && node build.test.js >/dev/null 2>&1); then
-  echo "merge-main: el bundle reconstruido NO corresponde a simulador-app.jsx." >&2
+  echo "merge-main: el bundle reconstruido NO corresponde a las fuentes JSX." >&2
   echo "merge-main: no se commitea nada. Revisá el estado del merge a mano." >&2
   exit 1
 fi

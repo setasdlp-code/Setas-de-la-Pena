@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SIM_APP_JSX = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+// El dibujo de etiquetas vive en thermal-label.js; estos contratos de texto
+// se leen sobre ambos fuentes.
+const SIM_APP_JSX = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8')
+  + '\n' + fs.readFileSync(path.join(__dirname, 'thermal-label.js'), 'utf8');
 const SIM_CSS = fs.readFileSync(path.join(__dirname, 'sim.css'), 'utf8');
 const TRACE_HTML = fs.readFileSync(path.join(__dirname, 'public/trace.html'), 'utf8');
 
@@ -148,7 +151,7 @@ test('trace.html extrae parámetros de canastillas (?crate= y ?canastilla=) y pr
 });
 
 test('etiqueta vertical 50x70: spec de canvas y CSS alineados (QR 34mm, lomo)', () => {
-  const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  const jsx = SIM_APP_JSX;
   const css = fs.readFileSync(path.join(__dirname, 'sim.css'), 'utf8');
   assert.match(jsx, /'50x70':\s*\{[^}]*?layout:\s*'vertical'[^}]*?qrMm:\s*34/);
   assert.match(jsx, /'50mm 70mm'/);
