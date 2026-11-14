@@ -75,7 +75,7 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(after,snapshot,'failed deletion must restore all durable records and queue');
   assert.equal(await page.evaluate(()=>localStorage.getItem('sdp_pending_write_v1')),null,'failed rollback must not replay a deletion after reload');
   await page.evaluate(()=>window.__restoreStorage());
-  await page.reload();await expect(page.getByText('REL-1',{exact:true}).first()).toBeVisible();
+  await page.reload();await expect(page.locator('.sdp-lote[data-lote-id="REL-1"]')).toBeVisible();
   assert.deepEqual(errors,[]);
   console.log('PASS alert access failure/retry/cache, open/history dedup, room scoping, truthful FAE and atomic failed deletion/reload (390px).');
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
