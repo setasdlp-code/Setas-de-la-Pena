@@ -236,6 +236,11 @@ text_sensor:
 # --- Termostato (solo calefacción, sobre el aire) ---
 # La banda y la histéresis vienen de la especificación del lote (ver sustituciones).
 # Los tiempos mínimos del relé son de protección del contacto, no de proceso.
+# SIN FUENTE PRIMARIA y en discrepancia con el KB (no se cambian aquí):
+#   este YAML: min_heating_off_time 60s, min_heating_run_time 60s, min_idle_time 30s;
+#   05_equipment/environmental_control.md (plantilla): min_heating_off_time 300s,
+#   min_idle_time 30s; 05_equipment/plan_ha_v1.md:31: min_idle_time 120s.
+# Se resuelven con la ficha del relé y del calefactor.
 climate:
   - platform: thermostat
     id: incubadora

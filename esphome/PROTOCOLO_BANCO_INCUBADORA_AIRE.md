@@ -12,7 +12,7 @@ Este protocolo no fija consignas, bandas ni umbrales de cultivo. Solo comprueba 
 - **Protecciones físicas obligatorias, fuera del firmware.** El termostato de corte, el fusible térmico en serie con el calefactor y la protección diferencial no dependen del ESP32 y siguen siendo obligatorios (DEC-023, «Lo que esta decisión no cambia»; DOC-0123, compuertas 1 a 4). Este banco no las sustituye ni las prueba. Ninguna prueba con tensión de red empieza antes de instalarlas y de la revisión eléctrica previa.
 - **El infrarrojo no sustituye ninguna protección.** Mide superficies de forma comparativa, en cada visita (sección 4).
 - **No hay núcleo.** Home Assistant debe mostrar «Núcleo del bloque: sin sensor» y «Mapa térmico: sin sensor». Si alguna pantalla muestra un número de núcleo o de sustrato, es un defecto.
-- **Compilar exige especificación de lote.** Con `setpoint_c` e `histeresis_c` como marcadores, el archivo no compila, y eso es intencional. Para grabar el banco, Sebastián decide los dos valores y se anotan en la hoja como «valor de banco, no consigna». Este protocolo no los propone. Los valores sintéticos que usa la prueba automática (`20.0` y `0.5` en `test_incubadora_piloto.py`) solo validan la sintaxis y no son consignas.
+- **Compilar exige especificación de lote.** Con `setpoint_c` e `histeresis_c` como marcadores, el archivo no compila, y eso es intencional. Para grabar el banco, Sebastián decide los dos valores y se anotan en la hoja como «valor de banco, no consigna». Este protocolo no los propone. Los valores sintéticos que usa la prueba automática (`20.0` y `0.5` en `test_incubadora_piloto.py`) solo validan la sintaxis y no son consignas. La especificación DOC-0122 es BORRADOR v1 («Aprobada por: Pendiente»): sus 22 °C (rango 20–24 °C) y 0,5 °C de histéresis son propuestas, no consignas aprobadas, y no se usan como valores por defecto.
 - Se anota cada ensayo en la hoja de la sección 5 con fecha, resultado, versión del YAML (commit) y quién lo ejecutó. Si un ensayo no deja el relé abierto, el banco se detiene y se trata como defecto de diseño.
 
 ## 1. Material
@@ -54,6 +54,16 @@ El resultado esperado de cada alarma es el mismo que en DOC-0123 §3. El relé q
 
 La lectura de GPIO26 con multímetro durante B1 y B2 es el único dato del arranque que el firmware no garantiza por sí mismo. El firmware solo fija el pin después de iniciar.
 
+**B12. Intervalo entre reset y setup (manda el hardware).** Con un módulo de disparo ALTO, el nivel físico del pin es el estado lógico XOR `inverted`. Con `relay_active_low: "false"` (`inverted: false`) y `restore_mode: ALWAYS_OFF`, el OFF lógico es LOW. Pero entre que se suelta el reset (o vuelve la energía) y que ESPHome configura GPIO26, el pin lo gobiernan el ROM y el bootloader, no el YAML. Para medirlo:
+
+- Usar un osciloscopio o analizador lógico sobre GPIO26 (o IN1) y EN, disparando con el flanco de subida de EN. Si no hay, usar un LED de bajo consumo en IN1 con grabación de video en cámara lenta.
+- Repetir 10 veces con reset por EN y 10 veces con corte y retorno de energía.
+- Anotar la duración hasta que GPIO26 queda en LOW fijo y cualquier pulso o nivel alto que aparezca en ese intervalo.
+- Hacer la misma medición en GPIO25 y GPIO27.
+- **Pasa** si GPIO26 no presenta ningún nivel alto capaz de cerrar el relé (el contacto COM–NO no muestra continuidad en ningún intento). Cualquier pulso visible se anota. Si cierra aunque sea brevemente, se añade un pull-down externo y se repite B2 y B12.
+
+Ningún pin tiene demostrado que no emita pulsos en el arranque, ni siquiera GPIO26. B2 y B12 son la evidencia.
+
 ## 4. Registro de visita con termómetro infrarrojo (DEC-023)
 
 DEC-023 sustituye las sondas por aire continuo (SHT45), un testigo de aire con registro manual (Inkbird) y superficies medidas con infrarrojo en cada visita. **Las lecturas infrarrojas son comparativas: bolsa contra aire, bolsa contra bolsa y visita contra visita. No son temperaturas de núcleo ni de sustrato.** Se registran por bloque, con fecha, hora y operador.
@@ -90,10 +100,21 @@ Hoja por visita (una fila por punto):
 | B9 | | | | | |
 | B10 | | | | | |
 | B11 | | | | | |
+| B12 (GPIO26 / 25 / 27) | | | | | |
 
 ## 6. Pendientes que este banco no cierra
 
-- **P-GPIO:** contrastar GPIO25, 26 y 27 con la documentación de Espressif sobre las señales en el arranque. No se pudo consultar durante la adaptación porque no había acceso web. La lista de pines de arranque se tomó del validador de ESPHome 2026.10.2. B2 lo comprueba en la práctica para el relé.
+- **P-GPIO (documentación NO VERIFICADA):** no se pudieron abrir esphome.io ni espressif.com desde la red de la sesión. La lista de pines de arranque {0, 2, 5, 12, 15} sale del código del validador de ESPHome 2026.10.2 (`esp32/gpio_esp32.py`), no de la hoja de datos.
+  - GPIO12 es de arranque (confirmado).
+  - Que GPIO14 emita un pulso en el arranque no está verificado en fuente primaria. No se usa, pero si se reasigna algún pin, se trata como un riesgo que hay que medir.
+  - GPIO16 y GPIO17 los ocupa la PSRAM en los módulos WROVER. No se usan sin confirmar que la placa es WROOM-32.
+  - Los pines usados (26, 25, 27, 21, 22) son aceptables en WROOM-32. B2 y B12 miden su comportamiento en el arranque.
+- **Tiempos mínimos del relé, sin fuente primaria y en discrepancia:**
+  - YAML: `min_heating_off_time` 60 s, `min_heating_run_time` 60 s, `min_idle_time` 30 s.
+  - Plantilla de `05_equipment/environmental_control.md`: `min_heating_off_time` 300 s, `min_idle_time` 30 s.
+  - `05_equipment/plan_ha_v1.md:31`: `min_idle_time` 120 s.
+
+  Protegen el contacto, no el proceso. No se cambian hasta tener la ficha del relé y del calefactor.
 - `fan_min_rpm` (500), `fan_arranque_gracia_s` (20 s) y los 2 pulsos por vuelta son valores de diseño sin ficha del ventilador.
 - `aire_max_c` (28 °C) no tiene fuente como límite de aire: es el tope del núcleo de `01_species/lentinula_edodes.md`. Se reemplaza cuando la especificación del lote (DOC-0122) defina la banda.
 - La ficha del módulo de relés para carga de red (corriente y tensión de contacto) y la potencia real del calefactor (DOC-0123, compuertas 5 y 6).
