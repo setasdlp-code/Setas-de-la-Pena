@@ -7,7 +7,7 @@
     "test": "npm run test:unit && npm run test:gates",
     "test:unit": "node scripts/test-unit.cjs",
     "test:gates": "node --test paso1-criterio-gate.test.js mobile-criterio-gate.test.js",
-    "test:browser": "node run-browser-tests.cjs",
+    "test:browser": "node e2e/culture-lineage.browser.cjs && node run-browser-tests.cjs",
     "test:e2e": "npx playwright test --config playwright.config.cjs",
     "test:gate:pr": "node build.test.js && npm test && npm run test:browser",
     "corpus": "node build-ground-truth-corpus.js",
