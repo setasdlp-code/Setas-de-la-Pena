@@ -143,3 +143,30 @@ test('si el correo falla no se guarda el estado: la siguiente corrida reintenta'
   assert.equal(sent, 1);
   assert.equal(data.climate_alerts.martha_01__sensor_stale.status, 'open');
 });
+
+test('planAlerts: el historial guarda aperturas y resoluciones, sobrevive a la reapertura y se acota', () => {
+  const [cond] = detect([cycle()], { martha_01: live({ temperature_c: 21 }) });
+  const step = (stored, conditions, nowMs) => alerts.planAlerts({ conditions, stored, nowMs }).writes;
+  let w = step([], [cond], NOW);
+  assert.deepEqual(w[0].history, []);
+  w = step(w, [cond], NOW + 10 * MIN);
+  assert.deepEqual(w[0].history.map(h => [h.type, h.at, h.value]), [['opened', NOW + 10 * MIN, 21]]);
+  w = step(w, [], NOW + 20 * MIN);
+  assert.deepEqual(w[0].history.map(h => h.type), ['opened', 'resolved']);
+  // Reaparece: el documento se reescribe pero conserva el rastro anterior.
+  w = step(w, [cond], NOW + 30 * MIN);
+  assert.equal(w[0].status, 'pending');
+  assert.deepEqual(w[0].history.map(h => h.type), ['opened', 'resolved']);
+
+  let stored = [{ ...w[0], status: 'open', history: Array.from({ length: alerts.HISTORY_MAX }, (_, i) => ({ type: 'opened', at: i })) }];
+  stored = step(stored, [], NOW + 40 * MIN);
+  assert.equal(stored[0].history.length, alerts.HISTORY_MAX);
+  assert.equal(stored[0].history.at(-1).type, 'resolved');
+});
+
+test('planAlerts: un pico que nunca se abrió no entra al historial', () => {
+  const [cond] = detect([cycle()], { martha_01: live({ temperature_c: 21 }) });
+  const t0 = alerts.planAlerts({ conditions: [cond], stored: [], nowMs: NOW });
+  const t1 = alerts.planAlerts({ conditions: [], stored: t0.writes, nowMs: NOW + 5 * MIN });
+  assert.deepEqual(t1.writes[0].history, []);
+});

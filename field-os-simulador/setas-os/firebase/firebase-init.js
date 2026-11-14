@@ -18,6 +18,7 @@ import {
 } from "./firebase-auth-bootstrap.js";
 import { initSetasAI } from "./ai-logic.js";
 import { pushClimateReading, subscribeToLiveClimate } from "./telemetria-sync.js";
+import { subscribeToClimateAlerts } from "./climate-alerts-sync.js";
 
 // Caché local persistente (IndexedDB): las escrituras hechas sin señal quedan
 // encoladas y se sincronizan solas al reconectar — es el punto que resuelve
@@ -53,7 +54,8 @@ Object.assign(window.SetasFirebase, {
   signInWithEmailAndPassword,
   signOut,
   pushClimateReading: (reading) => pushClimateReading(db, reading),
-  subscribeToLiveClimate: (cb) => subscribeToLiveClimate(db, cb)
+  subscribeToLiveClimate: (cb) => subscribeToLiveClimate(db, cb),
+  subscribeToClimateAlerts: (cb, onError) => subscribeToClimateAlerts(db, cb, onError)
 });
 window.dispatchEvent(new CustomEvent("setas-firebase-ready"));
 window.dispatchEvent(new CustomEvent("setas-firebase-data-ready"));

@@ -18,6 +18,11 @@
  *     no se replica esa corrección, así que una lectura sin compensar no se
  *     evalúa en vez de avisar con un valor que no es comparable con la banda.
  *
+ * Cada alerta guarda en `history` sus últimas HISTORY_MAX aperturas y
+ * resoluciones (lo que la app muestra como historial). El documento se
+ * reescribe en cada corrida, así que sin ese campo una alerta reabierta
+ * borraría el rastro de la anterior.
+ *
  * Para no avisar por un pico, un desvío debe verse en dos corridas seguidas
  * (`dwellMs`) antes de abrir la alerta. Una alerta abierta se recuerda cada
  * `remindMs` y se avisa una vez cuando se resuelve.
@@ -31,6 +36,18 @@ const CYCLES = 'room_cycles';
 const LIVE = 'telemetria_salas';
 
 const MIN = 60 * 1000;
+const HISTORY_MAX = 20;
+
+const historyEntry = (type, alert, atMs) => {
+  const entry = { type, at: atMs, detail: alert.detail || '' };
+  if (alert.metric) entry.metric = alert.metric;
+  if (typeof alert.value === 'number') entry.value = alert.value;
+  return entry;
+};
+const withHistory = (prevHistory, entry) => {
+  const list = Array.isArray(prevHistory) ? prevHistory : [];
+  return (entry ? [...list, entry] : list).slice(-HISTORY_MAX);
+};
 const DEFAULTS = Object.freeze({
   staleMs: 30 * MIN,      // sin lecturas por más de esto → sensor caído
   dwellMs: 10 * MIN,      // el desvío debe sostenerse esto antes de avisar
@@ -119,12 +136,13 @@ const planAlerts = ({ conditions = [], stored = [], nowMs, dwellMs = DEFAULTS.dw
   for (const c of conditions) {
     present.add(c.id);
     const prev = byId.get(c.id);
-    const base = { ...c, lastSeenAt: nowMs };
+    const base = { ...c, lastSeenAt: nowMs, history: withHistory(prev && prev.history) };
     if (!prev || prev.status === 'resolved') {
       writes.push({ ...base, status: 'pending', firstSeenAt: nowMs, openedAt: null, lastNotifiedAt: null });
     } else if (prev.status === 'pending') {
       if (nowMs - prev.firstSeenAt >= dwellMs) {
-        const alert = { ...base, status: 'open', firstSeenAt: prev.firstSeenAt, openedAt: nowMs, lastNotifiedAt: nowMs };
+        const alert = { ...base, status: 'open', firstSeenAt: prev.firstSeenAt, openedAt: nowMs, lastNotifiedAt: nowMs,
+          history: withHistory(prev.history, historyEntry('opened', c, nowMs)) };
         writes.push(alert);
         notifications.push({ type: 'opened', alert });
       } else {
@@ -140,7 +158,9 @@ const planAlerts = ({ conditions = [], stored = [], nowMs, dwellMs = DEFAULTS.dw
 
   for (const prev of stored) {
     if (present.has(prev.id) || prev.status === 'resolved') continue;
-    const alert = { ...prev, status: 'resolved', resolvedAt: nowMs };
+    // Un desvío que nunca llegó a abrirse no entra al historial.
+    const alert = { ...prev, status: 'resolved', resolvedAt: nowMs,
+      history: withHistory(prev.history, prev.status === 'open' ? historyEntry('resolved', prev, nowMs) : null) };
     writes.push(alert);
     // Un desvío que nunca llegó a abrirse se cierra en silencio.
     if (prev.status === 'open') notifications.push({ type: 'resolved', alert });
@@ -199,4 +219,4 @@ const createCheckClimateAlerts = ({ db, notify, now = Date.now, options = {} }) 
   };
 };
 
-module.exports = { createCheckClimateAlerts, detectConditions, planAlerts, formatMessage, DEFAULTS, ALERTS };
+module.exports = { createCheckClimateAlerts, detectConditions, planAlerts, formatMessage, DEFAULTS, ALERTS, HISTORY_MAX };

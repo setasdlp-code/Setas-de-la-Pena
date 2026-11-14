@@ -7506,6 +7506,59 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return ()=>clearTimeout(t);
   },[invLotes,invCompras,invProveedores,invReservas,invMovimientos,roomCycles,bitLotesLoaded,peritoInventoryLoaded]);
 
+  // ── Alertas de clima del servidor (climate_alerts, functions/climate-alerts.js).
+  // La función las detecta aunque la app esté cerrada y avisa por correo; aquí
+  // solo se leen. null = aún no hay respuesta; error = la lectura falló.
+  const [climateAlertDocs,setClimateAlertDocs]=useState(null);
+  const [climateAlertsError,setClimateAlertsError]=useState(null);
+  useEffect(()=>{
+    let unsub=null;
+    const start=()=>{
+      const fb=typeof window!=='undefined'?window.SetasFirebase:null;
+      if(unsub||!fb||typeof fb.subscribeToClimateAlerts!=='function') return;
+      try{
+        unsub=fb.subscribeToClimateAlerts(docs=>{setClimateAlertDocs(docs);setClimateAlertsError(null);},err=>setClimateAlertsError(err&&err.message||'error'));
+      }catch(e){setClimateAlertsError(e.message||'error');}
+    };
+    start();
+    window.addEventListener('setas-firebase-data-ready',start);
+    return ()=>{window.removeEventListener('setas-firebase-data-ready',start);if(typeof unsub==='function'){try{unsub();}catch(e){/* listener ya cerrado */}}};
+  },[]);
+  const summarizeServerClimate=roomId=>{
+    const api=typeof window!=='undefined'?window.SetasClimateAlertsView:null;
+    return api?api.summarizeClimateAlerts(climateAlertDocs||[],{roomId,historyLimit:roomId?10:5}):{open:[],history:[]};
+  };
+  const serverClimateAlerts=summarizeServerClimate(null);
+  // Una lectura rechazada también se cuenta: sin ella, Hoy parecería en calma.
+  const serverClimateAttention=serverClimateAlerts.open.length+(climateAlertsError?1:0);
+  const fmtAlertTime=ms=>{try{return new Date(ms).toLocaleString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}};
+  const roomNameOf=id=>(ROOMS_CONFIG[id]&&ROOMS_CONFIG[id].name)||id;
+  const renderServerClimateAlerts=({roomId,testId})=>{
+    const {open,history}=roomId?summarizeServerClimate(roomId):serverClimateAlerts;
+    if(climateAlertsError) return <div data-testid={testId} data-state="error" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-1)',margin:'0 0 12px'}}>No se pudieron leer las alertas de clima del servidor. Los avisos por correo siguen llegando.</div>;
+    if(climateAlertDocs===null) return null;
+    if(!open.length&&!history.length&&!roomId) return null;
+    return <section data-testid={testId} aria-label="Alertas de clima del servidor" style={{margin:'0 0 12px'}}>
+      {open.length>0
+        ? <ul style={{listStyle:'none',margin:0,padding:0,display:'flex',flexDirection:'column',gap:8}}>
+            {open.map(a=><li key={a.id} data-alert-id={a.id} data-alert-kind={a.kind} className="sdp-task sdp-task--critical" style={{display:'block'}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-error)',border:'1px solid var(--status-error)',padding:'1px 5px'}}>Alerta</span>
+                <strong style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{roomId?a.title:`${roomNameOf(a.roomId)} · ${a.title}`}</strong>
+              </div>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{a.detail}{a.openedAt?` Abierta ${fmtAlertTime(a.openedAt)}.`:''}</div>
+            </li>)}
+          </ul>
+        : roomId&&<div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-1)'}}>Sin alertas de clima abiertas en esta sala.</div>}
+      {history.length>0&&<details style={{marginTop:8}}>
+        <summary style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-1)',cursor:'pointer'}}>Historial de alertas ({history.length})</summary>
+        <ul data-testid={testId+'-history'} style={{listStyle:'none',margin:'6px 0 0',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-1)',display:'flex',flexDirection:'column',gap:4}}>
+          {history.map((h,i)=><li key={h.alertId+h.at+i}>{fmtAlertTime(h.at)} · {h.type==='opened'?'Abierta':'Resuelta'} · {roomId?h.title:`${roomNameOf(h.roomId)} · ${h.title}`}</li>)}
+        </ul>
+      </details>}
+    </section>;
+  };
+
   // ── Excepciones de Hoy que no salen del motor de clima (today-exceptions.js):
   // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
   // más larga que la referencia. Se calculan aquí, fuera del render de Hoy,
@@ -12911,6 +12964,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         </div>
 
+        {/* Alertas de clima del servidor para esta sala: abiertas e historial */}
+        {renderServerClimateAlerts({roomId:selectedClimateRoom,testId:'room-server-climate-alerts'})}
+
         {/* Asesor de Co-Cultivo Multiespecie en la Sala */}
         {coCultRoomOpt && (
           <section className="climate-live-alerts" data-testid="fruiting-cocultivation-advisor" aria-label="Asesor de Co-Cultivo Multiespecie">
@@ -14227,7 +14283,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </nav>
               {homeDashboard==='today'?<div data-testid="home-essential">
               {/* COLA OPERATIVA DE HOY · 3 BANDAS DE PRIORIDAD (DS-2026 CRITERIO FIELD MODE) */}
-              <div className="home-operational-queue" data-testid="ux-v2-today" data-has-alerts={liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0}>
+              <div className="home-operational-queue" data-testid="ux-v2-today" data-has-alerts={liveTelemetry.alerts.length + todayExceptions.length + serverClimateAttention + criticalStockItems.length + criticalLots.length > 0}>
 
                 <div className="home-primary-column">
                 {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
@@ -14366,9 +14422,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </section>
                 </div>
 
-                {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0)&&<aside className="home-context" aria-label="Contexto del turno">
+                {(liveTelemetry.alerts.length + todayExceptions.length + serverClimateAttention + criticalStockItems.length + criticalLots.length > 0)&&<aside className="home-context" aria-label="Contexto del turno">
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
-                {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
+                {(liveTelemetry.alerts.length + todayExceptions.length + serverClimateAttention + criticalStockItems.length + criticalLots.length > 0) && (
                 <section className="sdp-band sdp-band--atencion" aria-label="Alertas del cultivo" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-error)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -14379,7 +14435,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="sdp-provenance">Sensores, lotes e insumos</span>
                     </div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
-                      {liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
+                      {liveTelemetry.alerts.length + todayExceptions.length + serverClimateAttention + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + todayExceptions.length + serverClimateAttention + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
                     </span>
                   </div>
 
@@ -14389,6 +14445,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <LiveAlertsSection/>
                     </div>
                   )}
+
+                  {/* Alertas de clima abiertas por el servidor (climate_alerts) */}
+                  {renderServerClimateAlerts({testId:'today-server-climate-alerts'})}
 
                   {/* Sincronización, sobregiro, lecturas en cuarentena e incubación (today-exceptions.js) */}
                   {todayExceptions.length > 0 && (

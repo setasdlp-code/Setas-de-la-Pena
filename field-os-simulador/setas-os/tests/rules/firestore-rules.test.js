@@ -292,3 +292,12 @@ test('sin sesión no se leen correos de compra', async () => {
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'correos_compra/mail_e')));
   await assertSucceeds(getDoc(doc(asOperator(), 'correos_compra/mail_e')));
 });
+
+test('climate_alerts: un usuario autenticado lee; nadie escribe desde el cliente; sin sesión no se lee', async () => {
+  await seed('climate_alerts/martha_01__sensor_stale', { roomId: 'martha_01', kind: 'sensor_stale', status: 'open' });
+  await assertSucceeds(getDoc(doc(asOperator(), 'climate_alerts/martha_01__sensor_stale')));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'climate_alerts/martha_01__sensor_stale')));
+  await assertFails(updateDoc(doc(asOperator(), 'climate_alerts/martha_01__sensor_stale'), { status: 'resolved' }));
+  await assertFails(setDoc(doc(asOperator(), 'climate_alerts/nueva'), { roomId: 'martha_01', status: 'open' }));
+  await assertFails(deleteDoc(doc(asOperator(), 'climate_alerts/martha_01__sensor_stale')));
+});
