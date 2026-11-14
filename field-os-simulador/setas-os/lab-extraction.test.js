@@ -9,7 +9,7 @@ const path = require("node:path");
 const factorsJson = JSON.parse(fs.readFileSync(path.join(__dirname, "extraction-factors.json"), "utf8"));
 const storageCode = fs.readFileSync(path.join(__dirname, "utils/storage.js"), "utf8");
 const labCode = fs.readFileSync(path.join(__dirname, "lab-extraction.jsx"), "utf8");
-const appCode = fs.readFileSync(path.join(__dirname, "simulador-app.jsx"), "utf8");
+const appCode = require('./test-support/jsx-source.js').readJsxSource();
 
 // Mirror the pure calculation logic
 function calculateYield(biomassGrams, speciesKey, methodKey, factors = factorsJson) {
@@ -84,12 +84,22 @@ test("Lab Extraction — calculations, yields, costs and component integration",
 });
 
 test("el Laboratorio de extracción declara que sus factores no tienen fuente verificada", () => {
-  const app = fs.readFileSync(path.join(__dirname, "simulador-app.jsx"), "utf8");
+  const app = require('./test-support/jsx-source.js').readJsxSource();
   assert.match(app, /data-testid="extraction-unverified"[\s\S]{0,300}sin fuente verificada/);
 });
 
+test("las salidas de la calculadora se presentan como estimación, no como medición ni certificado", () => {
+  const app = require('./test-support/jsx-source.js').readJsxSource();
+  assert.match(app, /Rendimiento estimado: /);
+  assert.match(app, /factor sin fuente verificada, no es un peso medido/);
+  assert.match(app, /Extracto \(est\.\)/);
+  assert.match(app, /COP \/ g de extracto \(estimado\)/);
+  assert.doesNotMatch(app, /CERTIFICADO DE EXTRACCIÓN/);
+  assert.doesNotMatch(app, /Rendimiento calculado/);
+});
+
 // extraction-factors.json es la fuente; las copias embebidas no pueden divergir.
-for (const file of ["simulador-app.jsx", "lab-extraction.jsx"]) {
+for (const file of ["views/lab.jsx", "lab-extraction.jsx"]) {
   test(`${file}: DEFAULT_EXTRACTION_FACTORS es idéntico a extraction-factors.json`, () => {
     const src = fs.readFileSync(path.join(__dirname, file), "utf8");
     const start = src.indexOf("{", src.indexOf("DEFAULT_EXTRACTION_FACTORS = {"));

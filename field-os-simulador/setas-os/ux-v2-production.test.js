@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const root = __dirname;
 const shell = fs.readFileSync(path.join(root, 'Setas OS v5.dc.html'), 'utf8');
-const source = fs.readFileSync(path.join(root, 'simulador-app.jsx'), 'utf8');
+const source = require('./test-support/jsx-source.js').readJsxSource();
 const styles = fs.readFileSync(path.join(root, 'sim.css'), 'utf8');
 const authGate = fs.readFileSync(path.join(root, 'firebase/auth-gate.js'), 'utf8');
 const climate = fs.readFileSync(path.join(root, 'climate-bench.html'), 'utf8');

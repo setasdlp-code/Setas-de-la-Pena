@@ -27,7 +27,7 @@ echo "rama:    $branch (${dirty} archivo(s) sin commitear)"
 # editar evita descubrirlo al final, con el diff ya armado.
 if [ -f "$APP/simulador-app.js" ] && [ -f "$APP/simulador-app.jsx" ] && command -v node >/dev/null 2>&1; then
   banner=$(sed -n 's|^// source-hash: \([0-9a-f]\{64\}\)$|\1|p' "$APP/simulador-app.js" | head -1)
-  actual=$(node -e 'const c=require("node:crypto"),f=require("node:fs");process.stdout.write(c.createHash("sha256").update(f.readFileSync(process.argv[1])).digest("hex"))' "$APP/simulador-app.jsx" 2>/dev/null)
+  actual=$(cd "$APP" && node -e 'const b=require("./build.js");process.stdout.write(b.sourceHash(b.readSources()))' 2>/dev/null)
   if [ -z "$banner" ]; then
     echo "bundle:  SIN BANNER — correr 'node build.js'"
   elif [ "$banner" = "$actual" ]; then

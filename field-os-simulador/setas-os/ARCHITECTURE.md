@@ -158,9 +158,18 @@ Las inspecciones manuales requieren responsable y referencia, se vinculan a espe
 
 `sdp_production_readiness` conserva las inspecciones localmente mediante el registro de recuperación existente y se incluye en exportación/restauración de respaldos. Cada inspección es un registro inmutable que sube a `production_readiness` (una revisión nueva reemplaza a la anterior por fecha; las reglas solo permiten crear) y llega a los demás equipos por la sincronización de colecciones (ADR-0009). Las inspecciones no sustituyen la autorización del ensayo en Bitácora. Cuando el tratamiento es esterilización en autoclave, la revisión de equipo exige la corrida (ID del ciclo) y un bioindicador sin crecimiento; con crecimiento, el requisito queda bloqueado. Las referencias son declaraciones del revisor; el sistema no certifica el contenido de un informe físico. Pruebas: `production-readiness.test.js` y `e2e/production-readiness.browser.cjs`.
 
-`simulador-app.jsx` es el fuente editable. El navegador consume `simulador-app.js`, generado con esbuild vía `node build.js` (requiere `npm install` una vez — `esbuild` es devDependency).
+El fuente editable son los archivos JSX listados en `jsx-sources.cjs`: `views/*.jsx` y, al final, `simulador-app.jsx` (ADR-0011). `node build.js` los une en ese orden y genera un solo `simulador-app.js`, que es lo que consume el navegador (requiere `npm install` una vez — `esbuild` es devDependency).
 
-Después de cualquier cambio en `simulador-app.jsx`:
+Los archivos comparten un único ámbito: no hay imports entre ellos y un nombre declarado en uno es visible en los demás. Reglas para un archivo de `views/`:
+
+- Solo declaraciones de nivel superior (componentes, hooks, helpers).
+- No usar, al evaluarse, un nombre declarado en un archivo posterior de la lista; dentro de una función o componente sí.
+- Agregarlo a `jsx-sources.cjs`. `build.test.js` falla si falta, o si un nombre se declara en dos archivos.
+- Tras mover código entre archivos, correr `npm run test:browser`: un error de orden de evaluación no lo detectan los tests unitarios, solo la carga real del bundle.
+
+Los tests que comprueban texto del fuente leen las fuentes unidas con `test-support/jsx-source.js`, no `simulador-app.jsx`.
+
+Después de cualquier cambio en una fuente JSX:
 
 ```bash
 cd field-os-simulador/setas-os
@@ -182,17 +191,17 @@ distintos:
 Mezclarlos en un solo comando hacía que un entorno sin el build exacto de
 Chromium devolviera 11 fallos rojos ajenos al cambio en curso.
 
-`node build.js` transforma JSX a JS y escribe `simulador-app.js` con un SHA-256 del fuente en el encabezado. `build.test.js` recalcula ese hash y falla si no coincide — así un JSX editado sin reconstruir el bundle no llega a producción en silencio, pero **solo si la suite se corre antes del merge**.
+`node build.js` transforma JSX a JS y escribe `simulador-app.js` con un SHA-256 de las fuentes unidas en el encabezado. `build.test.js` recalcula ese hash y falla si no coincide — así un JSX editado sin reconstruir el bundle no llega a producción en silencio, pero **solo si la suite se corre antes del merge**.
 
 Un cambio en React no está terminado hasta que:
-1. `simulador-app.jsx` tiene la modificación.
+1. La fuente JSX tiene la modificación.
 2. Se corrió `node build.js`.
 3. `simulador-app.js` regenerado forma parte del mismo commit.
 4. `npm run test:unit` pasa (y `npm run test:gates` si el cambio toca el shell o el DS).
 
 Ninguna CI corre `node build.js`. Lo que hay es verificación: `build.test.js` lee el
 banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un hash
-fresco de `simulador-app.jsx`. Por eso el bundle generado tiene que ir en el mismo
+fresco de las fuentes de `jsx-sources.cjs`. Por eso el bundle generado tiene que ir en el mismo
 commit — la CI detecta el desfase, pero no lo corrige.
 
 ### Release, autenticación y actualización offline
