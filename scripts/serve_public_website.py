@@ -41,7 +41,9 @@ class Handler(SimpleHTTPRequestHandler):
         return super().translate_path('/' + mapping[route] if route in mapping else path)
 
     def end_headers(self):
-        self.send_header('X-Robots-Tag', 'noindex, nofollow')
+        route = urlsplit(self.path).path.removesuffix('.html')
+        if route not in {f'/especies/{slug}' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}:
+            self.send_header('X-Robots-Tag', 'noindex, nofollow')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Cache-Control', 'public, max-age=31536000, immutable' if urlsplit(self.path).path.startswith('/_assets/') else 'public, max-age=0, must-revalidate')
         super().end_headers()

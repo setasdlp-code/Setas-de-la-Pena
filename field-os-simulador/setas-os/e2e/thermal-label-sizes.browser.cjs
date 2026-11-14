@@ -6,10 +6,10 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const {chromium,expect}=require('@playwright/test');
 const root=path.resolve(__dirname,'..');
-const SRC=fs.readFileSync(path.join(root,'simulador-app.jsx'),'utf8');
+const {THERMAL_LABEL_SPECS}=require(path.join(root,'thermal-label.js'));
 function spec(size){
- const block=SRC.match(new RegExp(`'${size}':\\s*\\{([^}]*)\\}`))[1];
- const n=k=>Number(block.match(new RegExp(`${k}:\\s*([0-9.]+)`))[1]);
+ const block=THERMAL_LABEL_SPECS[size];
+ const n=k=>{assert.ok(Number.isFinite(block[k]),`${size}: falta ${k}`);return block[k];};
  const mm=96/25.4;
  return {type:{eyebrow:n('eyebrowPx'),species:n('speciesPx'),badge:n('badgePx'),code:n('codePx'),meta:n('metaPx')},
   // Mismo cálculo que buildThermalShareCanvas: textW = w - textX - padX.

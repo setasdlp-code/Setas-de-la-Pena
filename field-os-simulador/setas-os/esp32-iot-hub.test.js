@@ -3,13 +3,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 test('Setas OS — Hub de Integración IoT de Bajo Costo (ESP32 / Sonoff / Webhooks)', async (t) => {
   const jsxPath = path.join(__dirname, 'simulador-app.jsx');
-  const jsx = fs.readFileSync(jsxPath, 'utf8');
+  const jsx = require('./test-support/jsx-source.js').readJsxSource();
 
   await t.test('IoTHubModal is integrated in simulador-app.jsx with node list, firmware generator, and webhook tester', () => {
     assert.match(jsx, /const IoTHubModal\s*=\s*\(\{/);
@@ -19,20 +21,14 @@ test('Setas OS — Hub de Integración IoT de Bajo Costo (ESP32 / Sonoff / Webho
     assert.match(jsx, /Reglas de Automatización/);
   });
 
-  await t.test('Firmware generator supports ESPHome YAML, Arduino C++ (.ino), and cURL test payloads', () => {
+  await t.test('el Hub consume los generadores de firmware desde iot-firmware.js', () => {
+    assert.match(jsx, /require\('\.\/iot-firmware\.js'\)/);
     assert.match(jsx, /generateESPHomeYaml/);
     assert.match(jsx, /generateArduinoIno/);
     assert.match(jsx, /generateCurlPayload/);
-    assert.match(jsx, /esphome/);
-    assert.match(jsx, /sht3xd|scd30|dht|ds18b20/);
+    // El comportamiento de los generadores se prueba en iot-firmware.test.js.
   });
 
-  await t.test('ESPHome firmware never exports fallback or OTA passwords embedded in source', () => {
-    assert.match(jsx, /password: !secret fallback_password/);
-    assert.match(jsx, /password: !secret ota_password/);
-    assert.doesNotMatch(jsx, /password: "setas-recovery"/);
-    assert.doesNotMatch(jsx, /password: "setas-ota-secure"/);
-  });
 
   await t.test('Webhook tester parses and validates incoming payloads with canonical telemetry contract', () => {
     assert.match(jsx, /handleTestWebhook/);

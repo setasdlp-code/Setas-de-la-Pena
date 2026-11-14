@@ -227,8 +227,8 @@ test('Formular persists and validates the active draft for reload recovery', () 
   assert.match(jsx, /const readFormDraft=\(\)=>\{[\s\S]*draft\.version!==1[\s\S]*validIds\.has\(r\.id\)[\s\S]*recipeIds\.has\(id\)/);
   assert.match(jsx, /const initialFormDraft=useMemo\(\(\)=>readFormDraft\(\),\[\]\)/);
   assert.match(jsx, /const \[recipe,setRecipe\]=useState\(\(\)=>initialFormDraft\?\.recipe\|\|\[\]\)/);
-  assert.match(jsx, /localStorage\.setItem\(FORM_DRAFT_KEY,JSON\.stringify\(\{[\s\S]*version:1[\s\S]*hasPickedSpecies[\s\S]*lockedIds[\s\S]*saveName/);
-  assert.match(jsx, /if\(!recipe\.length\)\{localStorage\.removeItem\(FORM_DRAFT_KEY\);return;\}/);
+  assert.match(jsx, /writeLocal\(FORM_DRAFT_KEY,JSON\.stringify\(\{[\s\S]*version:1[\s\S]*hasPickedSpecies[\s\S]*lockedIds[\s\S]*saveName/);
+  assert.match(jsx, /if\(!recipe\.length\)\{removeLocal\(FORM_DRAFT_KEY\);return;\}/);
   assert.match(jsx, /Revisar receta · Autoguardado/);
 });
 

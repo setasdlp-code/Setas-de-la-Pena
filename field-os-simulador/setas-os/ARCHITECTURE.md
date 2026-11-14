@@ -89,7 +89,9 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 **Vigencia y diagnóstico del Generador.** Cambiar receta, bloqueos, especie, origen, costo máximo, catálogo habilitado, precios o inventario invalida resultados y cancela el cálculo diferido anterior. `searchScenarios().diagnostics.rejectionReasons` cuenta restricciones reales de las alternativas evaluadas, excluyendo la receta inicial; una evaluación puede incumplir varias. Los conteos describen una búsqueda acotada, no prueban inviabilidad global. El máximo de costo filtra insumos en COP/kg seco; las tarjetas separan ese costo del tratamiento y muestran los objetivos de su propia composición. Pruebas: `e2e/formulator-decisions.browser.cjs`.
 
-**Excepción importante:** el diagnóstico del Perito que ve el usuario (veredicto, sugerencias, "Aplicar ajuste", Auto-mejorar) sí sale de `recipe-optimizer.js` en producción: `generateOptimizer`, `applyOptToRecipe` y `createRecipeEvaluator`. Lo que es oráculo legado es solo el Generador por fuerza bruta (`runAutoOptimizer`).
+**Presentación del Generador.** `generator-presentation.js` transforma `ranked` antes de pintarlo, sin puntuar ni reordenar dentro de cada grupo: colapsa casi duplicados (≤1 pp de diferencia total), pone primero los Escenarios viables y agrupa en un bloque plegado los que el Perito marca `critical` o con seguridad `hold` («No ejecutar»). También marca los insumos cuyos lotes no tienen precio registrado (el costo queda subestimado) y explica una búsqueda vacía por falta de base, de suplemento o porque el tope de suplementación del perfil no deja generar ninguna semilla. Se carga como script propio desde `firebase/auth-gate.js` y `__harness.html`. Pruebas: `generator-presentation.test.js`, `generator-presentation-wiring.test.js`.
+
+**Excepción importante:** el diagnóstico del Perito que ve el usuario (veredicto, sugerencias, "Aplicar ajuste", Auto-mejorar) sí sale de `recipe-optimizer.js` en producción: `generateOptimizer`, `applyOptToRecipe` y `createRecipeEvaluator`. Lo que es oráculo legado es solo el Generador por fuerza bruta (`runAutoOptimizer`), eliminado el 2026-11-05: queda únicamente su salida congelada en `recipe-optimizer-legacy-golden.json` para `recipe-optimizer-parity.test.js`. Para reproducir lo que ve el usuario hay que llamar a `runHybridRecipeSearch` (`simulador-app.jsx`) sobre `SetasPeritoScenarios.searchScenarios`, nunca a una copia del motor viejo: este forzaba C:N = ideal y podía devolver 0 recetas donde el Generador sí encuentra Escenarios.
 
 **Contexto único de score del Perito.** El veredicto, el "Índice estimado" de cada sugerencia, el ΔScore de la tarjeta (`simulateSuggestionDelta`), el Morphing y Auto-mejorar puntúan con el mismo evaluador: `createRecipeEvaluator` (en el componente, `peritoEvaluate`). Para cada receta resuelve sus propios objetivos (`species-targets.js`; la clase de sustrato puede cambiar al aplicar un ajuste), toma el tratamiento recomendado, mezcla la EB con el histórico y puntúa con el mismo stock. No llamar `scoreAn` con un contexto armado a mano para mostrar un score del Perito: pasar por el evaluador. Pruebas: `perito-score-context.test.js` y `e2e/perito-score-context.browser.cjs`.
 
@@ -130,10 +132,19 @@ Dos reglas al tocarlos:
    forma perezosa. En `firebase/auth-gate.js` y en `__harness.html` el catálogo va
    primero. Invertirlos no rompe Node (hay `require`) pero deja la app en blanco en
    el navegador. `substrate-modules.test.js` lo verifica.
-2. **Compuerta empírica.** Cualquier cambio a `substrate-analysis.js`,
-   `substrate-catalog.js` o `scoring.js` exige `npm run perito:regression` con el
-   delta de `meanAbsErrorEB` adjunto al PR. Ver
-   `docs/agents/ground-truth-corpus.md`.
+2. **Compuerta empírica.** Depende del tipo de cambio (`AGENTS.md` §4):
+   - Alta o corrección de una entrada de `substrate-catalog.js` con fuente citada:
+     tests unitarios y `python3 scripts/quality/check_kb_sync.py`. No exige corpus.
+   - Cambio a `substrate-analysis.js` (`analyze()`), a los pesos o cortes de
+     `scoring.js` o al ranking: `npm run perito:regression` con su salida adjunta
+     al PR. Sin corpus de campo el comando sale con código 1; el cambio queda
+     declarado como no validado y requiere aprobación humana, no se da por bueno.
+   - En ambos casos, `npm run perito:drift -- --baseline=main` muestra qué
+     recetas de referencia (`PRESETS`) cambiaron de EB, C:N, score o status
+     respecto a la base. No valida nada —ninguna tiene EB medida—; hace visible
+     el efecto del cambio.
+
+   Ver `docs/agents/ground-truth-corpus.md`.
 
 Para probar funciones puras que todavía viven en el JSX, `test-support/jsx-extract.js`
 sigue existiendo, pero ya resuelve por `require()` todo lo que se extrajo. Cada
@@ -149,9 +160,18 @@ Las inspecciones manuales requieren responsable y referencia, se vinculan a espe
 
 `sdp_production_readiness` conserva las inspecciones localmente mediante el registro de recuperación existente y se incluye en exportación/restauración de respaldos. Cada inspección es un registro inmutable que sube a `production_readiness` (una revisión nueva reemplaza a la anterior por fecha; las reglas solo permiten crear) y llega a los demás equipos por la sincronización de colecciones (ADR-0009). Las inspecciones no sustituyen la autorización del ensayo en Bitácora. Cuando el tratamiento es esterilización en autoclave, la revisión de equipo exige la corrida (ID del ciclo) y un bioindicador sin crecimiento; con crecimiento, el requisito queda bloqueado. Las referencias son declaraciones del revisor; el sistema no certifica el contenido de un informe físico. Pruebas: `production-readiness.test.js` y `e2e/production-readiness.browser.cjs`.
 
-`simulador-app.jsx` es el fuente editable. El navegador consume `simulador-app.js`, generado con esbuild vía `node build.js` (requiere `npm install` una vez — `esbuild` es devDependency).
+El fuente editable son los archivos JSX listados en `jsx-sources.cjs`: `views/*.jsx` y, al final, `simulador-app.jsx` (ADR-0011). `node build.js` los une en ese orden y genera un solo `simulador-app.js`, que es lo que consume el navegador (requiere `npm install` una vez — `esbuild` es devDependency).
 
-Después de cualquier cambio en `simulador-app.jsx`:
+Los archivos comparten un único ámbito: no hay imports entre ellos y un nombre declarado en uno es visible en los demás. Reglas para un archivo de `views/`:
+
+- Solo declaraciones de nivel superior (componentes, hooks, helpers).
+- No usar, al evaluarse, un nombre declarado en un archivo posterior de la lista; dentro de una función o componente sí.
+- Agregarlo a `jsx-sources.cjs`. `build.test.js` falla si falta, o si un nombre se declara en dos archivos.
+- Tras mover código entre archivos, correr `npm run test:browser`: un error de orden de evaluación no lo detectan los tests unitarios, solo la carga real del bundle.
+
+Los tests que comprueban texto del fuente leen las fuentes unidas con `test-support/jsx-source.js`, no `simulador-app.jsx`.
+
+Después de cualquier cambio en una fuente JSX:
 
 ```bash
 cd field-os-simulador/setas-os
@@ -173,17 +193,17 @@ distintos:
 Mezclarlos en un solo comando hacía que un entorno sin el build exacto de
 Chromium devolviera 11 fallos rojos ajenos al cambio en curso.
 
-`node build.js` transforma JSX a JS y escribe `simulador-app.js` con un SHA-256 del fuente en el encabezado. `build.test.js` recalcula ese hash y falla si no coincide — así un JSX editado sin reconstruir el bundle no llega a producción en silencio, pero **solo si la suite se corre antes del merge**.
+`node build.js` transforma JSX a JS y escribe `simulador-app.js` con un SHA-256 de las fuentes unidas en el encabezado. `build.test.js` recalcula ese hash y falla si no coincide — así un JSX editado sin reconstruir el bundle no llega a producción en silencio, pero **solo si la suite se corre antes del merge**.
 
 Un cambio en React no está terminado hasta que:
-1. `simulador-app.jsx` tiene la modificación.
+1. La fuente JSX tiene la modificación.
 2. Se corrió `node build.js`.
 3. `simulador-app.js` regenerado forma parte del mismo commit.
 4. `npm run test:unit` pasa (y `npm run test:gates` si el cambio toca el shell o el DS).
 
 Ninguna CI corre `node build.js`. Lo que hay es verificación: `build.test.js` lee el
 banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un hash
-fresco de `simulador-app.jsx`. Por eso el bundle generado tiene que ir en el mismo
+fresco de las fuentes de `jsx-sources.cjs`. Por eso el bundle generado tiene que ir en el mismo
 commit — la CI detecta el desfase, pero no lo corrige.
 
 ### Release, autenticación y actualización offline

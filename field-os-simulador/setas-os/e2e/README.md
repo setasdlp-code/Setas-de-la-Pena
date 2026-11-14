@@ -27,6 +27,8 @@ pruebas autenticadas. Si se proporcionan credenciales, un login fallido siempre
 falla la ejecución. Para reproducir la política de release usa
 `E2E_REQUIRE_AUTH=true npm run test:e2e`. No guardar credenciales en el repositorio.
 
+`npm run test:browser` ejecuta `run-browser-tests.cjs`: corre todos los `e2e/*.browser.cjs`, no se detiene en el primer fallo y lista al final los que fallaron. Un script nuevo con ese sufijo entra solo. Para correr un subconjunto: `node run-browser-tests.cjs perito room`.
+
 `npm run test:browser` incluye una regresión offline independiente de Firebase:
 `service-worker-upgrade.browser.cjs` usa el worker y el versionado reales con
 assets sintéticos, incluidos fallo de instalación, actualización de CSS/módulos/

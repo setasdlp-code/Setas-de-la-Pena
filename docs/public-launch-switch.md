@@ -2,6 +2,10 @@
 
 La web pública se sirve con `X-Robots-Tag: noindex, nofollow` a propósito (versión de revisión, ver `docs/website-audit-2026-10-15.md`, «Visibilidad y caché»). Este documento lista, en un solo lugar, qué cambia al abrirla a buscadores. **Nada de esto se aplica sin una decisión explícita de Sebastián.**
 
+## Apertura limitada de las fichas · 13 de noviembre de 2026
+
+Por solicitud de Sebastián se prepara la indexación de `/especies/shiitake`, `/especies/melena-de-leon` y `/especies/eryngii`, incluidas sus variantes `.html`. Las reglas específicas de `public-headers.txt` eliminan la cabecera heredada solo para esas seis rutas; el resto conserva su estado de revisión. El servidor local y las comprobaciones de entrega reflejan esta excepción. Sebastián autorizó explícitamente publicar estos cambios el 13 de noviembre de 2026. El despliegue y su verificación deben registrarse por separado.
+
 ## Antes de decidir
 
 - Licencia de Gaya resuelta o fuente sustituida (`docs/brand/brand-audit-2026-10.md`, P0-1). El `noindex` es hoy la mitigación de ese riesgo.

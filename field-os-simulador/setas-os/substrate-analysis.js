@@ -29,6 +29,7 @@ const { INGS, SPP } = catalog;
 const EB_PENALTY_BALANCE_BAND={min:95,max:105}; // castigo de EB por balance muy fuera de 100 — no es la tolerancia de guardado
 const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
   if(!recipe.length) return null;
+  const estimatedCompositionIds=recipe.filter(r=>Number(r.p)>0&&ings.find(g=>g.id===r.id)?.compositionStatus==='estimated').map(r=>r.id);
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
   let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
   const DENSOS=['aserrin_roble','aserrin_eucalipto','aserrin_pino','aserrin_pino_compostado','borra_cafe','afrecho_cerveceria','chips_poda_urbana','guadua','carton_corrugado','pulpa_papel'];
@@ -51,7 +52,7 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     if(g.role==='aireador') airP+=p;
     if(g.cat==='cafe') cafeP+=p;
     if(g.cat==='est') manP+=p;
-    if(DENSOS.includes(g.id)) densaP+=p;
+    if(DENSOS.includes(g.analysisProxyId||g.id)) densaP+=p;
     if(sKey&&!g.cs.includes(sKey)&&g.cn>0) incompat.push(g.name);
   });
   const avgN=nP?wN/nP:0,cn=avgN>0?(nP?wC/nP:0)/avgN:0;
@@ -105,7 +106,7 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,requiresSterilization:Boolean(sp?.requires_sterilization),trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{...(estimatedCompositionIds.length?{estimatedCompositionIds}:{}),tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,requiresSterilization:Boolean(sp?.requires_sterilization),trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 
 const api = { analyze, EB_PENALTY_BALANCE_BAND };

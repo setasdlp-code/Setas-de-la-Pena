@@ -199,3 +199,11 @@ test('sin fuentes el script falla en vez de escribir un corpus vacío', () => {
 test('un argumento desconocido falla en vez de ignorarse', () => {
   assert.equal(tool.main(['--bitacoraa=x.json']), tool.EXIT.OPERATIONAL);
 });
+
+test('extractBitacora acepta el respaldo que descarga la app (setas.prototype-backup.v1)', () => {
+  const backup = {
+    schema: 'setas.prototype-backup.v1',
+    collections: { sdp_bit_lotes: [1], sdp_bit_cosechas: [2], sdp_bit_bolsas: [3] },
+  };
+  assert.deepEqual(tool.extractBitacora(backup, 'x'), { lotes: [1], cosechas: [2] });
+});

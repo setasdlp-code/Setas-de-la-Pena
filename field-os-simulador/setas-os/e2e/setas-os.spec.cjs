@@ -20,6 +20,9 @@ async function openApp(page, init = null) {
   await expect(page.locator('.app-shell')).toBeVisible();
   await page.locator('.rail-btn[data-workspace]:visible, .app-rail-mobile .rail-mobile-btn:visible').first().waitFor();
   await page.locator('main.app-main').waitFor({ state: 'visible' });
+  // The shell can paint before its React application has mounted. Navigation
+  // is safe only once the production workspace bridge is present.
+  await expect(page.locator('main.app-main .app-workspace')).toBeVisible();
 }
 
 function workspaceButton(page, key) {
@@ -111,8 +114,9 @@ test.describe('desktop navigation contract', () => {
     await contextTab(page, 'Recetario').click();
     await expectWorkspace(page, 'formular', 'Recetario');
 
-    const card = page.locator('.dash-card').filter({ hasText: 'E2E_RECETA_CARGADA' });
-    await expect(card).toBeVisible({ timeout: 10000 });
+    const card = page.locator('main.app-main [data-recipe-id="e2e-recipe-1"]');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('E2E_RECETA_CARGADA');
     await card.getByRole('button', { name: 'Cargar', exact: true }).click();
 
     await expectWorkspace(page, 'formular', 'Formular');

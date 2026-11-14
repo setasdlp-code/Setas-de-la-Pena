@@ -206,6 +206,13 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    // Alertas e historial generados por la función programada (Admin SDK).
+    // El cliente sólo consulta: ni siquiera administración modifica el registro.
+    match /climate_alerts/{id} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
+    }
+
     // Revisiones de requisitos antes de producir (production-readiness.js).
     // Cada revisión es un registro inmutable firmado por su responsable: una
     // revisión nueva reemplaza a la anterior por fecha, nunca la edita. Por eso

@@ -59,7 +59,7 @@ if [ -z "$PY" ]; then
   exit 1
 fi
 
-"$PY" -m compileall -q ECC mcp scripts/quality build_offline.py fetch_gmail.py
+"$PY" -m compileall -q mcp scripts/quality build_offline.py fetch_gmail.py
 node --check recipe-recommender.js
 bash -n push_to_github.sh
 "$PY" scripts/quality/check_repository.py

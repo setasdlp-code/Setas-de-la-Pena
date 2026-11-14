@@ -216,3 +216,26 @@ test('buildRoomBoard acepta un objeto-mapa de salas además de un arreglo', () =
   assert.equal(board.length, 1);
   assert.equal(board[0].roomId, 'martha_01');
 });
+
+test('lotesInRoom: un lote sin sala no se atribuye a ninguna sala (tampoco a martha_01)', () => {
+  const lotes = [
+    { id: 'A', sala: 'martha_01', lifecycleState: 'fruiting' },
+    { id: 'B', lifecycleState: 'incubation' },
+    { id: 'C', ubicacion: 'martha_01', lifecycleState: 'incubation' },
+    { id: 'D', sala: 'martha_01', lifecycleState: 'closed' },
+    { id: 'E', sala: 'incubacion_01', lifecycleState: 'incubation' },
+  ];
+  assert.deepEqual(roomState.lotesInRoom(lotes, 'martha_01').map(l => l.id), ['A', 'C']);
+  assert.deepEqual(roomState.lotesInRoom(lotes, 'cloudlab_844'), []);
+  assert.deepEqual(roomState.lotesInRoom(null, 'martha_01'), []);
+});
+
+test('lotesWithoutRoom: lista los lotes activos sin sala y omite los terminados', () => {
+  const lotes = [
+    { id: 'A', sala: 'martha_01', lifecycleState: 'fruiting' },
+    { id: 'B', lifecycleState: 'incubation' },
+    { id: 'F', sala: '', lifecycleState: 'discarded' },
+    { id: 'G', sala: '', lifecycleState: 'fruiting' },
+  ];
+  assert.deepEqual(roomState.lotesWithoutRoom(lotes).map(l => l.id), ['B', 'G']);
+});

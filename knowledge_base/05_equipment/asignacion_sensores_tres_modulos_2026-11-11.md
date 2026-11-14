@@ -47,6 +47,8 @@ La exclusión histórica **EXC-SCD30-AMAZON-001** corresponde a un pedido no ent
 | CLOUDLAB 844 `cloudlab_844` | 1 SHT3x AC Infinity (DEC-002) | 1 Klanata candidata a sonda protegida, solo tras confirmar modelo/pinout | 1 SCD30 provisional, con protección contra condensación y calibración documentada | Humidificador CloudForge T7 y extracción H4 solo bajo control verificado por perfil de especie |
 | Martha `martha_01` | 1 SHT3x AC Infinity (DEC-002) | 1 Klanata candidata a sonda protegida, solo tras confirmar modelo/pinout | 1 SCD30 provisional, con protección contra condensación y calibración documentada | VIVOSUN H05 manual: ignorar su sensor interno (DEC-003); automatización de humidificación/extracción pendiente |
 
+**Actualización 2026-11-12 (DEC-023):** por ahora la incubadora se instrumenta sin sonda de núcleo ni mapa DS18B20; se mide aire con el SHT45 breakout, un Inkbird como testigo y superficies con termómetro infrarrojo en cada visita. El requisito de la tabla queda aplazado, no eliminado: se revisa antes de cargar más de cuatro bolsas. Las protecciones físicas y la adaptación del firmware siguen pendientes.
+
 **MH-Z19C:** conservar como instrumento CO2 de comparación/contingencia y posible sustituto de un SCD30 no validado. El perfil de telemetría de CLOUDLAB del 8 de noviembre asigna actualmente MH-Z19C. La tabla anterior es una **propuesta nueva**, no un cambio de firmware aprobado. Validar SCD30 antes de cualquier migración; mantener el MH-Z19C en CLOUDLAB durante pruebas si ese es el único perfil instrumentado. No publicar valores simultáneos de dos sensores como si fueran la misma serie sin metadatos de dispositivo y procedencia.
 
 ## Restricciones de conexión y software
