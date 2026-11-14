@@ -145,7 +145,7 @@ function buildLaunchPlan({
 // que esas etapas se registren cuando de verdad pasan. Se escribe `estado`, el
 // campo legado, y nunca `lifecycleState`: ese lo escribe el servidor
 // (client-invariants.test.js lo vigila).
-function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now, estado = 'incubacion', objetivo = null }) {
+function buildLoteRecords({ form, plan, analysis = null, predictionSnapshot = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now, estado = 'incubacion', objetivo = null }) {
   const spec=plan.preparation;
   const nb = spec ? spec.target.bags : Number(form.numBolsas) || 0;
   const kb = spec ? spec.target.kgPerBag : Number(form.pesoHumedo) || 0;
@@ -184,12 +184,13 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
     ingredientShortfalls: (plan.shortfalls || []).map(s => ({ ...s })),
     ingredientLots: (plan.allocations || []).map(a => ({ ...a })),
     recipeRef: {
+      ...(predictionSnapshot?{predictionSnapshot:JSON.parse(JSON.stringify(predictionSnapshot))}:{}),
       id: now,
       name: recipeName || `Receta ${form.especie} (${form.codigo})`,
       sKey: spec ? spec.speciesKey : sKey,
       recipe: (spec ? spec.recipe : recipe).map(r => ({ ...r })),
       cn: analysis ? Number(analysis.cn).toFixed(1) : '—',
-      eb: analysis ? Number(analysis.eb).toFixed(0) : '—',
+      eb: analysis ? Number(predictionSnapshot?.workingPrediction?.eb??analysis.eb).toFixed(0) : '—',
       score: score || 0,
       cost: analysis ? Math.round(analysis.cost) : 0,
     },
