@@ -1175,6 +1175,7 @@ const SppSvg=({sKey,c})=>{
 const SetasSubstrateAnalysisApi=(typeof SetasSubstrateAnalysis!=='undefined'?SetasSubstrateAnalysis:(typeof require!=='undefined'?require('./substrate-analysis.js'):null));
 const EB_PENALTY_BALANCE_BAND=SetasSubstrateAnalysisApi.EB_PENALTY_BALANCE_BAND;
 const analyze=SetasSubstrateAnalysisApi.analyze;
+const CompositionScenarios=typeof SetasCompositionScenarios!=='undefined'?SetasCompositionScenarios:require('./perito-composition-scenarios.js');
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
 
@@ -3923,8 +3924,8 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
         <div className="ing-meta">
-          <span>C:N {ing.cn}</span>
-          <span>N {ing.n.toFixed(1)}%</span>
+          <span>C:N {ing.compositionStatus==='estimated'?'≈'+Math.round(ing.cn):ing.cn}</span>
+          <span>N {ing.compositionStatus==='estimated'?'≈'+ing.n.toFixed(2):ing.n.toFixed(1)}%</span>
           <span>{costStr}</span>
           {stockKg>0&&<span className="ing-stock-kg">{stockKg.toFixed(1)} kg</span>}
         </div>
@@ -8008,7 +8009,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
     const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
-    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
+    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?(compositionComparison?ebForecast.value:an.eb).toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};
     const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
@@ -8019,7 +8020,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if(window.SetasDB){
       window.SetasDB.saveReceta({
         nombre:nm, sKey, ingredientes:recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})),
-        cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:opt.score,
+        cn:an?an.cn:null, eb:an?(e.predictionSnapshot?.workingPrediction?.eb??an.eb):null, cost:an?Math.round(an.cost):null, score:opt.score,
+        ...(e.predictionSnapshot?{predictionSnapshot:e.predictionSnapshot}:{}),
       }).then(docRef=>{
         setSaved(prev=>{
           const upd=prev.map(r=>r.id===e.id?{...r,firestoreId:docRef.id}:r);
@@ -8227,6 +8229,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
     return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,effectiveSPP);
   },[coFormMode,recipe,coSpecConfig,effectiveINGS,effectiveSPP]);
+  const compositionComparison=useMemo(()=>CompositionScenarios.compare({recipe,sKey,ings:effectiveINGS,spp:effectiveSPP}),[recipe,sKey,effectiveINGS,effectiveSPP]);
+  const hasCompositionEstimate=CompositionScenarios.hasEstimatedComposition(recipe,effectiveINGS);
+  const captureCompositionPrediction=()=>CompositionScenarios.snapshot({recipe,sKey,ings:effectiveINGS,spp:effectiveSPP,at:new Date().toISOString(),forecast:ebForecast,modelVersion:typeof __SETAS_BUILD__!=='undefined'?__SETAS_BUILD__:'development'});
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
   const optimalAn=useMemo(()=>{try{
@@ -8524,6 +8529,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // que produjo (autoImproveResult.recipeKey).
   const [autoImproveResult,setAutoImproveResult]=React.useState(null);
   const autoImprove=()=>{
+    if(hasCompositionEstimate) return;
     const res=autoImproveRecipeDetailed({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats});
     if(!res.steps.length){
       setAutoImproveResult({recipeKey:recipeKeyOf(recipe),steps:[],before:res.before,after:res.before});
@@ -8558,6 +8564,21 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
     return(
       <section className="panel print-panel" id="bl-perito" data-perito-variant="formulador" aria-label="Perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
+        {compositionComparison&&<aside className="os-provenance-notice" data-testid="weber-composition" aria-label="Estimación de Weber Hickory">
+          <h3>Weber Hickory · estimación provisional</h3>
+          <p>Mezcla declarada: 40% hickory / 60% roble. Perfil de trabajo: C ≈49,8%, N ≈0,18%, C:N ≈276. Confianza baja; no medido en estos pellets.</p>
+          <p>Se aproximan las proporciones comerciales como masa seca y se combinan muestras de distintas procedencias. Humedad 8%, pH 5,4, CRA 3 y digestibilidad 2 son supuestos. El precio de catálogo es una referencia comercial; Bodega usa sus propios registros.</p>
+          <p><strong>{compositionComparison.diverges?'Composición insuficientemente conocida para decidir una reformulación.':'La composición sigue pendiente de validación local.'}</strong> Mantener la receta candidata como referencia experimental. Las sugerencias no aplican dosis automáticas sobre estos supuestos.</p>
+          <details><summary>Comparar supuestos de composición</summary>
+            <p>{compositionComparison.note}</p>
+            <div style={{overflowX:'auto'}}><table className="inv-table"><caption>Misma receta y mismos supuestos físicos; solo cambia C y N del pellet</caption>
+              <thead><tr><th scope="col">Supuesto</th><th scope="col">C / N del pellet (%)</th><th scope="col">C:N receta</th><th scope="col">N receta</th><th scope="col">EB del modelo</th></tr></thead>
+              <tbody>{compositionComparison.rows.map(row=><tr key={row.id}><th scope="row">{row.url?<a href={row.url} target="_blank" rel="noreferrer">{row.label}</a>:row.label}<small style={{display:'block'}}>{row.note}</small></th><td>{row.c.toFixed(1)} / {row.n.toFixed(2)}</td><td>{row.recipeCN.toFixed(1)} · {row.cnStatus}</td><td>{row.recipeN.toFixed(2)}% · {row.nStatus}</td><td>≈{Math.round(row.eb)}%</td></tr>)}</tbody>
+            </table></div>
+            <ul>{compositionComparison.estimate.inputs.map(source=><li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a> · C {source.c}% / N {source.n}% · peso supuesto {source.fraction*100}%</li>)}</ul>
+            {compositionComparison.estimate.assumptions.map(note=><p key={note}>{note}</p>)}
+          </details>
+        </aside>}
         {/* ── ENCABEZADO: score, veredicto y acciones (Auto-mejorar primero, asistente IA al final) ── */}
         {hasPer&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
@@ -8577,14 +8598,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} disabled={hasCompositionEstimate} title={hasCompositionEstimate?'Composición estimada: conservar receta de referencia':undefined} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
               {<>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(compositionComparison||status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
                           <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
@@ -8896,7 +8917,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // El lote NACE planificado y sus insumos quedan reservados, no
       // descontados: la bodega se toca al registrar "Preparar mezcla", que es
       // cuando el sustrato se pesa de verdad.
-      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,predictionSnapshot:captureCompositionPrediction(),treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan,selection:selectedTrial}));
       setSelectedTrial(null);
       consumoRegistrado=true;
@@ -8993,14 +9014,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
       spawnPct:'',humedad:'',tratamiento:'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'planificado',veredicto:'',
-      recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
+      recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),score:opt.score,cost:Math.round(an.cost),...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )}:null,
       // El snapshot congela lo que este lote debe seguir diciendo aunque la
       // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
       recipeSnapshot:(()=>{
         const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
         if(!lc||!recipe.length||!balanced) return null;
         const base=saved.find(r=>r.name===saveName)||{name:saveName||'Receta activa',sKey,recipe:[...recipe],status:'legacy',version:1};
-        try{ return lc.buildProductionSnapshot({...base,sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),cost:Math.round(an.cost)},{at:new Date().toISOString()}); }
+        try{ return lc.buildProductionSnapshot({...base,sKey,recipe:[...recipe],predictionSnapshot:captureCompositionPrediction(),cn:an.cn.toFixed(1),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),cost:Math.round(an.cost)},{at:new Date().toISOString()}); }
         catch(e){ return null; }
       })(),
     };
@@ -9188,7 +9209,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try {
       const now = Date.now();
       // Mismo criterio que el otro camino: planificar reserva, preparar descuenta.
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, predictionSnapshot:captureCompositionPrediction(), treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan:f.plan,selection:selectedTrial}));
       setSelectedTrial(null);
       consumoRegistrado = true;
@@ -15772,6 +15793,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={ing.id} className={`ing-card-item${justAddedIds.includes(ing.id)?' ing-row-flash':''}`} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
                         <div style={{position:'relative'}}>
                           <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0} isCompat={isCompat} spName={sp?.name}/>
+                          {ing.compositionStatus==='estimated'&&<small>Composición estimada · compatibilidad por analogía · pendiente de piloto</small>}
                           {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
                         </div>
                         <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:6,padding:'4px 4px 6px'}}>
@@ -15913,7 +15935,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {recipe.length>0?(
                 <div className="form-review-checks" aria-label="Comprobaciones de receta" aria-live="polite">
                   {(()=>{
-                    const undocumented=hasPickedSpecies?recipe.filter(r=>!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
+                    const undocumented=hasPickedSpecies?recipe.filter(r=>effectiveINGS.find(g=>g.id===r.id)?.compositionStatus==='estimated'||!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
                     const checks=[
                       {id:'balance',label:'Balance de masa',status:balanced?'verified':'blocked',detail:`${an?.tot?.toFixed(1)||'0'}% / 100%${balanced?' · Composición cerrada':` · ${balMsg}`}`,action:'recipe'},
                       {id:'compatibility',label:'Compatibilidad documentada',status:!hasPickedSpecies||undocumented.length?'unknown':'verified',detail:!hasPickedSpecies?'Seleccionar una especie.':undocumented.length?`Sin compatibilidad documentada con ${sp.name}: ${undocumented.map(r=>effectiveINGS.find(g=>g.id===r.id)?.name||r.id).join(', ')}.`:`Todos los ingredientes tienen compatibilidad documentada con ${sp.name}.`,action:'recipe'},
@@ -16128,7 +16150,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
-                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt?.score||0}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
+                  const p={version:'1.0',predictionSnapshot:captureCompositionPrediction(),exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:compositionComparison?ebForecast.value:an.eb,...(compositionComparison?{rawModelEB:an.eb}:{}),costo:an.cost,score:opt?.score||0}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}><span aria-hidden="true">↓</span> JSON</button>
                 <button className="btn" onClick={()=>{

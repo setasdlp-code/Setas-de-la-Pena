@@ -46,6 +46,7 @@ const PROTECTED_APP_SCRIPTS = [
   // cargarse, así que el orden entre estos dos importa.
   "../substrate-catalog.js",
   "../substrate-analysis.js",
+  "../perito-composition-scenarios.js",
   "../substrate-diagnosis.js",
   // Datos y generadores de texto extraídos del JSX; sin dependencias de carga.
   "../species-editorial.js",

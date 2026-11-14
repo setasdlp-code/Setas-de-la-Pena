@@ -64,7 +64,7 @@ test('ningún crítico de C:N o N queda sin botón y sin explicación', () => {
     for (const it of setup(sKey, recipe).opt.items) {
       const m = metricOf(it);
       if (it.priority !== 'critical' || (m !== 'cn' && m !== 'n') || it.apply) continue;
-      assert.ok(it.sameAdjustmentAs || /Ningún otro ingrediente compatible/.test(it.riskIfIgnored || ''),
+      assert.ok(it.sameAdjustmentAs || (it.compositionPending && /composición estimada/.test(it.riskIfIgnored || '')) || /Ningún otro ingrediente compatible/.test(it.riskIfIgnored || ''),
         `${sKey} ${JSON.stringify(recipe)} · ${it.label}: ${it.action}`);
     }
   }
