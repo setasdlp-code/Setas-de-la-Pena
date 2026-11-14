@@ -78,13 +78,14 @@ test('el simulador no trae siembras de inventario ni valores de sala de ejemplo 
   assert.match(jsx, /if \(!hasLive\) return \{ key: metricKey, label, empty: true \};/);
 });
 
-test('los actuadores del tablero de clima no deciden en automático sin lectura medida', () => {
-  assert.match(jsx, /const hasMeasuredClimate = hasLiveMetrics \|\| !!injected;/);
-  assert.match(jsx, /'AUTO \[SIN LECTURA\]'/);
+test('el tablero de clima no decide ni aparenta decidir actuadores', () => {
+  // Antes: modo AUTO con lectura medida. Ahora el panel no tiene estado propio de relés.
+  assert.doesNotMatch(jsx, /AUTO \[SIN LECTURA\]|AUTO \[ENCENDIDO\]|AUTO \[REPOSO\]|hasMeasuredClimate/);
   assert.match(jsx, /liveRoomAlerts\.length === 0 && climateHealth\.alerts\.length > 0 && \(hasLiveMetrics \|\| injected\)/);
 });
 
 test('el tablero de clima no muestra un historial de relés inventado', () => {
   assert.doesNotMatch(jsx, /Pulso periódico FAE completado|Encendido por banda mínima \(84\.2%/);
-  assert.match(jsx, /data-testid="relay-log-empty"/);
+  assert.doesNotMatch(jsx, /relay-log-empty|Historial Reciente de Conmutación de Relés/);
+  assert.match(jsx, /Sin datos de actuadores para esta sala/);
 });

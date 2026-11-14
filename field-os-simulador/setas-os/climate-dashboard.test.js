@@ -102,12 +102,13 @@ test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.climate-actuator-card/);
 });
 
-test('simulador-app.jsx renders relay actuator controls and interactive overrides', () => {
+test('el panel de actuadores es de solo lectura: sin estado publicado por un nodo solo dice que no hay datos', () => {
   assert.match(jsx, /data-testid="climate-actuators-panel"/);
-  assert.match(jsx, /Relay Ch1 · T7\/H05/);
-  assert.match(jsx, /Relay Ch2 · Cloudline H4/);
-  assert.match(jsx, /Disparar Pulso FAE/);
-  assert.match(jsx, /Forzar Humidificación/);
+  assert.match(jsx, /Sin datos de actuadores para esta sala/);
+  // Ninguna apariencia de control: el relé lo gobierna el firmware del nodo (DEC-001).
+  assert.doesNotMatch(jsx, /Forzar Humidificación|Disparar Pulso FAE|OVERRIDE \[|AUTO \[(ENCENDIDO|REPOSO|SIN LECTURA|EN ESPERA)\]/);
+  assert.doesNotMatch(jsx, /humidifierOverride|setHumidifierOverride|faePulseActive|humidifierAutoOn|faeAutoPulse/);
+  assert.doesNotMatch(jsx, /Relay Ch1|Relay Ch2|Hosyond \(2ch\)/);
 });
 
 test('Clima ejecuta su hook sin condición y consume la vista sin remontar el panel', () => {
