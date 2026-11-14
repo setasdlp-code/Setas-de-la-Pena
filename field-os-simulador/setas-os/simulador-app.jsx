@@ -1183,6 +1183,9 @@ const {
 //    igual que este bloque quede antes o después de que species-targets.js
 //    registre su global.
 const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
+// Presentación de Escenarios del generador (duplicados, «No ejecutar», búsquedas
+// vacías, insumos sin precio). No puntúa ni reordena: eso es del Perito.
+const SetasGeneratorPresentationApi=(typeof SetasGeneratorPresentation!=='undefined'?SetasGeneratorPresentation:(typeof require!=='undefined'?require('./generator-presentation.js'):null));
 
 // ── Metas de BE por especie y semaforo de contaminacion (propuesta KB 2026-10).
 //    El modulo registra globalThis.SetasKpiThresholds, que tambien lee el shell .dc.html.
@@ -4727,7 +4730,7 @@ const launchDiscountSummary=(plan,ings=[])=>{
   const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
   return `Se reservó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
 };
-const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
+const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey,invLotes=[])=>{
   const an=candidate?.evaluation?.analysis;
   // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
   const sp=an?.sp||SPP[targetKey];
@@ -4742,6 +4745,9 @@ const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>
     recipe:candidate.recipe,
     an,
     score:Number(candidate.evaluation?.score)||0,
+    status:candidate?.evaluation?.status||null,
+    safetyStatus:candidate?.evaluation?.dimensions?.safety?.status||null,
+    unpricedIds:SetasGeneratorPresentationApi.unpricedIds(candidate?.recipe||[],invLotes),
     riskScore:Number(candidate.evaluation?.riskScore??candidate.evaluation?.breakdown?.risk??50),
     maxKgWet,
     suppPct,
@@ -4768,6 +4774,7 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     supps:supps.length,
     aers:aers.length,
     tried:Number(out?.explored)||0,
+    structuralGenerated:Number(out?.structural?.generated??-1),
     resultsRaw:Number(out?.diagnostics?.allowedCount??out?.ranked?.length??0),
     suppLimit:Number(out?.profile?.maxSupp??spp[targetKey]?.supplementation_max??20),
     profileKey,
@@ -6042,7 +6049,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const generatorDisplayStatus=!optResults?generatorStatus:activeGeneratorError
     ?'No se pudieron calcular escenarios. Revisar el diagnóstico del Generador.'
     :optResults.noStock?'No hay ingredientes en stock registrados. Agregarlos en Bodega.'
-    :activeGeneratorResults.length?`${activeGeneratorResults.length} escenario${activeGeneratorResults.length===1?'':'s'} disponible${activeGeneratorResults.length===1?'':'s'} para ${OPT_PROFILES[optProfile]?.label||optProfile}.`
+    :activeGeneratorResults.length?(()=>{const p=SetasGeneratorPresentationApi.partitionRows(activeGeneratorResults);return SetasGeneratorPresentationApi.generatorHeadline({viable:p.viable.length,blocked:p.blocked.length,profileLabel:OPT_PROFILES[optProfile]?.label||optProfile});})()
     :`No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label||optProfile}. Revisar el diagnóstico del Generador.`;
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
@@ -10353,7 +10360,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           placeholder="$/kg"
                                         />
                                       ):(
-                                        r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
+                                        // pp===0: ningún lote con existencias tiene precio registrado;
+                                        // no es un insumo gratis.
+                                        <span style={r.pp===0?{color:'var(--status-attention-text)'}:undefined}>{r.pp>0?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:r.pp===0?'Sin precio':'—'}</span>
                                       )}
                                     </td>
                                     {/* PROVEEDOR */}
@@ -16451,9 +16460,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           spp:optTargetSPP,
                                         });
                                         noStock=noStock||!!out.noStock;
-                                        byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
-                                          hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
-                                        );
+                                        // Viables primero y casi duplicados colapsados dentro de cada
+                                        // grupo: el orden del Perito se conserva y quien lea [0]
+                                        // (mezcla/morphing) recibe el primer Escenario viable.
+                                        byProfile[pk]=SetasGeneratorPresentationApi.presentRows((out.ranked||[]).slice(0,12).map(c=>
+                                          hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk,invLotes)
+                                        ));
                                         const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk,optTargetSPP);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
@@ -16510,7 +16522,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {optResults&&optResults[optProfile]&&(
                               <div>
                                 <h3 id="generator-results-heading" tabIndex={-1} className="generator-results-heading" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',margin:'0 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
-                                  {optResults[optProfile].length} alternativas del modelo · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · objetivos resueltos por composición
+                                  {(()=>{const p=SetasGeneratorPresentationApi.partitionRows(optResults[optProfile]);return SetasGeneratorPresentationApi.generatorHeadline({viable:p.viable.length,blocked:p.blocked.length,profileLabel:OPT_PROFILES[optProfile]?.label||optProfile});})()} · {optUseStock?'solo stock':'paleta completa'} · objetivos resueltos por composición
                                 </h3>
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
@@ -16526,10 +16538,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <div className="generator-comparison" role="region" aria-label="Comparación de alternativas" tabIndex={0}>
                                   <table><caption>Alternativas · valores estimados del modelo · costo de catálogo sin tratamiento</caption>
                                     <thead><tr><th scope="col">Alternativa</th><th scope="col">Score</th><th scope="col">C:N</th><th scope="col">N %</th><th scope="col">COP/kg seco</th><th scope="col">Detalle</th></tr></thead>
-                                    <tbody>{optResults[optProfile].map((r,i)=><tr key={i}><th scope="row">#{i+1}</th><td>{r.score}</td><td>{r.an.cn.toFixed(1)}</td><td>{r.an.avgN.toFixed(2)}</td><td>{Math.round(r.an.cost).toLocaleString('es-CO')}</td><td><button type="button" onClick={()=>document.querySelector(`[data-result-id="${i}"]`)?.scrollIntoView({block:'start'})}>Ver composición</button></td></tr>)}</tbody>
+                                    <tbody>{optResults[optProfile].map((r,i)=><tr key={i}><th scope="row">#{i+1}{SetasGeneratorPresentationApi.isViableRow(r)?'':' · No ejecutar'}</th><td>{r.score}</td><td>{r.an.cn.toFixed(1)}</td><td>{r.an.avgN.toFixed(2)}</td><td>{Math.round(r.an.cost).toLocaleString('es-CO')}</td><td><button type="button" onClick={()=>{const el=document.querySelector(`[data-result-id="${i}"]`);const det=el?.closest('details');if(det)det.open=true;el?.scrollIntoView({block:'start'});}}>Ver composición</button></td></tr>)}</tbody>
                                   </table>
                                 </div>
-                                {optResults[optProfile].map((r,i)=>{
+                                {(()=>{const genCards=optResults[optProfile].map((r,i)=>{
                                   const mainIngs=r.recipe.map(x=>{const g=INGS.find(ing=>ing.id===x.id);return g?`${g.name} ${x.p}%`:x.id;}).filter(Boolean);
                                   const baseSig=r.recipe.map(x=>x.id).filter(id=>{const g=INGS.find(ing=>ing.id===id);return g&&g.role==='base_carbono';}).sort().join('+');
                                   return(
@@ -16543,10 +16555,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
                                           {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="currentColor" /> Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
+                                          {r.unpricedIds?.length>0&&<span className="opt-pill" data-testid="generator-unpriced-warning" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="currentColor" /> {`Sin precio en Bodega: ${r.unpricedIds.map(id=>INGS.find(g=>g.id===id)?.name||id).join(', ')}. El costo mostrado está subestimado.`}</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
-                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Planificar lote</button>
+                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}} disabled={!SetasGeneratorPresentationApi.isViableRow(r)} title={SetasGeneratorPresentationApi.isViableRow(r)?undefined:'Escenario marcado «No ejecutar»: cargarlo en la Mesa para corregirlo antes de planificar.'}>Planificar lote</button>
                                           <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);openBuilderSubTab('generador',{mode:'morphing'});}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>
@@ -16633,7 +16646,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       })()}
                                     </div>
                                   );
-                                })}
+                                });
+                                const nViable=optResults[optProfile].filter(SetasGeneratorPresentationApi.isViableRow).length;
+                                const blockedCards=genCards.slice(nViable);
+                                return(<>{genCards.slice(0,nViable)}{blockedCards.length>0&&(
+                                  <details data-testid="generator-blocked-group" className="generator-blocked-group" style={{marginTop:12,border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)',padding:'8px 12px'}}>
+                                    <summary style={{cursor:'pointer',fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--status-error)'}}>{`Combinaciones descartadas — No ejecutar (${blockedCards.length})`}</summary>
+                                    {blockedCards}
+                                  </details>
+                                )}</>);
+                                })()}
                               </div>
                             )}
                             {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
@@ -16659,13 +16681,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                     {diag.error&&<p role="alert">No se pudo completar la búsqueda: {diag.error}</p>}
-                                    {diag.bases===0&&<p>No hay una base de carbono compatible en {optUseStock?'Bodega':'el catálogo habilitado'}.</p>}
+                                    {(()=>{const why=!diag.error&&SetasGeneratorPresentationApi.explainEmptySearch(diag,OPT_PROFILES[diag.profileKey]?.label||diag.profileKey);return why?<p data-testid="generator-empty-reason" data-reason={why.code}>{why.message}</p>:null;})()}
                                     {diag.rejectionReasons?.length>0&&<div data-testid="generator-rejection-reasons">
                                       <strong>Restricciones encontradas en la búsqueda</strong>
                                       <ul>{diag.rejectionReasons.slice(0,5).map(reason=><li key={reason.code}>{describeSearchRejection(reason.code,optimizerINGS)} <span>({reason.count} evaluaciones)</span></li>)}</ul>
                                       <p>Un escenario puede incumplir varias restricciones. Este diagnóstico describe la búsqueda explorada, no demuestra que no exista otra fórmula.</p>
                                     </div>}
-                                    {!diag.error&&!diag.rejectionReasons?.length&&<p>No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción.</p>}
+                                    {!diag.error&&!diag.rejectionReasons?.length&&!SetasGeneratorPresentationApi.explainEmptySearch(diag,OPT_PROFILES[diag.profileKey]?.label||diag.profileKey)&&<p>No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción.</p>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>

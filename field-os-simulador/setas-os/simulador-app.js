@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6acf3a71c1a7f50b35b1f1e3880bda65777f066bf5ee6333a3eec10af8ed38e3
+// source-hash: 4a5b177b34145dc6c711281b9fec8eadc3401e83096263950bf0cecdd478a5da
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -947,6 +947,7 @@ const {
   OPT_PROFILES
 } = typeof SetasRecipeOptimizer !== "undefined" ? SetasRecipeOptimizer : typeof require !== "undefined" ? require("./recipe-optimizer.js") : {};
 const SetasSpeciesTargetsApi = typeof SetasSpeciesTargets !== "undefined" ? SetasSpeciesTargets : typeof require !== "undefined" ? require("./species-targets.js") : null;
+const SetasGeneratorPresentationApi = typeof SetasGeneratorPresentation !== "undefined" ? SetasGeneratorPresentation : typeof require !== "undefined" ? require("./generator-presentation.js") : null;
 const SetasKpiThresholdsApi = typeof SetasKpiThresholds !== "undefined" ? SetasKpiThresholds : typeof require !== "undefined" ? require("./kpi-thresholds.js") : null;
 const contamLevelOf = (pct) => SetasKpiThresholdsApi ? SetasKpiThresholdsApi.contamLevel(pct) : null;
 const CONTAM_LEVEL_COLOR = { amber: "var(--ochre-600)", red: "var(--coral-700)", stop: "var(--coral-700)" };
@@ -2962,7 +2963,7 @@ const launchDiscountSummary = (plan, ings = []) => {
   const nameOf = (id) => (ings || []).find((g) => g.id === id)?.name || id;
   return `Se reservó lo disponible; faltaron: ${sf.map((x) => `${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(", ")}.`;
 };
-const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey) => {
+const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey, invLotes = []) => {
   const an = candidate?.evaluation?.analysis;
   const sp = an?.sp || SPP[targetKey];
   const profile = OPT_PROFILES[profileKey] || OPT_PROFILES.produccion;
@@ -2974,6 +2975,9 @@ const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profile
     recipe: candidate.recipe,
     an,
     score: Number(candidate.evaluation?.score) || 0,
+    status: candidate?.evaluation?.status || null,
+    safetyStatus: candidate?.evaluation?.dimensions?.safety?.status || null,
+    unpricedIds: SetasGeneratorPresentationApi.unpricedIds(candidate?.recipe || [], invLotes),
     riskScore: Number(candidate.evaluation?.riskScore ?? candidate.evaluation?.breakdown?.risk ?? 50),
     maxKgWet,
     suppPct,
@@ -2998,6 +3002,7 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
     supps: supps.length,
     aers: aers.length,
     tried: Number(out?.explored) || 0,
+    structuralGenerated: Number(out?.structural?.generated ?? -1),
     resultsRaw: Number(out?.diagnostics?.allowedCount ?? out?.ranked?.length ?? 0),
     suppLimit: Number(out?.profile?.maxSupp ?? spp[targetKey]?.supplementation_max ?? 20),
     profileKey,
@@ -4095,7 +4100,10 @@ function SimuladorShell(props) {
   const [optProfile, setOptProfile] = useState("produccion");
   const activeGeneratorResults = optResults?.[optProfile] || [];
   const activeGeneratorError = optResults?.[`_diag_${optProfile}`]?.diag?.error;
-  const generatorDisplayStatus = !optResults ? generatorStatus : activeGeneratorError ? "No se pudieron calcular escenarios. Revisar el diagnóstico del Generador." : optResults.noStock ? "No hay ingredientes en stock registrados. Agregarlos en Bodega." : activeGeneratorResults.length ? `${activeGeneratorResults.length} escenario${activeGeneratorResults.length === 1 ? "" : "s"} disponible${activeGeneratorResults.length === 1 ? "" : "s"} para ${OPT_PROFILES[optProfile]?.label || optProfile}.` : `No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label || optProfile}. Revisar el diagnóstico del Generador.`;
+  const generatorDisplayStatus = !optResults ? generatorStatus : activeGeneratorError ? "No se pudieron calcular escenarios. Revisar el diagnóstico del Generador." : optResults.noStock ? "No hay ingredientes en stock registrados. Agregarlos en Bodega." : activeGeneratorResults.length ? (() => {
+    const p = SetasGeneratorPresentationApi.partitionRows(activeGeneratorResults);
+    return SetasGeneratorPresentationApi.generatorHeadline({ viable: p.viable.length, blocked: p.blocked.length, profileLabel: OPT_PROFILES[optProfile]?.label || optProfile });
+  })() : `No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label || optProfile}. Revisar el diagnóstico del Generador.`;
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [qrSelectedLoteId, setQrSelectedLoteId] = useState("");
   const [showFieldActionModal, setShowFieldActionModal] = useState(false);
@@ -7111,7 +7119,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "6acf3a71c1a7" : null;
+    const appVersion = true ? "4a5b177b3414" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -8185,7 +8193,11 @@ BATCH (${numBags}×${kgBag} kg):
           style: INP,
           placeholder: "$/kg"
         }
-      ) : r.pp != null ? `$${Math.round(r.pp).toLocaleString("es-CO")}/kg` : "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Proveedor", style: { color: "var(--ink-500)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", minWidth: 130 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockProvider-${r.id}`, "aria-label": `Proveedor de ${r.name}`, value: editingRowData.proveedorId, onChange: (e) => setEditingRowData((p) => ({ ...p, proveedorId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Sin especificar"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre))) : r.prov?.nombre || "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Alerta mínima", style: { minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
+      ) : (
+        // pp===0: ningún lote con existencias tiene precio registrado;
+        // no es un insumo gratis.
+        /* @__PURE__ */ React.createElement("span", { style: r.pp === 0 ? { color: "var(--status-attention-text)" } : void 0 }, r.pp > 0 ? `$${Math.round(r.pp).toLocaleString("es-CO")}/kg` : r.pp === 0 ? "Sin precio" : "—")
+      )), /* @__PURE__ */ React.createElement("td", { "data-label": "Proveedor", style: { color: "var(--ink-500)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", minWidth: 130 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockProvider-${r.id}`, "aria-label": `Proveedor de ${r.name}`, value: editingRowData.proveedorId, onChange: (e) => setEditingRowData((p) => ({ ...p, proveedorId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Sin especificar"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre))) : r.prov?.nombre || "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Alerta mínima", style: { minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
         "input",
         {
           name: `stockAlert-${r.id}`,
@@ -11201,9 +11213,9 @@ Click para ver análisis completo`
                 spp: optTargetSPP
               });
               noStock = noStock || !!out.noStock;
-              byProfile[pk] = (out.ranked || []).slice(0, 12).map(
-                (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk)
-              );
+              byProfile[pk] = SetasGeneratorPresentationApi.presentRows((out.ranked || []).slice(0, 12).map(
+                (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk, invLotes)
+              ));
               const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk, optTargetSPP);
               const stockCount = diag.stockIds;
               byProfile[`_diag_${pk}`] = { stockCount, diag };
@@ -11241,69 +11253,82 @@ Click para ver análisis completo`
   )), optUseStock ? (() => {
     const sc = [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0).map((l) => l.ingredienteId))].length;
     return sc > 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--moss-tint)", border: "1px solid var(--moss-300)", borderRadius: "var(--sim-r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700,var(--accent-olive))", marginBottom: 12 } }, "Usando solo ingredientes en stock · ", sc, " disponibles en inventario") : /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 14px", background: "var(--status-warn-bg)", border: "1px solid var(--status-warn)", borderRadius: "var(--sim-r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--status-warn-text)", marginBottom: 12 } }, "Inventario vacío. Cambiar a ", /* @__PURE__ */ React.createElement("strong", null, "Paleta completa"), " para generar recetas con toda la paleta, o registrar compras en Inventario.");
-  })() : /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--coral-tint)", border: "1px solid var(--coral-300)", borderRadius: "var(--sim-r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-600)", marginBottom: 12 } }, "Generando con toda la paleta compatible con ", SPP[optTarget]?.name, " · ignora inventario · ideal para diseñar la receta antes de comprar"), optResults && optResults[optProfile] && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { id: "generator-results-heading", tabIndex: -1, className: "generator-results-heading", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--sim-tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", margin: "0 0 12px", paddingBottom: 8, borderBottom: "1px solid var(--border-soft)" } }, optResults[optProfile].length, " alternativas del modelo · perfil ", /* @__PURE__ */ React.createElement("b", null, OPT_PROFILES[optProfile]?.label), " · ", optUseStock ? "solo stock" : "paleta completa", " · objetivos resueltos por composición"), (() => {
+  })() : /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--coral-tint)", border: "1px solid var(--coral-300)", borderRadius: "var(--sim-r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-600)", marginBottom: 12 } }, "Generando con toda la paleta compatible con ", SPP[optTarget]?.name, " · ignora inventario · ideal para diseñar la receta antes de comprar"), optResults && optResults[optProfile] && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { id: "generator-results-heading", tabIndex: -1, className: "generator-results-heading", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--sim-tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", margin: "0 0 12px", paddingBottom: 8, borderBottom: "1px solid var(--border-soft)" } }, (() => {
+    const p = SetasGeneratorPresentationApi.partitionRows(optResults[optProfile]);
+    return SetasGeneratorPresentationApi.generatorHeadline({ viable: p.viable.length, blocked: p.blocked.length, profileLabel: OPT_PROFILES[optProfile]?.label || optProfile });
+  })(), " · ", optUseStock ? "solo stock" : "paleta completa", " · objetivos resueltos por composición"), (() => {
     const evi = describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
     return /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: evi.hasEvidence ? "var(--moss-tint)" : "var(--paper-100)", border: `1px solid ${evi.hasEvidence ? "var(--moss-300)" : "var(--border-soft)"}`, borderRadius: "var(--sim-r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: evi.hasEvidence ? "var(--moss-700,var(--accent-olive))" : "var(--ink-500)", marginBottom: 12 } }, evi.hasEvidence ? `Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize === 1 ? "" : "s"} real${evi.sampleSize === 1 ? "" : "es"} de ${SPP[optTarget]?.name || optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)` : `Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name || optTarget} — Escenarios calculados solo con el modelo teórico.`, evi.exclusions && /* @__PURE__ */ React.createElement("div", null, evi.exclusions, ". Observaciones disponibles como contexto."));
-  })(), /* @__PURE__ */ React.createElement("div", { className: "generator-comparison", role: "region", "aria-label": "Comparación de alternativas", tabIndex: 0 }, /* @__PURE__ */ React.createElement("table", null, /* @__PURE__ */ React.createElement("caption", null, "Alternativas · valores estimados del modelo · costo de catálogo sin tratamiento"), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Alternativa"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Score"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "C:N"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "N %"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "COP/kg seco"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Detalle"))), /* @__PURE__ */ React.createElement("tbody", null, optResults[optProfile].map((r, i) => /* @__PURE__ */ React.createElement("tr", { key: i }, /* @__PURE__ */ React.createElement("th", { scope: "row" }, "#", i + 1), /* @__PURE__ */ React.createElement("td", null, r.score), /* @__PURE__ */ React.createElement("td", null, r.an.cn.toFixed(1)), /* @__PURE__ */ React.createElement("td", null, r.an.avgN.toFixed(2)), /* @__PURE__ */ React.createElement("td", null, Math.round(r.an.cost).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => document.querySelector(`[data-result-id="${i}"]`)?.scrollIntoView({ block: "start" }) }, "Ver composición"))))))), optResults[optProfile].map((r, i) => {
-    const mainIngs = r.recipe.map((x) => {
-      const g = INGS.find((ing) => ing.id === x.id);
-      return g ? `${g.name} ${x.p}%` : x.id;
-    }).filter(Boolean);
-    const baseSig = r.recipe.map((x) => x.id).filter((id) => {
-      const g = INGS.find((ing) => ing.id === id);
-      return g && g.role === "base_carbono";
-    }).sort().join("+");
-    return /* @__PURE__ */ React.createElement("div", { key: i, className: "opt-result", "data-result-id": i, "data-base-signature": baseSig }, /* @__PURE__ */ React.createElement("div", { className: "opt-result-head" }, /* @__PURE__ */ React.createElement("div", { className: "opt-rank" }, "#", i + 1), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "opt-score" }, r.score), /* @__PURE__ */ React.createElement("div", { className: "opt-score-lbl" }, "SCORE")), /* @__PURE__ */ React.createElement("div", { className: "opt-pills", style: { flex: 1 } }, mainIngs.map((s, j) => /* @__PURE__ */ React.createElement("span", { key: j, className: "opt-pill" }, s)), r.suppOverLimit && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention-text)", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "currentColor" }), " Supl. ", r.suppPct.toFixed(0), "% > límite")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "opt-load", onClick: () => {
-      setSKey(optTarget);
-      setRecipe(r.recipe);
-      setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
-      openBuilderSubTab("formular");
-      goTab("formular");
-      setLoadedFlash(true);
-      setTimeout(() => setLoadedFlash(false), 2200);
-    } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bowl", size: 12, style: { marginRight: 4 } }), " Cargar en Mesa"), /* @__PURE__ */ React.createElement("button", { className: "opt-load", style: { background: "var(--moss-600,var(--accent-olive))", borderColor: "var(--moss-700,var(--accent-olive))" }, onClick: () => {
-      setSKey(optTarget);
-      setRecipe(r.recipe);
-      setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
-      goTab("produccion");
-    } }, "Planificar lote"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "opt-load", style: { background: "var(--slate-800)", borderColor: "var(--slate-900)", color: "var(--paper-50)" }, onClick: () => {
-      setMorphTargetRecipe(r.recipe);
-      openBuilderSubTab("generador", { mode: "morphing" });
-    } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 12, style: { marginRight: 4 } }), " Comparar"))), /* @__PURE__ */ React.createElement("div", { className: "generator-candidate-context", "data-testid": "generator-candidate-context" }, "C:N objetivo ", r.an.sp?.cn_optimal?.min, "–", r.an.sp?.cn_optimal?.max, ":1", " · ", "Humedad objetivo ", r.an.moistureTarget ?? r.an.sp?.moisture?.ideal, "%", " · ", calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp })?.name), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
-      const tOpt = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
-      const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
-      const totalCost = Math.round(r.an.cost) + eCost;
-      return [
-        { l: "C:N", v: `${r.an.cn.toFixed(1)}:1` },
-        { l: "N%", v: `${r.an.avgN.toFixed(2)}%` },
-        { l: "EB", v: ((b) => `${b.low}–${b.high}%`)(ebBandFor(r.an)) },
-        {
-          l: "Insumos + trat./kg seco",
-          v: totalCost > 0 ? `${totalCost.toLocaleString("es-CO")}` : "--",
-          sub: eCost > 0 ? `ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}` : null
-        }
-      ];
-    })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), r.agronomicInsights?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, padding: "7px 10px", borderLeft: "3px solid var(--moss-500,var(--accent-olive))", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("b", null, "Lectura agronómica · ", r.evidenceClassification?.label || "Tier 3 · hipótesis/modelo", ":"), " ", r.agronomicInsights.slice(0, 2).map((x) => x.message).join(" ")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Seguridad modelada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500)" : "var(--status-error)" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
-      const tOpt2 = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
-      const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
-      const bags = [
-        { nom: "Bolsa 20×50", kgH: 1.8 },
-        { nom: "Bolsa 18×35", kgH: 1 },
-        { nom: "Punch bag", kgH: 3.5 }
-      ];
-      const hFactor = 1 - (r.an.moistureTarget ?? r.an.sp?.moisture?.ideal ?? 65) / 100;
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, borderTop: "1px solid var(--border-soft)", borderBottom: "none" } }, bags.map((b) => {
-        const kgSeco = b.kgH * hFactor;
-        const costBolsa = Math.round((r.an.cost + eCost2) * kgSeco);
-        return /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "5px 8px", borderRight: "1px solid var(--border-soft)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginBottom: 2, letterSpacing: "var(--sim-tracking-label)", fontWeight: 600 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--coral-700)", fontWeight: 700 } }, "$", costBolsa.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, "COP / bolsa · insumos + tratamiento"));
-      }));
-    })(), (() => {
-      const t = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
-      if (!t) return null;
-      const tc = t.col === "autoclave" ? { bg: "var(--status-error-bg)", br: "color-mix(in srgb, var(--status-error) 35%, var(--paper-50))", fg: "var(--brand-accent-text)", lbl: "Autoclave 121°C / 18.5–19 PSI" } : t.col === "thermal" ? { bg: "var(--status-attention-bg)", br: "var(--status-attention)", fg: "var(--status-attention-text)", lbl: "Pasteurización 65–75°C núcleo" } : { bg: "var(--status-ok-bg)", br: "var(--status-ok-marker)", fg: "var(--status-ok)", icon: "", lbl: "CWLP — Cal en Frío pH≥12" };
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 14px", background: tc.bg, borderTop: `1px solid ${tc.br}` } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, fontWeight: 700 } }, tc.icon, " ", tc.lbl, " · ", t.time.split("(")[0].trim()), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, opacity: 0.8 } }, "Spawn ", t.spawn, "%"));
-    })());
-  })), !optRunning && optResults && !optResults.noStock && optResults[optProfile]?.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "18px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)", background: "var(--paper-100)" } }, (() => {
+  })(), /* @__PURE__ */ React.createElement("div", { className: "generator-comparison", role: "region", "aria-label": "Comparación de alternativas", tabIndex: 0 }, /* @__PURE__ */ React.createElement("table", null, /* @__PURE__ */ React.createElement("caption", null, "Alternativas · valores estimados del modelo · costo de catálogo sin tratamiento"), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Alternativa"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Score"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "C:N"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "N %"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "COP/kg seco"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Detalle"))), /* @__PURE__ */ React.createElement("tbody", null, optResults[optProfile].map((r, i) => /* @__PURE__ */ React.createElement("tr", { key: i }, /* @__PURE__ */ React.createElement("th", { scope: "row" }, "#", i + 1, SetasGeneratorPresentationApi.isViableRow(r) ? "" : " · No ejecutar"), /* @__PURE__ */ React.createElement("td", null, r.score), /* @__PURE__ */ React.createElement("td", null, r.an.cn.toFixed(1)), /* @__PURE__ */ React.createElement("td", null, r.an.avgN.toFixed(2)), /* @__PURE__ */ React.createElement("td", null, Math.round(r.an.cost).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    const el = document.querySelector(`[data-result-id="${i}"]`);
+    const det = el?.closest("details");
+    if (det) det.open = true;
+    el?.scrollIntoView({ block: "start" });
+  } }, "Ver composición"))))))), (() => {
+    const genCards = optResults[optProfile].map((r, i) => {
+      const mainIngs = r.recipe.map((x) => {
+        const g = INGS.find((ing) => ing.id === x.id);
+        return g ? `${g.name} ${x.p}%` : x.id;
+      }).filter(Boolean);
+      const baseSig = r.recipe.map((x) => x.id).filter((id) => {
+        const g = INGS.find((ing) => ing.id === id);
+        return g && g.role === "base_carbono";
+      }).sort().join("+");
+      return /* @__PURE__ */ React.createElement("div", { key: i, className: "opt-result", "data-result-id": i, "data-base-signature": baseSig }, /* @__PURE__ */ React.createElement("div", { className: "opt-result-head" }, /* @__PURE__ */ React.createElement("div", { className: "opt-rank" }, "#", i + 1), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "opt-score" }, r.score), /* @__PURE__ */ React.createElement("div", { className: "opt-score-lbl" }, "SCORE")), /* @__PURE__ */ React.createElement("div", { className: "opt-pills", style: { flex: 1 } }, mainIngs.map((s, j) => /* @__PURE__ */ React.createElement("span", { key: j, className: "opt-pill" }, s)), r.suppOverLimit && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention-text)", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "currentColor" }), " Supl. ", r.suppPct.toFixed(0), "% > límite"), r.unpricedIds?.length > 0 && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", "data-testid": "generator-unpriced-warning", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention-text)", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "currentColor" }), " ", `Sin precio en Bodega: ${r.unpricedIds.map((id) => INGS.find((g) => g.id === id)?.name || id).join(", ")}. El costo mostrado está subestimado.`)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "opt-load", onClick: () => {
+        setSKey(optTarget);
+        setRecipe(r.recipe);
+        setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
+        openBuilderSubTab("formular");
+        goTab("formular");
+        setLoadedFlash(true);
+        setTimeout(() => setLoadedFlash(false), 2200);
+      } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bowl", size: 12, style: { marginRight: 4 } }), " Cargar en Mesa"), /* @__PURE__ */ React.createElement("button", { className: "opt-load", style: { background: "var(--moss-600,var(--accent-olive))", borderColor: "var(--moss-700,var(--accent-olive))" }, onClick: () => {
+        setSKey(optTarget);
+        setRecipe(r.recipe);
+        setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
+        goTab("produccion");
+      }, disabled: !SetasGeneratorPresentationApi.isViableRow(r), title: SetasGeneratorPresentationApi.isViableRow(r) ? void 0 : "Escenario marcado «No ejecutar»: cargarlo en la Mesa para corregirlo antes de planificar." }, "Planificar lote"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "opt-load", style: { background: "var(--slate-800)", borderColor: "var(--slate-900)", color: "var(--paper-50)" }, onClick: () => {
+        setMorphTargetRecipe(r.recipe);
+        openBuilderSubTab("generador", { mode: "morphing" });
+      } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 12, style: { marginRight: 4 } }), " Comparar"))), /* @__PURE__ */ React.createElement("div", { className: "generator-candidate-context", "data-testid": "generator-candidate-context" }, "C:N objetivo ", r.an.sp?.cn_optimal?.min, "–", r.an.sp?.cn_optimal?.max, ":1", " · ", "Humedad objetivo ", r.an.moistureTarget ?? r.an.sp?.moisture?.ideal, "%", " · ", calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp })?.name), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
+        const tOpt = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
+        const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
+        const totalCost = Math.round(r.an.cost) + eCost;
+        return [
+          { l: "C:N", v: `${r.an.cn.toFixed(1)}:1` },
+          { l: "N%", v: `${r.an.avgN.toFixed(2)}%` },
+          { l: "EB", v: ((b) => `${b.low}–${b.high}%`)(ebBandFor(r.an)) },
+          {
+            l: "Insumos + trat./kg seco",
+            v: totalCost > 0 ? `${totalCost.toLocaleString("es-CO")}` : "--",
+            sub: eCost > 0 ? `ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}` : null
+          }
+        ];
+      })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), r.agronomicInsights?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, padding: "7px 10px", borderLeft: "3px solid var(--moss-500,var(--accent-olive))", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("b", null, "Lectura agronómica · ", r.evidenceClassification?.label || "Tier 3 · hipótesis/modelo", ":"), " ", r.agronomicInsights.slice(0, 2).map((x) => x.message).join(" ")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Seguridad modelada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500)" : "var(--status-error)" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
+        const tOpt2 = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
+        const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
+        const bags = [
+          { nom: "Bolsa 20×50", kgH: 1.8 },
+          { nom: "Bolsa 18×35", kgH: 1 },
+          { nom: "Punch bag", kgH: 3.5 }
+        ];
+        const hFactor = 1 - (r.an.moistureTarget ?? r.an.sp?.moisture?.ideal ?? 65) / 100;
+        return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, borderTop: "1px solid var(--border-soft)", borderBottom: "none" } }, bags.map((b) => {
+          const kgSeco = b.kgH * hFactor;
+          const costBolsa = Math.round((r.an.cost + eCost2) * kgSeco);
+          return /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "5px 8px", borderRight: "1px solid var(--border-soft)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginBottom: 2, letterSpacing: "var(--sim-tracking-label)", fontWeight: 600 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--coral-700)", fontWeight: 700 } }, "$", costBolsa.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, "COP / bolsa · insumos + tratamiento"));
+        }));
+      })(), (() => {
+        const t = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
+        if (!t) return null;
+        const tc = t.col === "autoclave" ? { bg: "var(--status-error-bg)", br: "color-mix(in srgb, var(--status-error) 35%, var(--paper-50))", fg: "var(--brand-accent-text)", lbl: "Autoclave 121°C / 18.5–19 PSI" } : t.col === "thermal" ? { bg: "var(--status-attention-bg)", br: "var(--status-attention)", fg: "var(--status-attention-text)", lbl: "Pasteurización 65–75°C núcleo" } : { bg: "var(--status-ok-bg)", br: "var(--status-ok-marker)", fg: "var(--status-ok)", icon: "", lbl: "CWLP — Cal en Frío pH≥12" };
+        return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 14px", background: tc.bg, borderTop: `1px solid ${tc.br}` } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, fontWeight: 700 } }, tc.icon, " ", tc.lbl, " · ", t.time.split("(")[0].trim()), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, opacity: 0.8 } }, "Spawn ", t.spawn, "%"));
+      })());
+    });
+    const nViable = optResults[optProfile].filter(SetasGeneratorPresentationApi.isViableRow).length;
+    const blockedCards = genCards.slice(nViable);
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, genCards.slice(0, nViable), blockedCards.length > 0 && /* @__PURE__ */ React.createElement("details", { "data-testid": "generator-blocked-group", className: "generator-blocked-group", style: { marginTop: 12, border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)", padding: "8px 12px" } }, /* @__PURE__ */ React.createElement("summary", { style: { cursor: "pointer", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--status-error)" } }, `Combinaciones descartadas — No ejecutar (${blockedCards.length})`), blockedCards));
+  })()), !optRunning && optResults && !optResults.noStock && optResults[optProfile]?.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "18px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)", background: "var(--paper-100)" } }, (() => {
     const d = optResults[`_diag_${optProfile}`] || { diag: optResults._diag?.diag };
     const diag = d?.diag;
     return diag ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--coral-700)", marginBottom: 10 } }, "Sin combinaciones válidas — diagnóstico"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px", marginBottom: 12 } }, [
@@ -11315,7 +11340,10 @@ Click para ver análisis completo`
       ["Resultados antes de filtros", diag.resultsRaw],
       ["Límite suplementación", diag.suppLimit + "%"],
       ["Perfil activo", OPT_PROFILES[diag.profileKey]?.label || diag.profileKey]
-    ].map(([lb, v]) => /* @__PURE__ */ React.createElement("div", { key: lb, style: { display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-500)" } }, lb), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: Number(v) === 0 ? "var(--coral-700)" : "var(--ink-900)" } }, v)))), diag.error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, "No se pudo completar la búsqueda: ", diag.error), diag.bases === 0 && /* @__PURE__ */ React.createElement("p", null, "No hay una base de carbono compatible en ", optUseStock ? "Bodega" : "el catálogo habilitado", "."), diag.rejectionReasons?.length > 0 && /* @__PURE__ */ React.createElement("div", { "data-testid": "generator-rejection-reasons" }, /* @__PURE__ */ React.createElement("strong", null, "Restricciones encontradas en la búsqueda"), /* @__PURE__ */ React.createElement("ul", null, diag.rejectionReasons.slice(0, 5).map((reason) => /* @__PURE__ */ React.createElement("li", { key: reason.code }, describeSearchRejection(reason.code, optimizerINGS), " ", /* @__PURE__ */ React.createElement("span", null, "(", reason.count, " evaluaciones)")))), /* @__PURE__ */ React.createElement("p", null, "Un escenario puede incumplir varias restricciones. Este diagnóstico describe la búsqueda explorada, no demuestra que no exista otra fórmula.")), !diag.error && !diag.rejectionReasons?.length && /* @__PURE__ */ React.createElement("p", null, "No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción."), diag.bases > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "Bases:"), " ", diag.baseNames.join(", ")), diag.supps > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 3, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "Suplementos:"), " ", diag.suppNames.join(", "))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "var(--ink-500)" } }, "Seleccionar especie y Calcular.");
+    ].map(([lb, v]) => /* @__PURE__ */ React.createElement("div", { key: lb, style: { display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-500)" } }, lb), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: Number(v) === 0 ? "var(--coral-700)" : "var(--ink-900)" } }, v)))), diag.error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, "No se pudo completar la búsqueda: ", diag.error), (() => {
+      const why = !diag.error && SetasGeneratorPresentationApi.explainEmptySearch(diag, OPT_PROFILES[diag.profileKey]?.label || diag.profileKey);
+      return why ? /* @__PURE__ */ React.createElement("p", { "data-testid": "generator-empty-reason", "data-reason": why.code }, why.message) : null;
+    })(), diag.rejectionReasons?.length > 0 && /* @__PURE__ */ React.createElement("div", { "data-testid": "generator-rejection-reasons" }, /* @__PURE__ */ React.createElement("strong", null, "Restricciones encontradas en la búsqueda"), /* @__PURE__ */ React.createElement("ul", null, diag.rejectionReasons.slice(0, 5).map((reason) => /* @__PURE__ */ React.createElement("li", { key: reason.code }, describeSearchRejection(reason.code, optimizerINGS), " ", /* @__PURE__ */ React.createElement("span", null, "(", reason.count, " evaluaciones)")))), /* @__PURE__ */ React.createElement("p", null, "Un escenario puede incumplir varias restricciones. Este diagnóstico describe la búsqueda explorada, no demuestra que no exista otra fórmula.")), !diag.error && !diag.rejectionReasons?.length && !SetasGeneratorPresentationApi.explainEmptySearch(diag, OPT_PROFILES[diag.profileKey]?.label || diag.profileKey) && /* @__PURE__ */ React.createElement("p", null, "No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción."), diag.bases > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "Bases:"), " ", diag.baseNames.join(", ")), diag.supps > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 3, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "Suplementos:"), " ", diag.suppNames.join(", "))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "var(--ink-500)" } }, "Seleccionar especie y Calcular.");
   })()), !optRunning && optResults && optResults.noStock && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
     goTab("inventario");
     setInvTab("compra");
