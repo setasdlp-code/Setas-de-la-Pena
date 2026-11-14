@@ -10491,7 +10491,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const missing=[];
             if(!lotesEnSala.length) missing.push('Sin lote en la sala');
             if(lotesEnSala.some(l=>!Number.isFinite(l.biomasaActivaKg)||l.biomasaActivaKg<=0)) missing.push('Falta registrar la biomasa fúngica activa de cada lote');
-            const speciesKeys=lotesEnSala.map(l=>[l.sKey,l.speciesKey,l.especieKey,l.recipeRef?.sKey].find(k=>k&&(SPP[k]||climateMath?.SPECIES_RESPIRATION_RATES?.[k]||climateMath?.SPECIES_KEY_ALIASES?.[k]))||(l.especie?Object.keys(SPP).find(k=>SPP[k].name===l.especie):null));
+            const speciesKeys=lotesEnSala.map(l=>[l.sKey,l.speciesKey,l.especieKey,l.recipeRef?.sKey].find(k=>k&&(SPP[k]||climateMath?.SPECIES_RESPIRATION_RATES?.[k]||climateMath?.SPECIES_KEY_ALIASES?.[k]))||(l.especie?Object.keys(SPP).find(k=>SPP[k].name===l.especie):null)||(l.especieCientifico?Object.keys(SPP).find(k=>String(SPP[k].scientific||'').toLowerCase()===String(l.especieCientifico).trim().toLowerCase()):null));
             if(speciesKeys.some(k=>!k)) missing.push('Falta identificar la especie de cada lote');
             if(climateMath?.SPECIES_RESPIRATION_RATES&&speciesKeys.some(k=>k&&!climateMath.SPECIES_RESPIRATION_RATES[k]&&!climateMath.SPECIES_KEY_ALIASES?.[k])) missing.push('El modelo FAE no tiene parámetros para la especie registrada');
             if(new Set(speciesKeys).size>1) missing.push('El modelo FAE no admite varias especies en una sala');
