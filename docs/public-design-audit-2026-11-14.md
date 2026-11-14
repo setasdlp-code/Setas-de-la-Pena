@@ -63,4 +63,18 @@ Se inspeccionó cada página a 320/390/768/1440 px, con capturas de escritorio y
 
 La primera pasada de la suite funcional terminó con errores de recursos del navegador (`ERR_INSUFFICIENT_RESOURCES`) mientras coincidían varias verificaciones; la repetición secuencial pasó íntegra sin suprimir comprobaciones ni errores. La exportación integral de imágenes se interrumpió durante la recodificación WebP: `/tmp/setas-ui-export/public` es parcial y **no es un artefacto entregable**. Se verificaron la fuente, la compilación CSS y los recorridos del navegador; no se afirma que hayan pasado las suites de entrega/exportación completa.
 
-Las capturas y JSON anteriores son evidencia temporal de esta sesión. Los cambios quedan en la rama local; no hay push, PR, merge ni despliegue. Setas OS, Knowledge Base, fórmulas, recetas, datos comerciales y PDFs no se modifican.
+Las capturas y JSON anteriores son evidencia de la auditoría inicial. Al cerrar esa etapa los cambios eran locales, sin publicación. Setas OS, Knowledge Base, fórmulas, recetas, datos comerciales y PDFs no se modifican.
+
+
+## Entrega posterior autorizada: commit, push, PR y despliegue
+
+Sebastián solicitó después la entrega en GitHub y el despliegue. La implementación está publicada en la rama `codex/public-species-ui-audit`, con [PR #516](https://github.com/setasdlp-code/Setas-de-la-Pena/pull/516) hacia `main`. No se ha hecho merge.
+
+La exportación integral pendiente de la primera etapa ya se completó en `/workspace/reports/setas-ui-release-20261114/public`: **340 archivos, 48.452.357 bytes y 49 imágenes de origen**. Se utilizó el exportador del repositorio, con preparación paralela y caché local de variantes WebP: misma codificación `quality=86`, `method=6`, comprobación de hashes de entradas/salidas y paridad exacta de variantes con `Exporter.responsive`. No cambió el código del exportador ni las dependencias del producto. El CSS resultante mantiene el hash `82a9d614e0c2`.
+
+- `node scripts/quality/check_public_export.cjs`, con `SETAS_EXPORT_AUDIT_DIR=/workspace/reports/setas-ui-release-20261114`: **84 comprobaciones, 0 errores**.
+- `node scripts/quality/check_public_delivery.cjs`, con el mismo directorio: **60 comprobaciones, 0 errores**.
+- Informes: `export-verification.json`, `delivery-verification.json`, `export-audit.json`, `encoder-parity.json` y `release-provenance.json` en ese directorio. El paquete completo sustituye al artefacto parcial inicial, que no debe utilizarse.
+- GitHub confirmó `Repository and knowledge-base checks` con resultado `SUCCESS` para la implementación.
+
+**Despliegue bloqueado por autenticación:** Wrangler informó que la sesión OAuth configurada venció y no pudo renovarse en modo no interactivo. El entorno no tiene `CLOUDFLARE_API_TOKEN` ni un secreto de Cloudflare vinculado. Se solicitó renovar el acceso mediante el canal seguro; no se copiaron credenciales al repositorio ni al informe. Hasta disponer de autenticación válida, no se afirma un despliegue ni una verificación HTTPS de esta versión. El destino previsto conserva el proyecto existente `setas-de-la-pena`; no se crea otro sitio ni se modifica la indexación.
