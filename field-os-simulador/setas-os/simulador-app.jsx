@@ -6735,6 +6735,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       cameraId: 'martha',
       name: 'Martha Tent 01',
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
+      volumeM3: 0.59, // 1.65 × 0.70 × 0.51 m (hardware_inventory_august_2026.md)
       device: 'ESP32-WROOM-32 (setas-martha-01)',
       sensors: 'Sensirion SHT3x + Sensirion SCD30 (NDIR)',
       altitude: '2.600 msnm (Tenjo)'
@@ -6744,6 +6745,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       cameraId: 'cloudlab',
       name: 'Cloudlab 844',
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
+      volumeM3: 3.02, // hardware_inventory_august_2026.md
       device: 'ESP32-WROOM-32 (setas-cloudlab-01)',
       sensors: 'Sensirion SHT45 + Sensirion SCD30 (NDIR)',
       altitude: '2.600 msnm (Tenjo)'
@@ -6753,6 +6755,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       cameraId: 'incub',
       name: 'Cuarto de Incubación',
       spec: 'Zona 3 · estantería de incubación',
+      volumeM3: null, // sin medida registrada: no se calcula ventilación
       device: 'Inkbird + nodo ambiental (setas-incubacion-01)',
       sensors: 'Temperatura y humedad · CO₂ estimado por nodo',
       altitude: '2.600 msnm (Tenjo)'
@@ -13129,47 +13132,75 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {/* 5. Ventilación Dinámica FAE & AC Infinity Extractor */}
           {(() => {
-            const activeBiomassKg = mainLote?.pesoLote ? (mainLote.pesoLote * 0.22) : 25.0;
-            const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === 'function'
-              ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || 'orellana_gris', {
+            // Solo se calcula con insumos reales de ESTA sala: sus lotes, su
+            // sustrato húmedo registrado y su volumen. Antes usaba 25 kg fijos (el
+            // lote no tiene `pesoLote`) y volúmenes que no eran los de las carpas.
+            const faeInputs = climateMath && typeof climateMath.faeRoomInputs === 'function'
+              ? climateMath.faeRoomInputs({ lotes: lotesEnSala, roomVolumeM3: room.volumeM3 })
+              : { status: 'unavailable' };
+            // Supuestos sin fuente en knowledge_base/, declarados en la tarjeta:
+            // fracción del sustrato húmedo que se toma como hongo fresco respirando
+            // y caudal nominal del extractor.
+            const FAE_FRESH_FRACTION = 0.22;
+            const FAE_FAN_RATED_CFM = 140;
+            const activeBiomassKg = faeInputs.status === 'ok' ? faeInputs.substrateWetKg * FAE_FRESH_FRACTION : null;
+            const faeCalc = activeBiomassKg != null
+              ? climateMath.calcDynamicFAE(activeBiomassKg, faeInputs.speciesKey, {
                   targetPpm: defaultTargets.co2_ppm.target || 800,
                   outdoorPpm: 420,
-                  roomVolumeM3: selectedClimateRoom === 'martha_01' ? 11.5 : 8.0,
-                  fanRatedCfm: 140
+                  roomVolumeM3: faeInputs.roomVolumeM3,
+                  fanRatedCfm: FAE_FAN_RATED_CFM
                 })
               : null;
+            const faeMissing = {
+              no_lot: 'Sin lote activo en la sala: no hay ventilación que calcular.',
+              no_volume: 'Esta sala no tiene volumen registrado: no se calcula la ventilación.',
+              no_mass: 'Los lotes de la sala no tienen bolsas y kg húmedo por bolsa registrados.',
+              unavailable: 'El cálculo de ventilación no está disponible.',
+            }[faeInputs.status];
             return (
-              <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
+              <div className="climate-kpi-card" data-testid="climate-fae-card" data-fae-status={faeInputs.status} style={{ gridColumn: 'span 2' }}>
                 <div className="climate-kpi-header">
                   <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span>
-                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
+                  {faeCalc && <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Sustrato húmedo: {faeInputs.substrateWetKg} kg · {faeInputs.roomVolumeM3} m³</span>}
                 </div>
+                {!faeCalc && (
+                  <div data-testid="climate-fae-missing" style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--ink-2)', marginTop: 6 }}>{faeMissing}</div>
+                )}
+                {faeCalc && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
-                      {faeCalc ? `${faeCalc.requiredCfm} CFM` : '24.5 CFM'}
+                      {faeCalc.requiredCfm} CFM
                       <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginLeft: 6 }}>
-                        ({faeCalc ? faeCalc.requiredM3h : '41.6'} m³/h · {faeCalc ? faeCalc.effectiveAch : '3.6'} ACH)
+                        ({faeCalc.requiredM3h} m³/h · {faeCalc.effectiveAch} ACH)
                       </span>
                     </div>
                     <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)', marginTop: 2 }}>
-                      {faeCalc?.schedule.recommendation || 'Encender 2.5 min cada 10 min'}
+                      {faeCalc.schedule.recommendation}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <span style={{
                       padding: '3px 8px',
                       borderRadius: 4,
-                      background: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-                      color: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
+                      background: faeCalc.dutyCyclePct > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
+                      color: faeCalc.dutyCyclePct > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
                       fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       fontWeight: 700
                     }}>
-                      Duty Cycle: {faeCalc ? faeCalc.dutyCyclePct : 18}%
+                      Duty Cycle: {faeCalc.dutyCyclePct}%
                     </span>
                   </div>
                 </div>
+                )}
+                {faeCalc && (
+                  <div data-testid="climate-fae-assumptions" style={{ fontSize: 11, fontFamily: 'var(--font-sans)', color: 'var(--ink-2)', marginTop: 6 }}>
+                    Estimación del modelo, no una medición. Supone hongo fresco = {Math.round(FAE_FRESH_FRACTION * 100)} % del sustrato húmedo y extractor de {FAE_FAN_RATED_CFM} CFM; ninguno de los dos tiene fuente verificada.
+                    {faeInputs.lotesSinMasa > 0 && ` ${faeInputs.lotesSinMasa} lote(s) de la sala sin masa registrada no entran en el cálculo.`}
+                  </div>
+                )}
               </div>
             );
           })()}

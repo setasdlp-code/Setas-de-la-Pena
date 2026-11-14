@@ -481,6 +481,38 @@
     };
   };
 
+  /**
+   * Insumos reales de una sala para el cálculo de ventilación (FAE). No inventa
+   * nada: sin lote, sin volumen de sala o sin masa registrada devuelve el motivo
+   * y quien llama no calcula. Con varios lotes suma su sustrato húmedo
+   * (bolsas × kg húmedo por bolsa) y usa la especie de mayor tasa de respiración.
+   */
+  const faeRoomInputs = ({ lotes, roomVolumeM3 } = {}) => {
+    const list = Array.isArray(lotes) ? lotes.filter(Boolean) : [];
+    if (!list.length) return { status: 'no_lot' };
+    const volume = Number(roomVolumeM3);
+    if (!Number.isFinite(volume) || volume <= 0) return { status: 'no_volume' };
+    const massOf = l => {
+      const bags = parseFloat(l.numBolsas);
+      const wetKg = parseFloat(l.pesoHumedo);
+      return bags > 0 && wetKg > 0 ? bags * wetKg : 0;
+    };
+    const withMass = list.filter(l => massOf(l) > 0);
+    if (!withMass.length) return { status: 'no_mass' };
+    const keyOf = l => resolveSpeciesKey(l.especieKey || l.speciesKey || l.sKey || l.especie);
+    const speciesKey = withMass.map(keyOf).reduce((best, key) => (
+      SPECIES_RESPIRATION_RATES[key] > SPECIES_RESPIRATION_RATES[best] ? key : best
+    ));
+    return {
+      status: 'ok',
+      substrateWetKg: Math.round(withMass.reduce((sum, l) => sum + massOf(l), 0) * 100) / 100,
+      roomVolumeM3: volume,
+      speciesKey,
+      lotesConMasa: withMass.length,
+      lotesSinMasa: list.length - withMass.length,
+    };
+  };
+
   const api = {
     calcVPsat,
     calcVPact,
@@ -494,6 +526,7 @@
     generateSvgPolyline,
     calcBarometricCO2Correction,
     calcDynamicFAE,
+    faeRoomInputs,
     SPECIES_RESPIRATION_RATES,
     SPECIES_KEY_ALIASES,
     resolveSpeciesKey,

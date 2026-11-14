@@ -186,3 +186,29 @@ test('climate-math calcula psicrometría avanzada: humedad absoluta, bulbo húme
   const humAch = calcHumidificationDemand({ roomVolumeM3: 15.0, airChangesPerHour: 4.0 });
   assert.equal(humAch.faeM3h, 60.0);
 });
+
+test('faeRoomInputs: sin lote, sin volumen o sin masa no hay insumos para calcular', () => {
+  const { faeRoomInputs } = require('./climate-math.js');
+  assert.deepEqual(faeRoomInputs({ lotes: [], roomVolumeM3: 3.02 }), { status: 'no_lot' });
+  assert.deepEqual(faeRoomInputs({ lotes: null, roomVolumeM3: 3.02 }), { status: 'no_lot' });
+  const lote = { id: 'L1', numBolsas: 10, pesoHumedo: 2, especie: 'Shiitake' };
+  assert.equal(faeRoomInputs({ lotes: [lote], roomVolumeM3: null }).status, 'no_volume');
+  assert.equal(faeRoomInputs({ lotes: [lote], roomVolumeM3: 0 }).status, 'no_volume');
+  assert.equal(faeRoomInputs({ lotes: [{ id: 'L2', numBolsas: '', pesoHumedo: '' }], roomVolumeM3: 3.02 }).status, 'no_mass');
+});
+
+test('faeRoomInputs: suma el sustrato húmedo de los lotes y elige la especie de mayor respiración', () => {
+  const { faeRoomInputs } = require('./climate-math.js');
+  const out = faeRoomInputs({
+    roomVolumeM3: 3.02,
+    lotes: [
+      { id: 'L1', numBolsas: 10, pesoHumedo: '2.5', speciesKey: 'shiitake' },
+      { id: 'L2', numBolsas: '4', pesoHumedo: 2, speciesKey: 'orellana_rosa' },
+      { id: 'L3', numBolsas: 6, pesoHumedo: '' },
+    ],
+  });
+  assert.deepEqual(out, {
+    status: 'ok', substrateWetKg: 33, roomVolumeM3: 3.02,
+    speciesKey: 'orellana_rosa', lotesConMasa: 2, lotesSinMasa: 1,
+  });
+});
