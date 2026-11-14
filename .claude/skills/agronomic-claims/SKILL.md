@@ -145,8 +145,13 @@ Production evidence reaches Perito as `context.historicalEvidence` and
 - ranking weights or Escenario selection
 
 Any calibration change must first be validated against ground-truth production
-fixtures via `ground-truth-regression.js`. No corpus means no validation means no
-calibration change — an absent fixture file is a blocker, not a pass.
+fixtures via `ground-truth-regression.js`. No corpus means no validation — an
+absent fixture file is never a pass. Without a corpus, a calibration change can
+only ship as explicitly unvalidated, with human approval.
+
+Adding or correcting a catalog entry (species, ingredient) from a cited source is
+not a calibration change: it needs unit tests and `check_kb_sync.py`, not the
+corpus. See the invariants table in the root `AGENTS.md` §4.
 
 ## Evidence tiers and language
 
@@ -176,19 +181,24 @@ the implementation split, not the concept.
 | "The sensor bound and the setpoint are the same number anyway" | Today. They drift independently, and the day they diverge, conflating them silently quarantines valid readings or accepts impossible ones. |
 | "This is just a UI change, the science rules don't apply" | If the UI renders a confidence level or a parameter, it is making a claim. It applies. |
 
-## Red flags — stop
+## Red flags
+
+**Stop and ask the human** — these change what the product claims:
 
 - About to change a threshold in `scoring.js` because recent batches suggest it
-- About to return or hardcode `'high'` confidence on the evidence scale, or to
-  quote a confidence level without saying which of the three scales it is on
+- About to return or hardcode `'high'` confidence on the evidence scale
 - About to merge a literature value and a measured value into one field
 - About to drop a `provenance` or tier field to simplify a shape
-- About to write "optimal" about a substrate parameter
-- Reporting a regression pass without confirming the fixture corpus exists
 - Treating `LESSONS_LEARNED.md` or `CURRENT_OPERATIONS.md` as authority to change a
   canonical parameter — operational state does not silently amend a governing document
 
-**Every one of these means: stop and ask the human.**
+**Correct it yourself and mention it in the report** — these are wording or
+reporting errors:
+
+- Wrote "optimal", "best" or "always" about a cultivation parameter without
+  measured evidence
+- Quoted a confidence level without saying which of the three scales it is on
+- Reported a regression pass without confirming the fixture corpus exists
 
 ## Worked refusal
 
@@ -211,6 +221,7 @@ the implementation split, not the concept.
 
 ## Editing the knowledge base
 
-`knowledge_base/` content changes require explicit human authorization. An audit
-reports findings; it does not apply them unless asked. Architectural changes go
-through `DECISIONS.md`, not a casual CANON edit.
+Authorization depends on the change class; see the matrix in
+`knowledge_base/AGENTS.md`. Canonical parameters, SOPs, decisions and the CANON
+need explicit human authorization. An audit reports findings; it does not apply
+them unless asked.

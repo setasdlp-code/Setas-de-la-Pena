@@ -3,7 +3,7 @@ title: Registro de Decisiones — Setas de la Peña
 document_id: DOC-0048
 category: meta
 load_priority: selective
-last_reviewed: 2026-08-05
+last_reviewed: 2026-11-13
 ---
 
 # DECISIONS
@@ -766,6 +766,41 @@ Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bol
 **Criterio de revisión:** antes de cargar más de cuatro bolsas o de calificar la incubadora con 30 bloques (DOC-0122/DOC-0123); si una bolsa marca de forma repetida una superficie claramente más caliente que las demás o que el aire; si aparece daño compatible con calor; o si se consigue al menos una sonda para un bloque indicador.
 
 **Documentos afectados:** `05_equipment/asignacion_sensores_tres_modulos_2026-11-11.md`, `09_research/guia_prototipo_incubadora_placas_borrador.md`, `CHANGELOG.md`. Quedan sin modificar, y prevalecen en lo no cubierto aquí, `04_facility/incubation.md`, `05_equipment/environmental_control.md` y `esphome/incubadora_piloto.yaml`.
+
+---
+
+## DEC-024 — CANON v1.4: reglas de secuencia como valores por defecto con desviación documentada
+
+**Fecha:** 2026-11-13
+**Estado:** Activa
+**Área:** Arquitectura / Gobernanza
+
+**Problema:** Una auditoría de gobernanza encontró que el CANON v1.3 (autoridad máxima, §14.1) contenía reglas de secuencia redactadas como absolutas que decisiones posteriores ya habían dejado atrás: la Fase 1 de laboratorio decía «sin esterilización a presión» mientras DEC-013 fijó shiitake como especie de arranque y DEC-016 hizo obligatoria la esterilización; §17 exigía sensor de respaldo en todo punto crítico mientras DEC-023 opera la incubadora piloto sin sondas de núcleo; §18 exigía un número estadísticamente significativo de ciclos antes de cambiar un SOP, con cero lotes activos. Esas decisiones contradecían formalmente al documento de mayor autoridad. Además, §7 contenía decisiones de sensores, que §1.1 excluye del CANON, y §11 y §16 ubicaban el registro de decisiones en `FARM_BRAIN.md`, en contra de §14.1 y de `EDITORIAL_GUIDELINES.md`.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Reescribir las fases del CANON para que describan el estado actual | Elimina las contradicciones de hoy | Vuelve a fijar detalle operativo en el CANON; la próxima decisión lo deja obsoleto otra vez |
+| Mantener las reglas como valores por defecto y añadir un mecanismo formal de desviación documentada | El CANON conserva la ruta de menor riesgo sin bloquear decisiones justificadas; cada desviación queda con riesgo, controles y criterio de revisión | Añade una sección al CANON; exige disciplina al registrar desviaciones |
+
+**Decisión:** CANON v1.4:
+
+- Nueva §16.1 «Documented Deviation». Las reglas de secuencia y cobertura (§4 fases de infraestructura, §5 niveles de laboratorio, §6 segunda especie, §17 redundancia, §18 ciclo de medición) son valores por defecto. Apartarse de ellas es válido solo con una entrada en `DECISIONS.md` que registre la regla, el riesgo aceptado, los controles vigentes y el criterio de revisión. Los Principios (§3), las Prioridades Estratégicas (§12) y el orden de prioridad de Ingeniería (§15) no admiten desviación.
+- §5: las fases pasan a llamarse niveles de capacidad de laboratorio. El tratamiento del sustrato deja de formar parte de ellos: lo determina el requisito biológico de la especie y el sustrato (§15).
+- §7: las decisiones de sensores salen del CANON; rigen DEC-002, DEC-003 y `05_equipment/environmental_control.md`.
+- §11 y §16: el registro de decisiones es `DECISIONS.md`; `FARM_BRAIN.md` refleja el estado resultante.
+- §18: el ciclo aplica a la optimización de un proceso con línea base medida; se permite adoptar un cambio como provisional, etiquetado así en el SOP.
+
+**Desviaciones vigentes reconocidas bajo §16.1:** DEC-013 y DEC-016 (especie de arranque y esterilización, respecto a §5 y §6), DEC-019 (cepa no identificada) y DEC-023 (incubadora sin sondas de núcleo, respecto a §17). Cada una conserva su propio riesgo aceptado y criterio de revisión; esta decisión no los modifica.
+
+**Lo que esta decisión no cambia:** ningún parámetro biológico, SOP, consigna, umbral de §13 ni regla de precedencia de §14.
+
+**Justificación:** P-02 (simplicidad) y §21: un CANON que fija detalle operativo se contradice cada vez que la operación cambia, y un documento rector que se incumple de forma rutinaria deja de regir. Separar principio de valor por defecto mantiene estable el CANON y traslada la variación a `DECISIONS.md`, que es donde §14 la ubica.
+
+**Criterio de revisión:** si se acumulan más de cinco desviaciones activas sobre una misma regla, la regla se reevalúa; revisión programada del CANON el 2026-12-29.
+
+**Documentos afectados:** `SETAS_DE_LA_PENA_CANON.md`, `AGENTS.md`, `CHANGELOG.md`, `../AGENTS.md`, `../CLAUDE.md`.
 
 ---
 

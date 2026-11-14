@@ -5,7 +5,7 @@ Dos servidores MCP locales (stdio), independientes entre sí:
 | Servidor | Datos | Uso |
 |---|---|---|
 | `setas_mcp.py` | Parámetros de cultivo embebidos en el código (especies, FAE, automatización, inventario) | Consultas rápidas y estables sobre cultivo — no requiere que el repo esté clonado localmente para responder |
-| `setas_bridge_mcp.py` | Lee `knowledge_base/`, `field_os/`, `field-os-simulador/` y docs del repo **en vivo desde disco** — sin datos hardcodeados | Puente de lectura/escritura para que cualquier agente (Claude, ChatGPT, Codex, Antigravity) vea el estado actual del repo y coordine cambios (`CHANGELOG.md`, `FARM_BRAIN.md`) sin editar el filesystem a ciegas |
+| `setas_bridge_mcp.py` | Lee `knowledge_base/`, `field-os-simulador/` y docs del repo **en vivo desde disco** — sin datos hardcodeados | Puente de lectura/escritura para que cualquier agente (Claude, ChatGPT, Codex, Antigravity) vea el estado actual del repo y coordine cambios (`CHANGELOG.md`, `FARM_BRAIN.md`) sin editar el filesystem a ciegas |
 
 Ambos pueden correr en paralelo — no comparten estado ni se importan entre sí.
 
