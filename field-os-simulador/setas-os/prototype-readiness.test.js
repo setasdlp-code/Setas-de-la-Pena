@@ -144,3 +144,16 @@ test('pilot reset plans every lot with its own bags and harvests',()=>{
  ]);
  assert.deepEqual(p.planPilotReset({role:'direccion',typed:'REINICIAR'}),[]);
 });
+
+
+test('a rejected unchanged key does not leave a journal that replays an aborted deletion',()=>{
+ const storage=memory();
+ storage.setItem('sdp_bit_lotes','[{"id":"L1"}]');storage.setItem('sdp_bit_bolsas','[{"id":"B1"}]');
+ const original=storage.setItem;
+ storage.setItem=(key,value)=>{if(key==='sdp_bit_bolsas')throw Error('quota');original(key,value);};
+ assert.throws(()=>p.persist(storage,[['sdp_bit_lotes',[]],['sdp_bit_bolsas',[]]]),/quota/);
+ assert.equal(storage.getItem(p.PENDING),null);
+ storage.setItem=original;p.recover(storage);
+ assert.equal(p.read(storage,'sdp_bit_lotes')[0].id,'L1');
+ assert.equal(p.read(storage,'sdp_bit_bolsas')[0].id,'B1');
+});

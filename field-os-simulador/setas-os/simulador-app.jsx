@@ -1,6 +1,22 @@
 
 
 
+// Every local write reports failure even when a legacy caller catches it.
+// Rethrow so persist-first and rollback paths retain their failure semantics.
+let lastLocalWriteFailure = null;
+function reportLocalWriteFailure(key) {
+  lastLocalWriteFailure = {key, at: Date.now()};
+  window.dispatchEvent(new CustomEvent('setas-local-write-failed', {detail:lastLocalWriteFailure}));
+}
+function writeLocal(key, value) {
+  try { localStorage.setItem(key, value); }
+  catch (error) { reportLocalWriteFailure(key); throw error; }
+}
+function removeLocal(key) {
+  try { localStorage.removeItem(key); }
+  catch (error) { reportLocalWriteFailure(key); throw error; }
+}
+
 const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // Prototype plans and portable records. Suggestions never become observations.
@@ -20,6 +36,35 @@ function BagObservationEditor({bolsa,onSave}) {
     <span id={`bag-observation-status-${bolsa.id}`} role={error?'alert':'status'}>{error||(dirty?'Borrador sin guardar':'Registro local · sincronización independiente')}</span>
     {dirty&&<div><button type="button" className="inv-btn inv-btn-pri" onClick={save} aria-label={`Guardar observaciones de ${bolsa.codigo}`}>{error?'Reintentar':'Guardar'}</button><button type="button" className="inv-btn inv-btn-sec" onClick={discard} aria-label={`Cancelar observaciones de ${bolsa.codigo}`}>Cancelar</button></div>}
   </div>;
+}
+
+// This feed is separate from browser-only threshold warnings: it reflects the
+// scheduled server check even if nobody had the app open.
+function ServerClimateAlerts({feed,roomId,rooms,onOpenRoom,onRetry}) {
+  const records=feed.records.filter(a=>!roomId||a.roomId===roomId);
+  const open=records.filter(a=>a.status==='open'&&a.recordType!=='episode');
+  const history=Array.from(new Map(records.filter(a=>a.status==='resolved'&&a.openedAt!=null)
+    .map(a=>[`${a.alertId||a.id}:${a.openedAt}`,a])).values())
+    .sort((a,b)=>(b.resolvedAt||0)-(a.resolvedAt||0));
+  const date=value=>value==null?'—':new Date(typeof value?.toMillis==='function'?value.toMillis():value).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'short'});
+  const row=a=><li key={a.id} style={{padding:'10px 0',overflowWrap:'anywhere'}}>
+    <strong>{rooms[a.roomId]?.name||a.roomId} · {a.kind==='sensor_stale'?'Sensor sin lecturas':'Clima fuera de banda'}</strong>
+    <p style={{margin:'4px 0'}}>{a.detail}</p>
+    <span>{a.status==='open'?'Abierta':'Resuelta'} · Inicio: {date(a.openedAt)}{a.status==='resolved'?` · Cierre: ${date(a.resolvedAt)}`:''} · Ciclo: {a.cycleId||'—'}</span>
+    {!roomId&&<button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginLeft:8}} onClick={()=>onOpenRoom(a.roomId)}>Ver sala</button>}
+  </li>;
+  return <section className="panel" data-testid={roomId?'room-server-alerts':'today-server-alerts'} aria-label="Alertas de clima del servidor">
+    <h3 style={{marginTop:0}}>Alertas de clima del servidor</h3>
+    {feed.error?<div role="alert"><p>No se pudieron leer las alertas de clima. {feed.error==='permission-denied'?'Tu sesión no tiene permiso para consultar estas alertas.':'Revisar la conexión y reintentar.'}</p><button type="button" className="inv-btn inv-btn-sec" onClick={onRetry} style={{minHeight:44}}>Reintentar lectura</button></div>:feed.loading?<p role="status">Cargando alertas…</p>:<>
+      <p className="sdp-provenance">{feed.fromCache?'Copia local · pendiente de confirmar con el servidor':'Registro del servidor'} · No sustituye una lectura actual de la sala.</p>
+      <h4>Abiertas ({open.length})</h4>
+      {open.length?<ul style={{paddingLeft:20}}>{open.map(row)}</ul>:<p>Sin alertas abiertas{feed.fromCache?' en la copia local':''}.</p>}
+      <details><summary style={{minHeight:44,cursor:'pointer'}}>Historial ({history.length})</summary>
+        <p>Se conservan los episodios cerrados desde la actualización del registro. Los episodios anteriores que ya fueron sobrescritos no se pueden recuperar.</p>
+        {history.length?<ul style={{paddingLeft:20}}>{history.map(row)}</ul>:<p>Sin episodios cerrados registrados.</p>}
+      </details>
+    </>}
+  </section>;
 }
 
 // Lectura manual de superficie por bolsa (termómetro infrarrojo). Es un dato
@@ -234,7 +279,7 @@ function loadBioCheck() {
 
 function saveBioCheck(state) {
   try {
-    localStorage.setItem(BIO_CHECK_KEY, JSON.stringify(state));
+    writeLocal(BIO_CHECK_KEY, JSON.stringify(state));
     return true;
   } catch (e) {
     console.warn('Failed to save bio‑check to localStorage', e);
@@ -254,7 +299,7 @@ function loadBatches() {
 
 function saveBatches(batches) {
   try {
-    localStorage.setItem(BATCHES_KEY, JSON.stringify(batches));
+    writeLocal(BATCHES_KEY, JSON.stringify(batches));
     return true;
   } catch (e) {
     console.warn('Failed to save batches to localStorage', e);
@@ -5437,7 +5482,7 @@ function loadLiveTelemetryConfig() {
 
 function saveLiveTelemetryConfig(config) {
   try {
-    localStorage.setItem(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
+    writeLocal(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
     return true;
   } catch (e) { return false; }
 }
@@ -5806,7 +5851,28 @@ function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
 }
 
 function SimuladorShell(props){
+  const [localWriteFailure,setLocalWriteFailure]=useState(lastLocalWriteFailure);
+  useEffect(()=>{
+    const onFailure=e=>setLocalWriteFailure(e.detail);
+    window.addEventListener('setas-local-write-failed',onFailure);
+    setLocalWriteFailure(lastLocalWriteFailure);
+    return()=>window.removeEventListener('setas-local-write-failed',onFailure);
+  },[]);
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
+  const [serverClimateFeed,setServerClimateFeed]=useState({records:[],loading:true,error:'',fromCache:true});
+  const [serverClimateRetry,setServerClimateRetry]=useState(0);
+  useEffect(()=>{
+    let unsubscribe=null;
+    const start=()=>{
+      if(unsubscribe||!window.SetasDB?.subscribeClimateAlerts) return;
+      setServerClimateFeed({records:[],loading:true,error:'',fromCache:true});
+      unsubscribe=window.SetasDB.subscribeClimateAlerts(
+        result=>setServerClimateFeed({...result,loading:false,error:''}),
+        error=>setServerClimateFeed({records:[],loading:false,error:error?.code||'unavailable',fromCache:true}));
+    };
+    window.addEventListener('setas-db-ready',start);start();
+    return()=>{window.removeEventListener('setas-db-ready',start);if(unsubscribe)unsubscribe();};
+  },[serverClimateRetry]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
   // ya compite con el rail inferior) y la reaparece al subir o cerca del tope.
@@ -5855,7 +5921,7 @@ function SimuladorShell(props){
       const p=normSpp(props.preselectSpecies);
       if(p&&SPP[p]) return p;
       const pre=normSpp(localStorage.getItem('sim_preselect_spp'));
-      if(pre&&SPP[pre]){localStorage.removeItem('sim_preselect_spp');return pre;}
+      if(pre&&SPP[pre]){removeLocal('sim_preselect_spp');return pre;}
     }catch(e){}
     return initialFormDraft?.sKey||'p_ostreatus_gris';
   });
@@ -6604,7 +6670,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if (opResult.status !== 'failed') {
       setBitBolsas(opResult.updatedBolsas);
       try {
-        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+        writeLocal('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -6630,7 +6696,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
         setBitLotes(updLotes);
         try {
-          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+          writeLocal('sdp_bit_lotes', JSON.stringify(updLotes));
         } catch (e) {}
         encolarSync({type:'actualizarLote',key:'lote:'+activeLot.id,args:[activeLot.id,{lifecycleEvents:nextLog}]});
       }
@@ -6664,7 +6730,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if (opResult.status !== 'failed') {
       setBitBolsas(opResult.updatedBolsas);
       try {
-        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+        writeLocal('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -6686,7 +6752,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
         setBitLotes(updLotes);
         try {
-          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+          writeLocal('sdp_bit_lotes', JSON.stringify(updLotes));
         } catch (e) {}
       }
 
@@ -6742,6 +6808,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       id: 'martha_01',
       cameraId: 'martha',
       name: 'Martha Tent 01',
+      volumeM3: 1.65 * 0.70 * 0.51, // volumen nominal de las dimensiones declaradas
+      fanRatedCfm: null, // pendiente de configurar con datos del extractor
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
       device: 'ESP32-WROOM-32 (setas-martha-01)',
       sensors: 'Sensirion SHT3x + Sensirion SCD30 (NDIR)',
@@ -6751,6 +6819,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       id: 'cloudlab_844',
       cameraId: 'cloudlab',
       name: 'Cloudlab 844',
+      volumeM3: 1.22 * 1.22 * 2.03,
+      fanRatedCfm: null,
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
       device: 'ESP32-WROOM-32 (setas-cloudlab-01)',
       sensors: 'Sensirion SHT45 + Sensirion SCD30 (NDIR)',
@@ -6760,6 +6830,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       id: 'incubacion_01',
       cameraId: 'incub',
       name: 'Cuarto de Incubación',
+      volumeM3: null,
+      fanRatedCfm: null,
       spec: 'Zona 3 · estantería de incubación',
       device: 'Inkbird + nodo ambiental (setas-incubacion-01)',
       sensors: 'Temperatura y humedad · CO₂ estimado por nodo',
@@ -6849,14 +6921,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setOptUseStock(stockOnly);
     setUsePantry(stockOnly);
     try {
-      localStorage.setItem('setas_global_workmode', mode);
-      localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
+      writeLocal('setas_global_workmode', mode);
+      writeLocal('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
     } catch(e) {}
   };
   useEffect(()=>{
     try{
-      if(!recipe.length){localStorage.removeItem(FORM_DRAFT_KEY);return;}
-      localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({
+      if(!recipe.length){removeLocal(FORM_DRAFT_KEY);return;}
+      writeLocal(FORM_DRAFT_KEY,JSON.stringify({
         version:1,
         savedAt:new Date().toISOString(),
         recipe:recipe.map(r=>({id:r.id,p:Number(r.p)||0})),
@@ -6942,7 +7014,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(!b||!inline[b.id]||b.foto!==inline[b.id]) return b;
         const {foto,...rest}=b;return rest;
       });
-      try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){return;}
+      try{writeLocal('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){return;}
       bitBolsasEditRef.current=upd;
       setBitBolsas(upd);
     }).catch(()=>{});
@@ -7184,27 +7256,27 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:nuevoDisponible,cantidadKgTotal:Math.max(l.cantidadKgTotal,nuevoDisponible),precioPorKgCOP:pr};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      try{writeLocal('sdp_lotes',JSON.stringify(updated));}catch(e){}
       return updated;
     });
     // Reasignar en compras si cambió el tipo
     if(nuevoId){
       setInvCompras(prev=>{
         const upd=prev.map(c=>({...c,items:c.items.map(it=>it.ingredienteId===ingredienteId?{...it,ingredienteId:nuevoId}:it)}));
-        try{localStorage.setItem('sdp_compras',JSON.stringify(upd));}catch(e){}
+        try{writeLocal('sdp_compras',JSON.stringify(upd));}catch(e){}
         return upd;
       });
     }
     // Proveedor override
     if(proveedorId){
       const upd={...provOverride,[targetId]:proveedorId};
-      setProvOverride(upd);try{localStorage.setItem('sdp_prov_override',JSON.stringify(upd));}catch(e){}
+      setProvOverride(upd);try{writeLocal('sdp_prov_override',JSON.stringify(upd));}catch(e){}
     }
     // Alerta mínima
     const am=parseFloat(alertaMin);
     if(!isNaN(am)&&am>=0){
       const upd={...alertaConfig,[targetId]:am};
-      setAlertaConfig(upd);try{localStorage.setItem('sdp_alertas',JSON.stringify(upd));}catch(e){}
+      setAlertaConfig(upd);try{writeLocal('sdp_alertas',JSON.stringify(upd));}catch(e){}
     }
     setEditingRowId(null);
   };
@@ -7213,14 +7285,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const doDelete=()=>{
       setInvLotes(prev=>{
         const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
-        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
+        try{writeLocal('sdp_lotes',JSON.stringify(upd));}catch(e){}
         return upd;
       });
       // Limpiar pantry
       try{
         const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
         delete pantry[ingredienteId];
-        localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
+        writeLocal('sdp_pantry',JSON.stringify(pantry));
       }catch(e){}
     };
     setConfirmDlg({title:'Eliminar stock',msg:`¿Eliminar todo el stock de "${nombre}"? Esto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`,danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
@@ -7244,7 +7316,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:Math.round(kg*fraccion*100)/100};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      try{writeLocal('sdp_lotes',JSON.stringify(updated));}catch(e){}
       return updated;
     });
   };
@@ -7277,7 +7349,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const vigentes=ledgerApi?ledgerApi.expireDue(parsedReservas,Date.now()):parsedReservas;
         setInvReservas(vigentes);
         if(ledgerApi&&JSON.stringify(vigentes)!==JSON.stringify(parsedReservas)){
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
+          try{writeLocal('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
         }
       }
       const sq=localStorage.getItem('sdp_sync_queue');
@@ -7342,7 +7414,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(cancelled) return;
         syncQueueRef.current=updatedQueue;
         setSyncQueue(updatedQueue);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
+        try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
       }
     };
 
@@ -7380,7 +7452,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         r.deviceId=localStorage.getItem('sdp_device_id');
         if(!r.deviceId){
           r.deviceId='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
-          localStorage.setItem('sdp_device_id',r.deviceId);
+          writeLocal('sdp_device_id',r.deviceId);
         }
       }catch(e){r.deviceId=r.deviceId||'dev_'+Math.random().toString(36).slice(2,10);}
     }
@@ -7436,7 +7508,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const {queue,dropped}=planner.enqueueAll(prev,plan.ops,Date.now());
         if(dropped) console.warn('[SetasDeviceSync] cola llena: '+dropped+' envío(s) quedan para la próxima pasada');
         syncQueueRef.current=queue;
-        try{localStorage.setItem('sdp_sync_queue',window.SetasSyncQueue.serialize(queue));}catch(e){bitQuotaWarn();}
+        try{writeLocal('sdp_sync_queue',window.SetasSyncQueue.serialize(queue));}catch(e){bitQuotaWarn();}
         return queue;
       });
     }
@@ -7526,7 +7598,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const next=queueApi.retryStuck(syncQueueRef.current,Date.now());
       syncQueueRef.current=next;
       setSyncQueue(next);
-      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
+      try{writeLocal('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
@@ -7881,7 +7953,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const migradas=crudas.map(r=>lifecycle.migrateLegacyRecipe(r));
       setSaved(migradas);
       const cambio=migradas.some((r,i)=>r!==crudas[i]);
-      if(cambio){ try{localStorage.setItem('setas_v6',JSON.stringify(migradas));}catch(e2){} }
+      if(cambio){ try{writeLocal('setas_v6',JSON.stringify(migradas));}catch(e2){} }
     }catch(e){}
   },[]);
   useEffect(()=>{ if(props.onSavedChange) props.onSavedChange(saved); },[saved]);
@@ -7938,7 +8010,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
     const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?(compositionComparison?ebForecast.value:an.eb).toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};
-    const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
+    const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
     // así que un fallo de red no bloquea al operador; solo se avisa si no sincronizó.
@@ -7953,7 +8025,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       }).then(docRef=>{
         setSaved(prev=>{
           const upd=prev.map(r=>r.id===e.id?{...r,firestoreId:docRef.id}:r);
-          try{localStorage.setItem('setas_v6',JSON.stringify(upd));}catch(e3){}
+          try{writeLocal('setas_v6',JSON.stringify(upd));}catch(e3){}
           return upd;
         });
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
@@ -7983,7 +8055,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(recetaObj&&recetaObj.id){
         const u=saved.map(s=>s.id===recetaObj.id?{...s,esProduccion:true,fechaPromocion:new Date().toLocaleDateString('es-CO')}:s);
         setSaved(u);
-        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+        try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
       }
       setSKey(targetSKey);
       setRecipe(targetRecipe);
@@ -8028,7 +8100,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const nueva=lifecycle.newVersionFrom(newVersionFor,{},{actor:fieldOperatorRole,at:new Date().toISOString()});
       const u=[{...nueva,id:Date.now()},...saved];
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
       setNewVersionFor(null);
       setSKey(nueva.sKey);setRecipe(nueva.recipe);setLockedIds([]);
       openBuilderSubTab('formular');goTab('formular');
@@ -8051,7 +8123,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       });
       const u=saved.map(s=>s.id===receta.id?{...actualizada,id:receta.id}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
     }catch(err){ setNoticeDlg({title:'No se pudo cambiar el estado',msg:err.message}); }
   };
   // Protección de UI: solo evita el clic accidental de un operador de campo en
@@ -8066,7 +8138,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const delR=id=>{
     setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
       const receta=saved.find(r=>r.id===id);
-      const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      const u=saved.filter(r=>r.id!==id);setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
       // Sin esto el documento en recetas/ (Firestore) queda huérfano para
       // siempre: no hay UI ni proceso que lo purgue — igual que el bug de
       // Bitácora con public_lotes/. Si la receta se guardó antes de este fix
@@ -8092,7 +8164,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const ebReal=Math.round(n*10)/10;
       const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
     }});
   };
 
@@ -8533,7 +8605,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
               {<>
-                        {(compositionComparison||status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(compositionComparison||status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
                           <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
@@ -9031,7 +9103,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
 
     try {
-      localStorage.setItem('sdp_bit_lotes', JSON.stringify(bitLotes));
+      writeLocal('sdp_bit_lotes', JSON.stringify(bitLotes));
     } catch (e) {}
 
     const summaryMsg = `${targetLotes.length} lotes procesados: ${successCount} sincronizados, ${failedCount} con error.` + (errors.length ? `\nDetalles:\n${errors.slice(0, 5).join('\n')}` : '');
@@ -9263,7 +9335,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     runLanzamientoProduccion();
   });
 
-  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'});
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'No se pudo escribir en el almacenamiento local. El cambio no quedó guardado. Descargar un respaldo, revisar el espacio y los permisos del navegador y volver a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
   // guardado local y la confirmación de la interfaz ya ocurrieron antes de
   // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
@@ -9284,7 +9356,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setNoticeDlg({title:'No se pudo encolar el cambio',msg:'El cambio no se pudo poner en la cola de sincronización ('+(err.message||'error desconocido')+'). Revisar los cambios pendientes antes de seguir trabajando.'});
         return prev;
       }
-      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
       return next;
     });
   };
@@ -9326,12 +9398,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(ledgerApi&&!loteEraDescartado){
         setInvReservas(prev=>{
           const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción descartado',at:new Date().toISOString()});
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
           return upd;
         });
       }
     }
-    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{writeLocal('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
@@ -9353,7 +9425,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!bitBolsasEditRef.current.some(b=>b.id===bolsaId)) return false;
     const upd=bitBolsasEditRef.current.map(b=>b.id===bolsaId?{...b,...fields}:b);
     // Persist first: a failed local write must not appear saved or reach sync.
-    try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){if(!options.silent)bitQuotaWarn();return false;}
+    try{writeLocal('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){if(!options.silent)bitQuotaWarn();return false;}
     bitBolsasEditRef.current=upd;
     setBitBolsas(upd);
     encolarSync({type:'actualizarBolsa',key:'bolsa:'+bolsaId,args:[bolsaId,fields]});
@@ -9368,7 +9440,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!taskEngineApi) return;
     setBitTasks(prev=>{
       const upd=taskEngineApi.mergeTasks(prev,nuevasTareas);
-      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -9385,7 +9457,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           upd=taskEngineApi.completeTask(upd,taskId,eventId);
         }
       });
-      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -9399,7 +9471,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!nuevosEventos.length) return;
     setRoomEvents(prev=>{
       const upd=[...prev,...nuevosEventos];
-      try{localStorage.setItem('sdp_room_events',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_room_events',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -9459,7 +9531,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // pública para siempre — nadie más va a volver a pedir su borrado.
     const cosecha=bitCosechas.find(c=>c.id===id);
     const lote=cosecha&&bitLotes.find(l=>l.id===cosecha.loteId);
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    const upd=bitCosechas.filter(c=>c.id!==id);
+    try{writeLocal('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){return false;}
+    setBitCosechas(upd);
     encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
     // La cola de sync (arriba) es solo bitacora_* — la ficha pública
     // (public_lotes) es una colección aparte que nadie más limpia: sin
@@ -9474,43 +9548,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // ficha pública terminó de limpiarse (nunca rechaza).
   const purgeBitLote=(loteId)=>{
     const publicCleanup=[];
-    const lote=bitLotes.find(l=>l.id===loteId);
-    const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
-    const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
-    // Eliminar el lote es más definitivo que descartarlo — igual libera sus
-    // reservas held, o un lote borrado seguiría bloqueando kilos.
+    let lote,bolsaIds,cosechaIds;
     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-    if(ledgerApi){
-      setInvReservas(prev=>{
-        const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
-        return upd;
-      });
-    }
-    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
-    // Las fotos de las bolsas borradas salen también de IndexedDB.
+    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    let nextLotes,nextBolsas,nextCosechas,nextReservas,nextQueue;
+    try{
+      // Read the latest durable snapshots: pilot reset may delete several lots
+      // in one turn before React has committed its state updates.
+      SetasPrototype.recover(localStorage);
+      const currentLotes=SetasPrototype.read(localStorage,'sdp_bit_lotes');
+      const currentBolsas=SetasPrototype.read(localStorage,'sdp_bit_bolsas');
+      const currentCosechas=SetasPrototype.read(localStorage,'sdp_bit_cosechas');
+      const currentReservas=SetasPrototype.read(localStorage,'sdp_inv_reservas');
+      const currentQueue=SetasPrototype.read(localStorage,'sdp_sync_queue');
+      lote=currentLotes.find(l=>l.id===loteId);
+      bolsaIds=currentBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
+      cosechaIds=currentCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
+      nextLotes=currentLotes.filter(l=>l.id!==loteId);
+      nextBolsas=currentBolsas.filter(b=>b.loteId!==loteId);
+      nextCosechas=currentCosechas.filter(c=>c.loteId!==loteId);
+      nextReservas=ledgerApi?ledgerApi.releaseForBatch(currentReservas,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()}):currentReservas;
+      if(!syncQueueApi) throw Error('Cola de sincronización no disponible');
+      nextQueue=syncQueueApi.purgeKeys(currentQueue,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
+      nextQueue=syncQueueApi.enqueue(nextQueue,syncQueueApi.createOperation({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]}));
+      SetasPrototype.persist(localStorage,[['sdp_bit_lotes',nextLotes],['sdp_bit_bolsas',nextBolsas],['sdp_bit_cosechas',nextCosechas],['sdp_inv_reservas',nextReservas],['sdp_sync_queue',nextQueue]]);
+    }catch(e){reportLocalWriteFailure('sdp_bit_lotes');bitQuotaWarn();return Promise.resolve(false);}
+    setBitLotes(nextLotes);setBitBolsas(nextBolsas);bitBolsasEditRef.current=nextBolsas;
+    setBitCosechas(nextCosechas);setInvReservas(nextReservas);syncQueueRef.current=nextQueue;setSyncQueue(nextQueue);
     if(bagPhotoStoreRef.current&&bagPhotoStoreRef.current.available&&bolsaIds.length){
       publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(()=>{}));
       setBagPhotos(prev=>{const next={...prev};bolsaIds.forEach(id=>{delete next[id];});return next;});
     }
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
     if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
-    // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
-    // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
-    // descarta 'lote:'+loteId — sin este purgado, una actualizarBolsa o
-    // guardarCosecha pendiente de este lote podía ejecutarse después (o
-    // revivirse con retryStuck) y resucitar en Firestore un documento que
-    // ya no existe localmente.
-    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-    if(syncQueueApi){
-      setSyncQueue(prev=>{
-        const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
-        return purged;
-      });
-    }
-    encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
+    // The cascade tombstone was persisted atomically with the deletion.
     // eliminarLoteCascade (arriba) es solo bitacora_* — la ficha pública
     // (public_lotes) es una colección aparte que nadie más limpia: sin
     // esto, el QR de una etiqueta ya impresa seguía resolviendo al lote
@@ -9534,11 +9604,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const plan=SetasPrototype.planPilotReset({lotes:bitLotes,bolsas:bitBolsas,cosechas:bitCosechas,role:fieldOperatorRole,typed});
     try{await downloadPrototypeBackup('setas-respaldo-antes-del-piloto-');}
     catch(e){throw Error('No se pudo descargar el respaldo; no se borró nada. '+(e.message||''));}
-    const cleanup=plan.map(p=>purgeBitLote(p.loteId));
+    for(const entry of plan){
+      if(await purgeBitLote(entry.loteId)===false) throw Error('El reinicio se detuvo porque un lote no se pudo guardar. Revisar los datos antes de reintentar.');
+    }
+    writeLocal('sdp_bit_tasks','[]');
+    writeLocal(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());
     setBitTasks([]);
-    try{localStorage.setItem('sdp_bit_tasks','[]');}catch(e){}
-    try{localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());}catch(e){}
-    await Promise.all(cleanup);
     // Deja que React aplique los cambios encolados (cola de sync, reservas)
     // antes de recargar.
     await new Promise(r=>setTimeout(r,300));
@@ -9587,16 +9658,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 
   // ── v4: helpers persistencia inventario
-  const saveProveedores=list=>{setInvProveedores(list);try{localStorage.setItem('sdp_proveedores',JSON.stringify(list));}catch(e){}};
-  const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
-  const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
-  const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+  const saveProveedores=list=>{setInvProveedores(list);try{writeLocal('sdp_proveedores',JSON.stringify(list));}catch(e){}};
+  const saveCompras=list=>{setInvCompras(list);try{writeLocal('sdp_compras',JSON.stringify(list));}catch(e){}};
+  const saveLotes=list=>{setInvLotes(list);try{writeLocal('sdp_lotes',JSON.stringify(list));}catch(e){}};
+  const saveMovimientos=list=>{setInvMovimientos(list);try{writeLocal('sdp_movimientos',JSON.stringify(list));}catch(e){}};
 
   // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
   // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
   const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
   const [invOps,setInvOps]=useState(readInvOps);
-  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  const saveInvOps=q=>{setInvOps(q);try{writeLocal(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
   // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
   // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
   // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
@@ -9626,7 +9697,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!ledgerApi||!nuevas.length) return;
     setInvReservas(prev=>{
       const upd=ledgerApi.addReservations(prev,nuevas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
       return upd;
     });
   };
@@ -9649,7 +9720,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const yaTiene=prev.some(r=>r&&r.batchId===loteId&&r.status==='held');
       if(yaTiene) return prev;
       const upd=ledgerApi.addReservations(prev,reservas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
       return upd;
     });
     return true;
@@ -9664,10 +9735,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const r=SetasInventoryConsumptionApi.applyLocal(invLotesRef.current,op,{fecha,nota});
     invLotesRef.current=r.lotes;
     setInvLotes(r.lotes);
-    try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
+    try{writeLocal('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
     setInvMovimientos(prev=>{
       const upd=[...prev,...r.movimientos];
-      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_movimientos',JSON.stringify(upd));}catch(e){}
       return upd;
     });
     // Libro de reservas: CIERRA las reservas que dejó la planificación, con
@@ -9686,7 +9757,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           aCerrar=reservas;
         }
         upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
         return upd;
       });
     }
@@ -9718,7 +9789,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // pueden escribir en el mismo tick.
   const saveCorreos=fn=>setInvCorreos(prev=>{
     const upd=inboxApi?inboxApi.compactCorreos(fn(prev)):fn(prev);
-    try{localStorage.setItem('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
+    try{writeLocal('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
     return upd;
   });
   useEffect(()=>{
@@ -11050,7 +11121,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         const updated=qrLotesRef.current.map(item=>item.id===lote.id?{...item,lifecycleEvents:nextLog}:item);
         // Confirm durable local storage before saying saved; do not depend on
         // updateBitLote, whose legacy setter catches quota errors internally.
-        localStorage.setItem('sdp_bit_lotes',JSON.stringify(updated));
+        writeLocal('sdp_bit_lotes',JSON.stringify(updated));
         qrLotesRef.current=updated;
         setBitLotes(updated);
         savedLocally=true;
@@ -11260,7 +11331,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const at=new Date().toISOString();
       let upd=prev;
       descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
       return upd;
     });
   },[bitLotes]);
@@ -11830,7 +11901,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);
-                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
               }}>Reintentar</button>}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" data-testid="sync-export-stuck" style={{minHeight:44}} onClick={exportarSyncPendientes}>Exportar</button>}
             </div>;
@@ -11930,7 +12001,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {st.stuck>0&&<button type="button" onClick={()=>{
                     const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                     setSyncQueue(next);
-                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                    try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                   }} style={{marginLeft:6}}>Reintentar</button>}
                   {st.stuck>0&&<button type="button" data-testid="sync-export-stuck" onClick={exportarSyncPendientes} style={{marginLeft:6,minHeight:44,minWidth:44}}>Exportar</button>}
                 </span>;
@@ -12761,6 +12832,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+        <ServerClimateAlerts feed={serverClimateFeed} roomId={selectedClimateRoom} rooms={ROOMS_CONFIG} onRetry={()=>setServerClimateRetry(v=>v+1)}/>
         {renderRoomCyclePanel()}
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
@@ -13159,49 +13231,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {/* 5. Ventilación Dinámica FAE & AC Infinity Extractor */}
           {(() => {
-            const activeBiomassKg = mainLote?.pesoLote ? (mainLote.pesoLote * 0.22) : 25.0;
-            const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === 'function'
-              ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || 'orellana_gris', {
-                  targetPpm: defaultTargets.co2_ppm.target || 800,
-                  outdoorPpm: 420,
-                  roomVolumeM3: selectedClimateRoom === 'martha_01' ? 11.5 : 8.0,
-                  fanRatedCfm: 140
-                })
-              : null;
-            return (
-              <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
-                <div className="climate-kpi-header">
-                  <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span>
-                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
-                      {faeCalc ? `${faeCalc.requiredCfm} CFM` : '24.5 CFM'}
-                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginLeft: 6 }}>
-                        ({faeCalc ? faeCalc.requiredM3h : '41.6'} m³/h · {faeCalc ? faeCalc.effectiveAch : '3.6'} ACH)
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)', marginTop: 2 }}>
-                      {faeCalc?.schedule.recommendation || 'Encender 2.5 min cada 10 min'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      padding: '3px 8px',
-                      borderRadius: 4,
-                      background: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-                      color: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      fontWeight: 700
-                    }}>
-                      Duty Cycle: {faeCalc ? faeCalc.dutyCyclePct : 18}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
+            // A substrate weight is not a measurement of active fungal biomass.
+            const missing=[];
+            if(!lotesEnSala.length) missing.push('Sin lote en la sala');
+            if(lotesEnSala.some(l=>!Number.isFinite(l.biomasaActivaKg)||l.biomasaActivaKg<=0)) missing.push('Falta registrar la biomasa fúngica activa de cada lote');
+            const speciesKeys=lotesEnSala.map(l=>[l.sKey,l.speciesKey,l.especieKey,l.recipeRef?.sKey].find(k=>k&&(SPP[k]||climateMath?.SPECIES_RESPIRATION_RATES?.[k]||climateMath?.SPECIES_KEY_ALIASES?.[k]))||(l.especie?Object.keys(SPP).find(k=>SPP[k].name===l.especie):null));
+            if(speciesKeys.some(k=>!k)) missing.push('Falta identificar la especie de cada lote');
+            if(climateMath?.SPECIES_RESPIRATION_RATES&&speciesKeys.some(k=>k&&!climateMath.SPECIES_RESPIRATION_RATES[k]&&!climateMath.SPECIES_KEY_ALIASES?.[k])) missing.push('El modelo FAE no tiene parámetros para la especie registrada');
+            if(new Set(speciesKeys).size>1) missing.push('El modelo FAE no admite varias especies en una sala');
+            if(!Number.isFinite(room.volumeM3)||room.volumeM3<=0) missing.push('Falta configurar el volumen de la sala');
+            if(!Number.isFinite(room.fanRatedCfm)||room.fanRatedCfm<=0) missing.push('Falta configurar el caudal del extractor');
+            if(!climateMath?.calcDynamicFAE) missing.push('Modelo FAE no disponible');
+            const activeBiomassKg=lotesEnSala.reduce((sum,l)=>sum+(l.biomasaActivaKg||0),0);
+            const faeCalc=missing.length?null:climateMath.calcDynamicFAE(activeBiomassKg,speciesKeys[0],{
+              targetPpm:defaultTargets.co2_ppm.target, outdoorPpm:420,
+              roomVolumeM3:room.volumeM3, fanRatedCfm:room.fanRatedCfm,
+            });
+            return <div className="climate-kpi-card" data-testid="room-fae" style={{gridColumn:'span 2'}}>
+              <div className="climate-kpi-header"><span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span></div>
+              {faeCalc?<>
+                <p className="sdp-provenance">Estimación del modelo · Biomasa declarada: {activeBiomassKg.toFixed(1)} kg · Volumen nominal: {room.volumeM3.toFixed(2)} m³ · CO₂ exterior supuesto: 420 ppm</p>
+                <strong>{faeCalc.requiredCfm} CFM</strong> ({faeCalc.requiredM3h} m³/h · {faeCalc.effectiveAch} ACH)
+                <p>{faeCalc.schedule.recommendation} · Duty Cycle: {faeCalc.dutyCyclePct}%</p>
+              </>:<p role="status">{!lotesEnSala.length?'Sin lote en la sala. No se calcula ventilación.':missing.join('. ')+'. No se calcula ventilación.'}</p>}
+            </div>;
           })()}
         </div>
 
@@ -13616,7 +13669,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                       const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                       setSyncQueue(next);
-                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                      try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                     }}>Reintentar</button>}
                   </span>;
                 })()}
@@ -13984,6 +14037,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </header>
 
       <div className="wrap">
+        {localWriteFailure&&<div role="alert" data-testid="local-save-error" className="panel" style={{borderColor:'var(--coral-700)',color:'var(--coral-700)',position:'sticky',top:0,zIndex:'var(--z-sticky-header)'}}>
+          <strong>No se pudo guardar en este dispositivo.</strong> Algunos cambios pueden estar solo en pantalla y perderse al recargar. Mantener la app abierta, descargar un respaldo desde Datos y liberar espacio o habilitar el almacenamiento antes de reintentar.
+        </div>}
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
           <h1 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h1>
@@ -14337,7 +14393,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {st.stuck>0&&<button type="button" onClick={()=>{
                           const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                           setSyncQueue(next);
-                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                          try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                         }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
                       </span>;
                     })()}
@@ -14349,6 +14405,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </section>
                 </div>
 
+                <ServerClimateAlerts feed={serverClimateFeed} rooms={ROOMS_CONFIG} onOpenRoom={roomId=>{setSelectedClimateRoom(roomId);goTab('clima');}} onRetry={()=>setServerClimateRetry(v=>v+1)}/>
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0)&&<aside className="home-context" aria-label="Contexto del turno">
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
@@ -15682,7 +15739,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
                     {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
+                      <button onClick={()=>{setPriceOverrides({});try{removeLocal('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
                     )}
                   </div>
                   <div>
@@ -15703,7 +15760,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               const v=Math.max(0,parseInt(e.target.value)||0);
                               const n={...priceOverrides,[ing.id]:v};
                               setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
+                              try{writeLocal('setas_prices_v1',JSON.stringify(n));}catch(err){}
                             }}
                           />
                         </div>

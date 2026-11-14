@@ -96,11 +96,14 @@ const fakeDb = (data) => {
     const docs = () => Object.entries(data[name] || {}).map(([id, d]) => ({ id, data: () => d }));
     return {
       get: async () => ({ docs: docs() }),
-      where: (field, op, value) => ({ get: async () => ({ docs: docs().filter(d => d.data()[field] === value) }) }),
+      where: (field, op, value) => ({ get: async () => ({ docs: docs().filter(d => op==='in'?value.includes(d.data()[field]):d.data()[field] === value) }) }),
       doc: (id) => ({ set: async (d) => { (data[name] = data[name] || {})[id] = d; } }),
     };
   };
-  return { collection: col };
+  return { collection: col, batch: () => {
+    const writes=[];
+    return {set:(ref,value)=>writes.push([ref,value]),commit:async()=>{for(const [ref,value] of writes) await ref.set(value);}};
+  } };
 };
 
 test('la función avisa una vez al abrir, guarda el estado y avisa al resolver', async () => {
@@ -142,4 +145,34 @@ test('si el correo falla no se guarda el estado: la siguiente corrida reintenta'
   await run();
   assert.equal(sent, 1);
   assert.equal(data.climate_alerts.martha_01__sensor_stale.status, 'open');
+});
+
+
+test('el historial conserva episodios al resolver y no participa en nuevas alertas', async () => {
+  const [condition]=detect([cycle()],{martha_01:live({temperature_c:21})});
+  const opened={...condition,status:'open',firstSeenAt:NOW-10*MIN,openedAt:NOW,lastNotifiedAt:NOW};
+  const resolved=alerts.planAlerts({stored:[opened],conditions:[],nowMs:NOW+MIN});
+  const archive=resolved.writes.find(a=>a.recordType==='episode');
+  assert.equal(archive.alertId,opened.id);
+  assert.equal(archive.openedAt,NOW);
+  assert.equal(archive.resolvedAt,NOW+MIN);
+  const recurrence=alerts.planAlerts({stored:resolved.writes,conditions:[condition],nowMs:NOW+2*MIN});
+  assert.equal(recurrence.writes.length,1);
+  assert.equal(recurrence.writes[0].status,'pending');
+  assert.deepEqual(recurrence.notifications,[]);
+  const storage={climate_alerts:Object.fromEntries(resolved.writes.map(({id,...a})=>[id,a]))};
+  const run=alerts.createCheckClimateAlerts({db:fakeDb(storage),notify:async()=>{},now:()=>NOW+3*MIN});
+  await run();
+  assert.equal(storage.climate_alerts[archive.id].resolvedAt,NOW+MIN);
+});
+
+test('el estado y el episodio se escriben en un único batch', async () => {
+  const [condition]=detect([cycle()],{martha_01:live({temperature_c:21})});
+  const initial={...condition,status:'open',openedAt:NOW-20*MIN,firstSeenAt:NOW-30*MIN,lastNotifiedAt:NOW};
+  const data={climate_alerts:{[initial.id]:initial}};
+  const db=fakeDb(data);const batches=[];
+  db.batch=()=>{const writes=[];batches.push(writes);return {set:(ref,value)=>writes.push(value),commit:async()=>{throw Error('batch unavailable');}};};
+  await assert.rejects(alerts.createCheckClimateAlerts({db,notify:async()=>{},now:()=>NOW})(),/batch unavailable/);
+  assert.equal(data.climate_alerts[initial.id].status,'open');
+  assert.equal(batches.length,1);assert.deepEqual(batches[0].map(w=>w.status),['resolved','resolved']);
 });

@@ -105,7 +105,7 @@ test('QuotaExceededError al guardar: serialize es puro, la cola en memoria no se
 
 test('QuotaExceededError: en la app, encolar y el volcado de device-sync avisan al operario (bitQuotaWarn)', () => {
   const src = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
-  const persist = /localStorage\.setItem\('sdp_sync_queue',[^;]*\);\}catch\(e\)\{bitQuotaWarn\(\);\}/g;
+  const persist = /writeLocal\('sdp_sync_queue',[^;]*\);\}catch\(e\)\{bitQuotaWarn\(\);\}/g;
   assert.ok((src.match(persist) || []).length >= 2, 'encolarSync y la pasada de device-sync deben llamar bitQuotaWarn');
   assert.match(src, /No se pudo encolar el cambio/, 'la cola llena debe mostrar aviso al operario');
 });

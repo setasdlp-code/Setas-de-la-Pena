@@ -20,10 +20,11 @@ module.exports = defineConfig({
   expect: { timeout: 7_000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env.CI ? [['github'], ['list', {printSteps:true}], ['html', { open: 'never' }]] : 'list',
   globalSetup: require.resolve('./e2e/global-setup.js'),
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    launchOptions: {executablePath:process.env.SETAS_CHROMIUM_EXECUTABLE||undefined},
     navigationTimeout: 30000,
     actionTimeout: 10000,
     trace: 'retain-on-failure',
@@ -48,6 +49,8 @@ module.exports = defineConfig({
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',
     cwd: APP_DIR,
+    stdout: 'ignore',
+    stderr: process.env.CI ? 'ignore' : 'pipe',
     url: 'http://127.0.0.1:4173/Setas%20OS%20v5.dc.html',
     reuseExistingServer: !process.env.CI,
     timeout: 20_000,

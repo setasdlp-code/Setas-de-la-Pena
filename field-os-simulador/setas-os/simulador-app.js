@@ -1,6 +1,27 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: f3191aafd9e1544ecdea6da952c1c5f83800abf193a8d1e0c317eb9068be646f
+// source-hash: a21fbfcb760e81d9891f1829fcdfee6cda6fa1ba5427ecb2ceee699017019028
+let lastLocalWriteFailure = null;
+function reportLocalWriteFailure(key) {
+  lastLocalWriteFailure = { key, at: Date.now() };
+  window.dispatchEvent(new CustomEvent("setas-local-write-failed", { detail: lastLocalWriteFailure }));
+}
+function writeLocal(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    reportLocalWriteFailure(key);
+    throw error;
+  }
+}
+function removeLocal(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    reportLocalWriteFailure(key);
+    throw error;
+  }
+}
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -53,6 +74,14 @@ function BagObservationEditor({ bolsa, onSave }) {
       discard();
     }
   } }), /* @__PURE__ */ React.createElement("span", { id: `bag-observation-status-${bolsa.id}`, role: error ? "alert" : "status" }, error || (dirty ? "Borrador sin guardar" : "Registro local · sincronización independiente")), dirty && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save, "aria-label": `Guardar observaciones de ${bolsa.codigo}` }, error ? "Reintentar" : "Guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: discard, "aria-label": `Cancelar observaciones de ${bolsa.codigo}` }, "Cancelar")));
+}
+function ServerClimateAlerts({ feed, roomId, rooms, onOpenRoom, onRetry }) {
+  const records = feed.records.filter((a) => !roomId || a.roomId === roomId);
+  const open = records.filter((a) => a.status === "open" && a.recordType !== "episode");
+  const history = Array.from(new Map(records.filter((a) => a.status === "resolved" && a.openedAt != null).map((a) => [`${a.alertId || a.id}:${a.openedAt}`, a])).values()).sort((a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0));
+  const date = (value) => value == null ? "—" : new Date(typeof value?.toMillis === "function" ? value.toMillis() : value).toLocaleString("es-CO", { timeZone: "America/Bogota", dateStyle: "short", timeStyle: "short" });
+  const row = (a) => /* @__PURE__ */ React.createElement("li", { key: a.id, style: { padding: "10px 0", overflowWrap: "anywhere" } }, /* @__PURE__ */ React.createElement("strong", null, rooms[a.roomId]?.name || a.roomId, " · ", a.kind === "sensor_stale" ? "Sensor sin lecturas" : "Clima fuera de banda"), /* @__PURE__ */ React.createElement("p", { style: { margin: "4px 0" } }, a.detail), /* @__PURE__ */ React.createElement("span", null, a.status === "open" ? "Abierta" : "Resuelta", " · Inicio: ", date(a.openedAt), a.status === "resolved" ? ` · Cierre: ${date(a.resolvedAt)}` : "", " · Ciclo: ", a.cycleId || "—"), !roomId && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", style: { minHeight: 44, marginLeft: 8 }, onClick: () => onOpenRoom(a.roomId) }, "Ver sala"));
+  return /* @__PURE__ */ React.createElement("section", { className: "panel", "data-testid": roomId ? "room-server-alerts" : "today-server-alerts", "aria-label": "Alertas de clima del servidor" }, /* @__PURE__ */ React.createElement("h3", { style: { marginTop: 0 } }, "Alertas de clima del servidor"), feed.error ? /* @__PURE__ */ React.createElement("div", { role: "alert" }, /* @__PURE__ */ React.createElement("p", null, "No se pudieron leer las alertas de clima. ", feed.error === "permission-denied" ? "Tu sesión no tiene permiso para consultar estas alertas." : "Revisar la conexión y reintentar."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: onRetry, style: { minHeight: 44 } }, "Reintentar lectura")) : feed.loading ? /* @__PURE__ */ React.createElement("p", { role: "status" }, "Cargando alertas…") : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "sdp-provenance" }, feed.fromCache ? "Copia local · pendiente de confirmar con el servidor" : "Registro del servidor", " · No sustituye una lectura actual de la sala."), /* @__PURE__ */ React.createElement("h4", null, "Abiertas (", open.length, ")"), open.length ? /* @__PURE__ */ React.createElement("ul", { style: { paddingLeft: 20 } }, open.map(row)) : /* @__PURE__ */ React.createElement("p", null, "Sin alertas abiertas", feed.fromCache ? " en la copia local" : "", "."), /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", { style: { minHeight: 44, cursor: "pointer" } }, "Historial (", history.length, ")"), /* @__PURE__ */ React.createElement("p", null, "Se conservan los episodios cerrados desde la actualización del registro. Los episodios anteriores que ya fueron sobrescritos no se pueden recuperar."), history.length ? /* @__PURE__ */ React.createElement("ul", { style: { paddingLeft: 20 } }, history.map(row)) : /* @__PURE__ */ React.createElement("p", null, "Sin episodios cerrados registrados."))));
 }
 function BagSurfaceEditor({ bolsa, onSave, operador }) {
   const [temp, setTemp] = useState("");
@@ -284,7 +313,7 @@ function loadBioCheck() {
 }
 function saveBioCheck(state) {
   try {
-    localStorage.setItem(BIO_CHECK_KEY, JSON.stringify(state));
+    writeLocal(BIO_CHECK_KEY, JSON.stringify(state));
     return true;
   } catch (e) {
     console.warn("Failed to save bio‑check to localStorage", e);
@@ -302,7 +331,7 @@ function loadBatches() {
 }
 function saveBatches(batches) {
   try {
-    localStorage.setItem(BATCHES_KEY, JSON.stringify(batches));
+    writeLocal(BATCHES_KEY, JSON.stringify(batches));
     return true;
   } catch (e) {
     console.warn("Failed to save batches to localStorage", e);
@@ -3554,7 +3583,7 @@ function loadLiveTelemetryConfig() {
 }
 function saveLiveTelemetryConfig(config) {
   try {
-    localStorage.setItem(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
+    writeLocal(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
     return true;
   } catch (e) {
     return false;
@@ -3844,7 +3873,33 @@ function OperationalMetrics({ data, loaded, error, role, onReview, onBitacora })
   } }, "Revisar hallazgo"), editing?.id === i.id && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", null, "Motivo de la revisión", /* @__PURE__ */ React.createElement("textarea", { "aria-label": "Motivo de la revisión", value: reason, onChange: (e) => setReason(e.target.value), style: { display: "block", width: "100%", boxSizing: "border-box", minHeight: 80 } })), /* @__PURE__ */ React.createElement("button", { style: button, disabled: !reason.trim(), onClick: () => submit("validado") }, "Validar observación"), " ", /* @__PURE__ */ React.createElement("button", { style: button, disabled: !reason.trim(), onClick: () => submit("corregir") }, "Marcar para corregir")))), /* @__PURE__ */ React.createElement("h3", null, "Historial de revisiones"), /* @__PURE__ */ React.createElement("ul", null, data.reviews.map((e) => /* @__PURE__ */ React.createElement("li", { key: e.id, style: { overflowWrap: "anywhere" } }, e.payload.anomalyId, " · ", e.payload.decision, " · ", e.operatorId, " · ", e.at, " · ", e.payload.reason)))), section === "salidas" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Cosechas registradas"), /* @__PURE__ */ React.createElement("p", null, "Estas masas corresponden a cosechas. No representan ventas ni despachos."), !data.harvests.length && /* @__PURE__ */ React.createElement("p", null, "No hay cosechas válidas registradas."), /* @__PURE__ */ React.createElement("ul", null, data.harvests.map((c) => /* @__PURE__ */ React.createElement("li", { key: c.id }, c.loteId, " · ", c.id, " · ", c.pesoFresco, " ", c.unit || "g", " · ", c.fecha || "Fecha no registrada")))), section === "conocimiento" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Evidencia para conocimiento"), /* @__PURE__ */ React.createElement("p", null, data.eligibility.eligibleN, " resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo."), /* @__PURE__ */ React.createElement("p", null, "Los registros parciales y los datos inválidos no se utilizan como resultados finales. La evidencia y el cierre de cada lote están en Bitácora.")), /* @__PURE__ */ React.createElement("button", { style: button, onClick: onBitacora }, "Abrir Bitácora")), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message));
 }
 function SimuladorShell(props) {
+  const [localWriteFailure, setLocalWriteFailure] = useState(lastLocalWriteFailure);
+  useEffect(() => {
+    const onFailure = (e) => setLocalWriteFailure(e.detail);
+    window.addEventListener("setas-local-write-failed", onFailure);
+    setLocalWriteFailure(lastLocalWriteFailure);
+    return () => window.removeEventListener("setas-local-write-failed", onFailure);
+  }, []);
   const initialFormDraft = useMemo(() => readFormDraft(), []);
+  const [serverClimateFeed, setServerClimateFeed] = useState({ records: [], loading: true, error: "", fromCache: true });
+  const [serverClimateRetry, setServerClimateRetry] = useState(0);
+  useEffect(() => {
+    let unsubscribe = null;
+    const start = () => {
+      if (unsubscribe || !window.SetasDB?.subscribeClimateAlerts) return;
+      setServerClimateFeed({ records: [], loading: true, error: "", fromCache: true });
+      unsubscribe = window.SetasDB.subscribeClimateAlerts(
+        (result) => setServerClimateFeed({ ...result, loading: false, error: "" }),
+        (error) => setServerClimateFeed({ records: [], loading: false, error: error?.code || "unavailable", fromCache: true })
+      );
+    };
+    window.addEventListener("setas-db-ready", start);
+    start();
+    return () => {
+      window.removeEventListener("setas-db-ready", start);
+      if (unsubscribe) unsubscribe();
+    };
+  }, [serverClimateRetry]);
   const [bridgeOpen, setBridgeOpen] = useState(true);
   const [bridgeHidden, setBridgeHidden] = useState(false);
   useEffect(() => {
@@ -3897,7 +3952,7 @@ function SimuladorShell(props) {
       if (p && SPP[p]) return p;
       const pre = normSpp(localStorage.getItem("sim_preselect_spp"));
       if (pre && SPP[pre]) {
-        localStorage.removeItem("sim_preselect_spp");
+        removeLocal("sim_preselect_spp");
         return pre;
       }
     } catch (e) {
@@ -4580,7 +4635,7 @@ function SimuladorShell(props) {
     if (opResult.status !== "failed") {
       setBitBolsas(opResult.updatedBolsas);
       try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(opResult.updatedBolsas));
+        writeLocal("sdp_bit_bolsas", JSON.stringify(opResult.updatedBolsas));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -4604,7 +4659,7 @@ function SimuladorShell(props) {
         const updLotes = bitLotes.map((l) => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
         setBitLotes(updLotes);
         try {
-          localStorage.setItem("sdp_bit_lotes", JSON.stringify(updLotes));
+          writeLocal("sdp_bit_lotes", JSON.stringify(updLotes));
         } catch (e) {
         }
         encolarSync({ type: "actualizarLote", key: "lote:" + activeLot.id, args: [activeLot.id, { lifecycleEvents: nextLog }] });
@@ -4635,7 +4690,7 @@ function SimuladorShell(props) {
     if (opResult.status !== "failed") {
       setBitBolsas(opResult.updatedBolsas);
       try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(opResult.updatedBolsas));
+        writeLocal("sdp_bit_bolsas", JSON.stringify(opResult.updatedBolsas));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -4656,7 +4711,7 @@ function SimuladorShell(props) {
         const updLotes = bitLotes.map((l) => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
         setBitLotes(updLotes);
         try {
-          localStorage.setItem("sdp_bit_lotes", JSON.stringify(updLotes));
+          writeLocal("sdp_bit_lotes", JSON.stringify(updLotes));
         } catch (e) {
         }
       }
@@ -4708,6 +4763,10 @@ function SimuladorShell(props) {
       id: "martha_01",
       cameraId: "martha",
       name: "Martha Tent 01",
+      volumeM3: 1.65 * 0.7 * 0.51,
+      // volumen nominal de las dimensiones declaradas
+      fanRatedCfm: null,
+      // pendiente de configurar con datos del extractor
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
       device: "ESP32-WROOM-32 (setas-martha-01)",
       sensors: "Sensirion SHT3x + Sensirion SCD30 (NDIR)",
@@ -4717,6 +4776,8 @@ function SimuladorShell(props) {
       id: "cloudlab_844",
       cameraId: "cloudlab",
       name: "Cloudlab 844",
+      volumeM3: 1.22 * 1.22 * 2.03,
+      fanRatedCfm: null,
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
       device: "ESP32-WROOM-32 (setas-cloudlab-01)",
       sensors: "Sensirion SHT45 + Sensirion SCD30 (NDIR)",
@@ -4726,6 +4787,8 @@ function SimuladorShell(props) {
       id: "incubacion_01",
       cameraId: "incub",
       name: "Cuarto de Incubación",
+      volumeM3: null,
+      fanRatedCfm: null,
       spec: "Zona 3 · estantería de incubación",
       device: "Inkbird + nodo ambiental (setas-incubacion-01)",
       sensors: "Temperatura y humedad · CO₂ estimado por nodo",
@@ -4815,18 +4878,18 @@ function SimuladorShell(props) {
     setOptUseStock(stockOnly);
     setUsePantry(stockOnly);
     try {
-      localStorage.setItem("setas_global_workmode", mode2);
-      localStorage.setItem("setas_workmode", mode2 === "produccion" ? "bodega" : "catalogo");
+      writeLocal("setas_global_workmode", mode2);
+      writeLocal("setas_workmode", mode2 === "produccion" ? "bodega" : "catalogo");
     } catch (e) {
     }
   };
   useEffect(() => {
     try {
       if (!recipe.length) {
-        localStorage.removeItem(FORM_DRAFT_KEY);
+        removeLocal(FORM_DRAFT_KEY);
         return;
       }
-      localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify({
+      writeLocal(FORM_DRAFT_KEY, JSON.stringify({
         version: 1,
         savedAt: (/* @__PURE__ */ new Date()).toISOString(),
         recipe: recipe.map((r) => ({ id: r.id, p: Number(r.p) || 0 })),
@@ -4914,7 +4977,7 @@ function SimuladorShell(props) {
         return rest;
       });
       try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+        writeLocal("sdp_bit_bolsas", JSON.stringify(upd));
       } catch (e) {
         return;
       }
@@ -5193,7 +5256,7 @@ function SimuladorShell(props) {
         });
       }
       try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(updated));
+        writeLocal("sdp_lotes", JSON.stringify(updated));
       } catch (e) {
       }
       return updated;
@@ -5202,7 +5265,7 @@ function SimuladorShell(props) {
       setInvCompras((prev) => {
         const upd = prev.map((c) => ({ ...c, items: c.items.map((it) => it.ingredienteId === ingredienteId ? { ...it, ingredienteId: nuevoId } : it) }));
         try {
-          localStorage.setItem("sdp_compras", JSON.stringify(upd));
+          writeLocal("sdp_compras", JSON.stringify(upd));
         } catch (e) {
         }
         return upd;
@@ -5212,7 +5275,7 @@ function SimuladorShell(props) {
       const upd = { ...provOverride, [targetId]: proveedorId };
       setProvOverride(upd);
       try {
-        localStorage.setItem("sdp_prov_override", JSON.stringify(upd));
+        writeLocal("sdp_prov_override", JSON.stringify(upd));
       } catch (e) {
       }
     }
@@ -5221,7 +5284,7 @@ function SimuladorShell(props) {
       const upd = { ...alertaConfig, [targetId]: am };
       setAlertaConfig(upd);
       try {
-        localStorage.setItem("sdp_alertas", JSON.stringify(upd));
+        writeLocal("sdp_alertas", JSON.stringify(upd));
       } catch (e) {
       }
     }
@@ -5232,7 +5295,7 @@ function SimuladorShell(props) {
       setInvLotes((prev) => {
         const upd = prev.map((l) => l.ingredienteId === ingredienteId ? { ...l, activo: false } : l);
         try {
-          localStorage.setItem("sdp_lotes", JSON.stringify(upd));
+          writeLocal("sdp_lotes", JSON.stringify(upd));
         } catch (e) {
         }
         return upd;
@@ -5240,7 +5303,7 @@ function SimuladorShell(props) {
       try {
         const pantry = JSON.parse(localStorage.getItem("sdp_pantry") || "{}");
         delete pantry[ingredienteId];
-        localStorage.setItem("sdp_pantry", JSON.stringify(pantry));
+        writeLocal("sdp_pantry", JSON.stringify(pantry));
       } catch (e) {
       }
     };
@@ -5265,7 +5328,7 @@ function SimuladorShell(props) {
         });
       }
       try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(updated));
+        writeLocal("sdp_lotes", JSON.stringify(updated));
       } catch (e) {
       }
       return updated;
@@ -5299,7 +5362,7 @@ function SimuladorShell(props) {
         setInvReservas(vigentes);
         if (ledgerApi && JSON.stringify(vigentes) !== JSON.stringify(parsedReservas)) {
           try {
-            localStorage.setItem("sdp_inv_reservas", JSON.stringify(vigentes));
+            writeLocal("sdp_inv_reservas", JSON.stringify(vigentes));
           } catch (e) {
           }
         }
@@ -5344,7 +5407,7 @@ function SimuladorShell(props) {
         syncQueueRef.current = updatedQueue;
         setSyncQueue(updatedQueue);
         try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
+          writeLocal("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
         } catch (e) {
         }
       }
@@ -5381,7 +5444,7 @@ function SimuladorShell(props) {
         r.deviceId = localStorage.getItem("sdp_device_id");
         if (!r.deviceId) {
           r.deviceId = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
-          localStorage.setItem("sdp_device_id", r.deviceId);
+          writeLocal("sdp_device_id", r.deviceId);
         }
       } catch (e) {
         r.deviceId = r.deviceId || "dev_" + Math.random().toString(36).slice(2, 10);
@@ -5462,7 +5525,7 @@ function SimuladorShell(props) {
         if (dropped) console.warn("[SetasDeviceSync] cola llena: " + dropped + " envío(s) quedan para la próxima pasada");
         syncQueueRef.current = queue;
         try {
-          localStorage.setItem("sdp_sync_queue", window.SetasSyncQueue.serialize(queue));
+          writeLocal("sdp_sync_queue", window.SetasSyncQueue.serialize(queue));
         } catch (e) {
           bitQuotaWarn();
         }
@@ -5565,7 +5628,7 @@ function SimuladorShell(props) {
       syncQueueRef.current = next;
       setSyncQueue(next);
       try {
-        localStorage.setItem("sdp_sync_queue", queueApi.serialize(next));
+        writeLocal("sdp_sync_queue", queueApi.serialize(next));
       } catch (e) {
       }
     } else if (a.type === "goBodega") {
@@ -5839,7 +5902,7 @@ function SimuladorShell(props) {
       const cambio = migradas.some((r, i) => r !== crudas[i]);
       if (cambio) {
         try {
-          localStorage.setItem("setas_v6", JSON.stringify(migradas));
+          writeLocal("setas_v6", JSON.stringify(migradas));
         } catch (e2) {
         }
       }
@@ -5911,7 +5974,7 @@ function SimuladorShell(props) {
     const u = [e, ...saved];
     setSaved(u);
     try {
-      localStorage.setItem("setas_v6", JSON.stringify(u));
+      writeLocal("setas_v6", JSON.stringify(u));
     } catch (e2) {
     }
     setSaveName("");
@@ -5932,7 +5995,7 @@ function SimuladorShell(props) {
         setSaved((prev) => {
           const upd = prev.map((r) => r.id === e.id ? { ...r, firestoreId: docRef.id } : r);
           try {
-            localStorage.setItem("setas_v6", JSON.stringify(upd));
+            writeLocal("setas_v6", JSON.stringify(upd));
           } catch (e3) {
           }
           return upd;
@@ -5962,7 +6025,7 @@ function SimuladorShell(props) {
         const u = saved.map((s) => s.id === recetaObj.id ? { ...s, esProduccion: true, fechaPromocion: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO") } : s);
         setSaved(u);
         try {
-          localStorage.setItem("setas_v6", JSON.stringify(u));
+          writeLocal("setas_v6", JSON.stringify(u));
         } catch (e) {
         }
       }
@@ -6023,7 +6086,7 @@ function SimuladorShell(props) {
       const u = [{ ...nueva, id: Date.now() }, ...saved];
       setSaved(u);
       try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
+        writeLocal("setas_v6", JSON.stringify(u));
       } catch (e) {
       }
       setNewVersionFor(null);
@@ -6053,7 +6116,7 @@ function SimuladorShell(props) {
       const u = saved.map((s) => s.id === receta.id ? { ...actualizada, id: receta.id } : s);
       setSaved(u);
       try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
+        writeLocal("setas_v6", JSON.stringify(u));
       } catch (e) {
       }
     } catch (err) {
@@ -6073,7 +6136,7 @@ function SimuladorShell(props) {
       const u = saved.filter((r) => r.id !== id);
       setSaved(u);
       try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
+        writeLocal("setas_v6", JSON.stringify(u));
       } catch (e) {
       }
       if (receta?.firestoreId && window.SetasDB?.deleteReceta) {
@@ -6091,7 +6154,7 @@ function SimuladorShell(props) {
       const u = saved.map((s) => s.id === id ? { ...s, ebReal, outcome: confirmedOutcome(ebReal) } : s);
       setSaved(u);
       try {
-        localStorage.setItem("setas_v6", JSON.stringify(u));
+        writeLocal("setas_v6", JSON.stringify(u));
       } catch (e) {
       }
     } });
@@ -6148,7 +6211,7 @@ function SimuladorShell(props) {
   }, [coFormMode, recipe, coSpecConfig, effectiveINGS, effectiveSPP]);
   const compositionComparison = useMemo(() => CompositionScenarios.compare({ recipe, sKey, ings: effectiveINGS, spp: effectiveSPP }), [recipe, sKey, effectiveINGS, effectiveSPP]);
   const hasCompositionEstimate = CompositionScenarios.hasEstimatedComposition(recipe, effectiveINGS);
-  const captureCompositionPrediction = () => CompositionScenarios.snapshot({ recipe, sKey, ings: effectiveINGS, spp: effectiveSPP, at: (/* @__PURE__ */ new Date()).toISOString(), forecast: ebForecast, modelVersion: true ? "f3191aafd9e1" : "development" });
+  const captureCompositionPrediction = () => CompositionScenarios.snapshot({ recipe, sKey, ings: effectiveINGS, spp: effectiveSPP, at: (/* @__PURE__ */ new Date()).toISOString(), forecast: ebForecast, modelVersion: true ? "a21fbfcb760e" : "development" });
   const balanced = isMassBalanced(an);
   const balMsg = balanced ? "" : massBalanceMsg(an);
   const optimalAn = useMemo(() => {
@@ -6561,7 +6624,7 @@ function SimuladorShell(props) {
         const u = [e, ...saved];
         setSaved(u);
         try {
-          localStorage.setItem("setas_v6", JSON.stringify(u));
+          writeLocal("setas_v6", JSON.stringify(u));
         } catch (e2) {
         }
         setNoticeDlg({ msg: `Guardada como prueba: ${nm}` });
@@ -6901,7 +6964,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
     }
     try {
-      localStorage.setItem("sdp_bit_lotes", JSON.stringify(bitLotes));
+      writeLocal("sdp_bit_lotes", JSON.stringify(bitLotes));
     } catch (e) {
     }
     const summaryMsg = `${targetLotes.length} lotes procesados: ${successCount} sincronizados, ${failedCount} con error.` + (errors.length ? `
@@ -7098,7 +7161,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     runLanzamientoProduccion();
   });
-  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar." });
+  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "No se pudo escribir en el almacenamiento local. El cambio no quedó guardado. Descargar un respaldo, revisar el espacio y los permisos del navegador y volver a intentar." });
   const encolarSync = ({ type, key, args }) => {
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!syncQueueApi) {
@@ -7115,7 +7178,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         return prev;
       }
       try {
-        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+        writeLocal("sdp_sync_queue", syncQueueApi.serialize(next));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -7125,7 +7188,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "f3191aafd9e1" : null;
+    const appVersion = true ? "a21fbfcb760e" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7163,7 +7226,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         setInvReservas((prev) => {
           const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción descartado", at: (/* @__PURE__ */ new Date()).toISOString() });
           try {
-            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+            writeLocal("sdp_inv_reservas", JSON.stringify(upd));
           } catch (e) {
           }
           return upd;
@@ -7173,7 +7236,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setBitLotes((prev) => {
       const upd = prev.map((l) => l.id === loteId ? { ...l, ...fields } : l);
       try {
-        localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
+        writeLocal("sdp_bit_lotes", JSON.stringify(upd));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -7200,7 +7263,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     if (!bitBolsasEditRef.current.some((b) => b.id === bolsaId)) return false;
     const upd = bitBolsasEditRef.current.map((b) => b.id === bolsaId ? { ...b, ...fields } : b);
     try {
-      localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+      writeLocal("sdp_bit_bolsas", JSON.stringify(upd));
     } catch (e) {
       if (!options.silent) bitQuotaWarn();
       return false;
@@ -7217,7 +7280,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setBitTasks((prev) => {
       const upd = taskEngineApi.mergeTasks(prev, nuevasTareas);
       try {
-        localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
+        writeLocal("sdp_bit_tasks", JSON.stringify(upd));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -7236,7 +7299,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         }
       });
       try {
-        localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
+        writeLocal("sdp_bit_tasks", JSON.stringify(upd));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -7249,7 +7312,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setRoomEvents((prev) => {
       const upd = [...prev, ...nuevosEventos];
       try {
-        localStorage.setItem("sdp_room_events", JSON.stringify(upd));
+        writeLocal("sdp_room_events", JSON.stringify(upd));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -7305,14 +7368,13 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const deleteBitCosecha = (id) => {
     const cosecha = bitCosechas.find((c) => c.id === id);
     const lote = cosecha && bitLotes.find((l) => l.id === cosecha.loteId);
-    setBitCosechas((prev) => {
-      const upd = prev.filter((c) => c.id !== id);
-      try {
-        localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
-      } catch (e) {
-      }
-      return upd;
-    });
+    const upd = bitCosechas.filter((c) => c.id !== id);
+    try {
+      writeLocal("sdp_bit_cosechas", JSON.stringify(upd));
+    } catch (e) {
+      return false;
+    }
+    setBitCosechas(upd);
     encolarSync({ type: "eliminarCosecha", key: "cosecha:" + id, args: [id] });
     if (lote?.codigo) {
       window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, id).catch((err) => console.warn("No se pudo quitar la cosecha de la ficha pública:", err));
@@ -7320,36 +7382,40 @@ ${errors.slice(0, 5).join("\n")}` : "");
   };
   const purgeBitLote = (loteId) => {
     const publicCleanup = [];
-    const lote = bitLotes.find((l) => l.id === loteId);
-    const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
-    const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
+    let lote, bolsaIds, cosechaIds;
     const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
-    if (ledgerApi) {
-      setInvReservas((prev) => {
-        const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() });
-        try {
-          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-        } catch (e) {
-        }
-        return upd;
-      });
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    let nextLotes, nextBolsas, nextCosechas, nextReservas, nextQueue;
+    try {
+      SetasPrototype.recover(localStorage);
+      const currentLotes = SetasPrototype.read(localStorage, "sdp_bit_lotes");
+      const currentBolsas = SetasPrototype.read(localStorage, "sdp_bit_bolsas");
+      const currentCosechas = SetasPrototype.read(localStorage, "sdp_bit_cosechas");
+      const currentReservas = SetasPrototype.read(localStorage, "sdp_inv_reservas");
+      const currentQueue = SetasPrototype.read(localStorage, "sdp_sync_queue");
+      lote = currentLotes.find((l) => l.id === loteId);
+      bolsaIds = currentBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
+      cosechaIds = currentCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
+      nextLotes = currentLotes.filter((l) => l.id !== loteId);
+      nextBolsas = currentBolsas.filter((b) => b.loteId !== loteId);
+      nextCosechas = currentCosechas.filter((c) => c.loteId !== loteId);
+      nextReservas = ledgerApi ? ledgerApi.releaseForBatch(currentReservas, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() }) : currentReservas;
+      if (!syncQueueApi) throw Error("Cola de sincronización no disponible");
+      nextQueue = syncQueueApi.purgeKeys(currentQueue, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
+      nextQueue = syncQueueApi.enqueue(nextQueue, syncQueueApi.createOperation({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] }));
+      SetasPrototype.persist(localStorage, [["sdp_bit_lotes", nextLotes], ["sdp_bit_bolsas", nextBolsas], ["sdp_bit_cosechas", nextCosechas], ["sdp_inv_reservas", nextReservas], ["sdp_sync_queue", nextQueue]]);
+    } catch (e) {
+      reportLocalWriteFailure("sdp_bit_lotes");
+      bitQuotaWarn();
+      return Promise.resolve(false);
     }
-    setBitLotes((prev) => {
-      const upd = prev.filter((l) => l.id !== loteId);
-      try {
-        localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
-      } catch (e) {
-      }
-      return upd;
-    });
-    setBitBolsas((prev) => {
-      const upd = prev.filter((b) => b.loteId !== loteId);
-      try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-      } catch (e) {
-      }
-      return upd;
-    });
+    setBitLotes(nextLotes);
+    setBitBolsas(nextBolsas);
+    bitBolsasEditRef.current = nextBolsas;
+    setBitCosechas(nextCosechas);
+    setInvReservas(nextReservas);
+    syncQueueRef.current = nextQueue;
+    setSyncQueue(nextQueue);
     if (bagPhotoStoreRef.current && bagPhotoStoreRef.current.available && bolsaIds.length) {
       publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(() => {
       }));
@@ -7361,30 +7427,10 @@ ${errors.slice(0, 5).join("\n")}` : "");
         return next;
       });
     }
-    setBitCosechas((prev) => {
-      const upd = prev.filter((c) => c.loteId !== loteId);
-      try {
-        localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
-      } catch (e) {
-      }
-      return upd;
-    });
     if (bitActiveLoteId === loteId) {
       setBitActiveLoteId(null);
       goBitTab("bit_dash");
     }
-    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
-    if (syncQueueApi) {
-      setSyncQueue((prev) => {
-        const purged = syncQueueApi.purgeKeys(prev, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
-        try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
-        } catch (e) {
-        }
-        return purged;
-      });
-    }
-    encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
     if (lote?.codigo && window.SetasPublicTraceDB) {
       cosechaIds.forEach((cid) => {
         publicCleanup.push(Promise.resolve(window.SetasPublicTraceDB.eliminarCosecha(lote.codigo, cid)).catch((err) => console.warn("No se pudo quitar una cosecha de la ficha pública:", err)));
@@ -7405,17 +7451,12 @@ ${errors.slice(0, 5).join("\n")}` : "");
     } catch (e) {
       throw Error("No se pudo descargar el respaldo; no se borró nada. " + (e.message || ""));
     }
-    const cleanup = plan.map((p) => purgeBitLote(p.loteId));
+    for (const entry of plan) {
+      if (await purgeBitLote(entry.loteId) === false) throw Error("El reinicio se detuvo porque un lote no se pudo guardar. Revisar los datos antes de reintentar.");
+    }
+    writeLocal("sdp_bit_tasks", "[]");
+    writeLocal(SetasPrototype.PILOT_RESET_MARKER, (/* @__PURE__ */ new Date()).toISOString());
     setBitTasks([]);
-    try {
-      localStorage.setItem("sdp_bit_tasks", "[]");
-    } catch (e) {
-    }
-    try {
-      localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER, (/* @__PURE__ */ new Date()).toISOString());
-    } catch (e) {
-    }
-    await Promise.all(cleanup);
     await new Promise((r) => setTimeout(r, 300));
     location.reload();
   };
@@ -7464,28 +7505,28 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const saveProveedores = (list) => {
     setInvProveedores(list);
     try {
-      localStorage.setItem("sdp_proveedores", JSON.stringify(list));
+      writeLocal("sdp_proveedores", JSON.stringify(list));
     } catch (e) {
     }
   };
   const saveCompras = (list) => {
     setInvCompras(list);
     try {
-      localStorage.setItem("sdp_compras", JSON.stringify(list));
+      writeLocal("sdp_compras", JSON.stringify(list));
     } catch (e) {
     }
   };
   const saveLotes = (list) => {
     setInvLotes(list);
     try {
-      localStorage.setItem("sdp_lotes", JSON.stringify(list));
+      writeLocal("sdp_lotes", JSON.stringify(list));
     } catch (e) {
     }
   };
   const saveMovimientos = (list) => {
     setInvMovimientos(list);
     try {
-      localStorage.setItem("sdp_movimientos", JSON.stringify(list));
+      writeLocal("sdp_movimientos", JSON.stringify(list));
     } catch (e) {
     }
   };
@@ -7500,7 +7541,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const saveInvOps = (q) => {
     setInvOps(q);
     try {
-      localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY, JSON.stringify(q));
+      writeLocal(SetasInventoryConsumptionApi.QUEUE_KEY, JSON.stringify(q));
     } catch (e) {
     }
   };
@@ -7532,7 +7573,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setInvReservas((prev) => {
       const upd = ledgerApi.addReservations(prev, nuevas);
       try {
-        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+        writeLocal("sdp_inv_reservas", JSON.stringify(upd));
       } catch (e) {
       }
       return upd;
@@ -7554,7 +7595,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       if (yaTiene) return prev;
       const upd = ledgerApi.addReservations(prev, reservas);
       try {
-        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+        writeLocal("sdp_inv_reservas", JSON.stringify(upd));
       } catch (e) {
       }
       return upd;
@@ -7569,14 +7610,14 @@ ${errors.slice(0, 5).join("\n")}` : "");
     invLotesRef.current = r.lotes;
     setInvLotes(r.lotes);
     try {
-      localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
+      writeLocal("sdp_lotes", JSON.stringify(r.lotes));
     } catch (e) {
       bitQuotaWarn();
     }
     setInvMovimientos((prev) => {
       const upd = [...prev, ...r.movimientos];
       try {
-        localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
+        writeLocal("sdp_movimientos", JSON.stringify(upd));
       } catch (e) {
       }
       return upd;
@@ -7595,7 +7636,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         }
         upd = aCerrar.reduce((acc, r2) => ledgerApi.consume(acc, r2.id, { eventId: op.opId, at: nowIso }), upd);
         try {
-          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+          writeLocal("sdp_inv_reservas", JSON.stringify(upd));
         } catch (e) {
         }
         return upd;
@@ -7635,7 +7676,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const saveCorreos = (fn) => setInvCorreos((prev) => {
     const upd = inboxApi ? inboxApi.compactCorreos(fn(prev)) : fn(prev);
     try {
-      localStorage.setItem("sdp_correos_compra", JSON.stringify(upd));
+      writeLocal("sdp_correos_compra", JSON.stringify(upd));
     } catch (e) {
     }
     return upd;
@@ -8512,7 +8553,7 @@ BATCH (${numBags}×${kgBag} kg):
           payload: { nota: evento.nota || "Riego registrado por QR" }
         });
         const updated = qrLotesRef.current.map((item) => item.id === lote.id ? { ...item, lifecycleEvents: nextLog } : item);
-        localStorage.setItem("sdp_bit_lotes", JSON.stringify(updated));
+        writeLocal("sdp_bit_lotes", JSON.stringify(updated));
         qrLotesRef.current = updated;
         setBitLotes(updated);
         savedLocally = true;
@@ -8691,7 +8732,7 @@ BATCH (${numBags}×${kgBag} kg):
         upd = ledgerApi.releaseForBatch(upd, id, { reason: "Lote de producción descartado", at });
       });
       try {
-        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+        writeLocal("sdp_inv_reservas", JSON.stringify(upd));
       } catch (e) {
       }
       return upd;
@@ -8976,7 +9017,7 @@ BATCH (${numBags}×${kgBag} kg):
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
         try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+          writeLocal("sdp_sync_queue", syncQueueApi.serialize(next));
         } catch (e) {
         }
       } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "data-testid": "sync-export-stuck", style: { minHeight: 44 }, onClick: exportarSyncPendientes }, "Exportar"));
@@ -9033,7 +9074,7 @@ BATCH (${numBags}×${kgBag} kg):
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
         try {
-          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+          writeLocal("sdp_sync_queue", syncQueueApi.serialize(next));
         } catch (e) {
         }
       }, style: { marginLeft: 6 } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "sync-export-stuck", onClick: exportarSyncPendientes, style: { marginLeft: 6, minHeight: 44, minWidth: 44 } }, "Exportar"));
@@ -9607,7 +9648,7 @@ BATCH (${numBags}×${kgBag} kg):
           "Sanitizar sala"
         )
       );
-    }))), renderRoomCyclePanel(), /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
+    }))), /* @__PURE__ */ React.createElement(ServerClimateAlerts, { feed: serverClimateFeed, roomId: selectedClimateRoom, rooms: ROOMS_CONFIG, onRetry: () => setServerClimateRetry((v) => v + 1) }), renderRoomCyclePanel(), /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -9742,22 +9783,24 @@ BATCH (${numBags}×${kgBag} kg):
       const ndirCorr = co2Correction ? { correctedPpm: co2Correction.correctedPpm, baroFactor: co2Correction.baroFactor, deltaPpm: co2Correction.deltaPpm, rawPpm: co2Correction.rawPpm, live: true } : climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745, currentMetrics.temp), { live: false }) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
       return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele", "data-testid": "climate-co2-card", "data-co2-live": ndirCorr.live ? "true" : "false" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "co2_ppm", roomLive, injected }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "ppm compensados"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", ndirCorr.rawPpm, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert ", co2Correction && co2Correction.pressureHpa || liveTelemetry.config.pressureHpa || 745, " hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
     })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Estimado · derivado de T° y HR"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
-      const activeBiomassKg = mainLote?.pesoLote ? mainLote.pesoLote * 0.22 : 25;
-      const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === "function" ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || "orellana_gris", {
-        targetPpm: defaultTargets.co2_ppm.target || 800,
+      const missing = [];
+      if (!lotesEnSala.length) missing.push("Sin lote en la sala");
+      if (lotesEnSala.some((l) => !Number.isFinite(l.biomasaActivaKg) || l.biomasaActivaKg <= 0)) missing.push("Falta registrar la biomasa fúngica activa de cada lote");
+      const speciesKeys = lotesEnSala.map((l) => [l.sKey, l.speciesKey, l.especieKey, l.recipeRef?.sKey].find((k) => k && (SPP[k] || climateMath?.SPECIES_RESPIRATION_RATES?.[k] || climateMath?.SPECIES_KEY_ALIASES?.[k])) || (l.especie ? Object.keys(SPP).find((k) => SPP[k].name === l.especie) : null));
+      if (speciesKeys.some((k) => !k)) missing.push("Falta identificar la especie de cada lote");
+      if (climateMath?.SPECIES_RESPIRATION_RATES && speciesKeys.some((k) => k && !climateMath.SPECIES_RESPIRATION_RATES[k] && !climateMath.SPECIES_KEY_ALIASES?.[k])) missing.push("El modelo FAE no tiene parámetros para la especie registrada");
+      if (new Set(speciesKeys).size > 1) missing.push("El modelo FAE no admite varias especies en una sala");
+      if (!Number.isFinite(room.volumeM3) || room.volumeM3 <= 0) missing.push("Falta configurar el volumen de la sala");
+      if (!Number.isFinite(room.fanRatedCfm) || room.fanRatedCfm <= 0) missing.push("Falta configurar el caudal del extractor");
+      if (!climateMath?.calcDynamicFAE) missing.push("Modelo FAE no disponible");
+      const activeBiomassKg = lotesEnSala.reduce((sum, l) => sum + (l.biomasaActivaKg || 0), 0);
+      const faeCalc = missing.length ? null : climateMath.calcDynamicFAE(activeBiomassKg, speciesKeys[0], {
+        targetPpm: defaultTargets.co2_ppm.target,
         outdoorPpm: 420,
-        roomVolumeM3: selectedClimateRoom === "martha_01" ? 11.5 : 8,
-        fanRatedCfm: 140
-      }) : null;
-      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { gridColumn: "span 2" } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 4 } }), " Ventilación Dinámica FAE (Extracción)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--ink-1)" } }, "Biomasa activa: ", activeBiomassKg.toFixed(1), " kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--ink-0)" } }, faeCalc ? `${faeCalc.requiredCfm} CFM` : "24.5 CFM", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginLeft: 6 } }, "(", faeCalc ? faeCalc.requiredM3h : "41.6", " m³/h · ", faeCalc ? faeCalc.effectiveAch : "3.6", " ACH)")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--accent-olive)", marginTop: 2 } }, faeCalc?.schedule.recommendation || "Encender 2.5 min cada 10 min")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("span", { style: {
-        padding: "3px 8px",
-        borderRadius: 4,
-        background: (faeCalc?.dutyCyclePct || 20) > 85 ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
-        color: (faeCalc?.dutyCyclePct || 20) > 85 ? "var(--accent-rust)" : "var(--moss-800)",
-        fontFamily: "var(--font-mono)",
-        fontSize: 11,
-        fontWeight: 700
-      } }, "Duty Cycle: ", faeCalc ? faeCalc.dutyCyclePct : 18, "%"))));
+        roomVolumeM3: room.volumeM3,
+        fanRatedCfm: room.fanRatedCfm
+      });
+      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", "data-testid": "room-fae", style: { gridColumn: "span 2" } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 4 } }), " Ventilación Dinámica FAE (Extracción)")), faeCalc ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "sdp-provenance" }, "Estimación del modelo · Biomasa declarada: ", activeBiomassKg.toFixed(1), " kg · Volumen nominal: ", room.volumeM3.toFixed(2), " m³ · CO₂ exterior supuesto: 420 ppm"), /* @__PURE__ */ React.createElement("strong", null, faeCalc.requiredCfm, " CFM"), " (", faeCalc.requiredM3h, " m³/h · ", faeCalc.effectiveAch, " ACH)", /* @__PURE__ */ React.createElement("p", null, faeCalc.schedule.recommendation, " · Duty Cycle: ", faeCalc.dutyCyclePct, "%")) : /* @__PURE__ */ React.createElement("p", { role: "status" }, !lotesEnSala.length ? "Sin lote en la sala. No se calcula ventilación." : missing.join(". ") + ". No se calcula ventilación."));
     })()), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "target", size: 13, style: { marginRight: 4 } }), " Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "active-culinary-profile", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-1)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
       "select",
       {
@@ -9955,7 +9998,7 @@ BATCH (${numBags}×${kgBag} kg):
       const next = syncQueueApi.retryStuck(syncQueue, Date.now());
       setSyncQueue(next);
       try {
-        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+        writeLocal("sdp_sync_queue", syncQueueApi.serialize(next));
       } catch (e) {
       }
     } }, "Reintentar"));
@@ -10165,7 +10208,7 @@ BATCH (${numBags}×${kgBag} kg):
   return /* @__PURE__ */ React.createElement("main", { className: "workspace app-workspace", "data-mode": getSurfaceMode(tab) }, /* @__PURE__ */ React.createElement("div", { className: "topbar" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "topbar-mark", onClick: () => goTab("catalogo"), style: { cursor: "pointer", display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("img", { src: resolveLogo("_standalone_imgs/logo-sdlp.png"), alt: "Setas de la Peña", width: "54", height: "28", style: { width: 54, height: "auto", maxHeight: 28, objectFit: "contain" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 700 } }, "Setas de la Peña")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { className: `sdp-sync-chip ${isOnline ? "sdp-sync-chip--synced" : "sdp-sync-chip--pending"}` }, isOnline ? "CONECTADO · SINCRONIZADO" : "MODO LOCAL · PENDIENTE"))), /* @__PURE__ */ React.createElement("nav", { className: "fos-rail" }, /* @__PURE__ */ React.createElement("span", { className: "fos-rail-mark", style: { position: "relative", width: 91, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 4px 8px" } }, /* @__PURE__ */ React.createElement("img", { src: resolveLogo("_standalone_imgs/logo-sdlp.png"), alt: "Setas de la Peña", width: "80", height: "42", style: { width: 80, height: "auto", maxHeight: 48, objectFit: "contain", display: "block" } })), NAV_GROUPS.map((g) => {
     const on = g.tabs.includes(tab);
     return /* @__PURE__ */ React.createElement("button", { key: g.key, className: "fos-rail-btn" + (on ? " on" : ""), onClick: () => goTab(g.tabs[0]) }, g.icon, /* @__PURE__ */ React.createElement("span", null, g.label));
-  })), /* @__PURE__ */ React.createElement("header", { className: "hero", style: { display: tab === "inicio" || tab === "home" ? "none" : void 0 } }, /* @__PURE__ */ React.createElement("div", { className: "hero-inner" }, /* @__PURE__ */ React.createElement("div", { className: "hero-copy" }, /* @__PURE__ */ React.createElement("div", { className: "hero-eyebrow" }, "Setas de la Peña — Simulador de recetas"), /* @__PURE__ */ React.createElement("div", { className: "hero-title" }, "Diseño de", /* @__PURE__ */ React.createElement("br", null), "Sustratos"), /* @__PURE__ */ React.createElement("div", { className: "hero-lede", style: { display: "block", marginTop: 14, fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Cálculo, optimización y trazabilidad de mezclas.")), /* @__PURE__ */ React.createElement("div", { className: "hero-art" }, /* @__PURE__ */ React.createElement("img", { src: window.__resources && window.__resources.img_banner || "_standalone_imgs/banner.png", alt: "", "aria-hidden": "true", width: "720", height: "480" })))), /* @__PURE__ */ React.createElement("div", { className: "wrap" }, /* @__PURE__ */ React.createElement("div", { className: "page-title-bar", style: { display: tab === "catalogo" || tab === "inicio" || tab === "home" ? "none" : void 0 } }, /* @__PURE__ */ React.createElement("span", { className: "page-title-eyebrow" }, RECETA_TABS.includes(tab) ? "Receta" : "Cultivo"), /* @__PURE__ */ React.createElement("h1", { className: "page-title-h" }, TAB_PAGE_TITLES[tab]), /* @__PURE__ */ React.createElement("div", { className: "page-title-rule" })), tab !== "inicio" && (() => {
+  })), /* @__PURE__ */ React.createElement("header", { className: "hero", style: { display: tab === "inicio" || tab === "home" ? "none" : void 0 } }, /* @__PURE__ */ React.createElement("div", { className: "hero-inner" }, /* @__PURE__ */ React.createElement("div", { className: "hero-copy" }, /* @__PURE__ */ React.createElement("div", { className: "hero-eyebrow" }, "Setas de la Peña — Simulador de recetas"), /* @__PURE__ */ React.createElement("div", { className: "hero-title" }, "Diseño de", /* @__PURE__ */ React.createElement("br", null), "Sustratos"), /* @__PURE__ */ React.createElement("div", { className: "hero-lede", style: { display: "block", marginTop: 14, fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Cálculo, optimización y trazabilidad de mezclas.")), /* @__PURE__ */ React.createElement("div", { className: "hero-art" }, /* @__PURE__ */ React.createElement("img", { src: window.__resources && window.__resources.img_banner || "_standalone_imgs/banner.png", alt: "", "aria-hidden": "true", width: "720", height: "480" })))), /* @__PURE__ */ React.createElement("div", { className: "wrap" }, localWriteFailure && /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "local-save-error", className: "panel", style: { borderColor: "var(--coral-700)", color: "var(--coral-700)", position: "sticky", top: 0, zIndex: "var(--z-sticky-header)" } }, /* @__PURE__ */ React.createElement("strong", null, "No se pudo guardar en este dispositivo."), " Algunos cambios pueden estar solo en pantalla y perderse al recargar. Mantener la app abierta, descargar un respaldo desde Datos y liberar espacio o habilitar el almacenamiento antes de reintentar."), /* @__PURE__ */ React.createElement("div", { className: "page-title-bar", style: { display: tab === "catalogo" || tab === "inicio" || tab === "home" ? "none" : void 0 } }, /* @__PURE__ */ React.createElement("span", { className: "page-title-eyebrow" }, RECETA_TABS.includes(tab) ? "Receta" : "Cultivo"), /* @__PURE__ */ React.createElement("h1", { className: "page-title-h" }, TAB_PAGE_TITLES[tab]), /* @__PURE__ */ React.createElement("div", { className: "page-title-rule" })), tab !== "inicio" && (() => {
     const activeGroup = NAV_GROUPS.find((g) => g.tabs.includes(tab));
     if (!activeGroup || activeGroup.key === "recetas" || activeGroup.tabs.length < 2) return null;
     return /* @__PURE__ */ React.createElement("div", { className: "fos-chips" }, activeGroup.tabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t, className: t === tab ? "on" : "", onClick: () => goTab(t) }, TAB_LABELS[t])));
@@ -10365,7 +10408,7 @@ BATCH (${numBags}×${kgBag} kg):
           const next = syncQueueApi.retryStuck(syncQueue, Date.now());
           setSyncQueue(next);
           try {
-            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+            writeLocal("sdp_sync_queue", syncQueueApi.serialize(next));
           } catch (e) {
           }
         }, style: { cursor: "pointer", minHeight: 48, padding: "0 14px", background: "var(--paper-0)", color: "var(--coral-700)", border: "1px solid var(--coral-700)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Reintentar")
@@ -10382,7 +10425,10 @@ BATCH (${numBags}×${kgBag} kg):
         style: { cursor: "pointer", minHeight: 40, padding: "0 16px", background: "var(--paper-0)", color: "var(--ink-0)", border: "1px solid var(--line-0)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" }
       },
       "Cerrar jornada"
-    )))), liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("aside", { className: "home-context", "aria-label": "Contexto del turno" }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Alertas del cultivo", style: { background: "var(--surface-page)", border: "1px solid var(--border-heavy)", borderLeft: "5px solid var(--status-error)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error)" } }, "Alertas del cultivo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sensores, lotes e insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), todayExceptions.length > 0 && /* @__PURE__ */ React.createElement("ul", { "data-testid": "today-exceptions", style: { listStyle: "none", margin: "0 0 12px", padding: 0, display: "flex", flexDirection: "column", gap: 8 } }, todayExceptions.map((item) => {
+    )))), /* @__PURE__ */ React.createElement(ServerClimateAlerts, { feed: serverClimateFeed, rooms: ROOMS_CONFIG, onOpenRoom: (roomId) => {
+      setSelectedClimateRoom(roomId);
+      goTab("clima");
+    }, onRetry: () => setServerClimateRetry((v) => v + 1) }), liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("aside", { className: "home-context", "aria-label": "Contexto del turno" }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Alertas del cultivo", style: { background: "var(--surface-page)", border: "1px solid var(--border-heavy)", borderLeft: "5px solid var(--status-error)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error)" } }, "Alertas del cultivo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sensores, lotes e insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), todayExceptions.length > 0 && /* @__PURE__ */ React.createElement("ul", { "data-testid": "today-exceptions", style: { listStyle: "none", margin: "0 0 12px", padding: 0, display: "flex", flexDirection: "column", gap: 8 } }, todayExceptions.map((item) => {
       const alarma = item.severity === "alarma";
       const ink = alarma ? "var(--status-error)" : "var(--status-warn-text)";
       return /* @__PURE__ */ React.createElement("li", { key: item.id, "data-exception-kind": item.kind, "data-severity": item.severity, className: `sdp-task ${alarma ? "sdp-task--critical" : ""}`, style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "10px 14px", borderLeft: `3px solid ${ink}` } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: "1 1 240px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: ink, border: `1px solid ${ink}`, padding: "1px 5px" } }, alarma ? "Alarma" : "Vigilar"), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, item.title)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, item.detail)), item.action && /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--field", onClick: () => runTodayExceptionAction(item) }, item.action.label));
@@ -10808,7 +10854,7 @@ Click para ver análisis completo`
   }), pantryIds.length > 12 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip", style: { opacity: 0.5 } }, "+", pantryIds.length - 12, " más")), /* @__PURE__ */ React.createElement("details", { className: "ingredient-options", "data-testid": "ingredient-options" }, /* @__PURE__ */ React.createElement("summary", null, "Más opciones", cat !== "all" ? ` · ${CATS[cat]}` : "", showPrices ? " · Precios abiertos" : ""), /* @__PURE__ */ React.createElement("div", { className: "ingredient-options-body" }, /* @__PURE__ */ React.createElement("div", { className: "cats", role: "group", "aria-label": "Filtrar por categoría" }, Object.entries(CATS).map(([k, l]) => /* @__PURE__ */ React.createElement("button", { type: "button", key: k, "data-cat": k, className: `cat${cat === k ? " on" : ""}`, "aria-pressed": cat === k, onClick: () => setCat(k) }, l))), /* @__PURE__ */ React.createElement("div", { className: "ingredient-option-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `cat${groupByRole ? " on" : ""}`, "aria-pressed": groupByRole, onClick: () => setGroupByRole((g) => !g) }, "Agrupar por función"), showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", className: "cat", onClick: () => setAllRoleGroups(false) }, "Expandir grupos"), showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", className: "cat", onClick: () => setAllRoleGroups(true) }, "Colapsar grupos"), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setPriceOverrides({});
     try {
-      localStorage.removeItem("setas_prices_v1");
+      removeLocal("setas_prices_v1");
     } catch (e) {
     }
   }, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 8px", border: "1px solid var(--coral-500)", background: "none", color: "var(--coral-500)", cursor: "pointer" } }, "Restaurar todo")), /* @__PURE__ */ React.createElement("div", null, fings.filter((g) => g.cn > 0 || g.cost > 0).map((ing) => {
@@ -10831,7 +10877,7 @@ Click para ver análisis completo`
           const n = { ...priceOverrides, [ing.id]: v };
           setPriceOverrides(n);
           try {
-            localStorage.setItem("setas_prices_v1", JSON.stringify(n));
+            writeLocal("setas_prices_v1", JSON.stringify(n));
           } catch (err) {
           }
         }
