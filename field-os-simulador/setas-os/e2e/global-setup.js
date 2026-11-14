@@ -1,7 +1,8 @@
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium, expect } = require('@playwright/test');
+const { chromium } = require('@playwright/test');
+const { savePersistedAuthState } = require('./auth-storage.cjs');
 const { requiresAuth } = require('./auth-policy.cjs');
 
 // Inicia sesión una sola vez contra el Firebase real del proyecto (sdlp-os)
@@ -61,15 +62,7 @@ module.exports = async (config) => {
     // Wait for the persisted Auth record instead of a fixed delay. A visible
     // app only proves the in-memory session; workers need the IndexedDB copy.
     stage = 'persistir sesión en IndexedDB';
-    let persistedState;
-    await expect.poll(async () => {
-      persistedState = await page.context().storageState({indexedDB:true});
-      return persistedState.origins.some(origin => origin.indexedDB?.some(database =>
-        database.name === 'firebaseLocalStorageDb' && database.stores.some(store =>
-          store.name === 'firebaseLocalStorage' && store.records.some(record =>
-            typeof record.value?.fbase_key === 'string' && record.value.fbase_key.startsWith('firebase:authUser:') && record.value.value?.uid))));
-    }, {timeout:10000, message:'Firebase Auth debe quedar persistido antes de iniciar los workers'}).toBe(true);
-    fs.writeFileSync(storageState, JSON.stringify(persistedState));
+    await savePersistedAuthState(page, storageState);
   } catch (error) {
     if (storageState) fs.rmSync(storageState, { force: true });
     // El error de Playwright puede incluir el contenido de campos de login.
