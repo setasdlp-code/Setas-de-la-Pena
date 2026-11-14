@@ -20,7 +20,11 @@ module.exports = defineConfig({
   expect: { timeout: 7_000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
+  // En CI: el JSON alimenta e2e/print-failures.cjs, que imprime el error y los
+  // pasos de cada prueba fallida al final del log.
+  reporter: process.env.CI
+    ? [['line'], ['json', { outputFile: 'e2e-results.json' }], ['html', { open: 'never' }]]
+    : 'list',
   globalSetup: require.resolve('./e2e/global-setup.js'),
   use: {
     baseURL: 'http://127.0.0.1:4173',
@@ -50,6 +54,9 @@ module.exports = defineConfig({
     cwd: APP_DIR,
     url: 'http://127.0.0.1:4173/Setas%20OS%20v5.dc.html',
     reuseExistingServer: !process.env.CI,
+    // El log de peticiones de http.server (stderr) ocultaba el error real en CI.
+    stdout: 'ignore',
+    stderr: process.env.CI ? 'ignore' : 'pipe',
     timeout: 20_000,
   },
 });

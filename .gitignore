@@ -100,3 +100,4 @@ knowledge_base.zip
 .claude/worktrees/
 .claude/.cc-writes
 esphome/secrets.yaml
+**/e2e-results.json

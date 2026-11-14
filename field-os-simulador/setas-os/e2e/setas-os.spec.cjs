@@ -121,9 +121,14 @@ test.describe('desktop navigation contract', () => {
   });
 
   test('Formular keeps species and live recipe evaluation visible before advanced tools', async ({ page }) => {
-    await openApp(page, () => localStorage.setItem('sim_preselect_spp', 'p_ostreatus_gris'));
-    await workspaceButton(page, 'formular').click();
-    await contextTab(page, 'Formular').click();
+    // Recorrido largo (~20-30 s en CI): con 30 s fallaba por timeout sin paso
+    // identificable. Los test.step dejan en el reporte en qué tramo se detiene.
+    test.setTimeout(60_000);
+    await test.step('abrir Formular con Orellana gris', async () => {
+      await openApp(page, () => localStorage.setItem('sim_preselect_spp', 'p_ostreatus_gris'));
+      await workspaceButton(page, 'formular').click();
+      await contextTab(page, 'Formular').click();
+    });
 
     const species = page.locator('.form-species-context');
     const liveSummary = page.locator('.sim-live-dashboard');
@@ -133,6 +138,9 @@ test.describe('desktop navigation contract', () => {
     const ingredients = page.locator('#bl-ingredientes');
     const review = page.locator('#formulator-review');
     const command = page.locator('.form-production-command');
+    const gauges = page.getByTestId('form-review-gauges');
+
+    await test.step('estado inicial sin ingredientes', async () => {
 
     await expect(species).toBeVisible();
     await expect(species).toContainText('Orellana Gris');
@@ -143,7 +151,6 @@ test.describe('desktop navigation contract', () => {
     await expect(recipe).toContainText('Sin ingredientes aún');
     // La evaluación en vivo vive dentro de "Medidores y comparación del modelo",
     // un <details> cerrado por defecto en el panel unificado de revisión.
-    const gauges = page.getByTestId('form-review-gauges');
     await expect(evaluation).toBeHidden();
     await gauges.locator('summary').click();
     await expect(evaluation).toBeVisible();
@@ -154,6 +161,9 @@ test.describe('desktop navigation contract', () => {
     await expect(review).toContainText('Revisión y preparación');
 
     await expectDesktopWorkspace(page);
+    });
+
+    await test.step('agregar Paja de trigo desde Catálogo con teclado', async () => {
 
     // A fresh workspace has no physical inventory. Recipe exploration must
     // explicitly use the catalog instead of relying on seeded Bodega stock.
@@ -182,12 +192,17 @@ test.describe('desktop navigation contract', () => {
     await expect(summary).toBeVisible();
     await expect(summary).not.toContainText('Paja de trigo');
     await expect(command).toBeVisible();
+    });
 
+    await test.step('panel de revisión con evaluación y resumen', async () => {
     // The score/gauges panel and RecipeGauges now live together in the unified review panel.
     if (!(await gauges.evaluate(el => el.open))) await gauges.locator('summary').click();
     await expect(evaluation).toBeVisible();
     await expect(page.locator('#formulator-review #recipe-live-evaluation')).toHaveCount(1);
     await expect(page.locator('#formulator-review #bl-receta-summary')).toHaveCount(1);
+    });
+
+    await test.step('barra de producción visible al desplazar', async () => {
 
     await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight / 2; });
     const sticky = await page.evaluate(() => {
@@ -207,6 +222,7 @@ test.describe('desktop navigation contract', () => {
     expect(sticky.commandBottom).toBeLessThan(sticky.viewport);
     expect(sticky.livePosition).toBe('relative');
     expect(sticky.speciesPosition).toBe('relative');
+    });
   });
 
   test('ingredient groups use the bounded desktop sidebar and collapse independently', async ({ page }) => {

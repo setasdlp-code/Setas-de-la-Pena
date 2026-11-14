@@ -85,6 +85,12 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: npm run test:e2e
 
+      # Imprime error y pasos de cada intento fallido (también los que pasaron
+      # al reintentar), para no depender de descargar artefactos.
+      - name: E2E failures summary
+        if: always()
+        run: node e2e/print-failures.cjs e2e-results.json
+
       - name: Preserve failed E2E visual diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -93,6 +99,7 @@ jobs:
           path: |
             field-os-simulador/setas-os/test-results/**/error-context.md
             field-os-simulador/setas-os/test-results/**/*.png
+            field-os-simulador/setas-os/e2e-results.json
           if-no-files-found: ignore
           retention-days: 3
 
