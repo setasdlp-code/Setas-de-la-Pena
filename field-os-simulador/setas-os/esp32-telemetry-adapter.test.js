@@ -199,51 +199,38 @@ test('createTelemetryServer atiende POST /api/telemetry, GET /active-cycles y GE
   assert.equal(postJson.success, true);
   assert.equal(postJson.count, 2);
   assert.equal(receivedReadings.length, 2);
-  assert.ok(postJson.commands);
+  // Solo telemetría: la respuesta no lleva comandos ni estado de actuadores (DEC-001).
+  assert.equal('commands' in postJson, false);
+  assert.equal('actuator_state' in postJson, false);
+  assert.equal(serverInst.getActuatorStates, undefined);
 
-  // 4. Test GET /api/actuators/status
-  const reqActStatus = new EventEmitter();
-  reqActStatus.method = 'GET';
-  reqActStatus.url = '/api/actuators/status';
-
-  let actStatus = 0;
-  let actBody = '';
-  const resAct = {
-    setHeader: () => {},
-    writeHead: (st) => { actStatus = st; },
-    end: (data) => { actBody = data; }
+  // 4. Las rutas de actuadores ya no existen (antes: sin autenticación y con CORS abierto).
+  const requestStatus = (method, url, payload) => {
+    const req = new EventEmitter();
+    req.method = method;
+    req.url = url;
+    const out = { status: 0, body: '' };
+    const res = {
+      setHeader: () => {},
+      writeHead: (st) => { out.status = st; },
+      end: (data) => { out.body = data; }
+    };
+    serverInst.server.emit('request', req, res);
+    if (payload !== undefined) req.emit('data', JSON.stringify(payload));
+    req.emit('end');
+    return out;
   };
-  serverInst.server.emit('request', reqActStatus, resAct);
-  assert.equal(actStatus, 200);
-  const actJson = JSON.parse(actBody);
-  assert.equal(actJson.status, 'ok');
-  assert.ok(actJson.actuatorStates.martha_01);
-
-  // 5. Test POST /api/actuators/override
-  const reqOverride = new EventEmitter();
-  reqOverride.method = 'POST';
-  reqOverride.url = '/api/actuators/override';
-
-  let ovStatus = 0;
-  let ovBody = '';
-  const resOv = {
-    setHeader: () => {},
-    writeHead: (st) => { ovStatus = st; },
-    end: (data) => { ovBody = data; }
-  };
-  serverInst.server.emit('request', reqOverride, resOv);
-  reqOverride.emit('data', JSON.stringify({
-    room_id: 'martha_01',
-    relay_ch1: 'OFF',
-    relay_ch2: 'ON'
-  }));
-  reqOverride.emit('end');
-
-  assert.equal(ovStatus, 200);
-  const ovJson = JSON.parse(ovBody);
-  assert.equal(ovJson.success, true);
-  assert.equal(ovJson.state.manualCommands.relay_ch1_humidifier, 'OFF');
-  assert.equal(ovJson.state.manualCommands.relay_ch2_fae, 'ON');
+  const removed = [
+    ['GET', '/api/actuators/status'],
+    ['GET', '/actuators/status'],
+    ['POST', '/api/actuators/override', { room_id: 'martha_01', relay_ch1: 'ON', relay_ch2: 'ON' }],
+    ['POST', '/actuators/override', { room_id: 'martha_01', relay_ch1: 'ON', relay_ch2: 'ON' }]
+  ];
+  removed.forEach(([method, url, payload]) => {
+    const out = requestStatus(method, url, payload);
+    assert.equal(out.status, 404, `${method} ${url} debe responder 404`);
+    assert.equal(JSON.parse(out.body).error, 'Ruta no encontrada');
+  });
 });
 
 
