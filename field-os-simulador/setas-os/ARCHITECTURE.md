@@ -89,7 +89,9 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 **Vigencia y diagnóstico del Generador.** Cambiar receta, bloqueos, especie, origen, costo máximo, catálogo habilitado, precios o inventario invalida resultados y cancela el cálculo diferido anterior. `searchScenarios().diagnostics.rejectionReasons` cuenta restricciones reales de las alternativas evaluadas, excluyendo la receta inicial; una evaluación puede incumplir varias. Los conteos describen una búsqueda acotada, no prueban inviabilidad global. El máximo de costo filtra insumos en COP/kg seco; las tarjetas separan ese costo del tratamiento y muestran los objetivos de su propia composición. Pruebas: `e2e/formulator-decisions.browser.cjs`.
 
-**Excepción importante:** el diagnóstico del Perito que ve el usuario (veredicto, sugerencias, "Aplicar ajuste", Auto-mejorar) sí sale de `recipe-optimizer.js` en producción: `generateOptimizer`, `applyOptToRecipe` y `createRecipeEvaluator`. Lo que es oráculo legado es solo el Generador por fuerza bruta (`runAutoOptimizer`).
+**Presentación del Generador.** `generator-presentation.js` transforma `ranked` antes de pintarlo, sin puntuar ni reordenar dentro de cada grupo: colapsa casi duplicados (≤1 pp de diferencia total), pone primero los Escenarios viables y agrupa en un bloque plegado los que el Perito marca `critical` o con seguridad `hold` («No ejecutar»). También marca los insumos cuyos lotes no tienen precio registrado (el costo queda subestimado) y explica una búsqueda vacía por falta de base, de suplemento o porque el tope de suplementación del perfil no deja generar ninguna semilla. Se carga como script propio desde `firebase/auth-gate.js` y `__harness.html`. Pruebas: `generator-presentation.test.js`, `generator-presentation-wiring.test.js`.
+
+**Excepción importante:** el diagnóstico del Perito que ve el usuario (veredicto, sugerencias, "Aplicar ajuste", Auto-mejorar) sí sale de `recipe-optimizer.js` en producción: `generateOptimizer`, `applyOptToRecipe` y `createRecipeEvaluator`. Lo que es oráculo legado es solo el Generador por fuerza bruta (`runAutoOptimizer`), eliminado el 2026-11-05: queda únicamente su salida congelada en `recipe-optimizer-legacy-golden.json` para `recipe-optimizer-parity.test.js`. Para reproducir lo que ve el usuario hay que llamar a `runHybridRecipeSearch` (`simulador-app.jsx`) sobre `SetasPeritoScenarios.searchScenarios`, nunca a una copia del motor viejo: este forzaba C:N = ideal y podía devolver 0 recetas donde el Generador sí encuentra Escenarios.
 
 **Contexto único de score del Perito.** El veredicto, el "Índice estimado" de cada sugerencia, el ΔScore de la tarjeta (`simulateSuggestionDelta`), el Morphing y Auto-mejorar puntúan con el mismo evaluador: `createRecipeEvaluator` (en el componente, `peritoEvaluate`). Para cada receta resuelve sus propios objetivos (`species-targets.js`; la clase de sustrato puede cambiar al aplicar un ajuste), toma el tratamiento recomendado, mezcla la EB con el histórico y puntúa con el mismo stock. No llamar `scoreAn` con un contexto armado a mano para mostrar un score del Perito: pasar por el evaluador. Pruebas: `perito-score-context.test.js` y `e2e/perito-score-context.browser.cjs`.
 
@@ -130,10 +132,19 @@ Dos reglas al tocarlos:
    forma perezosa. En `firebase/auth-gate.js` y en `__harness.html` el catálogo va
    primero. Invertirlos no rompe Node (hay `require`) pero deja la app en blanco en
    el navegador. `substrate-modules.test.js` lo verifica.
-2. **Compuerta empírica.** Cualquier cambio a `substrate-analysis.js`,
-   `substrate-catalog.js` o `scoring.js` exige `npm run perito:regression` con el
-   delta de `meanAbsErrorEB` adjunto al PR. Ver
-   `docs/agents/ground-truth-corpus.md`.
+2. **Compuerta empírica.** Depende del tipo de cambio (`AGENTS.md` §4):
+   - Alta o corrección de una entrada de `substrate-catalog.js` con fuente citada:
+     tests unitarios y `python3 scripts/quality/check_kb_sync.py`. No exige corpus.
+   - Cambio a `substrate-analysis.js` (`analyze()`), a los pesos o cortes de
+     `scoring.js` o al ranking: `npm run perito:regression` con su salida adjunta
+     al PR. Sin corpus de campo el comando sale con código 1; el cambio queda
+     declarado como no validado y requiere aprobación humana, no se da por bueno.
+   - En ambos casos, `npm run perito:drift -- --baseline=main` muestra qué
+     recetas de referencia (`PRESETS`) cambiaron de EB, C:N, score o status
+     respecto a la base. No valida nada —ninguna tiene EB medida—; hace visible
+     el efecto del cambio.
+
+   Ver `docs/agents/ground-truth-corpus.md`.
 
 Para probar funciones puras que todavía viven en el JSX, `test-support/jsx-extract.js`
 sigue existiendo, pero ya resuelve por `require()` todo lo que se extrajo. Cada

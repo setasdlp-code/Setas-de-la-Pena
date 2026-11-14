@@ -4,7 +4,7 @@
   const toggle = document.querySelector('.menu-toggle');
   const nav = document.querySelector('#primary-nav');
   if (!toggle || !nav) return;
-  const mobile = window.matchMedia('(max-width: 650px)');
+  const mobile = window.matchMedia(document.body.classList.contains('editorial-page') ? '(max-width: 1000px)' : '(max-width: 650px)');
   const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
   function setOpen(open, restoreFocus = false) {
     toggle.setAttribute('aria-expanded', String(open));

@@ -48,6 +48,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../substrate-analysis.js",
   "../perito-composition-scenarios.js",
   "../substrate-diagnosis.js",
+  // Datos y generadores de texto extraídos del JSX; sin dependencias de carga.
+  "../species-editorial.js",
+  "../iot-firmware.js",
   "../scoring.js",
   "../bitacora-model.js",
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada
@@ -117,6 +120,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../perito-context.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Presentación de Escenarios del generador (duplicados, «No ejecutar»,
+  // búsquedas vacías). simulador-app.js lo lee al cargarse.
+  "../generator-presentation.js",
   // Vista "Mejor con Bodega" del Formulador; lee SetasPeritoScenarios y
   // SetasEconomy en cada llamada, no al cargar.
   "../formulador-best.js",

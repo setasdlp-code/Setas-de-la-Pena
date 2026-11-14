@@ -209,7 +209,7 @@ alguien recuerde declarar un ciclo. Sigue siendo deseable, no bloqueante.
 - `knowledge_base/09_research/intake/app_kb_parameter_discrepancies_2026-09-28.md`
 - `knowledge_base/09_research/phenotype_dictionary_v0.1.md`
 - `knowledge_base/09_research/environmental_morphology_customization_2026-08-28.md`
-- `field_os/DATA_MODEL.md` (DM-2, DM-3, DM-4, DM-10)
+- `archive/field_os/DATA_MODEL.md` (archivado) (DM-2, DM-3, DM-4, DM-10)
 - ADR-0004 (la evidencia no toca el ranking), ADR-0006 (separación de clases de
   dato), ADR-0007 (las tres escalas de confianza)
 - `field-os-simulador/setas-os/HISTORY_ELIGIBILITY.md`
