@@ -17,7 +17,7 @@ function loadBioCheck() {
 
 function saveBioCheck(state) {
   try {
-    localStorage.setItem(BIO_CHECK_KEY, JSON.stringify(state));
+    writeLocal(BIO_CHECK_KEY, JSON.stringify(state));
     return true;
   } catch (e) {
     console.warn('Failed to save bio‑check to localStorage', e);
@@ -37,7 +37,7 @@ function loadBatches() {
 
 function saveBatches(batches) {
   try {
-    localStorage.setItem(BATCHES_KEY, JSON.stringify(batches));
+    writeLocal(BATCHES_KEY, JSON.stringify(batches));
     return true;
   } catch (e) {
     console.warn('Failed to save batches to localStorage', e);

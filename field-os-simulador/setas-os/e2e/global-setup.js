@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('@playwright/test');
+const { savePersistedAuthState } = require('./auth-storage.cjs');
 const { requiresAuth } = require('./auth-policy.cjs');
 
 // Inicia sesión una sola vez contra el Firebase real del proyecto (sdlp-os)
@@ -41,31 +42,33 @@ module.exports = async (config) => {
     return;
   }
   let browser;
+  let stage = 'abrir navegador';
   try {
     browser = await chromium.launch({ executablePath: process.env.SETAS_CHROMIUM_EXECUTABLE || undefined });
     const page = await browser.newPage();
 
+    stage = 'cargar acceso';
     await page.goto(`${baseURL}/Setas%20OS%20v5.dc.html`);
     await page.locator('#setas-auth-email').waitFor({ state: 'visible', timeout: 10_000 });
     await page.locator('#setas-auth-email').fill(email);
     await page.locator('#setas-auth-password').fill(password);
+    stage = 'enviar acceso';
     await page.locator('#setas-auth-submit').click();
+    stage = 'esperar sesión y runtime';
 
     // El gate se oculta (display:none) cuando onAuthStateChanged confirma la sesión.
     await page.locator('#setas-auth-gate').waitFor({ state: 'hidden', timeout: 15_000 });
 
-    // Firebase Auth persiste la sesión en IndexedDB de forma asíncrona, después de
-    // que onAuthStateChanged ya notificó en memoria — sin esta espera, storageState()
-    // puede capturarse antes de que esa escritura termine y quedar sin sesión real.
-    await page.waitForTimeout(1500);
-
-    // indexedDB:true es obligatorio — Firebase Auth persiste la sesión ahí, no en
-    // localStorage, y storageState() la omite por defecto.
-    await page.context().storageState({ path: storageState, indexedDB: true });
-  } catch {
+    // Wait for the persisted Auth record instead of a fixed delay. A visible
+    // app only proves the in-memory session; workers need the IndexedDB copy.
+    stage = 'persistir sesión en IndexedDB';
+    await savePersistedAuthState(page, storageState);
+  } catch (error) {
     if (storageState) fs.rmSync(storageState, { force: true });
     // El error de Playwright puede incluir el contenido de campos de login.
-    throw new Error('No se pudo completar Firebase Auth durante globalSetup. Las pruebas autenticadas no se ejecutaron; la validación ha fallado.');
+    // Only the known stage and error class: raw errors may contain credentials.
+    const errorType = error?.name === 'TimeoutError' ? 'TimeoutError' : 'Error';
+    throw new Error(`No se pudo completar Firebase Auth durante globalSetup: ${stage} (${errorType}). Las pruebas autenticadas no se ejecutaron; la validación ha fallado.`);
   } finally {
     if (browser) await browser.close();
   }

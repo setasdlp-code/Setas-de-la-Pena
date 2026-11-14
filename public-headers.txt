@@ -38,3 +38,22 @@
 
 /cultivo
   Cache-Control: public, max-age=0, must-revalidate
+
+# The three published species sheets are open to search indexing.
+/especies/shiitake
+  ! X-Robots-Tag
+
+/especies/shiitake.html
+  ! X-Robots-Tag
+
+/especies/melena-de-leon
+  ! X-Robots-Tag
+
+/especies/melena-de-leon.html
+  ! X-Robots-Tag
+
+/especies/eryngii
+  ! X-Robots-Tag
+
+/especies/eryngii.html
+  ! X-Robots-Tag

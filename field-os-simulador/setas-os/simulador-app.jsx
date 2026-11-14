@@ -1,6 +1,22 @@
 
 
 
+// Every local write reports failure even when a legacy caller catches it.
+// Rethrow so persist-first and rollback paths retain their failure semantics.
+let lastLocalWriteFailure = null;
+function reportLocalWriteFailure(key) {
+  lastLocalWriteFailure = {key, at: Date.now()};
+  window.dispatchEvent(new CustomEvent('setas-local-write-failed', {detail:lastLocalWriteFailure}));
+}
+function writeLocal(key, value) {
+  try { localStorage.setItem(key, value); }
+  catch (error) { reportLocalWriteFailure(key); throw error; }
+}
+function removeLocal(key) {
+  try { localStorage.removeItem(key); }
+  catch (error) { reportLocalWriteFailure(key); throw error; }
+}
+
 const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // Prototype plans and portable records. Suggestions never become observations.
@@ -20,6 +36,35 @@ function BagObservationEditor({bolsa,onSave}) {
     <span id={`bag-observation-status-${bolsa.id}`} role={error?'alert':'status'}>{error||(dirty?'Borrador sin guardar':'Registro local · sincronización independiente')}</span>
     {dirty&&<div><button type="button" className="inv-btn inv-btn-pri" onClick={save} aria-label={`Guardar observaciones de ${bolsa.codigo}`}>{error?'Reintentar':'Guardar'}</button><button type="button" className="inv-btn inv-btn-sec" onClick={discard} aria-label={`Cancelar observaciones de ${bolsa.codigo}`}>Cancelar</button></div>}
   </div>;
+}
+
+// This feed is separate from browser-only threshold warnings: it reflects the
+// scheduled server check even if nobody had the app open.
+function ServerClimateAlerts({feed,roomId,rooms,onOpenRoom,onRetry}) {
+  const records=feed.records.filter(a=>!roomId||a.roomId===roomId);
+  const open=records.filter(a=>a.status==='open'&&a.recordType!=='episode');
+  const history=Array.from(new Map(records.filter(a=>a.status==='resolved'&&a.openedAt!=null)
+    .map(a=>[`${a.alertId||a.id}:${a.openedAt}`,a])).values())
+    .sort((a,b)=>(b.resolvedAt||0)-(a.resolvedAt||0));
+  const date=value=>value==null?'—':new Date(typeof value?.toMillis==='function'?value.toMillis():value).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'short'});
+  const row=a=><li key={a.id} style={{padding:'10px 0',overflowWrap:'anywhere'}}>
+    <strong>{rooms[a.roomId]?.name||a.roomId} · {a.kind==='sensor_stale'?'Sensor sin lecturas':'Clima fuera de banda'}</strong>
+    <p style={{margin:'4px 0'}}>{a.detail}</p>
+    <span>{a.status==='open'?'Abierta':'Resuelta'} · Inicio: {date(a.openedAt)}{a.status==='resolved'?` · Cierre: ${date(a.resolvedAt)}`:''} · Ciclo: {a.cycleId||'—'}</span>
+    {!roomId&&<button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginLeft:8}} onClick={()=>onOpenRoom(a.roomId)}>Ver sala</button>}
+  </li>;
+  return <section className="panel" data-testid={roomId?'room-server-alerts':'today-server-alerts'} aria-label="Alertas de clima del servidor">
+    <h3 style={{marginTop:0}}>Alertas de clima del servidor</h3>
+    {feed.error?<div role="alert"><p>No se pudieron leer las alertas de clima. {feed.error==='permission-denied'?'Tu sesión no tiene permiso para consultar estas alertas.':'Revisar la conexión y reintentar.'}</p><button type="button" className="inv-btn inv-btn-sec" onClick={onRetry} style={{minHeight:44}}>Reintentar lectura</button></div>:feed.loading?<p role="status">Cargando alertas…</p>:<>
+      <p className="sdp-provenance">{feed.fromCache?'Copia local · pendiente de confirmar con el servidor':'Registro del servidor'} · No sustituye una lectura actual de la sala.</p>
+      <h4>Abiertas ({open.length})</h4>
+      {open.length?<ul style={{paddingLeft:20}}>{open.map(row)}</ul>:<p>Sin alertas abiertas{feed.fromCache?' en la copia local':''}.</p>}
+      <details><summary style={{minHeight:44,cursor:'pointer'}}>Historial ({history.length})</summary>
+        <p>Se conservan los episodios cerrados desde la actualización del registro. Los episodios anteriores que ya fueron sobrescritos no se pueden recuperar.</p>
+        {history.length?<ul style={{paddingLeft:20}}>{history.map(row)}</ul>:<p>Sin episodios cerrados registrados.</p>}
+      </details>
+    </>}
+  </section>;
 }
 
 // Lectura manual de superficie por bolsa (termómetro infrarrojo). Es un dato
@@ -338,6 +383,7 @@ const SppSvg=({sKey,c})=>{
 const SetasSubstrateAnalysisApi=(typeof SetasSubstrateAnalysis!=='undefined'?SetasSubstrateAnalysis:(typeof require!=='undefined'?require('./substrate-analysis.js'):null));
 const EB_PENALTY_BALANCE_BAND=SetasSubstrateAnalysisApi.EB_PENALTY_BALANCE_BAND;
 const analyze=SetasSubstrateAnalysisApi.analyze;
+const CompositionScenarios=typeof SetasCompositionScenarios!=='undefined'?SetasCompositionScenarios:require('./perito-composition-scenarios.js');
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
 
@@ -391,6 +437,9 @@ const {
 //    igual que este bloque quede antes o después de que species-targets.js
 //    registre su global.
 const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
+// Presentación de Escenarios del generador (duplicados, «No ejecutar», búsquedas
+// vacías, insumos sin precio). No puntúa ni reordena: eso es del Perito.
+const SetasGeneratorPresentationApi=(typeof SetasGeneratorPresentation!=='undefined'?SetasGeneratorPresentation:(typeof require!=='undefined'?require('./generator-presentation.js'):null));
 
 // ── Metas de BE por especie y semaforo de contaminacion (propuesta KB 2026-10).
 //    El modulo registra globalThis.SetasKpiThresholds, que tambien lee el shell .dc.html.
@@ -1578,8 +1627,8 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
         <div className="ing-meta">
-          <span>C:N {ing.cn}</span>
-          <span>N {ing.n.toFixed(1)}%</span>
+          <span>C:N {ing.compositionStatus==='estimated'?'≈'+Math.round(ing.cn):ing.cn}</span>
+          <span>N {ing.compositionStatus==='estimated'?'≈'+ing.n.toFixed(2):ing.n.toFixed(1)}%</span>
           <span>{costStr}</span>
           {stockKg>0&&<span className="ing-stock-kg">{stockKg.toFixed(1)} kg</span>}
         </div>
@@ -2430,7 +2479,7 @@ const launchDiscountSummary=(plan,ings=[])=>{
   const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
   return `Se reservó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
 };
-const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
+const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey,invLotes=[])=>{
   const an=candidate?.evaluation?.analysis;
   // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
   const sp=an?.sp||SPP[targetKey];
@@ -2445,6 +2494,9 @@ const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>
     recipe:candidate.recipe,
     an,
     score:Number(candidate.evaluation?.score)||0,
+    status:candidate?.evaluation?.status||null,
+    safetyStatus:candidate?.evaluation?.dimensions?.safety?.status||null,
+    unpricedIds:SetasGeneratorPresentationApi.unpricedIds(candidate?.recipe||[],invLotes),
     riskScore:Number(candidate.evaluation?.riskScore??candidate.evaluation?.breakdown?.risk??50),
     maxKgWet,
     suppPct,
@@ -2471,6 +2523,7 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     supps:supps.length,
     aers:aers.length,
     tried:Number(out?.explored)||0,
+    structuralGenerated:Number(out?.structural?.generated??-1),
     resultsRaw:Number(out?.diagnostics?.allowedCount??out?.ranked?.length??0),
     suppLimit:Number(out?.profile?.maxSupp??spp[targetKey]?.supplementation_max??20),
     profileKey,
@@ -2685,7 +2738,7 @@ function loadLiveTelemetryConfig() {
 
 function saveLiveTelemetryConfig(config) {
   try {
-    localStorage.setItem(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
+    writeLocal(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
     return true;
   } catch (e) { return false; }
 }
@@ -3054,7 +3107,28 @@ function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
 }
 
 function SimuladorShell(props){
+  const [localWriteFailure,setLocalWriteFailure]=useState(lastLocalWriteFailure);
+  useEffect(()=>{
+    const onFailure=e=>setLocalWriteFailure(e.detail);
+    window.addEventListener('setas-local-write-failed',onFailure);
+    setLocalWriteFailure(lastLocalWriteFailure);
+    return()=>window.removeEventListener('setas-local-write-failed',onFailure);
+  },[]);
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
+  const [serverClimateFeed,setServerClimateFeed]=useState({records:[],loading:true,error:'',fromCache:true});
+  const [serverClimateRetry,setServerClimateRetry]=useState(0);
+  useEffect(()=>{
+    let unsubscribe=null;
+    const start=()=>{
+      if(unsubscribe||!window.SetasDB?.subscribeClimateAlerts) return;
+      setServerClimateFeed({records:[],loading:true,error:'',fromCache:true});
+      unsubscribe=window.SetasDB.subscribeClimateAlerts(
+        result=>setServerClimateFeed({...result,loading:false,error:''}),
+        error=>setServerClimateFeed({records:[],loading:false,error:error?.code||'unavailable',fromCache:true}));
+    };
+    window.addEventListener('setas-db-ready',start);start();
+    return()=>{window.removeEventListener('setas-db-ready',start);if(unsubscribe)unsubscribe();};
+  },[serverClimateRetry]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
   // ya compite con el rail inferior) y la reaparece al subir o cerca del tope.
@@ -3103,7 +3177,7 @@ function SimuladorShell(props){
       const p=normSpp(props.preselectSpecies);
       if(p&&SPP[p]) return p;
       const pre=normSpp(localStorage.getItem('sim_preselect_spp'));
-      if(pre&&SPP[pre]){localStorage.removeItem('sim_preselect_spp');return pre;}
+      if(pre&&SPP[pre]){removeLocal('sim_preselect_spp');return pre;}
     }catch(e){}
     return initialFormDraft?.sKey||'p_ostreatus_gris';
   });
@@ -3298,7 +3372,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const generatorDisplayStatus=!optResults?generatorStatus:activeGeneratorError
     ?'No se pudieron calcular escenarios. Revisar el diagnóstico del Generador.'
     :optResults.noStock?'No hay ingredientes en stock registrados. Agregarlos en Bodega.'
-    :activeGeneratorResults.length?`${activeGeneratorResults.length} escenario${activeGeneratorResults.length===1?'':'s'} disponible${activeGeneratorResults.length===1?'':'s'} para ${OPT_PROFILES[optProfile]?.label||optProfile}.`
+    :activeGeneratorResults.length?(()=>{const p=SetasGeneratorPresentationApi.partitionRows(activeGeneratorResults);return SetasGeneratorPresentationApi.generatorHeadline({viable:p.viable.length,blocked:p.blocked.length,profileLabel:OPT_PROFILES[optProfile]?.label||optProfile});})()
     :`No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label||optProfile}. Revisar el diagnóstico del Generador.`;
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
@@ -3852,7 +3926,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if (opResult.status !== 'failed') {
       setBitBolsas(opResult.updatedBolsas);
       try {
-        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+        writeLocal('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -3878,7 +3952,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
         setBitLotes(updLotes);
         try {
-          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+          writeLocal('sdp_bit_lotes', JSON.stringify(updLotes));
         } catch (e) {}
         encolarSync({type:'actualizarLote',key:'lote:'+activeLot.id,args:[activeLot.id,{lifecycleEvents:nextLog}]});
       }
@@ -3912,7 +3986,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if (opResult.status !== 'failed') {
       setBitBolsas(opResult.updatedBolsas);
       try {
-        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+        writeLocal('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
       } catch (e) {
         bitQuotaWarn();
       }
@@ -3934,7 +4008,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
         setBitLotes(updLotes);
         try {
-          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+          writeLocal('sdp_bit_lotes', JSON.stringify(updLotes));
         } catch (e) {}
       }
 
@@ -3990,6 +4064,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       id: 'martha_01',
       cameraId: 'martha',
       name: 'Martha Tent 01',
+      volumeM3: 1.65 * 0.70 * 0.51, // volumen nominal de las dimensiones declaradas
+      fanRatedCfm: null, // pendiente de configurar con datos del extractor
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
       device: 'ESP32-WROOM-32 (setas-martha-01)',
       sensors: 'Sensirion SHT3x + Sensirion SCD30 (NDIR)',
@@ -3999,6 +4075,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       id: 'cloudlab_844',
       cameraId: 'cloudlab',
       name: 'Cloudlab 844',
+      volumeM3: 1.22 * 1.22 * 2.03,
+      fanRatedCfm: null,
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
       device: 'ESP32-WROOM-32 (setas-cloudlab-01)',
       sensors: 'Sensirion SHT45 + Sensirion SCD30 (NDIR)',
@@ -4008,6 +4086,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       id: 'incubacion_01',
       cameraId: 'incub',
       name: 'Cuarto de Incubación',
+      volumeM3: null,
+      fanRatedCfm: null,
       spec: 'Zona 3 · estantería de incubación',
       device: 'Inkbird + nodo ambiental (setas-incubacion-01)',
       sensors: 'Temperatura y humedad · CO₂ estimado por nodo',
@@ -4097,14 +4177,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setOptUseStock(stockOnly);
     setUsePantry(stockOnly);
     try {
-      localStorage.setItem('setas_global_workmode', mode);
-      localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
+      writeLocal('setas_global_workmode', mode);
+      writeLocal('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
     } catch(e) {}
   };
   useEffect(()=>{
     try{
-      if(!recipe.length){localStorage.removeItem(FORM_DRAFT_KEY);return;}
-      localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({
+      if(!recipe.length){removeLocal(FORM_DRAFT_KEY);return;}
+      writeLocal(FORM_DRAFT_KEY,JSON.stringify({
         version:1,
         savedAt:new Date().toISOString(),
         recipe:recipe.map(r=>({id:r.id,p:Number(r.p)||0})),
@@ -4190,7 +4270,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(!b||!inline[b.id]||b.foto!==inline[b.id]) return b;
         const {foto,...rest}=b;return rest;
       });
-      try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){return;}
+      try{writeLocal('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){return;}
       bitBolsasEditRef.current=upd;
       setBitBolsas(upd);
     }).catch(()=>{});
@@ -4432,27 +4512,27 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:nuevoDisponible,cantidadKgTotal:Math.max(l.cantidadKgTotal,nuevoDisponible),precioPorKgCOP:pr};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      try{writeLocal('sdp_lotes',JSON.stringify(updated));}catch(e){}
       return updated;
     });
     // Reasignar en compras si cambió el tipo
     if(nuevoId){
       setInvCompras(prev=>{
         const upd=prev.map(c=>({...c,items:c.items.map(it=>it.ingredienteId===ingredienteId?{...it,ingredienteId:nuevoId}:it)}));
-        try{localStorage.setItem('sdp_compras',JSON.stringify(upd));}catch(e){}
+        try{writeLocal('sdp_compras',JSON.stringify(upd));}catch(e){}
         return upd;
       });
     }
     // Proveedor override
     if(proveedorId){
       const upd={...provOverride,[targetId]:proveedorId};
-      setProvOverride(upd);try{localStorage.setItem('sdp_prov_override',JSON.stringify(upd));}catch(e){}
+      setProvOverride(upd);try{writeLocal('sdp_prov_override',JSON.stringify(upd));}catch(e){}
     }
     // Alerta mínima
     const am=parseFloat(alertaMin);
     if(!isNaN(am)&&am>=0){
       const upd={...alertaConfig,[targetId]:am};
-      setAlertaConfig(upd);try{localStorage.setItem('sdp_alertas',JSON.stringify(upd));}catch(e){}
+      setAlertaConfig(upd);try{writeLocal('sdp_alertas',JSON.stringify(upd));}catch(e){}
     }
     setEditingRowId(null);
   };
@@ -4461,14 +4541,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const doDelete=()=>{
       setInvLotes(prev=>{
         const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
-        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
+        try{writeLocal('sdp_lotes',JSON.stringify(upd));}catch(e){}
         return upd;
       });
       // Limpiar pantry
       try{
         const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
         delete pantry[ingredienteId];
-        localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
+        writeLocal('sdp_pantry',JSON.stringify(pantry));
       }catch(e){}
     };
     setConfirmDlg({title:'Eliminar stock',msg:`¿Eliminar todo el stock de "${nombre}"? Esto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`,danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
@@ -4492,7 +4572,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:Math.round(kg*fraccion*100)/100};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      try{writeLocal('sdp_lotes',JSON.stringify(updated));}catch(e){}
       return updated;
     });
   };
@@ -4525,7 +4605,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const vigentes=ledgerApi?ledgerApi.expireDue(parsedReservas,Date.now()):parsedReservas;
         setInvReservas(vigentes);
         if(ledgerApi&&JSON.stringify(vigentes)!==JSON.stringify(parsedReservas)){
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
+          try{writeLocal('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
         }
       }
       const sq=localStorage.getItem('sdp_sync_queue');
@@ -4590,7 +4670,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(cancelled) return;
         syncQueueRef.current=updatedQueue;
         setSyncQueue(updatedQueue);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
+        try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
       }
     };
 
@@ -4628,7 +4708,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         r.deviceId=localStorage.getItem('sdp_device_id');
         if(!r.deviceId){
           r.deviceId='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
-          localStorage.setItem('sdp_device_id',r.deviceId);
+          writeLocal('sdp_device_id',r.deviceId);
         }
       }catch(e){r.deviceId=r.deviceId||'dev_'+Math.random().toString(36).slice(2,10);}
     }
@@ -4684,7 +4764,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const {queue,dropped}=planner.enqueueAll(prev,plan.ops,Date.now());
         if(dropped) console.warn('[SetasDeviceSync] cola llena: '+dropped+' envío(s) quedan para la próxima pasada');
         syncQueueRef.current=queue;
-        try{localStorage.setItem('sdp_sync_queue',window.SetasSyncQueue.serialize(queue));}catch(e){bitQuotaWarn();}
+        try{writeLocal('sdp_sync_queue',window.SetasSyncQueue.serialize(queue));}catch(e){bitQuotaWarn();}
         return queue;
       });
     }
@@ -4774,7 +4854,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const next=queueApi.retryStuck(syncQueueRef.current,Date.now());
       syncQueueRef.current=next;
       setSyncQueue(next);
-      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
+      try{writeLocal('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
@@ -5129,7 +5209,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const migradas=crudas.map(r=>lifecycle.migrateLegacyRecipe(r));
       setSaved(migradas);
       const cambio=migradas.some((r,i)=>r!==crudas[i]);
-      if(cambio){ try{localStorage.setItem('setas_v6',JSON.stringify(migradas));}catch(e2){} }
+      if(cambio){ try{writeLocal('setas_v6',JSON.stringify(migradas));}catch(e2){} }
     }catch(e){}
   },[]);
   useEffect(()=>{ if(props.onSavedChange) props.onSavedChange(saved); },[saved]);
@@ -5185,8 +5265,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
     const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
-    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
-    const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
+    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?(compositionComparison?ebForecast.value:an.eb).toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};
+    const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
     // así que un fallo de red no bloquea al operador; solo se avisa si no sincronizó.
@@ -5196,11 +5276,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if(window.SetasDB){
       window.SetasDB.saveReceta({
         nombre:nm, sKey, ingredientes:recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})),
-        cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:opt.score,
+        cn:an?an.cn:null, eb:an?(e.predictionSnapshot?.workingPrediction?.eb??an.eb):null, cost:an?Math.round(an.cost):null, score:opt.score,
+        ...(e.predictionSnapshot?{predictionSnapshot:e.predictionSnapshot}:{}),
       }).then(docRef=>{
         setSaved(prev=>{
           const upd=prev.map(r=>r.id===e.id?{...r,firestoreId:docRef.id}:r);
-          try{localStorage.setItem('setas_v6',JSON.stringify(upd));}catch(e3){}
+          try{writeLocal('setas_v6',JSON.stringify(upd));}catch(e3){}
           return upd;
         });
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
@@ -5230,7 +5311,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(recetaObj&&recetaObj.id){
         const u=saved.map(s=>s.id===recetaObj.id?{...s,esProduccion:true,fechaPromocion:new Date().toLocaleDateString('es-CO')}:s);
         setSaved(u);
-        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+        try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
       }
       setSKey(targetSKey);
       setRecipe(targetRecipe);
@@ -5275,7 +5356,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const nueva=lifecycle.newVersionFrom(newVersionFor,{},{actor:fieldOperatorRole,at:new Date().toISOString()});
       const u=[{...nueva,id:Date.now()},...saved];
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
       setNewVersionFor(null);
       setSKey(nueva.sKey);setRecipe(nueva.recipe);setLockedIds([]);
       openBuilderSubTab('formular');goTab('formular');
@@ -5298,7 +5379,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       });
       const u=saved.map(s=>s.id===receta.id?{...actualizada,id:receta.id}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
     }catch(err){ setNoticeDlg({title:'No se pudo cambiar el estado',msg:err.message}); }
   };
   // Protección de UI: solo evita el clic accidental de un operador de campo en
@@ -5313,7 +5394,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const delR=id=>{
     setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
       const receta=saved.find(r=>r.id===id);
-      const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      const u=saved.filter(r=>r.id!==id);setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
       // Sin esto el documento en recetas/ (Firestore) queda huérfano para
       // siempre: no hay UI ni proceso que lo purgue — igual que el bug de
       // Bitácora con public_lotes/. Si la receta se guardó antes de este fix
@@ -5339,7 +5420,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const ebReal=Math.round(n*10)/10;
       const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{writeLocal('setas_v6',JSON.stringify(u));}catch(e){}
     }});
   };
 
@@ -5404,6 +5485,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
     return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,effectiveSPP);
   },[coFormMode,recipe,coSpecConfig,effectiveINGS,effectiveSPP]);
+  const compositionComparison=useMemo(()=>CompositionScenarios.compare({recipe,sKey,ings:effectiveINGS,spp:effectiveSPP}),[recipe,sKey,effectiveINGS,effectiveSPP]);
+  const hasCompositionEstimate=CompositionScenarios.hasEstimatedComposition(recipe,effectiveINGS);
+  const captureCompositionPrediction=()=>CompositionScenarios.snapshot({recipe,sKey,ings:effectiveINGS,spp:effectiveSPP,at:new Date().toISOString(),forecast:ebForecast,modelVersion:typeof __SETAS_BUILD__!=='undefined'?__SETAS_BUILD__:'development'});
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
   const optimalAn=useMemo(()=>{try{
@@ -5701,6 +5785,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // que produjo (autoImproveResult.recipeKey).
   const [autoImproveResult,setAutoImproveResult]=React.useState(null);
   const autoImprove=()=>{
+    if(hasCompositionEstimate) return;
     const res=autoImproveRecipeDetailed({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats});
     if(!res.steps.length){
       setAutoImproveResult({recipeKey:recipeKeyOf(recipe),steps:[],before:res.before,after:res.before});
@@ -5735,6 +5820,21 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
     return(
       <section className="panel print-panel" id="bl-perito" data-perito-variant="formulador" aria-label="Perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
+        {compositionComparison&&<aside className="os-provenance-notice" data-testid="weber-composition" aria-label="Estimación de Weber Hickory">
+          <h3>Weber Hickory · estimación provisional</h3>
+          <p>Mezcla declarada: 40% hickory / 60% roble. Perfil de trabajo: C ≈49,8%, N ≈0,18%, C:N ≈276. Confianza baja; no medido en estos pellets.</p>
+          <p>Se aproximan las proporciones comerciales como masa seca y se combinan muestras de distintas procedencias. Humedad 8%, pH 5,4, CRA 3 y digestibilidad 2 son supuestos. El precio de catálogo es una referencia comercial; Bodega usa sus propios registros.</p>
+          <p><strong>{compositionComparison.diverges?'Composición insuficientemente conocida para decidir una reformulación.':'La composición sigue pendiente de validación local.'}</strong> Mantener la receta candidata como referencia experimental. Las sugerencias no aplican dosis automáticas sobre estos supuestos.</p>
+          <details><summary>Comparar supuestos de composición</summary>
+            <p>{compositionComparison.note}</p>
+            <div style={{overflowX:'auto'}}><table className="inv-table"><caption>Misma receta y mismos supuestos físicos; solo cambia C y N del pellet</caption>
+              <thead><tr><th scope="col">Supuesto</th><th scope="col">C / N del pellet (%)</th><th scope="col">C:N receta</th><th scope="col">N receta</th><th scope="col">EB del modelo</th></tr></thead>
+              <tbody>{compositionComparison.rows.map(row=><tr key={row.id}><th scope="row">{row.url?<a href={row.url} target="_blank" rel="noreferrer">{row.label}</a>:row.label}<small style={{display:'block'}}>{row.note}</small></th><td>{row.c.toFixed(1)} / {row.n.toFixed(2)}</td><td>{row.recipeCN.toFixed(1)} · {row.cnStatus}</td><td>{row.recipeN.toFixed(2)}% · {row.nStatus}</td><td>≈{Math.round(row.eb)}%</td></tr>)}</tbody>
+            </table></div>
+            <ul>{compositionComparison.estimate.inputs.map(source=><li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a> · C {source.c}% / N {source.n}% · peso supuesto {source.fraction*100}%</li>)}</ul>
+            {compositionComparison.estimate.assumptions.map(note=><p key={note}>{note}</p>)}
+          </details>
+        </aside>}
         {/* ── ENCABEZADO: score, veredicto y acciones (Auto-mejorar primero, asistente IA al final) ── */}
         {hasPer&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
@@ -5754,14 +5854,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} disabled={hasCompositionEstimate} title={hasCompositionEstimate?'Composición estimada: conservar receta de referencia':undefined} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
               {<>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(compositionComparison||status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )};const u=[e,...saved];setSaved(u);try{writeLocal('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
                           <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
@@ -6073,7 +6173,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // El lote NACE planificado y sus insumos quedan reservados, no
       // descontados: la bodega se toca al registrar "Preparar mezcla", que es
       // cuando el sustrato se pesa de verdad.
-      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,predictionSnapshot:captureCompositionPrediction(),treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan,selection:selectedTrial}));
       setSelectedTrial(null);
       consumoRegistrado=true;
@@ -6170,14 +6270,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
       spawnPct:'',humedad:'',tratamiento:'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'planificado',veredicto:'',
-      recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
+      recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),score:opt.score,cost:Math.round(an.cost),...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )}:null,
       // El snapshot congela lo que este lote debe seguir diciendo aunque la
       // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
       recipeSnapshot:(()=>{
         const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
         if(!lc||!recipe.length||!balanced) return null;
         const base=saved.find(r=>r.name===saveName)||{name:saveName||'Receta activa',sKey,recipe:[...recipe],status:'legacy',version:1};
-        try{ return lc.buildProductionSnapshot({...base,sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),cost:Math.round(an.cost)},{at:new Date().toISOString()}); }
+        try{ return lc.buildProductionSnapshot({...base,sKey,recipe:[...recipe],predictionSnapshot:captureCompositionPrediction(),cn:an.cn.toFixed(1),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),cost:Math.round(an.cost)},{at:new Date().toISOString()}); }
         catch(e){ return null; }
       })(),
     };
@@ -6259,7 +6359,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
 
     try {
-      localStorage.setItem('sdp_bit_lotes', JSON.stringify(bitLotes));
+      writeLocal('sdp_bit_lotes', JSON.stringify(bitLotes));
     } catch (e) {}
 
     const summaryMsg = `${targetLotes.length} lotes procesados: ${successCount} sincronizados, ${failedCount} con error.` + (errors.length ? `\nDetalles:\n${errors.slice(0, 5).join('\n')}` : '');
@@ -6365,7 +6465,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try {
       const now = Date.now();
       // Mismo criterio que el otro camino: planificar reserva, preparar descuenta.
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, predictionSnapshot:captureCompositionPrediction(), treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan:f.plan,selection:selectedTrial}));
       setSelectedTrial(null);
       consumoRegistrado = true;
@@ -6491,7 +6591,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     runLanzamientoProduccion();
   });
 
-  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'});
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'No se pudo escribir en el almacenamiento local. El cambio no quedó guardado. Descargar un respaldo, revisar el espacio y los permisos del navegador y volver a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
   // guardado local y la confirmación de la interfaz ya ocurrieron antes de
   // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
@@ -6512,7 +6612,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setNoticeDlg({title:'No se pudo encolar el cambio',msg:'El cambio no se pudo poner en la cola de sincronización ('+(err.message||'error desconocido')+'). Revisar los cambios pendientes antes de seguir trabajando.'});
         return prev;
       }
-      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
       return next;
     });
   };
@@ -6554,12 +6654,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(ledgerApi&&!loteEraDescartado){
         setInvReservas(prev=>{
           const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción descartado',at:new Date().toISOString()});
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
           return upd;
         });
       }
     }
-    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{writeLocal('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
@@ -6581,7 +6681,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!bitBolsasEditRef.current.some(b=>b.id===bolsaId)) return false;
     const upd=bitBolsasEditRef.current.map(b=>b.id===bolsaId?{...b,...fields}:b);
     // Persist first: a failed local write must not appear saved or reach sync.
-    try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){if(!options.silent)bitQuotaWarn();return false;}
+    try{writeLocal('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){if(!options.silent)bitQuotaWarn();return false;}
     bitBolsasEditRef.current=upd;
     setBitBolsas(upd);
     encolarSync({type:'actualizarBolsa',key:'bolsa:'+bolsaId,args:[bolsaId,fields]});
@@ -6596,7 +6696,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!taskEngineApi) return;
     setBitTasks(prev=>{
       const upd=taskEngineApi.mergeTasks(prev,nuevasTareas);
-      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -6613,7 +6713,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           upd=taskEngineApi.completeTask(upd,taskId,eventId);
         }
       });
-      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -6627,7 +6727,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!nuevosEventos.length) return;
     setRoomEvents(prev=>{
       const upd=[...prev,...nuevosEventos];
-      try{localStorage.setItem('sdp_room_events',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      try{writeLocal('sdp_room_events',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -6687,7 +6787,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // pública para siempre — nadie más va a volver a pedir su borrado.
     const cosecha=bitCosechas.find(c=>c.id===id);
     const lote=cosecha&&bitLotes.find(l=>l.id===cosecha.loteId);
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    const upd=bitCosechas.filter(c=>c.id!==id);
+    try{writeLocal('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){return false;}
+    setBitCosechas(upd);
     encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
     // La cola de sync (arriba) es solo bitacora_* — la ficha pública
     // (public_lotes) es una colección aparte que nadie más limpia: sin
@@ -6702,43 +6804,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // ficha pública terminó de limpiarse (nunca rechaza).
   const purgeBitLote=(loteId)=>{
     const publicCleanup=[];
-    const lote=bitLotes.find(l=>l.id===loteId);
-    const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
-    const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
-    // Eliminar el lote es más definitivo que descartarlo — igual libera sus
-    // reservas held, o un lote borrado seguiría bloqueando kilos.
+    let lote,bolsaIds,cosechaIds;
     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-    if(ledgerApi){
-      setInvReservas(prev=>{
-        const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
-        return upd;
-      });
-    }
-    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
-    // Las fotos de las bolsas borradas salen también de IndexedDB.
+    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    let nextLotes,nextBolsas,nextCosechas,nextReservas,nextQueue;
+    try{
+      // Read the latest durable snapshots: pilot reset may delete several lots
+      // in one turn before React has committed its state updates.
+      SetasPrototype.recover(localStorage);
+      const currentLotes=SetasPrototype.read(localStorage,'sdp_bit_lotes');
+      const currentBolsas=SetasPrototype.read(localStorage,'sdp_bit_bolsas');
+      const currentCosechas=SetasPrototype.read(localStorage,'sdp_bit_cosechas');
+      const currentReservas=SetasPrototype.read(localStorage,'sdp_inv_reservas');
+      const currentQueue=SetasPrototype.read(localStorage,'sdp_sync_queue');
+      lote=currentLotes.find(l=>l.id===loteId);
+      bolsaIds=currentBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
+      cosechaIds=currentCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
+      nextLotes=currentLotes.filter(l=>l.id!==loteId);
+      nextBolsas=currentBolsas.filter(b=>b.loteId!==loteId);
+      nextCosechas=currentCosechas.filter(c=>c.loteId!==loteId);
+      nextReservas=ledgerApi?ledgerApi.releaseForBatch(currentReservas,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()}):currentReservas;
+      if(!syncQueueApi) throw Error('Cola de sincronización no disponible');
+      nextQueue=syncQueueApi.purgeKeys(currentQueue,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
+      nextQueue=syncQueueApi.enqueue(nextQueue,syncQueueApi.createOperation({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]}));
+      SetasPrototype.persist(localStorage,[['sdp_bit_lotes',nextLotes],['sdp_bit_bolsas',nextBolsas],['sdp_bit_cosechas',nextCosechas],['sdp_inv_reservas',nextReservas],['sdp_sync_queue',nextQueue]]);
+    }catch(e){reportLocalWriteFailure('sdp_bit_lotes');bitQuotaWarn();return Promise.resolve(false);}
+    setBitLotes(nextLotes);setBitBolsas(nextBolsas);bitBolsasEditRef.current=nextBolsas;
+    setBitCosechas(nextCosechas);setInvReservas(nextReservas);syncQueueRef.current=nextQueue;setSyncQueue(nextQueue);
     if(bagPhotoStoreRef.current&&bagPhotoStoreRef.current.available&&bolsaIds.length){
       publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(()=>{}));
       setBagPhotos(prev=>{const next={...prev};bolsaIds.forEach(id=>{delete next[id];});return next;});
     }
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
     if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
-    // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
-    // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
-    // descarta 'lote:'+loteId — sin este purgado, una actualizarBolsa o
-    // guardarCosecha pendiente de este lote podía ejecutarse después (o
-    // revivirse con retryStuck) y resucitar en Firestore un documento que
-    // ya no existe localmente.
-    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-    if(syncQueueApi){
-      setSyncQueue(prev=>{
-        const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
-        return purged;
-      });
-    }
-    encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
+    // The cascade tombstone was persisted atomically with the deletion.
     // eliminarLoteCascade (arriba) es solo bitacora_* — la ficha pública
     // (public_lotes) es una colección aparte que nadie más limpia: sin
     // esto, el QR de una etiqueta ya impresa seguía resolviendo al lote
@@ -6762,11 +6860,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const plan=SetasPrototype.planPilotReset({lotes:bitLotes,bolsas:bitBolsas,cosechas:bitCosechas,role:fieldOperatorRole,typed});
     try{await downloadPrototypeBackup('setas-respaldo-antes-del-piloto-');}
     catch(e){throw Error('No se pudo descargar el respaldo; no se borró nada. '+(e.message||''));}
-    const cleanup=plan.map(p=>purgeBitLote(p.loteId));
+    for(const entry of plan){
+      if(await purgeBitLote(entry.loteId)===false) throw Error('El reinicio se detuvo porque un lote no se pudo guardar. Revisar los datos antes de reintentar.');
+    }
+    writeLocal('sdp_bit_tasks','[]');
+    writeLocal(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());
     setBitTasks([]);
-    try{localStorage.setItem('sdp_bit_tasks','[]');}catch(e){}
-    try{localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());}catch(e){}
-    await Promise.all(cleanup);
     // Deja que React aplique los cambios encolados (cola de sync, reservas)
     // antes de recargar.
     await new Promise(r=>setTimeout(r,300));
@@ -6815,16 +6914,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 
   // ── v4: helpers persistencia inventario
-  const saveProveedores=list=>{setInvProveedores(list);try{localStorage.setItem('sdp_proveedores',JSON.stringify(list));}catch(e){}};
-  const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
-  const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
-  const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+  const saveProveedores=list=>{setInvProveedores(list);try{writeLocal('sdp_proveedores',JSON.stringify(list));}catch(e){}};
+  const saveCompras=list=>{setInvCompras(list);try{writeLocal('sdp_compras',JSON.stringify(list));}catch(e){}};
+  const saveLotes=list=>{setInvLotes(list);try{writeLocal('sdp_lotes',JSON.stringify(list));}catch(e){}};
+  const saveMovimientos=list=>{setInvMovimientos(list);try{writeLocal('sdp_movimientos',JSON.stringify(list));}catch(e){}};
 
   // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
   // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
   const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
   const [invOps,setInvOps]=useState(readInvOps);
-  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  const saveInvOps=q=>{setInvOps(q);try{writeLocal(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
   // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
   // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
   // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
@@ -6854,7 +6953,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!ledgerApi||!nuevas.length) return;
     setInvReservas(prev=>{
       const upd=ledgerApi.addReservations(prev,nuevas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
       return upd;
     });
   };
@@ -6877,7 +6976,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const yaTiene=prev.some(r=>r&&r.batchId===loteId&&r.status==='held');
       if(yaTiene) return prev;
       const upd=ledgerApi.addReservations(prev,reservas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
       return upd;
     });
     return true;
@@ -6892,10 +6991,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const r=SetasInventoryConsumptionApi.applyLocal(invLotesRef.current,op,{fecha,nota});
     invLotesRef.current=r.lotes;
     setInvLotes(r.lotes);
-    try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
+    try{writeLocal('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
     setInvMovimientos(prev=>{
       const upd=[...prev,...r.movimientos];
-      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_movimientos',JSON.stringify(upd));}catch(e){}
       return upd;
     });
     // Libro de reservas: CIERRA las reservas que dejó la planificación, con
@@ -6914,7 +7013,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           aCerrar=reservas;
         }
         upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
         return upd;
       });
     }
@@ -6946,7 +7045,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // pueden escribir en el mismo tick.
   const saveCorreos=fn=>setInvCorreos(prev=>{
     const upd=inboxApi?inboxApi.compactCorreos(fn(prev)):fn(prev);
-    try{localStorage.setItem('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
+    try{writeLocal('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
     return upd;
   });
   useEffect(()=>{
@@ -7609,7 +7708,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           placeholder="$/kg"
                                         />
                                       ):(
-                                        r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
+                                        // pp===0: ningún lote con existencias tiene precio registrado;
+                                        // no es un insumo gratis.
+                                        <span style={r.pp===0?{color:'var(--status-attention-text)'}:undefined}>{r.pp>0?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:r.pp===0?'Sin precio':'—'}</span>
                                       )}
                                     </td>
                                     {/* PROVEEDOR */}
@@ -8276,7 +8377,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         const updated=qrLotesRef.current.map(item=>item.id===lote.id?{...item,lifecycleEvents:nextLog}:item);
         // Confirm durable local storage before saying saved; do not depend on
         // updateBitLote, whose legacy setter catches quota errors internally.
-        localStorage.setItem('sdp_bit_lotes',JSON.stringify(updated));
+        writeLocal('sdp_bit_lotes',JSON.stringify(updated));
         qrLotesRef.current=updated;
         setBitLotes(updated);
         savedLocally=true;
@@ -8486,7 +8587,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const at=new Date().toISOString();
       let upd=prev;
       descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{writeLocal('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
       return upd;
     });
   },[bitLotes]);
@@ -9056,7 +9157,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);
-                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
               }}>Reintentar</button>}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" data-testid="sync-export-stuck" style={{minHeight:44}} onClick={exportarSyncPendientes}>Exportar</button>}
             </div>;
@@ -9156,7 +9257,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {st.stuck>0&&<button type="button" onClick={()=>{
                     const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                     setSyncQueue(next);
-                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                    try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                   }} style={{marginLeft:6}}>Reintentar</button>}
                   {st.stuck>0&&<button type="button" data-testid="sync-export-stuck" onClick={exportarSyncPendientes} style={{marginLeft:6,minHeight:44,minWidth:44}}>Exportar</button>}
                 </span>;
@@ -9987,6 +10088,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+        <ServerClimateAlerts feed={serverClimateFeed} roomId={selectedClimateRoom} rooms={ROOMS_CONFIG} onRetry={()=>setServerClimateRetry(v=>v+1)}/>
         {renderRoomCyclePanel()}
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
@@ -10385,49 +10487,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {/* 5. Ventilación Dinámica FAE & AC Infinity Extractor */}
           {(() => {
-            const activeBiomassKg = mainLote?.pesoLote ? (mainLote.pesoLote * 0.22) : 25.0;
-            const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === 'function'
-              ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || 'orellana_gris', {
-                  targetPpm: defaultTargets.co2_ppm.target || 800,
-                  outdoorPpm: 420,
-                  roomVolumeM3: selectedClimateRoom === 'martha_01' ? 11.5 : 8.0,
-                  fanRatedCfm: 140
-                })
-              : null;
-            return (
-              <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
-                <div className="climate-kpi-header">
-                  <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span>
-                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
-                      {faeCalc ? `${faeCalc.requiredCfm} CFM` : '24.5 CFM'}
-                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginLeft: 6 }}>
-                        ({faeCalc ? faeCalc.requiredM3h : '41.6'} m³/h · {faeCalc ? faeCalc.effectiveAch : '3.6'} ACH)
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)', marginTop: 2 }}>
-                      {faeCalc?.schedule.recommendation || 'Encender 2.5 min cada 10 min'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      padding: '3px 8px',
-                      borderRadius: 4,
-                      background: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-                      color: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      fontWeight: 700
-                    }}>
-                      Duty Cycle: {faeCalc ? faeCalc.dutyCyclePct : 18}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
+            // A substrate weight is not a measurement of active fungal biomass.
+            const missing=[];
+            if(!lotesEnSala.length) missing.push('Sin lote en la sala');
+            if(lotesEnSala.some(l=>!Number.isFinite(l.biomasaActivaKg)||l.biomasaActivaKg<=0)) missing.push('Falta registrar la biomasa fúngica activa de cada lote');
+            const speciesKeys=lotesEnSala.map(l=>[l.sKey,l.speciesKey,l.especieKey,l.recipeRef?.sKey].find(k=>k&&(SPP[k]||climateMath?.SPECIES_RESPIRATION_RATES?.[k]||climateMath?.SPECIES_KEY_ALIASES?.[k]))||(l.especie?Object.keys(SPP).find(k=>SPP[k].name===l.especie):null));
+            if(speciesKeys.some(k=>!k)) missing.push('Falta identificar la especie de cada lote');
+            if(climateMath?.SPECIES_RESPIRATION_RATES&&speciesKeys.some(k=>k&&!climateMath.SPECIES_RESPIRATION_RATES[k]&&!climateMath.SPECIES_KEY_ALIASES?.[k])) missing.push('El modelo FAE no tiene parámetros para la especie registrada');
+            if(new Set(speciesKeys).size>1) missing.push('El modelo FAE no admite varias especies en una sala');
+            if(!Number.isFinite(room.volumeM3)||room.volumeM3<=0) missing.push('Falta configurar el volumen de la sala');
+            if(!Number.isFinite(room.fanRatedCfm)||room.fanRatedCfm<=0) missing.push('Falta configurar el caudal del extractor');
+            if(!climateMath?.calcDynamicFAE) missing.push('Modelo FAE no disponible');
+            const activeBiomassKg=lotesEnSala.reduce((sum,l)=>sum+(l.biomasaActivaKg||0),0);
+            const faeCalc=missing.length?null:climateMath.calcDynamicFAE(activeBiomassKg,speciesKeys[0],{
+              targetPpm:defaultTargets.co2_ppm.target, outdoorPpm:420,
+              roomVolumeM3:room.volumeM3, fanRatedCfm:room.fanRatedCfm,
+            });
+            return <div className="climate-kpi-card" data-testid="room-fae" style={{gridColumn:'span 2'}}>
+              <div className="climate-kpi-header"><span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span></div>
+              {faeCalc?<>
+                <p className="sdp-provenance">Estimación del modelo · Biomasa declarada: {activeBiomassKg.toFixed(1)} kg · Volumen nominal: {room.volumeM3.toFixed(2)} m³ · CO₂ exterior supuesto: 420 ppm</p>
+                <strong>{faeCalc.requiredCfm} CFM</strong> ({faeCalc.requiredM3h} m³/h · {faeCalc.effectiveAch} ACH)
+                <p>{faeCalc.schedule.recommendation} · Duty Cycle: {faeCalc.dutyCyclePct}%</p>
+              </>:<p role="status">{!lotesEnSala.length?'Sin lote en la sala. No se calcula ventilación.':missing.join('. ')+'. No se calcula ventilación.'}</p>}
+            </div>;
           })()}
         </div>
 
@@ -10842,7 +10925,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                       const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                       setSyncQueue(next);
-                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                      try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                     }}>Reintentar</button>}
                   </span>;
                 })()}
@@ -11210,6 +11293,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </header>
 
       <div className="wrap">
+        {localWriteFailure&&<div role="alert" data-testid="local-save-error" className="panel" style={{borderColor:'var(--coral-700)',color:'var(--coral-700)',position:'sticky',top:0,zIndex:'var(--z-sticky-header)'}}>
+          <strong>No se pudo guardar en este dispositivo.</strong> Algunos cambios pueden estar solo en pantalla y perderse al recargar. Mantener la app abierta, descargar un respaldo desde Datos y liberar espacio o habilitar el almacenamiento antes de reintentar.
+        </div>}
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
           <h1 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h1>
@@ -11563,7 +11649,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {st.stuck>0&&<button type="button" onClick={()=>{
                           const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                           setSyncQueue(next);
-                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                          try{writeLocal('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                         }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
                       </span>;
                     })()}
@@ -11575,6 +11661,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </section>
                 </div>
 
+                <ServerClimateAlerts feed={serverClimateFeed} rooms={ROOMS_CONFIG} onOpenRoom={roomId=>{setSelectedClimateRoom(roomId);goTab('clima');}} onRetry={()=>setServerClimateRetry(v=>v+1)}/>
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0)&&<aside className="home-context" aria-label="Contexto del turno">
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
@@ -12908,7 +12995,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
                     {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
+                      <button onClick={()=>{setPriceOverrides({});try{removeLocal('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
                     )}
                   </div>
                   <div>
@@ -12929,7 +13016,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               const v=Math.max(0,parseInt(e.target.value)||0);
                               const n={...priceOverrides,[ing.id]:v};
                               setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
+                              try{writeLocal('setas_prices_v1',JSON.stringify(n));}catch(err){}
                             }}
                           />
                         </div>
@@ -12962,6 +13049,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={ing.id} className={`ing-card-item${justAddedIds.includes(ing.id)?' ing-row-flash':''}`} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
                         <div style={{position:'relative'}}>
                           <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0} isCompat={isCompat} spName={sp?.name}/>
+                          {ing.compositionStatus==='estimated'&&<small>Composición estimada · compatibilidad por analogía · pendiente de piloto</small>}
                           {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
                         </div>
                         <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:6,padding:'4px 4px 6px'}}>
@@ -13103,7 +13191,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {recipe.length>0?(
                 <div className="form-review-checks" aria-label="Comprobaciones de receta" aria-live="polite">
                   {(()=>{
-                    const undocumented=hasPickedSpecies?recipe.filter(r=>!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
+                    const undocumented=hasPickedSpecies?recipe.filter(r=>effectiveINGS.find(g=>g.id===r.id)?.compositionStatus==='estimated'||!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
                     const checks=[
                       {id:'balance',label:'Balance de masa',status:balanced?'verified':'blocked',detail:`${an?.tot?.toFixed(1)||'0'}% / 100%${balanced?' · Composición cerrada':` · ${balMsg}`}`,action:'recipe'},
                       {id:'compatibility',label:'Compatibilidad documentada',status:!hasPickedSpecies||undocumented.length?'unknown':'verified',detail:!hasPickedSpecies?'Seleccionar una especie.':undocumented.length?`Sin compatibilidad documentada con ${sp.name}: ${undocumented.map(r=>effectiveINGS.find(g=>g.id===r.id)?.name||r.id).join(', ')}.`:`Todos los ingredientes tienen compatibilidad documentada con ${sp.name}.`,action:'recipe'},
@@ -13318,7 +13406,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
-                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt?.score||0}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
+                  const p={version:'1.0',predictionSnapshot:captureCompositionPrediction(),exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:compositionComparison?ebForecast.value:an.eb,...(compositionComparison?{rawModelEB:an.eb}:{}),costo:an.cost,score:opt?.score||0}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}><span aria-hidden="true">↓</span> JSON</button>
                 <button className="btn" onClick={()=>{
@@ -13707,9 +13795,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           spp:optTargetSPP,
                                         });
                                         noStock=noStock||!!out.noStock;
-                                        byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
-                                          hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
-                                        );
+                                        // Viables primero y casi duplicados colapsados dentro de cada
+                                        // grupo: el orden del Perito se conserva y quien lea [0]
+                                        // (mezcla/morphing) recibe el primer Escenario viable.
+                                        byProfile[pk]=SetasGeneratorPresentationApi.presentRows((out.ranked||[]).slice(0,12).map(c=>
+                                          hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk,invLotes)
+                                        ));
                                         const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk,optTargetSPP);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
@@ -13766,7 +13857,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {optResults&&optResults[optProfile]&&(
                               <div>
                                 <h3 id="generator-results-heading" tabIndex={-1} className="generator-results-heading" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',margin:'0 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
-                                  {optResults[optProfile].length} alternativas del modelo · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · objetivos resueltos por composición
+                                  {(()=>{const p=SetasGeneratorPresentationApi.partitionRows(optResults[optProfile]);return SetasGeneratorPresentationApi.generatorHeadline({viable:p.viable.length,blocked:p.blocked.length,profileLabel:OPT_PROFILES[optProfile]?.label||optProfile});})()} · {optUseStock?'solo stock':'paleta completa'} · objetivos resueltos por composición
                                 </h3>
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
@@ -13782,10 +13873,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <div className="generator-comparison" role="region" aria-label="Comparación de alternativas" tabIndex={0}>
                                   <table><caption>Alternativas · valores estimados del modelo · costo de catálogo sin tratamiento</caption>
                                     <thead><tr><th scope="col">Alternativa</th><th scope="col">Score</th><th scope="col">C:N</th><th scope="col">N %</th><th scope="col">COP/kg seco</th><th scope="col">Detalle</th></tr></thead>
-                                    <tbody>{optResults[optProfile].map((r,i)=><tr key={i}><th scope="row">#{i+1}</th><td>{r.score}</td><td>{r.an.cn.toFixed(1)}</td><td>{r.an.avgN.toFixed(2)}</td><td>{Math.round(r.an.cost).toLocaleString('es-CO')}</td><td><button type="button" onClick={()=>document.querySelector(`[data-result-id="${i}"]`)?.scrollIntoView({block:'start'})}>Ver composición</button></td></tr>)}</tbody>
+                                    <tbody>{optResults[optProfile].map((r,i)=><tr key={i}><th scope="row">#{i+1}{SetasGeneratorPresentationApi.isViableRow(r)?'':' · No ejecutar'}</th><td>{r.score}</td><td>{r.an.cn.toFixed(1)}</td><td>{r.an.avgN.toFixed(2)}</td><td>{Math.round(r.an.cost).toLocaleString('es-CO')}</td><td><button type="button" onClick={()=>{const el=document.querySelector(`[data-result-id="${i}"]`);const det=el?.closest('details');if(det)det.open=true;el?.scrollIntoView({block:'start'});}}>Ver composición</button></td></tr>)}</tbody>
                                   </table>
                                 </div>
-                                {optResults[optProfile].map((r,i)=>{
+                                {(()=>{const genCards=optResults[optProfile].map((r,i)=>{
                                   const mainIngs=r.recipe.map(x=>{const g=INGS.find(ing=>ing.id===x.id);return g?`${g.name} ${x.p}%`:x.id;}).filter(Boolean);
                                   const baseSig=r.recipe.map(x=>x.id).filter(id=>{const g=INGS.find(ing=>ing.id===id);return g&&g.role==='base_carbono';}).sort().join('+');
                                   return(
@@ -13799,10 +13890,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
                                           {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="currentColor" /> Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
+                                          {r.unpricedIds?.length>0&&<span className="opt-pill" data-testid="generator-unpriced-warning" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="currentColor" /> {`Sin precio en Bodega: ${r.unpricedIds.map(id=>INGS.find(g=>g.id===id)?.name||id).join(', ')}. El costo mostrado está subestimado.`}</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
-                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Planificar lote</button>
+                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}} disabled={!SetasGeneratorPresentationApi.isViableRow(r)} title={SetasGeneratorPresentationApi.isViableRow(r)?undefined:'Escenario marcado «No ejecutar»: cargarlo en la Mesa para corregirlo antes de planificar.'}>Planificar lote</button>
                                           <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);openBuilderSubTab('generador',{mode:'morphing'});}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>
@@ -13889,7 +13981,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       })()}
                                     </div>
                                   );
-                                })}
+                                });
+                                const nViable=optResults[optProfile].filter(SetasGeneratorPresentationApi.isViableRow).length;
+                                const blockedCards=genCards.slice(nViable);
+                                return(<>{genCards.slice(0,nViable)}{blockedCards.length>0&&(
+                                  <details data-testid="generator-blocked-group" className="generator-blocked-group" style={{marginTop:12,border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)',padding:'8px 12px'}}>
+                                    <summary style={{cursor:'pointer',fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--status-error)'}}>{`Combinaciones descartadas — No ejecutar (${blockedCards.length})`}</summary>
+                                    {blockedCards}
+                                  </details>
+                                )}</>);
+                                })()}
                               </div>
                             )}
                             {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
@@ -13915,13 +14016,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                     {diag.error&&<p role="alert">No se pudo completar la búsqueda: {diag.error}</p>}
-                                    {diag.bases===0&&<p>No hay una base de carbono compatible en {optUseStock?'Bodega':'el catálogo habilitado'}.</p>}
+                                    {(()=>{const why=!diag.error&&SetasGeneratorPresentationApi.explainEmptySearch(diag,OPT_PROFILES[diag.profileKey]?.label||diag.profileKey);return why?<p data-testid="generator-empty-reason" data-reason={why.code}>{why.message}</p>:null;})()}
                                     {diag.rejectionReasons?.length>0&&<div data-testid="generator-rejection-reasons">
                                       <strong>Restricciones encontradas en la búsqueda</strong>
                                       <ul>{diag.rejectionReasons.slice(0,5).map(reason=><li key={reason.code}>{describeSearchRejection(reason.code,optimizerINGS)} <span>({reason.count} evaluaciones)</span></li>)}</ul>
                                       <p>Un escenario puede incumplir varias restricciones. Este diagnóstico describe la búsqueda explorada, no demuestra que no exista otra fórmula.</p>
                                     </div>}
-                                    {!diag.error&&!diag.rejectionReasons?.length&&<p>No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción.</p>}
+                                    {!diag.error&&!diag.rejectionReasons?.length&&!SetasGeneratorPresentationApi.explainEmptySearch(diag,OPT_PROFILES[diag.profileKey]?.label||diag.profileKey)&&<p>No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción.</p>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>

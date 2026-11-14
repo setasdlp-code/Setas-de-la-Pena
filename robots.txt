@@ -1,5 +1,5 @@
-# Review visibility is deliberate: responses retain X-Robots-Tag: noindex, nofollow.
-# Crawling is allowed so clients can read that HTTP directive. This does not enable indexing.
+# Crawling is allowed. The three species sheets permit indexing.
+# Other review pages retain their HTTP or HTML noindex directive.
 User-agent: *
 Allow: /
 
