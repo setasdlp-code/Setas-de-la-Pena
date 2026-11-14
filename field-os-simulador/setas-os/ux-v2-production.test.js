@@ -180,7 +180,7 @@ test('bitácora writes are enqueued through SetasSyncQueue instead of fired and 
   assert.match(source, /encolarSync\(\{type:'actualizarBolsa',key:'bolsa:'\+bolsaId,args:\[bolsaId,fields\]\}\)/);
   assert.match(source, /encolarSync\(\{type:'guardarCosecha',key:'cosecha:'\+e\.id,args:\[e\]\}\)/);
   assert.match(source, /encolarSync\(\{type:'eliminarCosecha',key:'cosecha:'\+id,args:\[id\]\}\)/);
-  assert.match(source, /encolarSync\(\{type:'eliminarLoteCascade',key:'lote:'\+loteId,args:\[loteId,bolsaIds,cosechaIds\]\}\)/);
+  assert.match(source, /syncQueueApi\.createOperation\(\{type:'eliminarLoteCascade',key:'lote:'\+loteId,args:\[loteId,bolsaIds,cosechaIds\]\}\)/);
 
   // Cola llena (u operación inválida): el operario se entera, nunca se
   // descarta en silencio.
@@ -493,7 +493,7 @@ test('mergeReservas fusiona vía addReservations y persiste en sdp_inv_reservas'
   assert.ok(start > -1);
   const block = source.slice(start, start + 400);
   assert.match(block, /ledgerApi\.addReservations\(prev,nuevas\)/);
-  assert.match(block, /localStorage\.setItem\('sdp_inv_reservas',JSON\.stringify\(upd\)\)/);
+  assert.match(block, /writeLocal\('sdp_inv_reservas',JSON\.stringify\(upd\)\)/);
 });
 
 test('los dos flujos de lanzamiento sólo preguntan por el insumo comprometido, no por el que ya falta en bodega', () => {
@@ -541,8 +541,8 @@ test('descartar o eliminar un lote libera sus reservas con releaseForBatch', () 
 
   const deleteStart = source.indexOf('const purgeBitLote=(loteId)=>{');
   assert.ok(deleteStart > -1);
-  const deleteBlock = source.slice(deleteStart, deleteStart + 900);
-  assert.match(deleteBlock, /ledgerApi\.releaseForBatch\(prev,loteId,\{reason:'Lote de producción eliminado',at:new Date\(\)\.toISOString\(\)\}\)/);
+  const deleteBlock = source.slice(deleteStart, source.indexOf('const deleteBitLote=', deleteStart));
+  assert.match(deleteBlock, /ledgerApi\.releaseForBatch\(currentReservas,loteId,\{reason:'Lote de producción eliminado',at:new Date\(\)\.toISOString\(\)\}\)/);
 });
 
 test('la Bodega muestra físico, reservado y disponible ahora que el intervalo existe', () => {

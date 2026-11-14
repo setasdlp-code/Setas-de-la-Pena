@@ -111,6 +111,7 @@ const detectConditions = ({ cycles = [], liveByRoom = {}, nowMs, staleMs = DEFAU
  * escribir y qué avisar. Puro.
  */
 const planAlerts = ({ conditions = [], stored = [], nowMs, dwellMs = DEFAULTS.dwellMs, remindMs = DEFAULTS.remindMs }) => {
+  stored = stored.filter(a => a.recordType !== 'episode');
   const byId = new Map(stored.map(a => [a.id, a]));
   const present = new Set();
   const writes = [];
@@ -142,6 +143,11 @@ const planAlerts = ({ conditions = [], stored = [], nowMs, dwellMs = DEFAULTS.dw
     if (present.has(prev.id) || prev.status === 'resolved') continue;
     const alert = { ...prev, status: 'resolved', resolvedAt: nowMs };
     writes.push(alert);
+    // Snapshot each opened episode before a recurrence replaces its state.
+    // Deterministic identity makes retries idempotent; archives never drive alerts.
+    if (prev.status === 'open' && prev.openedAt != null) {
+      writes.push({...alert, id:`${prev.id}__episode_${prev.openedAt}`, alertId:prev.id, recordType:'episode'});
+    }
     // Un desvío que nunca llegó a abrirse se cierra en silencio.
     if (prev.status === 'open') notifications.push({ type: 'resolved', alert });
   }
@@ -177,7 +183,9 @@ const createCheckClimateAlerts = ({ db, notify, now = Date.now, options = {} }) 
   const [cyclesSnap, liveSnap, alertsSnap] = await Promise.all([
     db.collection(CYCLES).where('state', '==', 'active').get(),
     db.collection(LIVE).get(),
-    db.collection(ALERTS).get(),
+    // Closed records and archived episodes do not participate in the next
+    // check. Query only active state so history does not inflate every run.
+    db.collection(ALERTS).where('status', 'in', ['pending', 'open']).get(),
   ]);
   const cycles = cyclesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const liveByRoom = Object.fromEntries(liveSnap.docs.map(d => [d.id, d.data()]));
@@ -190,7 +198,13 @@ const createCheckClimateAlerts = ({ db, notify, now = Date.now, options = {} }) 
   // próxima corrida reintenta desde el mismo estado. El orden inverso dejaría
   // una alerta marcada como avisada que nadie recibió.
   if (notifications.length) await notify(formatMessage(notifications));
-  await Promise.all(writes.map(({ id, ...data }) => db.collection(ALERTS).doc(id).set(data)));
+  if (writes.length) {
+    // The state and its history must commit together, or a failed archive
+    // could be lost permanently after the state becomes resolved.
+    const batch = db.batch();
+    for (const { id, ...data } of writes) batch.set(db.collection(ALERTS).doc(id), data);
+    await batch.commit();
+  }
 
   return {
     salasEvaluadas: new Set(cycles.filter(c => c.state === 'active').map(c => c.roomId)).size,
