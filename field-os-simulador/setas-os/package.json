@@ -5,7 +5,7 @@
   "scripts": {
     "build": "node build.js",
     "test": "npm run test:unit && npm run test:gates",
-    "test:unit": "node --test $(ls *.test.js | grep -v -- '-criterio-gate')",
+    "test:unit": "node --test $(ls *.test.js firebase/*.test.js | grep -v -- '-criterio-gate')",
     "test:gates": "node --test paso1-criterio-gate.test.js mobile-criterio-gate.test.js",
     "test:browser": "node run-browser-tests.cjs",
     "test:e2e": "npx playwright test --config playwright.config.cjs",
