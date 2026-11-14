@@ -210,6 +210,12 @@
     return SPECIES_KEY_ALIASES[clean] || 'orellana_gris';
   };
 
+  const isKnownSpeciesKey = (key) => {
+    if (!key || typeof key !== 'string') return false;
+    const clean = key.trim().toLowerCase();
+    return clean !== 'default' && (!!SPECIES_RESPIRATION_RATES[clean] || !!SPECIES_KEY_ALIASES[clean]);
+  };
+
   /**
    * Corrección barométrica para sensores de CO2 tipo NDIR (MH-Z19C, SCD30, Senseair S8) en altitud.
    * La ley de Beer-Lambert depende de la densidad molar del gas; a 745 hPa (Tenjo) el sensor no compensado
@@ -303,6 +309,10 @@
       targetPpm,
       outdoorPpm,
       roomVolumeM3,
+      resolvedSpeciesKey: normKey,
+      speciesKnown: isKnownSpeciesKey(speciesKey),
+      co2Cfm: Math.round(qCfmCo2 * 10) / 10,
+      minAchCfm: Math.round(qCfmMinAch * 10) / 10,
       requiredCfm: Math.round(requiredCfm * 10) / 10,
       requiredM3h: Math.round(requiredM3h * 10) / 10,
       effectiveAch,

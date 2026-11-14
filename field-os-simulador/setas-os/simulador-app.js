@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6acf3a71c1a7f50b35b1f1e3880bda65777f066bf5ee6333a3eec10af8ed38e3
+// source-hash: 5a9a0328dc37055ef015783de211c63038e7f8699223eac1430128522e282fe3
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -4700,6 +4700,9 @@ function SimuladorShell(props) {
       cameraId: "martha",
       name: "Martha Tent 01",
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
+      // Volumen interior de la carpa (1.65 × 0.70 × 0.51 m). Caudal del extractor sin medir: null.
+      volumeM3: 0.589,
+      fanCfm: null,
       device: "ESP32-WROOM-32 (setas-martha-01)",
       sensors: "Sensirion SHT3x + Sensirion SCD30 (NDIR)",
       altitude: "2.600 msnm (Tenjo)"
@@ -4709,6 +4712,8 @@ function SimuladorShell(props) {
       cameraId: "cloudlab",
       name: "Cloudlab 844",
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
+      volumeM3: 3.02,
+      fanCfm: null,
       device: "ESP32-WROOM-32 (setas-cloudlab-01)",
       sensors: "Sensirion SHT45 + Sensirion SCD30 (NDIR)",
       altitude: "2.600 msnm (Tenjo)"
@@ -7111,7 +7116,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "6acf3a71c1a7" : null;
+    const appVersion = true ? "5a9a0328dc37" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -9724,22 +9729,44 @@ BATCH (${numBags}×${kgBag} kg):
       const ndirCorr = co2Correction ? { correctedPpm: co2Correction.correctedPpm, baroFactor: co2Correction.baroFactor, deltaPpm: co2Correction.deltaPpm, rawPpm: co2Correction.rawPpm, live: true } : climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745, currentMetrics.temp), { live: false }) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
       return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele", "data-testid": "climate-co2-card", "data-co2-live": ndirCorr.live ? "true" : "false" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "co2_ppm", roomLive, injected }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "ppm compensados"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", ndirCorr.rawPpm, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert ", co2Correction && co2Correction.pressureHpa || liveTelemetry.config.pressureHpa || 745, " hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
     })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Estimado · derivado de T° y HR"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
-      const activeBiomassKg = mainLote?.pesoLote ? mainLote.pesoLote * 0.22 : 25;
-      const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === "function" ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || "orellana_gris", {
-        targetPpm: defaultTargets.co2_ppm.target || 800,
-        outdoorPpm: 420,
-        roomVolumeM3: selectedClimateRoom === "martha_01" ? 11.5 : 8,
-        fanRatedCfm: 140
-      }) : null;
-      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { gridColumn: "span 2" } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 4 } }), " Ventilación Dinámica FAE (Extracción)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--ink-1)" } }, "Biomasa activa: ", activeBiomassKg.toFixed(1), " kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--ink-0)" } }, faeCalc ? `${faeCalc.requiredCfm} CFM` : "24.5 CFM", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginLeft: 6 } }, "(", faeCalc ? faeCalc.requiredM3h : "41.6", " m³/h · ", faeCalc ? faeCalc.effectiveAch : "3.6", " ACH)")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--accent-olive)", marginTop: 2 } }, faeCalc?.schedule.recommendation || "Encender 2.5 min cada 10 min")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("span", { style: {
+      const fruiting = lotesEnSala.filter((l) => l.estado === "fructificacion");
+      const roomVolumeM3 = Number(room.volumeM3) > 0 ? Number(room.volumeM3) : null;
+      const fanCfm = Number(room.fanCfm) > 0 ? Number(room.fanCfm) : null;
+      const canCalc = climateMath && typeof climateMath.calcDynamicFAE === "function";
+      let blocked = null;
+      if (!lotesEnSala.length) blocked = "Sin lote en la sala: no hay biomasa para calcular la renovación de aire.";
+      else if (!fruiting.length) blocked = "Ningún lote de la sala está en fructificación.";
+      else if (!roomVolumeM3) blocked = "Volumen de la sala no configurado.";
+      else if (!canCalc) blocked = "Motor de clima no disponible.";
+      const perLote = blocked ? [] : fruiting.map((l) => {
+        const wetKg = (Number(l.numBolsas) || 0) * (Number(l.pesoHumedo) || 0);
+        const sci = String(l.especieCientifico || "").trim().toLowerCase().split(/\s+/).slice(0, 2).join("_");
+        const speciesKey = [l.sKey, l.speciesKey, l.recipeRef?.sKey, sci].find(Boolean) || "";
+        return { lote: l, wetKg, calc: climateMath.calcDynamicFAE(wetKg * 0.22, speciesKey, {
+          targetPpm: defaultTargets.co2_ppm.target || 800,
+          outdoorPpm: 420,
+          roomVolumeM3,
+          fanRatedCfm: fanCfm || void 0
+        }) };
+      });
+      if (!blocked && !perLote.some((x) => x.wetKg > 0)) blocked = "Los lotes en fructificación no tienen bolsas ni peso húmedo registrados.";
+      const biomassKg = perLote.reduce((a, x) => a + x.calc.biomassKg, 0);
+      const co2Cfm = perLote.reduce((a, x) => a + x.calc.co2Cfm, 0);
+      const minAchCfm = perLote[0]?.calc.minAchCfm || 0;
+      const requiredCfm = Math.round(Math.max(co2Cfm, minAchCfm) * 10) / 10;
+      const requiredM3h = Math.round(requiredCfm * 1.69901 * 10) / 10;
+      const effectiveAch = roomVolumeM3 ? Math.round(requiredM3h / roomVolumeM3 * 10) / 10 : null;
+      const dutyCyclePct = fanCfm ? Math.min(100, Math.round(requiredCfm / fanCfm * 1e3) / 10) : null;
+      const onMin = dutyCyclePct != null ? Math.round(dutyCyclePct / 100 * 10 * 10) / 10 : null;
+      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", "data-testid": "fae-card", style: { gridColumn: "span 2" } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 4 } }), " Ventilación FAE (extracción)"), !blocked && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--ink-1)" } }, "Biomasa estimada: ", biomassKg.toFixed(1), " kg · ", roomVolumeM3, " m³")), blocked ? /* @__PURE__ */ React.createElement("div", { "data-testid": "fae-blocked", style: { fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, blocked) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--ink-0)" } }, requiredCfm, " CFM", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginLeft: 6 } }, "(", requiredM3h, " m³/h · ", effectiveAch, " ACH)")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 2 } }, perLote.map((x) => `${x.lote.codigo || x.lote.id}: ${x.calc.speciesKnown ? x.calc.resolvedSpeciesKey : "especie sin tasa de respiración propia, se usa " + x.calc.resolvedSpeciesKey}`).join(" · ")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--accent-olive)", marginTop: 2 } }, dutyCyclePct == null ? "Caudal del extractor no configurado: no se calcula el ciclo de encendido." : dutyCyclePct >= 95 ? "Extractor al 100% continuo o adicionar segundo extractor" : `Encender ${onMin} min cada 10 min`)), dutyCyclePct != null && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("span", { style: {
         padding: "3px 8px",
         borderRadius: 4,
-        background: (faeCalc?.dutyCyclePct || 20) > 85 ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
-        color: (faeCalc?.dutyCyclePct || 20) > 85 ? "var(--accent-rust)" : "var(--moss-800)",
+        background: dutyCyclePct > 85 ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
+        color: dutyCyclePct > 85 ? "var(--accent-rust)" : "var(--moss-800)",
         fontFamily: "var(--font-mono)",
         fontSize: 11,
         fontWeight: 700
-      } }, "Duty Cycle: ", faeCalc ? faeCalc.dutyCyclePct : 18, "%"))));
+      } }, "Duty Cycle: ", dutyCyclePct, "%"))));
     })()), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "target", size: 13, style: { marginRight: 4 } }), " Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "active-culinary-profile", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-1)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
       "select",
       {

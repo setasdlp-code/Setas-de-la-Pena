@@ -186,3 +186,13 @@ test('climate-math calcula psicrometría avanzada: humedad absoluta, bulbo húme
   const humAch = calcHumidificationDemand({ roomVolumeM3: 15.0, airChangesPerHour: 4.0 });
   assert.equal(humAch.faeM3h, 60.0);
 });
+
+test('calcDynamicFAE expone componentes CO2/ACH y si la especie tiene tasa propia', () => {
+  const { calcDynamicFAE } = require('./climate-math.js');
+  const known = calcDynamicFAE(5, 'pleurotus_ostreatus', { roomVolumeM3: 0.589 });
+  assert.strictEqual(known.speciesKnown, true);
+  assert.strictEqual(known.resolvedSpeciesKey, 'orellana_gris');
+  assert.strictEqual(known.requiredCfm, Math.max(known.co2Cfm, known.minAchCfm));
+  const unknown = calcDynamicFAE(5, 'especie_rara', { roomVolumeM3: 0.589 });
+  assert.strictEqual(unknown.speciesKnown, false);
+});

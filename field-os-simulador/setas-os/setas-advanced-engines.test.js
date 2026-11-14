@@ -98,7 +98,10 @@ test('simulador-app.jsx expone botones accesibles y modales de los 4 motores', (
   assert.match(jsx, /Cinética de Autoclave & Integral F₀/);
   assert.match(jsx, /Optimizador de Co-Cultivo y Setpoints Pareto/);
   assert.match(jsx, /Fisiología Poscosecha & Degradación en Cadena de Frío/);
-  assert.match(jsx, /Ventilación Dinámica FAE \(Extracción\)/);
+  assert.match(jsx, /Ventilación FAE \(extracción\)/);
+  // Sin lote en la sala no se calcula con biomasa ni volumen supuestos.
+  assert.match(jsx, /Sin lote en la sala: no hay biomasa/);
+  assert.doesNotMatch(jsx, /roomVolumeM3: selectedClimateRoom/);
   assert.match(jsx, /Dióxido de Carbono \(NDIR\)/);
 });
 

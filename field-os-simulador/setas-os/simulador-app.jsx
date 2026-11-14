@@ -6735,6 +6735,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       cameraId: 'martha',
       name: 'Martha Tent 01',
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
+      // Volumen interior de la carpa (1.65 × 0.70 × 0.51 m). Caudal del extractor sin medir: null.
+      volumeM3: 0.589,
+      fanCfm: null,
       device: 'ESP32-WROOM-32 (setas-martha-01)',
       sensors: 'Sensirion SHT3x + Sensirion SCD30 (NDIR)',
       altitude: '2.600 msnm (Tenjo)'
@@ -6744,6 +6747,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       cameraId: 'cloudlab',
       name: 'Cloudlab 844',
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
+      volumeM3: 3.02,
+      fanCfm: null,
       device: 'ESP32-WROOM-32 (setas-cloudlab-01)',
       sensors: 'Sensirion SHT45 + Sensirion SCD30 (NDIR)',
       altitude: '2.600 msnm (Tenjo)'
@@ -13127,49 +13132,80 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
 
-          {/* 5. Ventilación Dinámica FAE & AC Infinity Extractor */}
+          {/* 5. Ventilación FAE: solo con lotes en fructificación y volumen de sala configurado */}
           {(() => {
-            const activeBiomassKg = mainLote?.pesoLote ? (mainLote.pesoLote * 0.22) : 25.0;
-            const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === 'function'
-              ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || 'orellana_gris', {
-                  targetPpm: defaultTargets.co2_ppm.target || 800,
-                  outdoorPpm: 420,
-                  roomVolumeM3: selectedClimateRoom === 'martha_01' ? 11.5 : 8.0,
-                  fanRatedCfm: 140
-                })
-              : null;
+            const fruiting = lotesEnSala.filter(l => l.estado === 'fructificacion');
+            const roomVolumeM3 = Number(room.volumeM3) > 0 ? Number(room.volumeM3) : null;
+            const fanCfm = Number(room.fanCfm) > 0 ? Number(room.fanCfm) : null;
+            const canCalc = climateMath && typeof climateMath.calcDynamicFAE === 'function';
+            let blocked = null;
+            if (!lotesEnSala.length) blocked = 'Sin lote en la sala: no hay biomasa para calcular la renovación de aire.';
+            else if (!fruiting.length) blocked = 'Ningún lote de la sala está en fructificación.';
+            else if (!roomVolumeM3) blocked = 'Volumen de la sala no configurado.';
+            else if (!canCalc) blocked = 'Motor de clima no disponible.';
+            const perLote = blocked ? [] : fruiting.map(l => {
+              const wetKg = (Number(l.numBolsas) || 0) * (Number(l.pesoHumedo) || 0);
+              const sci = String(l.especieCientifico || '').trim().toLowerCase().split(/\s+/).slice(0, 2).join('_');
+              const speciesKey = [l.sKey, l.speciesKey, l.recipeRef?.sKey, sci].find(Boolean) || '';
+              return { lote: l, wetKg, calc: climateMath.calcDynamicFAE(wetKg * 0.22, speciesKey, {
+                targetPpm: defaultTargets.co2_ppm.target || 800,
+                outdoorPpm: 420,
+                roomVolumeM3,
+                fanRatedCfm: fanCfm || undefined
+              }) };
+            });
+            if (!blocked && !perLote.some(x => x.wetKg > 0)) blocked = 'Los lotes en fructificación no tienen bolsas ni peso húmedo registrados.';
+            const biomassKg = perLote.reduce((a, x) => a + x.calc.biomassKg, 0);
+            const co2Cfm = perLote.reduce((a, x) => a + x.calc.co2Cfm, 0);
+            const minAchCfm = perLote[0]?.calc.minAchCfm || 0;
+            const requiredCfm = Math.round(Math.max(co2Cfm, minAchCfm) * 10) / 10;
+            const requiredM3h = Math.round(requiredCfm * 1.69901 * 10) / 10;
+            const effectiveAch = roomVolumeM3 ? Math.round((requiredM3h / roomVolumeM3) * 10) / 10 : null;
+            const dutyCyclePct = fanCfm ? Math.min(100, Math.round((requiredCfm / fanCfm) * 1000) / 10) : null;
+            const onMin = dutyCyclePct != null ? Math.round(dutyCyclePct / 100 * 10 * 10) / 10 : null;
             return (
-              <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
+              <div className="climate-kpi-card" data-testid="fae-card" style={{ gridColumn: 'span 2' }}>
                 <div className="climate-kpi-header">
-                  <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span>
-                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
+                  <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación FAE (extracción)</span>
+                  {!blocked && <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa estimada: {biomassKg.toFixed(1)} kg · {roomVolumeM3} m³</span>}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
-                      {faeCalc ? `${faeCalc.requiredCfm} CFM` : '24.5 CFM'}
-                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginLeft: 6 }}>
-                        ({faeCalc ? faeCalc.requiredM3h : '41.6'} m³/h · {faeCalc ? faeCalc.effectiveAch : '3.6'} ACH)
-                      </span>
+                {blocked ? (
+                  <div data-testid="fae-blocked" style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginTop: 4 }}>{blocked}</div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, gap: 8, flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        {requiredCfm} CFM
+                        <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginLeft: 6 }}>
+                          ({requiredM3h} m³/h · {effectiveAch} ACH)
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginTop: 2 }}>
+                        {perLote.map(x => `${x.lote.codigo || x.lote.id}: ${x.calc.speciesKnown ? x.calc.resolvedSpeciesKey : 'especie sin tasa de respiración propia, se usa ' + x.calc.resolvedSpeciesKey}`).join(' · ')}
+                      </div>
+                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)', marginTop: 2 }}>
+                        {dutyCyclePct == null
+                          ? 'Caudal del extractor no configurado: no se calcula el ciclo de encendido.'
+                          : (dutyCyclePct >= 95 ? 'Extractor al 100% continuo o adicionar segundo extractor' : `Encender ${onMin} min cada 10 min`)}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)', marginTop: 2 }}>
-                      {faeCalc?.schedule.recommendation || 'Encender 2.5 min cada 10 min'}
-                    </div>
+                    {dutyCyclePct != null && (
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{
+                          padding: '3px 8px',
+                          borderRadius: 4,
+                          background: dutyCyclePct > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
+                          color: dutyCyclePct > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 11,
+                          fontWeight: 700
+                        }}>
+                          Duty Cycle: {dutyCyclePct}%
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      padding: '3px 8px',
-                      borderRadius: 4,
-                      background: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-                      color: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      fontWeight: 700
-                    }}>
-                      Duty Cycle: {faeCalc ? faeCalc.dutyCyclePct : 18}%
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             );
           })()}
