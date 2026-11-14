@@ -54,7 +54,6 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   const [nodes, setNodes] = useState(DEFAULT_IOT_NODES);
   const [fwMcu, setFwMcu] = useState('esp32dev');
   const [fwSensors, setFwSensors] = useState(['sht3xd', 'scd30']);
-  const [fwRelays, setFwRelays] = useState(['ch1_humidifier', 'ch2_fae']);
   const [fwRoom, setFwRoom] = useState(selectedRoomId || 'martha_01');
   const [fwWifiSsid, setFwWifiSsid] = useState('SetasPeña_2.4G');
   const [fwWifiPass, setFwWifiPass] = useState('**********');
@@ -85,16 +84,13 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   if (!isOpen) return null;
 
   const generatedCode = fwFormat === 'esphome'
-    ? generateESPHomeYaml({ deviceName: `setas-${fwRoom}`, roomId: fwRoom, mcu: fwMcu, sensors: fwSensors, relays: fwRelays, wifiSsid: fwWifiSsid, wifiPass: fwWifiPass, serverHost: fwServerHost, serverPort: fwServerPort })
+    ? generateESPHomeYaml({ deviceName: `setas-${fwRoom}`, roomId: fwRoom, mcu: fwMcu, sensors: fwSensors, wifiSsid: fwWifiSsid, wifiPass: fwWifiPass, serverHost: fwServerHost, serverPort: fwServerPort })
     : fwFormat === 'arduino'
     ? generateArduinoIno({ deviceName: `setas-${fwRoom}`, roomId: fwRoom, wifiSsid: fwWifiSsid, wifiPass: fwWifiPass, serverHost: fwServerHost, serverPort: fwServerPort })
     : generateCurlPayload({ roomId: fwRoom, temp: 18.4, rh: 89.2, co2: 710, subTemp: 19.3, serverHost: fwServerHost, serverPort: fwServerPort });
 
   const toggleSensor = id => {
     setFwSensors(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
-  const toggleRelay = id => {
-    setFwRelays(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   return (
@@ -249,7 +245,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </div>
             </div>
 
-            {/* Sensores y Relés */}
+            {/* Sensores (las plantillas no emiten relés: el control vive en el firmware del nodo, DEC-001) */}
             <div style={{ background: 'var(--paper-100)', padding: 12, borderRadius: 4, marginBottom: 16, border: '1px solid var(--border-hairline)' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>Sensores Conectados:</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
@@ -268,18 +264,6 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
                   <input type="checkbox" checked={fwSensors.includes('dht22')} onChange={() => toggleSensor('dht22')} />
                   DHT22 Sensor Digital
-                </label>
-              </div>
-
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, margin: '12px 0 8px', textTransform: 'uppercase' }}>Actuadores / Relés:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={fwRelays.includes('ch1_humidifier')} onChange={() => toggleRelay('ch1_humidifier')} />
-                  Relé Ch1: Humidificador Ultrasónico T7
-                </label>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={fwRelays.includes('ch2_fae')} onChange={() => toggleRelay('ch2_fae')} />
-                  Relé Ch2: Extractor FAE Cloudline H4
                 </label>
               </div>
             </div>
@@ -314,6 +298,9 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </button>
             </div>
 
+            <div role="note" data-testid="iot-template-note" style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ink-2)', marginBottom: 6 }}>
+              Plantilla de telemetría: solo sensores, sin relés ni control de actuadores. No incluye la autenticación del publicador real (telemetry-publisher/); revisarla antes de usarla.
+            </div>
             <pre className="iot-code-box">
               <code>{generatedCode}</code>
             </pre>

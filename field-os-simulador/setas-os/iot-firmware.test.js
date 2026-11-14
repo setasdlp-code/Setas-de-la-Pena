@@ -49,3 +49,22 @@ test('curl: el payload es JSON válido con los campos del contrato de telemetrí
   assert.equal(body.substrate_temperature_c, 18);
   assert.ok(!Number.isNaN(Date.parse(body.observed_at)));
 });
+
+test('ESPHome: es una plantilla de telemetría sin relés ni switches, aunque se pidan', () => {
+  const yaml = generateESPHomeYaml({ relays: ['ch1_humidifier', 'ch2_fae'] });
+  assert.match(yaml, /PLANTILLA DE TELEMETRÍA/);
+  const config = yaml.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
+  assert.doesNotMatch(config, /^switch:/m);
+  assert.doesNotMatch(config, /platform: gpio|relay|Relé/i);
+});
+
+test('Arduino y curl se rotulan como plantilla de telemetría y no gobiernan relés', () => {
+  const ino = generateArduinoIno({});
+  assert.match(ino, /PLANTILLA DE TELEMETRÍA/);
+  assert.doesNotMatch(ino, /relay|pinMode|digitalWrite/i);
+  assert.match(generateCurlPayload({}), /^# Plantilla de telemetría/);
+});
+
+test('los nodos por defecto no declaran relés', () => {
+  DEFAULT_IOT_NODES.forEach((n) => assert.equal('relays' in n, false, `${n.id}: declara relés`));
+});

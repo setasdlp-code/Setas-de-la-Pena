@@ -30,6 +30,12 @@ test('Setas OS — Hub de Integración IoT de Bajo Costo (ESP32 / Sonoff / Webho
   });
 
 
+  await t.test('el generador de firmware no ofrece relés y rotula su salida como plantilla de telemetría', () => {
+    assert.doesNotMatch(jsx, /fwRelays|toggleRelay|Actuadores \/ Relés|Relé Ch[12]/);
+    assert.match(jsx, /data-testid="iot-template-note"/);
+    assert.match(jsx, /Plantilla de telemetría: solo sensores, sin relés/);
+  });
+
   await t.test('Webhook tester parses and validates incoming payloads with canonical telemetry contract', () => {
     assert.match(jsx, /handleTestWebhook/);
     assert.match(jsx, /temperature_c|rh_pct|co2_ppm/);
