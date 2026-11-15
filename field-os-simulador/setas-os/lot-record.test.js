@@ -320,3 +320,106 @@ test('recordedAt es inyectable para que el registro sea determinista', () => {
   const rec = LR.buildLotRecord({ lote: closedLote(), cosechas: [harvest()], recordedAt: '2026-10-02T00:00:00.000Z' });
   assert.equal(rec.recordedAt, '2026-10-02T00:00:00.000Z');
 });
+
+// ── quality: calidad de cosecha ─────────────────────────────────────────────
+const qRec = (cosechas) => LR.buildLotRecord({
+  lote: closedLote(), cosechas, recordedAt: '2026-01-01T00:00:00.000Z',
+});
+const GRADED = { pesoFresco: 500, pesoPrimera: 300, pesoSegunda: 150, pesoDescarte: 50, criterioGrado: 'provisional_unversioned' };
+
+test('quality: cosecha sin campos nuevos no cambia answers ni gaps', () => {
+  const legacy = qRec([harvest()]);
+  // Literales capturados del comportamiento previo a `quality`.
+  assert.deepEqual(legacy.answers, {
+    eb_by_species_and_flush: true, strain_stratification: false, co2_dose_response: false,
+  });
+  assert.deepEqual(legacy.gaps.map((g) => g.code),
+    ['strain_unidentified', 'no_fruiting_cycle_linked', 'phenotype_unrecorded']);
+  assert.ok(legacy.quality.gaps.some((g) => g.code === 'quality_unrecorded'));
+  const graded = qRec([harvest({ ...GRADED, pesoFresco: 2000, firmeza: 4, defectosCampo: ['sporulation'] })]);
+  assert.deepEqual(graded.answers, legacy.answers);
+  assert.deepEqual(graded.gaps.map((g) => g.code), legacy.gaps.map((g) => g.code));
+});
+
+test('quality: kg por grado y fracciones completas', () => {
+  const q = qRec([harvest(GRADED)]).quality;
+  const f = q.flushes[0];
+  assert.deepEqual(f.gradeKg, { primera: 0.3, segunda: 0.15, descarte: 0.05 });
+  assert.deepEqual(f.gradeFractions, { primera: 0.6, segunda: 0.3, descarte: 0.1 });
+  assert.equal(f.fractionsStatus, 'complete');
+  assert.equal(f.harvests[0].gap.status, 'ok');
+  const codes = q.gaps.map((g) => g.code);
+  assert.ok(codes.includes('grade_criteria_provisional'));
+  assert.ok(!codes.includes('quality_unrecorded'));
+});
+
+test('quality: descarte vacío deja fracciones incompletas, nunca 0 implícito', () => {
+  const f = qRec([harvest({ ...GRADED, pesoDescarte: null })]).quality.flushes[0];
+  assert.equal(f.gradeKg.descarte, null);
+  assert.equal(f.gradeFractions, null);
+  assert.equal(f.fractionsStatus, 'incomplete');
+});
+
+test('quality: la diferencia se calcula por cosecha', () => {
+  const f = qRec([
+    harvest({ id: 'H-1', pesoFresco: 500, pesoPrimera: 400, pesoSegunda: 200, pesoDescarte: 0 }),
+    harvest({ id: 'H-2', pesoFresco: 500, pesoPrimera: 100, pesoSegunda: 100, pesoDescarte: 0 }),
+  ]).quality.flushes[0];
+  assert.equal(f.harvests.length, 2);
+  assert.deepEqual(f.harvests.map((h) => h.harvestId), ['H-1', 'H-2']);
+  assert.deepEqual(f.harvests.map((h) => h.gap.status), ['over_tolerance', 'over_tolerance']);
+  assert.ok(f.harvests[0].gap.gapG > 0 && f.harvests[1].gap.gapG > 0);
+});
+
+test('quality: neto nulo => no_net_weight', () => {
+  const f = qRec([harvest({ pesoFresco: null, pesoPrimera: 100 })]).quality.flushes[0];
+  assert.equal(f.harvests[0].gap.status, 'no_net_weight');
+  assert.equal(f.gradeKg.primera, 0.1);
+});
+
+test('quality: unit kg', () => {
+  const f = qRec([harvest({ unit: 'kg', pesoFresco: 0.5, pesoPrimera: 0.5 })]).quality.flushes[0];
+  assert.equal(f.gradeKg.primera, 0.5);
+  assert.equal(f.harvests[0].gap.status, 'incomplete');
+  const g = qRec([harvest({ unit: 'kg', pesoFresco: 0.5, pesoPrimera: 0.5, pesoSegunda: 0, pesoDescarte: 0 })]).quality.flushes[0];
+  assert.equal(g.harvests[0].gap.status, 'ok');
+});
+
+test('quality: pesos por grado negativos o no finitos se tratan como no declarados', () => {
+  const f = qRec([harvest({ pesoFresco: 500, pesoPrimera: -5, pesoSegunda: Infinity, pesoDescarte: 'x' })]).quality.flushes[0];
+  assert.deepEqual(f.gradeKg, { primera: null, segunda: null, descarte: null });
+  assert.equal(f.gradeFractions, null);
+});
+
+test('quality: firmeza inválida se proyecta null', () => {
+  assert.equal(qRec([harvest({ firmeza: 7 })]).quality.flushes[0].firmness, null);
+  assert.equal(qRec([harvest({ firmeza: 2.5 })]).quality.flushes[0].firmness, null);
+  assert.deepEqual(qRec([harvest({ firmeza: 4 })]).quality.flushes[0].firmness,
+    { values: [4], method: 'tacto_ordinal', scale: 'v0_texto' });
+});
+
+test('quality: fieldDefects y desconocidos', () => {
+  const base = qRec([harvest({ capDiameterMm: 60, stipeLengthMm: 30 })]);
+  const f = qRec([harvest({ defectosCampo: ['sporulation', 'xyz'] })]).quality.flushes[0];
+  assert.deepEqual(f.fieldDefects, ['sporulation']);
+  assert.deepEqual(f.undeclaredFieldDefects, ['xyz']);
+  const withDefects = qRec([harvest({
+    capDiameterMm: 60, stipeLengthMm: 30,
+    defectosCampo: ['sporulation', 'stipe_elongated', 'edge_curl_lost'],
+  })]);
+  assert.deepEqual(withDefects.phenotype, base.phenotype);
+  assert.deepEqual(withDefects.answers, base.answers);
+  assert.equal(withDefects.answers[LR.QUESTIONS.CO2_DOSE_RESPONSE], base.answers[LR.QUESTIONS.CO2_DOSE_RESPONSE]);
+});
+
+test('quality: procedencia por campo y esquema v1', () => {
+  const rec = qRec([harvest(GRADED)]);
+  assert.deepEqual(rec.quality.provenance, {
+    gradeKg: 'operator_declared_grade',
+    firmness: 'operator_ordinal_text_anchored',
+    capDiameter: 'observed_field_measured',
+    defects: 'observed_field_measured',
+  });
+  assert.equal(rec.schema, 'setas.lot-record.v1');
+  assert.equal(LR.selectForQuestion([rec], LR.QUESTIONS.EB_BY_SPECIES_AND_FLUSH).eligibleN, 1);
+});
