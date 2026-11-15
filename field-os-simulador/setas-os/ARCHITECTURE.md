@@ -245,6 +245,21 @@ Varios equipos escriben a la vez. Bitácora y Bodega se leen en vivo de Firestor
 
 Pruebas: `device-sync.test.js` (convergencia con dos equipos y un servidor simulado) y `e2e/multi-device-sync.browser.cjs` (la app real en dos contextos de navegador).
 
+## 5b. Automatización de los nodos de control: Setas OS solo lee
+
+El control de cada sala vive en el firmware del nodo (DEC-001, `esphome/CONTRATO_NODOS.md`); Setas OS no tiene ruta de escritura hacia un relé ni hacia un nodo y no se le añade ningún botón de forzado. Lo que sí muestra, sin pantallas ni pestañas nuevas:
+
+- **Dato:** el último `node_status` (`setas.node-status.v1`) de cada nodo llega en `telemetria_salas/{roomId}.device_readings.{deviceId}`. `live-telemetry-bridge.js` lo expone aparte de las lecturas (`snapshot.nodeStatuses`, `getNodeStatuses`): un paquete con solo estado (sensor inválido) no produce lecturas pero la alarma debe verse.
+- **Modelo de vista:** `node-automation.js` valida el estado contra el perfil de la sala (`node-control-profiles.json`; `PROFILES` es su copia con test de paridad) y lo convierte en relés comandados, alarmas, consigna y antigüedad. Sala sin perfil = «Sala sin automatización» (hoy Martha e incubación); perfil sin estado = «Sin datos del nodo»; un estado que no cumple el perfil no se muestra. Los relés son estado comandado (`reported`), no la medición del contacto.
+- **Antigüedad:** umbrales de `sensor-health.js` (`DEFAULT_FRESH_MS` → obsoleto, `DEFAULT_OFFLINE_MS` → sin enlace); no hay un umbral propio.
+- **Consigna:** `room-node-setpoints.compareNodeSetpoints` compara techo y arranque que reporta el nodo con la banda de temperatura del ciclo activo; una diferencia pide recompilar el firmware. La procedencia mostrada es la de la banda del ciclo (`SOURCE_LABELS`).
+- **Hoy:** `today-exceptions.js` añade filas `nodo` (alarma activa, sin enlace, consigna distinta, fuera de banda con la calefacción comandada). El tiempo fuera de banda es el parámetro `nodeOutOfBandMs`; por defecto toma `anomaly-thresholds.DEFAULT_DWELL_MS.temperature_c` y se mide desde el `since` de la alerta del motor.
+- **Ficha de lote:** `cycle-out-of-band.js` calcula horas fuera de banda por etapa y métrica con las bandas del ciclo y la telemetría de `sdp_telemetry_v1`; con cobertura menor que 0,5 dice «Datos insuficientes» y la cobertura, sin número. Hueco máximo y corte de cobertura vienen de `contamination-risk.js`.
+- **Bandas sin fuente:** `room-cycle-targets.bandOrigins` declara el origen de cada banda efectiva; las de `ROOM_TARGET_BANDS` se muestran como «predeterminado de la app, sin fuente».
+- **Carga de scripts:** `room-node-setpoints.js`, `node-automation.js` y `cycle-out-of-band.js` deben registrarse en `PROTECTED_APP_SCRIPTS` (`firebase/auth-gate.js`) después de `room-cycle-targets.js`. Hasta entonces la app degrada: el panel dice «Sin datos de actuadores», Hoy no muestra filas de nodo y la ficha de lote no pinta las horas.
+
+Escenario: E2E-12 en `E2E_SCENARIOS.md` (`e2e/node-automation.browser.cjs`, transporte simulado).
+
 ## Preguntas para revisar un PR que toque navegación o el Formulador
 
 1. ¿Alguna acción de React cambia de pestaña sin notificar al shell (`setTab`/`setBitTab` directo en vez de `goTab`/`goBitTab`)?
