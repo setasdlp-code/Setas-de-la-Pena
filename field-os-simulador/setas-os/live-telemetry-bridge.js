@@ -252,6 +252,27 @@
   };
 
   /**
+   * Estados de nodo (`node_status`, contrato setas.node-status.v1) de un
+   * documento `telemetria_salas/{roomId}`: último estado por dispositivo, tal
+   * como se guardó (crudo; node-automation.js lo valida contra el perfil de la
+   * sala). Un paquete con solo estado y sin lecturas (sensor inválido) no genera
+   * lecturas, así que esto se lee aparte de `parseFirestoreRoomDoc`.
+   * @returns {Array<{device_id: string, position: string|null, node_status: object}>}
+   */
+  const nodeStatusRowsFromRoomDoc = (data) => {
+    const devices = data && typeof data === 'object' && data.device_readings && typeof data.device_readings === 'object'
+      && !Array.isArray(data.device_readings) ? data.device_readings : {};
+    return Object.entries(devices)
+      .filter(([, entry]) => entry && typeof entry === 'object' && entry.node_status
+        && typeof entry.node_status === 'object' && !Array.isArray(entry.node_status))
+      .map(([deviceId, entry]) => ({
+        device_id: deviceId,
+        position: typeof entry.position === 'string' ? entry.position : null,
+        node_status: JSON.parse(JSON.stringify(entry.node_status)),
+      }));
+  };
+
+  /**
    * Crea el puente. Nada se conecta hasta llamar `start()`.
    *
    * @param {object} options
@@ -309,6 +330,9 @@
     // Estado por sala: series por métrica, última muestra agregada y el registro
     // de identidades ya vistas (deduplicado entre transportes).
     const roomsState = new Map();
+    // Último estado de nodo por sala y dispositivo (solo lectura; viene del
+    // documento de la sala en Firestore). roomId -> rows[]
+    const nodeStatusState = new Map();
     let running = false;
     let statusRevision = 0;
 
@@ -491,6 +515,12 @@
       },
       // Firestore: el mapa completo { [roomId]: doc } de `subscribeToLiveClimate`.
       onSnapshot: (roomsMap) => {
+        // El snapshot trae cada documento de sala completo: lo que no esté en él
+        // ya no es el último estado del servidor.
+        Object.entries(roomsMap || {}).forEach(([roomId, data]) => {
+          const rows = nodeStatusRowsFromRoomDoc(data);
+          if (rows.length) nodeStatusState.set(roomId, rows); else nodeStatusState.delete(roomId);
+        });
         const packets = Object.entries(roomsMap || {})
           .flatMap(([roomId, data]) => parseFirestoreRoomDoc(roomId, data) || [])
           .filter(Boolean);
@@ -696,7 +726,9 @@
           freshMetrics,
         };
       });
-      return { at, status: getStatus(), rooms };
+      const nodeStatuses = {};
+      nodeStatusState.forEach((rows, roomId) => { nodeStatuses[roomId] = rows.map(r => ({ ...r })); });
+      return { at, status: getStatus(), rooms, nodeStatuses };
     };
 
     const start = () => {
@@ -726,7 +758,9 @@
       setCycles: (next) => { cycles = Array.isArray(next) ? next.slice() : []; },
       setPressureHpa: (hpa) => { if (Number.isFinite(hpa)) pressureHpa = hpa; },
       knownRooms: () => Array.from(roomsState.keys()),
-      resetRoom: (roomId) => { roomsState.delete(roomId); },
+      resetRoom: (roomId) => { roomsState.delete(roomId); nodeStatusState.delete(roomId); },
+      /** Estados de nodo de una sala (crudos). Vacío si no llegó ninguno. */
+      getNodeStatuses: (roomId) => (nodeStatusState.get(roomId) || []).map(r => ({ ...r })),
       _links: links,
     };
   };
@@ -799,6 +833,7 @@
     compensateCo2Reading,
     parseMqttMessage,
     parseFirestoreRoomDoc,
+    nodeStatusRowsFromRoomDoc,
     browserFactories,
     browserWebSocketFactory,
     browserMqttFactory,
