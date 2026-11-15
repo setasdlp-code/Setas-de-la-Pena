@@ -145,7 +145,7 @@ function buildLaunchPlan({
 // que esas etapas se registren cuando de verdad pasan. Se escribe `estado`, el
 // campo legado, y nunca `lifecycleState`: ese lo escribe el servidor
 // (client-invariants.test.js lo vigila).
-function buildLoteRecords({ form, plan, analysis = null, predictionSnapshot = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now, estado = 'incubacion', objetivo = null }) {
+function buildLoteRecords({ form, plan, analysis = null, predictionSnapshot = null, forecastSnapshot = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now, estado = 'incubacion', objetivo = null }) {
   const spec=plan.preparation;
   const nb = spec ? spec.target.bags : Number(form.numBolsas) || 0;
   const kb = spec ? spec.target.kgPerBag : Number(form.pesoHumedo) || 0;
@@ -183,6 +183,8 @@ function buildLoteRecords({ form, plan, analysis = null, predictionSnapshot = nu
     ubicacion: form.sala,
     ingredientShortfalls: (plan.shortfalls || []).map(s => ({ ...s })),
     ingredientLots: (plan.allocations || []).map(a => ({ ...a })),
+    // Pronóstico visible al crear el lote (setas.eb-forecast.v1), escritura única.
+    ...(forecastSnapshot?{forecastSnapshot:JSON.parse(JSON.stringify(forecastSnapshot))}:{}),
     recipeRef: {
       ...(predictionSnapshot?{predictionSnapshot:JSON.parse(JSON.stringify(predictionSnapshot))}:{}),
       id: now,
