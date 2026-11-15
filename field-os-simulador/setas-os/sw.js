@@ -18,7 +18,7 @@
  */
 
 // build:cache-version
-const CACHE_VERSION = '5f1954b430df';
+const CACHE_VERSION = '6507fa04bd71';
 const CACHE = `setas-os-${CACHE_VERSION}`;
 
 // build:release-assets
