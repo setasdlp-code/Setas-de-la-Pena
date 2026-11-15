@@ -23,5 +23,6 @@ module.exports = [
   'views/public-traceability-modal.jsx',
   'views/iot-hub-modal.jsx',
   'views/field-action-modal.jsx',
+  'views/node-automation-panels.jsx',
   'simulador-app.jsx',
 ];

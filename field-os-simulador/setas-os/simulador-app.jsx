@@ -2798,6 +2798,7 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   useEffect(() => {
     const bridgeLib = typeof window !== 'undefined' ? window.SetasLiveBridge : null;
     const anomalyLib = typeof window !== 'undefined' ? window.SetasAnomaly : null;
+    const nodeAutomationApi = typeof window !== 'undefined' ? window.SetasNodeAutomation : null;
     if (!enabled || !bridgeLib || !anomalyLib) return undefined;
 
     const engine = anomalyLib.createAnomalyEngine({ bands: bandsRef.current });
@@ -2848,6 +2849,13 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
         next.status.activeSource || '-',
         Object.values(next.rooms).map(r => `${r.id}@${r.sample && r.sample.lastUpdateAt}:${Object.entries(r.metricAgeMs||{}).map(([m,age])=>`${m}:${Number.isFinite(age)?liveAgeLabel(age):'?'}:${r.freshMetrics?.[m]}`).join(',')}`).join(','),
         activeAlerts.map(a => `${a.key}:${a.severity}`).join(','),
+        // Estados de nodo: un estado nuevo, o que cruza el umbral de frescura o
+        // de enlace (sensor-health), vuelve a pintar la ficha de sala y Hoy.
+        Object.entries(next.nodeStatuses || {}).map(([roomId, rows]) => rows.map(row => {
+          const ns = row.node_status || {};
+          const link = nodeAutomationApi ? nodeAutomationApi.evaluateNodeLink(ns.observed_at, { now: Date.now() }) : null;
+          return `${roomId}/${row.device_id}@${ns.observed_at}:${link ? link.state : '-'}:${ns.control_state}:${(ns.alarms || []).join('+')}`;
+        }).join(',')).join(','),
       ].join('|');
       if (signature === signatureRef.current) return;
       signatureRef.current = signature;
@@ -2903,6 +2911,9 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     status: snapshot.status,
     hasLiveData: roomsWithData.length > 0,
     roomLive: (roomId) => (snapshot.rooms || {})[roomId] || null,
+    // Último node_status de cada nodo de la sala (crudo, solo lectura). Vacío si
+    // no llegó ninguno: la ficha dice "sin datos del nodo", nunca un valor por omisión.
+    nodeStatusRows: (roomId) => ((snapshot.nodeStatuses || {})[roomId]) || [],
     roomAlerts: (roomId) => alerts.filter(a => a.roomId === roomId),
     getSeries: (roomId, metric, opts) => (bridgeRef.current ? bridgeRef.current.getSeries(roomId, metric, opts) : null),
   };
@@ -4828,12 +4839,32 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
   // más larga que la referencia. Se calculan aquí, fuera del render de Hoy,
   // porque también alimentan las notificaciones.
+  // Nodos de control (solo lectura): el último node_status de cada sala con
+  // perfil, comparado con su ciclo activo. Sin estado recibido no hay fila.
+  const nodeAutomationApi=typeof window!=='undefined'?window.SetasNodeAutomation:null;
+  const buildRoomNodeAutomation=(roomId,nowMs=Date.now())=>{
+    if(!nodeAutomationApi) return null;
+    try{
+      return nodeAutomationApi.buildRoomAutomation({
+        roomId,
+        roomName:(ROOMS_CONFIG[roomId]&&ROOMS_CONFIG[roomId].name)||null,
+        statusRows:liveTelemetry.nodeStatusRows(roomId),
+        cycles:roomCycles,
+        now:nowMs,
+      });
+    }catch(e){console.warn('[Nodos] no se pudo armar la automatización de la sala',roomId,e);return null;}
+  };
+  const nodeAutomationRooms=nodeAutomationApi
+    ?Object.keys(nodeAutomationApi.PROFILES).map(roomId=>buildRoomNodeAutomation(roomId)).filter(Boolean)
+    :[];
   const todayExceptions=(()=>{
     const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
     const queueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
     if(!api) return [];
     try{
       return api.buildTodayExceptions({
+        nodeRooms:nodeAutomationRooms,
+        alerts:liveTelemetry.alerts||[],
         now:Date.now(),
         lotes:bitLotes,
         bolsas:bitBolsas,
@@ -4855,6 +4886,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       try{writeLocal('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
+    else if(a.type==='openRoom'&&a.roomId){setSelectedClimateRoom(a.roomId);goTab('clima');}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
   };
 
@@ -9130,6 +9162,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </section>
         );
       })()}
+      <LotOutOfBandPanel roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id,r])=>[id,r.name]))} result={lotOutOfBand({lote,cycles:roomCycles,now:cycleClock})}/>
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className="sdp-provenance" data-provenance={e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
@@ -9188,6 +9221,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Mismas bandas que Cámaras y el motor de alertas: las del ciclo activo
     // de la sala si lo hay, si no las fijas.
     const targetBands = roomId ? (effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null) : null;
+    // De dónde sale cada banda: ciclo (con su fuente) o fija de la sala, sin procedencia.
+    const targetOrigins = (roomId && cycleTargetsApi && cycleTargetsApi.bandOrigins
+      ? cycleTargetsApi.bandOrigins(ROOM_TARGET_BANDS, roomCycles, cycleClock)[roomId]
+      : null) || {};
 
     const buildReading = (metricKey, label, unit, decimals) => {
       const band = targetBands && targetBands[metricKey];
@@ -9211,7 +9248,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const targetLabel = band
         ? (metricKey === 'co2_ppm' ? `TARGET < ${band.max}` : `TARGET ${band.min}–${band.max}`)
         : null;
-      return { key: metricKey, label, unit, value: value.toFixed(decimals), modifier, targetLabel, provenanceKind, provenanceMeta };
+      const origin = band ? targetOrigins[metricKey] : null;
+      const originLabel = origin ? (origin.origin === 'cycle' ? origin.sourceLabel : `Banda ${origin.sourceLabel}`) : null;
+      return { key: metricKey, label, unit, value: value.toFixed(decimals), modifier, targetLabel, originLabel, provenanceKind, provenanceMeta };
     };
     const readings = roomId ? [
       buildReading('temperature_c', 'Temperatura', '°C', 1),
@@ -9353,6 +9392,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="sdp-reading__label">{r.label}</div>
                   <div className="sdp-reading__value">{r.value}<span className="sdp-reading__unit">{r.unit}</span></div>
                   {r.targetLabel && <div className="sdp-reading__target">{r.targetLabel}</div>}
+                  {r.originLabel && <div className="sdp-reading__target" data-testid="reading-band-origin">{r.originLabel}</div>}
                   <div className="sdp-reading__meta">
                     <span className="sdp-provenance" data-provenance={r.provenanceKind}>{r.provenanceKind === 'measured' ? 'MEASURED' : 'ESTIMATED'}</span>
                     <span>{r.provenanceMeta}</span>
@@ -9416,6 +9456,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+
+        <LotOutOfBandPanel mobile roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id, r]) => [id, r.name]))} result={lotOutOfBand({ lote, cycles: roomCycles, now: cycleClock })} />
 
         <section style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
@@ -9526,6 +9568,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // dashboard y el cockpit de Hoy nunca discrepen sobre qué es "en rango".
     // Con un ciclo de sala activo, sus bandas reemplazan las fijas de la sala.
     const defaultTargets = effectiveRoomBands[selectedClimateRoom] || ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
+    // Origen de cada banda efectiva. ROOM_TARGET_BANDS no tiene procedencia:
+    // donde se usa como banda efectiva se declara "predeterminado de la app, sin fuente".
+    const roomBandOrigins = (cycleTargetsApi && cycleTargetsApi.bandOrigins
+      ? cycleTargetsApi.bandOrigins(ROOM_TARGET_BANDS, roomCycles, cycleClock)[selectedClimateRoom]
+      : null) || {};
 
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
@@ -10382,6 +10429,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
             ?'Bandas provisionales: vienen del ciclo activo de la sala y aún no están validadas con lotes propios. Las alertas contra ellas son orientativas.'
             :'Bandas provisionales: son las fijas de la sala, sin especificación de lote aprobada. Las alertas contra ellas son orientativas.'}
         </p>
+        {/* Origen de cada banda efectiva: la del ciclo con su fuente, o la fija de la sala,
+            que no tiene procedencia (ROOM_TARGET_BANDS). */}
+        <ul className="climate-band-origins" data-testid="climate-band-origins" aria-label="Origen de las bandas de la sala" style={{listStyle:'none',margin:'0 0 12px',padding:0,fontSize:'var(--text-md)',color:'var(--ink-1)',display:'flex',flexDirection:'column',gap:2}}>
+          {[['temperature_c','Temperatura'],['rh_pct','Humedad relativa'],['co2_ppm','CO₂']].map(([metric,label])=>{
+            const o=roomBandOrigins[metric];
+            if(!o) return null;
+            return <li key={metric} data-metric={metric} data-band-origin={o.origin}>
+              <b>{label}:</b> {o.origin==='cycle'?`${o.sourceLabel} · ciclo activo`:`Banda ${o.sourceLabel}`}
+            </li>;
+          })}
+        </ul>
         <RoomDeviceReadings roomLive={roomLive}/>
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
@@ -10772,10 +10830,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         </div>
 
         {/* Actuadores: el control vive en el firmware del nodo (DEC-001); Setas OS solo lee estado.
-            Sin estado real publicado por un nodo no hay nada que mostrar ni controles de escritura. */}
-        <div className="climate-actuators-panel" data-testid="climate-actuators-panel">
-          Sin datos de actuadores para esta sala
-        </div>
+            Relés comandados, alarmas y consigna salen del último node_status del nodo; sin
+            estado recibido dice "sin datos del nodo" y sin perfil "sala sin automatización".
+            No hay controles de escritura. */}
+        <RoomAutomationPanel view={buildRoomNodeAutomation(selectedClimateRoom)}/>
       </div>
     );
   };
@@ -11601,9 +11659,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{minWidth:0,flex:'1 1 240px'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                               <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:ink,border:`1px solid ${ink}`,padding:'1px 5px'}}>{alarma?'Alarma':'Vigilar'}</span>
-                              <strong style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{item.title}</strong>
+                              <strong style={{fontFamily:'var(--font-sans)',fontSize:item.why&&item.next?'var(--text-md)':'var(--text-sm)',color:'var(--ink-0)'}}>{item.title}</strong>
                             </div>
-                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{item.detail}</div>
+                            {item.why&&item.next
+                              ?<div data-testid="today-exception-detail" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-md)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>
+                                <div><b>Por qué ahora:</b> {item.why}</div>
+                                <div><b>Siguiente:</b> {item.next}</div>
+                              </div>
+                              :<div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{item.detail}</div>}
                           </div>
                           {item.action&&<button type="button" className="sdp-btn sdp-btn--field" onClick={()=>runTodayExceptionAction(item)}>{item.action.label}</button>}
                         </li>;
@@ -11669,7 +11732,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       ))}
                     </div>
                   ) : (
-                    liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && (
+                    liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && todayExceptions.length === 0 && (
                       <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',padding:'4px 0'}}>
                         <span style={{display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="check" size={13} color="var(--status-ok)" /> Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal.</span>
                       </div>

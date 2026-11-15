@@ -128,10 +128,13 @@
   // del ciclo (room-node-setpoints.buildNodeSubstitutions); Setas OS no las manda.
   const RECOMPILE_ACTION = 'Recompilar y volver a cargar el firmware del nodo con las consignas del ciclo activo.';
 
-  /** "techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C; …" */
-  const describeDifferences = comparison => (comparison && comparison.differences ? comparison.differences : [])
-    .map(d => `${d.label}: el nodo reporta ${num(d.reported)} °C y el ciclo activo pide ${num(d.expected)} °C`)
-    .join('; ');
+  /** "Techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C; …" */
+  const describeDifferences = comparison => {
+    const text = (comparison && comparison.differences ? comparison.differences : [])
+      .map(d => `${d.label}: el nodo reporta ${num(d.reported)} °C y el ciclo activo pide ${num(d.expected)} °C`)
+      .join('; ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
 
   /**
    * Texto de la comparación de consigna. Una discrepancia siempre dice qué hacer:

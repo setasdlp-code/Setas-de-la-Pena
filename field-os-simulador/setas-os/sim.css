@@ -5177,6 +5177,89 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   gap: 14px;
 }
 
+/* Automatización del nodo (solo lectura) y horas fuera de banda del lote.
+   Una columna; texto operativo a 16 px (--text-md); sin controles de escritura. */
+.sim-root .climate-node-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+.sim-root .climate-node-title h3 { margin: 0; font-size: var(--text-lg); }
+.sim-root .climate-node-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
+  border-radius: var(--sim-radius-sm, 2px);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  color: var(--ink-0);
+  line-height: 1.4;
+}
+.sim-root .climate-node-card[data-link-state="stale"],
+.sim-root .climate-node-card[data-link-state="offline"] { border-left: 4px solid var(--status-warn-text); }
+.sim-root .climate-node-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  min-height: 48px;
+}
+.sim-root .climate-node-sub {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink-1);
+}
+.sim-root .climate-node-line,
+.sim-root .climate-node-note,
+.sim-root .climate-node-foot,
+.sim-root .climate-node-mismatch { margin: 0; font-size: var(--text-md); }
+.sim-root .climate-node-foot { color: var(--ink-1); }
+.sim-root .climate-node-note { color: var(--status-warn-text); }
+.sim-root .climate-node-mismatch {
+  padding: var(--space-1) var(--space-2);
+  background: var(--status-warn-bg);
+  border-left: 4px solid var(--status-warn-text);
+  color: var(--ink-0);
+}
+.sim-root .climate-node-relays,
+.sim-root .climate-node-alarms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.sim-root .climate-node-relay {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-half) 0;
+  border-bottom: 1px solid var(--border-hairline, var(--color-species-name));
+}
+.sim-root .climate-node-alarm { padding: var(--space-half) 0; color: var(--status-error); }
+.sim-root .batch-oob-stage__title { margin: var(--space-2) 0 var(--space-1); font-size: var(--text-md); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; }
+.sim-root .batch-oob-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.sim-root .batch-oob-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-hairline, var(--color-species-name));
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+}
+.sim-root .batch-oob-row__metric { font-weight: 700; }
+.sim-root .batch-oob-row__band, .sim-root .batch-oob-row__cov { color: var(--ink-1); font-weight: 400; }
+.sim-root .batch-oob-row__value--none { color: var(--status-warn-text); }
+@media (min-width: 900px) {
+  .sim-root .batch-oob-row { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+  .sim-root .climate-node-card { max-width: 72ch; }
+}
+
 .sim-root .climate-actuators-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

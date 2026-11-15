@@ -102,13 +102,19 @@ test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.climate-actuator-card/);
 });
 
-test('el panel de actuadores es de solo lectura: sin estado publicado por un nodo solo dice que no hay datos', () => {
-  assert.match(jsx, /data-testid="climate-actuators-panel"/);
-  assert.match(jsx, /Sin datos de actuadores para esta sala/);
+test('el panel de actuadores es de solo lectura: lee el estado del nodo; sin él dice que no hay datos', () => {
+  const all = require('./test-support/jsx-source.js').readJsxSource();
+  assert.match(all, /data-testid="climate-actuators-panel"/);
+  assert.match(all, /<RoomAutomationPanel view=\{buildRoomNodeAutomation\(selectedClimateRoom\)\}\/>/);
+  assert.match(all, /Sin datos de actuadores para esta sala/);
+  // Los textos de cada caso viven en el módulo puro, que sí se prueba (node-automation.test.js).
+  const nodeAutomation = fs.readFileSync(path.join(ROOT, 'node-automation.js'), 'utf8');
+  assert.match(nodeAutomation, /Sala sin automatización/);
+  assert.match(nodeAutomation, /Sin datos del nodo/);
   // Ninguna apariencia de control: el relé lo gobierna el firmware del nodo (DEC-001).
-  assert.doesNotMatch(jsx, /Forzar Humidificación|Disparar Pulso FAE|OVERRIDE \[|AUTO \[(ENCENDIDO|REPOSO|SIN LECTURA|EN ESPERA)\]/);
-  assert.doesNotMatch(jsx, /humidifierOverride|setHumidifierOverride|faePulseActive|humidifierAutoOn|faeAutoPulse/);
-  assert.doesNotMatch(jsx, /Relay Ch1|Relay Ch2|Hosyond \(2ch\)/);
+  assert.doesNotMatch(all, /Forzar Humidificación|Disparar Pulso FAE|OVERRIDE \[|AUTO \[(ENCENDIDO|REPOSO|SIN LECTURA|EN ESPERA)\]/);
+  assert.doesNotMatch(all, /humidifierOverride|setHumidifierOverride|faePulseActive|humidifierAutoOn|faeAutoPulse/);
+  assert.doesNotMatch(all, /Relay Ch1|Relay Ch2|Hosyond \(2ch\)/);
 });
 
 test('Clima ejecuta su hook sin condición y consume la vista sin remontar el panel', () => {

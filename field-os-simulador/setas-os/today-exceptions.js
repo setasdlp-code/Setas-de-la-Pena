@@ -271,7 +271,8 @@
   const MIN_MS = 60000;
   const durationLabel = ms => {
     if (!Number.isFinite(ms)) return 'tiempo desconocido';
-    if (ms < HOUR_MS) return `${Math.max(1, Math.round(ms / MIN_MS))} min`;
+    if (ms < MIN_MS) return `${Math.max(1, Math.round(ms / 1000))} s`;
+    if (ms < HOUR_MS) return `${Math.round(ms / MIN_MS)} min`;
     return hoursLabel(ms);
   };
   const ageLabel = ms => (Number.isFinite(ms) ? `hace ${durationLabel(ms)}` : 'sin hora válida');

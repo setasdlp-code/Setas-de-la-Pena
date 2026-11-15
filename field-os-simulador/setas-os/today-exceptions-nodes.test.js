@@ -72,7 +72,7 @@ test('alarma activa del nodo: qué / objeto / por qué ahora / siguiente acción
   assert.match(item.title, /CLOUDLAB 844: 1 alarma activa del nodo setas-cloudlab-01/);
   assert.deepEqual(item.object, { type: 'room', id: ROOM, name: 'CLOUDLAB 844' });
   assert.match(item.why, /Temperatura en o sobre el techo de la banda: calefacción OFF/);
-  assert.match(item.why, /Último estado hace 1 min/);
+  assert.match(item.why, /Último estado hace 30 s/);
   assert.match(item.next, /rehabilitación se hace a mano en el nodo: Setas OS solo lee/);
   assert.equal(item.detail, `${item.why} ${item.next}`);
   assert.deepEqual(item.action, { type: 'openRoom', roomId: ROOM, label: 'Abrir sala' });
@@ -140,7 +140,7 @@ test('discrepancia de consigna: pide recompilar el firmware', () => {
   assert.equal(item.id, `node:setpoint:${ROOM}:${DEVICE}`);
   assert.equal(item.severity, 'vigilar');
   assert.match(item.title, /la consigna del nodo setas-cloudlab-01 no coincide con el ciclo activo/);
-  assert.match(item.why, /techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C/);
+  assert.match(item.why, /Techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C/);
   assert.match(item.next, /^Recompilar y volver a cargar el firmware del nodo/);
 });
 

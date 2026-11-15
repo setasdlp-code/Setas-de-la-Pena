@@ -87,5 +87,7 @@ test('el tablero de clima no decide ni aparenta decidir actuadores', () => {
 test('el tablero de clima no muestra un historial de relés inventado', () => {
   assert.doesNotMatch(jsx, /Pulso periódico FAE completado|Encendido por banda mínima \(84\.2%/);
   assert.doesNotMatch(jsx, /relay-log-empty|Historial Reciente de Conmutación de Relés/);
-  assert.match(jsx, /Sin datos de actuadores para esta sala/);
+  // El panel lee el estado del nodo; sin él dice que no hay datos (views/node-automation-panels.jsx).
+  const panels = fs.readFileSync(path.join(__dirname, 'views', 'node-automation-panels.jsx'), 'utf8');
+  assert.match(panels, /Sin datos de actuadores para esta sala/);
 });

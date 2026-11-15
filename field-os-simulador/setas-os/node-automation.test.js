@@ -167,7 +167,7 @@ test('discrepancia de consigna: el texto manda recompilar el firmware', () => {
   const v = room([row(status({ setpoints: { consigna_id: 'rc-0@1', heat_setpoint_c: 12, hysteresis_c: 0.5, temp_max_c: 22 } }))]).nodes[0];
   assert.equal(v.comparison.state, 'mismatch');
   assert.match(v.comparisonText, /Recompilar y volver a cargar el firmware del nodo/);
-  assert.match(v.comparisonText, /techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C/);
+  assert.match(v.comparisonText, /Techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C/);
   assert.match(v.comparisonText, /arranque de calefacción: el nodo reporta 12 °C y el ciclo activo pide 13,5 °C/);
 });
 
