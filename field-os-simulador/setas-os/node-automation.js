@@ -124,18 +124,25 @@
     return { ...base, state, ageMs, observedAt: iso, label: LINK_LABELS[state] };
   };
 
+  // Qué hacer ante una discrepancia: el firmware se compila con las consignas
+  // del ciclo (room-node-setpoints.buildNodeSubstitutions); Setas OS no las manda.
+  const RECOMPILE_ACTION = 'Recompilar y volver a cargar el firmware del nodo con las consignas del ciclo activo.';
+
+  /** "techo de temperatura: el nodo reporta 22 °C y el ciclo activo pide 24 °C; …" */
+  const describeDifferences = comparison => (comparison && comparison.differences ? comparison.differences : [])
+    .map(d => `${d.label}: el nodo reporta ${num(d.reported)} °C y el ciclo activo pide ${num(d.expected)} °C`)
+    .join('; ');
+
   /**
-   * Texto de una discrepancia de consigna. Siempre dice qué hacer: recompilar.
+   * Texto de la comparación de consigna. Una discrepancia siempre dice qué hacer:
+   * recompilar el firmware.
    */
   const describeComparison = comparison => {
     if (!comparison) return null;
     if (comparison.state === 'match') {
       return 'La consigna del nodo coincide con la banda de temperatura del ciclo activo.';
     }
-    if (comparison.state === 'mismatch') {
-      const parts = comparison.differences.map(d => `${d.label}: el nodo reporta ${num(d.reported)} °C y el ciclo activo pide ${num(d.expected)} °C`);
-      return `${parts.join('; ')}. Recompilar y volver a cargar el firmware del nodo con las consignas del ciclo activo.`;
-    }
+    if (comparison.state === 'mismatch') return `${describeDifferences(comparison)}. ${RECOMPILE_ACTION}`;
     if (comparison.state === 'no_cycle') return 'No hay un ciclo de sala activo con el que comparar la consigna del nodo.';
     if (comparison.state === 'no_band') return `El ciclo activo no tiene una banda de temperatura utilizable para comparar${comparison.reason ? ` (${comparison.reason})` : ''}.`;
     if (comparison.state === 'no_setpoints') return 'El nodo no reportó consigna de temperatura: no se puede comparar con el ciclo.';
@@ -238,6 +245,8 @@
     HEAT_RELAY_ID,
     profileForRoom,
     evaluateNodeLink,
+    RECOMPILE_ACTION,
+    describeDifferences,
     describeComparison,
     buildNodeView,
     buildRoomAutomation,
