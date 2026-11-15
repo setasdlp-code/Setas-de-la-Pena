@@ -46,7 +46,7 @@
 .home-page .specimen-button img { display: block; width: 100%; height: clamp(200px, 18vw, 250px); object-fit: contain; transition: transform 220ms ease; }
 .home-page .specimen-button:hover img { transform: translateY(-4px); }
 .catalog-card-copy { padding-top: 16px; display: flex; flex-direction: column; flex: 1; }
-.home-page .species-card h3 { font: 500 clamp(28px, 2.5vw, 36px)/1.15 var(--font-editorial); letter-spacing: -.015em; margin: 0 0 5px; color: var(--brand-primary); }
+.home-page .species-card .t-species { font: 500 clamp(28px, 2.5vw, 36px)/1.15 var(--font-editorial); letter-spacing: -.015em; margin: 0 0 5px; color: var(--brand-primary); }
 .home-page .species-card .t-latin { font-size: 20px; line-height: 1.4; margin: 0; padding-bottom: 4px; }
 .home-page .card-profile { font: 400 16px/1.6 var(--font-sans); margin: 16px 0 20px; min-height: 0; color: var(--text-primary); }
 .home-page .card-actions { display: flex; flex-direction: column; gap: 0; margin-top: auto; border-top: var(--rule-hairline); }
@@ -101,7 +101,7 @@
   .home-page .masthead { flex-wrap: wrap; }
   .home-page .masthead nav { gap: 16px; }
   .home-page .species-card { padding-inline: 18px; }
-  .home-page .species-card h3 { font-size: 28px; }
+  .home-page .species-card .t-species { font-size: 28px; }
   .home-page .species-card .t-latin { font-size: 18px; }
   .home-page .card-profile { min-height: 52px; }
   .catalog-colophon { flex-direction: column; gap: 8px; }
@@ -135,7 +135,7 @@
   .home-page .species-card { padding: 0 0 24px; border-right: 0; border-bottom: var(--rule-hairline); }
   .home-page .species-card:last-child { padding-bottom: 0; border-bottom: 0; }
   .home-page .specimen-button img { height: 270px; }
-  .home-page .species-card h3 { font-size: 34px; }
+  .home-page .species-card .t-species { font-size: 34px; }
   .home-page .species-card .t-latin { font-size: 21px; }
   .home-page .catalog-card-copy { padding-top: 8px; }
   .home-page .card-profile { min-height: 0; margin-block: 12px 20px; }

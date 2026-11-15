@@ -10950,6 +10950,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
 
+            <CultureLineageView lotes={bitLotes} bolsas={bitBolsas} cosechas={bitCosechas} onOpenBatch={id=>{setBitActiveLoteId(id);goBitTab('bit_ficha',true);}} onLink={(id,spawnGenerationId,cultureRecords)=>updateBitLote(id,{spawnGenerationId,cultureRecords})}/>
             {bitTab==='bit_dash'&&(
               <div className="panel">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>

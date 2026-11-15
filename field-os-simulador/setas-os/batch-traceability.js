@@ -107,6 +107,8 @@
     cosechas = [],
     incidencias = [],
     generatedAt = null,
+    cultureRecords = lote?.cultureRecords || [],
+    passAlertThreshold = null,
   } = {}) => {
     if (!lote || !lote.id) throw new Error('lote válido con id es requerido');
 
@@ -205,6 +207,7 @@
       state: lote.estado || lote.state || 'activo',
       fechaInoculacion: lote.fechaInoculacion || null,
       lineage: {
+        culture: (isNode ? require('./culture-lineage.js') : globalThis.SetasCultureLineage).traceBatch(lote, cultureRecords, passAlertThreshold),
         recipeSnapshot,
         ingredientLots: ingredientLots.map(x => ({ ...x })),
         spawnLot: spawnLot ? { ...spawnLot } : null,

@@ -18,7 +18,7 @@
 // Uso:
 //   node build-ground-truth-corpus.js --bitacora=<export.json> [--trials=<export.json>]
 //                                     [--out=<ruta>] [--min-per-species=N]
-//                                     [--json] [--dry-run]
+//                                     [--json] [--dry-run] [--no-catalog]
 //
 // Formatos de entrada aceptados (--bitacora):
 //   { "lotes": [...], "cosechas": [...] }        ← export directo
@@ -60,6 +60,7 @@ const parseArgs = (argv) => {
     minPerSpecies: DEFAULT_MIN_PER_SPECIES,
     json: false,
     dryRun: false,
+    noCatalog: false,
   };
   for (const arg of argv) {
     const [flag, ...rest] = arg.split('=');
@@ -71,6 +72,7 @@ const parseArgs = (argv) => {
       case '--min-per-species': opts.minPerSpecies = Number(value); break;
       case '--json': opts.json = true; break;
       case '--dry-run': opts.dryRun = true; break;
+      case '--no-catalog': opts.noCatalog = true; break;
       case '--help': case '-h': opts.help = true; break;
       default:
         throw new Error(`argumento desconocido: ${flag}`);
@@ -140,20 +142,112 @@ const trialObservations = (trials, file) => {
   }));
 };
 
-const toFixture = (row) => ({
+// Formato exacto que consume ground-truth-regression.loadFixtures y el ejemplo
+// ground-truth-fixtures.example.json: solo estos cuatro campos. La trazabilidad
+// (fuente, código, fecha, motivo) vive en el reporte por lote, no en el corpus.
+const toFixture = (row, eb) => ({
   sKey: row.sKey,
   recipe: (row.recipe || []).map((r) => ({ id: r.id, p: Number(r.p ?? r.pct) })),
-  ebReal: row.be,
+  ebReal: eb,
   loteId: row.loteId || row.sourceId || null,
-  source: row.source,
-  ...(row.codigo ? { codigo: row.codigo } : {}),
-  ...(row.fecha ? { fecha: row.fecha } : {}),
 });
 
 const countBySpecies = (fixtures) => {
   const counts = {};
   fixtures.forEach((f) => { counts[f.sKey] = (counts[f.sKey] || 0) + 1; });
   return counts;
+};
+
+// Motivos propios de este script. NO redefinen elegibilidad: `historical-calibration`
+// decide qué es un resultado final. Estos solo detectan lotes que esa decisión
+// acepta pero que el arnés de regresión no podría evaluar (receta vacía, especie
+// o ingrediente fuera del catálogo de producción). Sin este filtro el lote entraría
+// al corpus y reaparecería como "fixture descartada" o "no evaluable" en el reporte.
+const CORPUS_REASON_LABELS = {
+  'corpus-empty-recipe': 'receta vacía',
+  'corpus-invalid-percentage': 'porcentaje de ingrediente ausente o inválido',
+  'corpus-unknown-species': 'especie fuera del catálogo de producción',
+  'corpus-unknown-ingredient': 'ingrediente fuera del catálogo de producción',
+};
+const reasonLabel = (reason) => (reason ? (CORPUS_REASON_LABELS[reason] || calib.EXCLUSION_LABELS?.[reason] || reason) : null);
+
+const corpusReason = (fixture, catalog) => {
+  if (!fixture.recipe.length) return 'corpus-empty-recipe';
+  if (fixture.recipe.some((r) => !r.id || !Number.isFinite(r.p) || r.p <= 0)) return 'corpus-invalid-percentage';
+  if (!catalog) return null;
+  if (!Object.prototype.hasOwnProperty.call(catalog.SPP, fixture.sKey)) return 'corpus-unknown-species';
+  const known = new Set(catalog.INGS.map((i) => i.id));
+  if (fixture.recipe.some((r) => !known.has(r.id))) return 'corpus-unknown-ingredient';
+  return null;
+};
+
+const NO_SPECIES = '(sin especie)';
+
+// Una pasada: elegibilidad canónica → filtro de evaluabilidad → resultado por lote,
+// fixtures exportables e indicador por especie.
+const evaluateLots = (observations, { catalog = null, minPerSpecies = DEFAULT_MIN_PER_SPECIES } = {}) => {
+  const report = calib.assessHistory(observations, 'be');
+  const lots = [];
+  const fixtures = [];
+  report.observations.forEach((x) => {
+    const { row } = x;
+    let reason = x.eligible ? null : x.reason;
+    let fixture = null;
+    if (x.eligible) {
+      fixture = toFixture(row, x.eb);
+      reason = corpusReason(fixture, catalog);
+      if (reason) fixture = null;
+    }
+    if (fixture) fixtures.push(fixture);
+    lots.push({
+      loteId: row.loteId || row.sourceId || null,
+      source: row.source || null,
+      codigo: row.codigo || null,
+      sKey: row.sKey || null,
+      eligible: !reason,
+      reason,
+      reasonLabel: reasonLabel(reason),
+    });
+  });
+
+  const exclusionReasons = {};
+  lots.filter((l) => !l.eligible).forEach((l) => { exclusionReasons[l.reason] = (exclusionReasons[l.reason] || 0) + 1; });
+
+  const bySpecies = new Map();
+  lots.forEach((l) => {
+    const key = l.sKey || NO_SPECIES;
+    if (!bySpecies.has(key)) bySpecies.set(key, { sKey: key, eligible: 0, excluded: 0 });
+    bySpecies.get(key)[l.eligible ? 'eligible' : 'excluded'] += 1;
+  });
+  const species = [...bySpecies.values()]
+    .map((s) => ({ ...s, belowMin: s.eligible < minPerSpecies }))
+    .sort((a, b) => a.sKey.localeCompare(b.sKey));
+
+  return {
+    lots, fixtures, species, exclusionReasons,
+    total: lots.length, eligibleN: fixtures.length, excludedN: lots.length - fixtures.length,
+  };
+};
+
+const reasonSummary = (reasons) => Object.entries(reasons)
+  .map(([reason, n]) => `${reasonLabel(reason)}: ${n}`).join(' · ');
+
+const printRejected = (lots, write) => {
+  const rejected = lots.filter((l) => !l.eligible);
+  if (!rejected.length) return;
+  write('');
+  write(`Lotes rechazados (${rejected.length}):`);
+  rejected.forEach((l) => write(
+    `  ${String(l.loteId || '(sin id)').padEnd(22)} ${String(l.sKey || NO_SPECIES).padEnd(20)} ${l.reasonLabel}`
+  ));
+};
+
+const printSpecies = (species, minPerSpecies, write) => {
+  write('Lotes elegibles por especie:');
+  species.forEach((s) => write(
+    `  ${s.sKey.padEnd(22)} ${String(s.eligible).padStart(3)} elegible(s) · ${String(s.excluded).padStart(3)} rechazado(s)` +
+    `${s.belowMin ? `  ← bajo el mínimo (${minPerSpecies})` : ''}`
+  ));
 };
 
 // ── main ──────────────────────────────────────────────────────────
@@ -169,7 +263,7 @@ const main = (argv) => {
   if (opts.help || (!opts.bitacora && !opts.trials)) {
     process.stderr.write(
       'Uso: node build-ground-truth-corpus.js --bitacora=<export.json> [--trials=<export.json>]\n' +
-      '                                       [--out=<ruta>] [--min-per-species=N] [--json] [--dry-run]\n' +
+      '                                       [--out=<ruta>] [--min-per-species=N] [--json] [--dry-run] [--no-catalog]\n' +
       'Se requiere al menos una fuente. Ver el encabezado del archivo para los formatos aceptados.\n'
     );
     return opts.help ? EXIT.OK : EXIT.OPERATIONAL;
@@ -195,38 +289,72 @@ const main = (argv) => {
     return EXIT.OPERATIONAL;
   }
 
-  // Única decisión de elegibilidad, delegada al módulo canónico.
-  const report = calib.assessHistory(observations, 'be');
-  const fixtures = report.eligibleRows.map(toFixture);
+  // Catálogo de producción: el mismo que usa perito-regression-report.js. Si no
+  // carga es un error, no un pase: validar contra nada reintroduciría las
+  // fixtures "no evaluables" que este filtro existe para evitar.
+  let catalog = null;
+  if (!opts.noCatalog) {
+    try {
+      catalog = require('./perito-regression-report.js').loadProductionCatalog(HERE);
+    } catch (err) {
+      process.stderr.write(`no se pudo cargar el catálogo de producción: ${err.message}\n(usa --no-catalog para omitir esa validación, bajo tu responsabilidad)\n`);
+      return EXIT.OPERATIONAL;
+    }
+  }
+
+  // Elegibilidad canónica (historical-calibration) + evaluabilidad por el arnés.
+  const result = evaluateLots(observations, { catalog, minPerSpecies: opts.minPerSpecies });
+  const { fixtures } = result;
   const counts = countBySpecies(fixtures);
-  const thin = Object.entries(counts).filter(([, n]) => n < opts.minPerSpecies);
+  const thin = result.species.filter((s) => s.belowMin);
 
   const summary = {
     sources,
-    observed: report.total,
-    eligible: report.eligibleN,
-    excluded: report.excludedN,
-    exclusionReasons: report.exclusionReasons,
+    observed: result.total,
+    eligible: result.eligibleN,
+    excluded: result.excludedN,
+    exclusionReasons: result.exclusionReasons,
+    catalogValidated: Boolean(catalog),
     bySpecies: counts,
+    species: result.species,
+    lots: result.lots,
     minPerSpecies: opts.minPerSpecies,
-    thinSpecies: thin.map(([sKey, n]) => ({ sKey, n })),
+    thinSpecies: thin.map((s) => ({ sKey: s.sKey, n: s.eligible })),
     out: opts.dryRun ? null : opts.out,
   };
+
+  const lines = [];
+  const emit = (l = '') => lines.push(l);
+  sources.forEach((s) => emit(`fuente ${s.kind}: ${s.file} → ${s.rows} observación(es)`));
+  emit(`${result.eligibleN} lote(s) elegible(s) · ${result.excludedN} rechazado(s)` +
+    (result.excludedN ? ` · ${reasonSummary(result.exclusionReasons)}` : ''));
+  if (!catalog) emit('AVISO: --no-catalog — especies e ingredientes NO se validaron contra el catálogo de producción.');
+  printRejected(result.lots, emit);
+  emit();
+  printSpecies(result.species, opts.minPerSpecies, emit);
 
   if (!fixtures.length) {
     if (opts.json) process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
     process.stderr.write(
-      `SIN FIXTURES ELEGIBLES: ${report.total} observación(es), 0 elegible(s).\n` +
-      `${calib.describeHistory(report)}\n` +
+      `SIN FIXTURES ELEGIBLES: ${result.total} observación(es), 0 elegible(s).\n${lines.join('\n')}\n` +
       'No se escribió nada. Un corpus vacío haría pasar la compuerta sin validar nada,\n' +
       'que es precisamente la falla que perito-regression-report.js existe para evitar.\n'
     );
     return EXIT.NO_ELIGIBLE;
   }
 
+  // Ida y vuelta por el consumidor real: si loadFixtures descartara algo, el
+  // corpus escrito no sería el que se cree haber validado.
+  const serialized = `${JSON.stringify(fixtures, null, 2)}\n`;
+  const roundTrip = require('./ground-truth-regression.js').loadFixtures(serialized);
+  if (roundTrip.error || roundTrip.skipped || roundTrip.fixtures.length !== fixtures.length) {
+    process.stderr.write(`el corpus no sobrevive a ground-truth-regression.loadFixtures (descartadas: ${roundTrip.skipped}, error: ${roundTrip.error}). No se escribió nada.\n`);
+    return EXIT.OPERATIONAL;
+  }
+
   if (!opts.dryRun) {
     try {
-      fs.writeFileSync(opts.out, `${JSON.stringify(fixtures, null, 2)}\n`, 'utf8');
+      fs.writeFileSync(opts.out, serialized, 'utf8');
     } catch (err) {
       process.stderr.write(`no se pudo escribir ${opts.out}: ${err.message}\n`);
       return EXIT.OPERATIONAL;
@@ -236,19 +364,12 @@ const main = (argv) => {
   if (opts.json) {
     process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
   } else {
-    const lines = [];
-    sources.forEach((s) => lines.push(`fuente ${s.kind}: ${s.file} → ${s.rows} observación(es)`));
-    lines.push(calib.describeHistory(report));
-    lines.push('');
-    lines.push('Corpus por especie:');
-    Object.entries(counts).sort(([a], [b]) => a.localeCompare(b))
-      .forEach(([sKey, n]) => lines.push(`  ${sKey.padEnd(22)} ${String(n).padStart(3)}${n < opts.minPerSpecies ? '  ← bajo el mínimo' : ''}`));
-    lines.push('');
-    lines.push(opts.dryRun ? `(dry-run) ${fixtures.length} fixture(s) NO escritas` : `${fixtures.length} fixture(s) → ${opts.out}`);
+    emit();
+    emit(opts.dryRun ? `(dry-run) ${fixtures.length} fixture(s) NO escritas` : `${fixtures.length} fixture(s) → ${opts.out}`);
     if (thin.length) {
-      lines.push('');
-      lines.push(
-        `AVISO: ${thin.length} especie(s) con menos de ${opts.minPerSpecies} lote(s). ` +
+      emit();
+      emit(
+        `AVISO: ${thin.length} especie(s) con menos de ${opts.minPerSpecies} lote(s) elegible(s). ` +
         'Con esa n el error promedio es ruido, no evidencia: sirve para detectar que un\n' +
         'cambio rompió algo, no para afirmar que el modelo mejoró. Calibrar constantes\n' +
         'contra estas especies requiere decirlo explícitamente en el PR.'
@@ -264,4 +385,4 @@ if (require.main === module) {
   process.exitCode = main(process.argv.slice(2));
 }
 
-module.exports = { main, extractBitacora, trialObservations, toFixture, countBySpecies, EXIT, DEFAULT_MIN_PER_SPECIES };
+module.exports = { main, extractBitacora, trialObservations, toFixture, countBySpecies, evaluateLots, corpusReason, EXIT, DEFAULT_MIN_PER_SPECIES };
