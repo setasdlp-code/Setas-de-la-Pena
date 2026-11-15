@@ -51,5 +51,9 @@ module.exports = defineConfig({
     url: 'http://127.0.0.1:4173/Setas%20OS%20v5.dc.html',
     reuseExistingServer: !process.env.CI,
     timeout: 20_000,
+    // http.server escribe cada petición en stderr. Reenviado al log de CI,
+    // enterraba el error de la prueba fallida entre miles de líneas GET.
+    stdout: 'ignore',
+    stderr: 'ignore',
   },
 });
