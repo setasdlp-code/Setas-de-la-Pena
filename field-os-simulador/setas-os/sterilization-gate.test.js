@@ -36,7 +36,7 @@ test('shiitake 79/20/1 con cwlp queda en hold', () => {
 test('shiitake con autoclave no cambia', () => {
   const an = analyze(SHIITAKE_CANONICAL, 'shiitake', INGS, SPP);
   const res = scoreRecipe(an, { treatment: { col: 'autoclave' } });
-  assert.equal(res.score, 67);
+  assert.equal(res.score, 68); // 67→68 por H-A (eb-heuristic-2)
   assert.equal(res.status, 'good');
   assert.notEqual(res.dimensions.safety.status, 'hold');
 });

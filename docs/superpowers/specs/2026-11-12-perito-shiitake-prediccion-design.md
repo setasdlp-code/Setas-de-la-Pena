@@ -5,6 +5,23 @@ Estado: **[Decisión]** Sebastián pidió auditar e implementar (2026-11-14). Ra
 
 Convención: **[Decisión]** la tomó Sebastián. **[Mi decisión]** la tomé yo al redactar y debe revisarse. Toda confianza citada nombra su escala (ADR-0007).
 
+## 000. Decisión 2026-11-15: H-A aplicada a producción
+
+**[Decisión]** Sebastián ordenó aplicar H-A (2026-11-15), usando la excepción del 2026-11-12. Esto adelanta la condición de §5.3 (lotes del piloto o sustento publicado), que no se cumplía.
+
+- `analyze()`: `aerF = 1` para shiitake cuando todo el material denso es madera (`aserrin_*` o `pellets_*`). Con guadua, café, afrecho, cartón u otro denso no leñoso, el castigo sigue. Otras especies no cambian.
+- `EB_MODEL_VERSION` pasa a `eb-heuristic-2`. Los lotes con pronóstico de la versión 1 lo conservan con esa versión.
+- Efecto medido:
+  - Roble 79/20/1: EB 45,6 → 53,7; banda visible 31–61 → 39–69.
+  - Benchmark (3 tratamientos de El Sebaaly): error medio 19,2 → 10,9; máximo 26,8 → 18,4; dentro de banda 1/3 → 2/3.
+  - Ningún preset de otra especie cambia.
+- Lo que no corrige: el puntaje con 30 % de salvado (74) sigue por encima del de 20 % (68), porque depende de C:N y N, no de la aireación.
+- Tests actualizados a la decisión:
+  - `formulador-baseline.fixture.json`: solo cambia `shiitake-lote1-proxy`.
+  - `perito-composition-scenarios.test.js`: los pellets Weber ya no llevan castigo de aireación; `densaP` conserva el proxy de roble.
+  - `sterilization-gate.test.js`: puntaje con autoclave 67 → 68; el bloqueo del tratamiento térmico no cambia.
+- `perito:regression` sigue bloqueado (sin corpus de campo). H-A se revisa con los lotes del piloto mediante `forecastSnapshot`.
+
 ## 00. Revisión 3: autoauditoría contra `main` @ `6939cba`
 
 `main` incorporó #509 (perfil provisional de pellets Weber Hickory y sensibilidad de composición) después de la revisión 2. Cambios:

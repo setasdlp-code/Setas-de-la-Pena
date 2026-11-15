@@ -84,7 +84,16 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     }
     // Aireación: riesgo de anaerobiosis con mucho material denso y poco aireador
     var aerF=1;
-    if(densaP>60&&airP<10) aerF=.85;
+    // H-A (Sebastián, 2026-11-15, excepción limitada a shiitake): el bloque de
+    // madera es el sustrato estándar del shiitake, así que no se castiga la
+    // aireación cuando todo el material denso es madera (aserrín o pellets).
+    // Sigue aplicando si hay café, afrecho, cartón u otro denso no leñoso.
+    // Validada solo contra literatura (perito-literature-benchmark.js); revisar
+    // con los lotes del piloto.
+    const woodOnlyDense=sKey==='shiitake'&&densaP>0&&recipe.every(r=>!DENSOS.includes(r.id)||/^aserrin_/.test(r.id)||!(parseFloat(r.p)>0))
+      &&recipe.some(r=>/^aserrin_|^pellets_/.test(r.id)&&parseFloat(r.p)>0);
+    if(woodOnlyDense) aerF=1;
+    else if(densaP>60&&airP<10) aerF=.85;
     else if(densaP>40&&airP<8) aerF=.93;
     // Digestibilidad: sustratos muy lignificados colonizan lento y rinden algo menos
     // F-19: shiitake/reishi son degradadores de lignina — digF no aplica en madera dura
@@ -112,7 +121,7 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
 // Versión del modelo heurístico de EB. Incrementar con cada cambio a analyze()
 // o a valores de catálogo que muevan la EB: los pronósticos congelados en los
 // lotes (eb-forecast-record.js) la citan para saber con qué modelo se hicieron.
-const EB_MODEL_VERSION = 'eb-heuristic-1';
+const EB_MODEL_VERSION = 'eb-heuristic-2'; // 2: H-A, sin castigo de aireación para shiitake en madera
 const api = { analyze, EB_PENALTY_BALANCE_BAND, EB_MODEL_VERSION };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.SetasSubstrateAnalysis = api;

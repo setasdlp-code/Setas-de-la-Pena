@@ -24,7 +24,7 @@ test('working blend sums C and N separately and declares hypotheses instead of m
 test('Weber is calculated in full and retains the declared oak density proxy',()=>{
  const a=analyze(recipe,'shiitake');
  assert.ok(Number.isFinite(a.eb)&&a.eb>0);
- assert.equal(a.densaP,79);assert.equal(a.ebMods.aerF,.85);
+ assert.equal(a.densaP,79);assert.equal(a.ebMods.aerF,1); // H-A (2026-11-15): pellets de madera exentos; densaP conserva el proxy de roble
  assert.ok(Math.abs(a.cn-(product.c*79+45*20)/(product.n*79+2.8*20))<1e-10);
 });
 test('fixed-recipe comparison preserves input and matches actual engine calculations without averaging predictions',()=>{
@@ -48,7 +48,7 @@ test('estimates suppress automatic recipe changes while retaining diagnosis and 
  assert.ok(opt.items.length>0);
  assert.ok(opt.items.every(i=>!i.apply&&!i.comboApply));
  assert.ok(opt.items.some(i=>i.label==='Composición provisional'));
- assert.equal(analyze([{id:'aserrin_roble',p:79},{id:'salvado_trigo',p:20},{id:'carbonato_calcio',p:1}],'shiitake').eb,45.60334695165119);
+ assert.equal(analyze([{id:'aserrin_roble',p:79},{id:'salvado_trigo',p:20},{id:'carbonato_calcio',p:1}],'shiitake').eb,53.65099641370728); // eb-heuristic-2 (H-A): sin castigo de aireación en madera
 });
 test('saved prediction and production records keep detached evidence, parameters and model version',()=>{
  const inputRecipe=structuredClone(recipe),ings=structuredClone(INGS);

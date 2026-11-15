@@ -3,7 +3,7 @@
 // Benchmark EXPLORATORIO del Perito contra EB publicadas (literature-eb-benchmark.json).
 //
 // Qué es: compara la predicción de EB de la versión actual del modelo y de
-// variantes nombradas (hipótesis H-A, H-B) aplicadas en memoria, contra EB que
+// variantes nombradas (hipótesis H-B) aplicadas en memoria, contra EB que
 // reporta la literatura. Reporta por tratamiento y por estudio, y comprueba
 // límites de deterioro fijados antes de evaluar.
 //
@@ -29,33 +29,14 @@ const HEADER = 'Benchmark exploratorio de literatura. No valida ni aprueba cambi
 // Límites fijados antes de evaluar (diseño 2026-11-12, rev. 2 §5.3).
 const LIMITS = { maxTreatmentWorseningEB: 5, maxOtherSpeciesPresetShiftEB: 5 };
 
-// Material denso que no es madera: una exención de aireación "solo madera" no
-// aplica si la receta contiene alguno (espejo de DENSOS en substrate-analysis.js).
-const NON_WOOD_DENSE = ['borra_cafe', 'afrecho_cerveceria', 'chips_poda_urbana', 'guadua', 'carton_corrugado', 'pulpa_papel'];
-const isWood = (id) => /^aserrin_/.test(id) || /^pellets_/.test(id);
-
 const withOak = (ings) => ings.map((g) => (g.id === 'aserrin_roble' ? { ...g, c: 53.8, n: 0.48, cn: 53.8 / 0.48 } : g));
 
 // Cada variante devuelve el análisis que produciría; nada se escribe en el catálogo.
+// H-A (sin castigo de aireación para shiitake en madera) se aplicó a producción
+// el 2026-11-15 (EB_MODEL_VERSION eb-heuristic-2) y forma parte de 'actual'.
 const VARIANTS = {
-  actual: { label: 'Versión actual', analyze: (recipe, sKey, ings) => analyze(recipe, sKey, ings) },
-  'H-A': {
-    label: 'H-A: sin castigo de aireación para shiitake en madera',
-    analyze: (recipe, sKey, ings) => {
-      const an = analyze(recipe, sKey, ings);
-      if (!an || sKey !== 'shiitake') return an;
-      const ids = recipe.filter((r) => Number(r.p) > 0).map((r) => r.id);
-      const woodOnly = ids.some(isWood) && !ids.some((id) => NON_WOOD_DENSE.includes(id));
-      const aerF = an.ebMods?.aerF;
-      if (!woodOnly || !(aerF > 0) || aerF >= 1) return an;
-      return { ...an, eb: an.eb / aerF, ebMods: { ...an.ebMods, aerF: 1 } };
-    },
-  },
+  actual: { label: 'Versión actual (incluye H-A)', analyze: (recipe, sKey, ings) => analyze(recipe, sKey, ings) },
   'H-B': { label: 'H-B: roble con C 53,8 % y N 0,48 % (El Sebaaly 2024)', analyze: (recipe, sKey, ings) => analyze(recipe, sKey, withOak(ings)) },
-};
-VARIANTS['H-A+H-B'] = {
-  label: 'H-A + H-B',
-  analyze: (recipe, sKey, ings) => VARIANTS['H-A'].analyze(recipe, sKey, withOak(ings)),
 };
 
 // La banda que ve el usuario (recipeEBForecast sin historial), no la de analyze().
