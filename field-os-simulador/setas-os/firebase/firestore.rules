@@ -206,6 +206,15 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    // Estado de las alertas de clima (functions/climate-alerts.js). Solo la
+    // función de servidor las escribe, con el Admin SDK, que no pasa por estas
+    // reglas. Un cliente que pudiera escribirlas podría cerrar una alerta
+    // abierta y silenciar el aviso por correo.
+    match /climate_alerts/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     // Revisiones de requisitos antes de producir (production-readiness.js).
     // Cada revisión es un registro inmutable firmado por su responsable: una
     // revisión nueva reemplaza a la anterior por fecha, nunca la edita. Por eso

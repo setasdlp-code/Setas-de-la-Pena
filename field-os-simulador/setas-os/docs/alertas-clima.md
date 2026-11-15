@@ -27,6 +27,18 @@ Código: `functions/climate-alerts.js` (lógica, probada en
 `functions/index.js`. El estado de cada alerta queda en la colección
 `climate_alerts`, que solo escribe el servidor.
 
+## En la app
+
+Las alertas abiertas también aparecen en Setas OS, aunque la app estuviera
+cerrada cuando se abrieron:
+
+- **Hoy:** como alarma, con el nombre de la sala y un botón para ir a ella.
+- **Clima:** en el panel de la sala afectada.
+
+Se leen de `climate_alerts` (solo las de estado abierto) y desaparecen cuando
+la función las marca resueltas. La app no puede crear, cerrar ni borrar
+alertas: la regla de Firestore solo permite leerlas.
+
 ## Configuración
 
 Usa la misma cuenta y contraseña de aplicación de Gmail que los correos de
@@ -45,4 +57,10 @@ No se despliega solo al fusionar. Desde `field-os-simulador/setas-os/`:
 
 ```bash
 firebase deploy --only functions:alertasClima
+```
+
+Para que la app pueda leer las alertas, despliega también las reglas:
+
+```bash
+firebase deploy --only firestore:rules
 ```

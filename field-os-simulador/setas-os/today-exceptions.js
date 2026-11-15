@@ -250,6 +250,32 @@
   /**
    * Excepciones para la Banda 1 de Hoy, ordenadas por severidad.
    */
+  /**
+   * Alertas que abrió la función de servidor `alertasClima`
+   * (functions/climate-alerts.js, colección climate_alerts). Solo las abiertas:
+   * una pendiente todavía no cumplió el tiempo mínimo y una resuelta ya no
+   * pide nada. El texto del desvío viene del servidor tal cual.
+   */
+  const serverAlertExceptions = ({ serverAlerts, roomNames, now }) => {
+    if (!Array.isArray(serverAlerts)) return [];
+    return serverAlerts
+      .filter(a => a && a.status === 'open' && a.id && a.roomId)
+      .map(a => {
+        const room = (roomNames && roomNames[a.roomId]) || `Sala ${a.roomId}`;
+        const openedMs = typeof a.openedAt === 'number' ? a.openedAt : Date.parse(a.openedAt);
+        const age = Number.isFinite(openedMs) ? Math.max(0, Math.round((now - openedMs) / 60000)) : null;
+        const since = age == null ? 'Aviso del servidor.' : `Aviso del servidor, abierto hace ${age} min.`;
+        return {
+          id: `servidor:clima:${a.id}`,
+          kind: 'clima',
+          severity: 'alarma',
+          title: `${room}: ${a.kind === 'sensor_stale' ? 'sensor sin lecturas' : 'clima fuera de banda'}`,
+          detail: `${a.detail ? `${a.detail} ` : ''}${since}`,
+          action: { type: 'goClima', roomId: a.roomId, label: 'Ver sala' },
+        };
+      });
+  };
+
   const buildTodayExceptions = ({
     now = Date.now(),
     lotes = [],
@@ -258,7 +284,10 @@
     remoteSync = null,
     overdrawnLots = [],
     rejected = [],
+    serverAlerts = [],
+    roomNames = null,
   } = {}) => [
+    ...serverAlertExceptions({ serverAlerts, roomNames, now }),
     ...syncExceptions({ syncStats, remoteSync, now }),
     ...overdrawExceptions({ overdrawnLots }),
     ...quarantineExceptions({ rejected, now }),

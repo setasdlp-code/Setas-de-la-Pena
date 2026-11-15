@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 3457c5dbb3948ec258622a50eb2aea75a2807c5e79cfeb837ab60b6ccb69455a
+// source-hash: 4520a02c529d0245f174c29250eec61b25bdc48edb498f0d65f42d77b6a5994f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -5542,6 +5542,25 @@ function SimuladorShell(props) {
     }, 400);
     return () => clearTimeout(t);
   }, [invLotes, invCompras, invProveedores, invReservas, invMovimientos, roomCycles, bitLotesLoaded, peritoInventoryLoaded]);
+  const [serverClimateAlerts, setServerClimateAlerts] = useState([]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let unsub = null;
+    const attach = () => {
+      if (unsub || !window.SetasFirebase || typeof window.SetasFirebase.subscribeToClimateAlerts !== "function") return;
+      try {
+        unsub = window.SetasFirebase.subscribeToClimateAlerts((list) => setServerClimateAlerts(Array.isArray(list) ? list : []));
+      } catch (e) {
+        console.warn("[Hoy] no se pudo escuchar las alertas de clima", e);
+      }
+    };
+    attach();
+    window.addEventListener("setas-firebase-data-ready", attach);
+    return () => {
+      window.removeEventListener("setas-firebase-data-ready", attach);
+      if (typeof unsub === "function") unsub();
+    };
+  }, []);
   const todayExceptions = (() => {
     const api = typeof window !== "undefined" ? window.SetasTodayExceptions : null;
     const queueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
@@ -5554,7 +5573,9 @@ function SimuladorShell(props) {
         syncStats: queueApi ? queueApi.stats(syncQueue, Date.now()) : null,
         remoteSync: { ...remoteSync, online: deviceOnline },
         overdrawnLots: invLotes.filter((l) => (Number(l.sobregiroKg) || 0) > 0).map((l) => ({ ...l, name: (INGS.find((g) => g.id === l.ingredienteId) || {}).name })),
-        rejected: liveTelemetry.rejected || []
+        rejected: liveTelemetry.rejected || [],
+        serverAlerts: serverClimateAlerts,
+        roomNames: Object.fromEntries(Object.values(ROOMS_CONFIG).map((r) => [r.id, r.name]))
       });
     } catch (e) {
       console.warn("[Hoy] no se pudieron calcular las excepciones", e);
@@ -5581,6 +5602,9 @@ function SimuladorShell(props) {
       setShowIoTHub(true);
     } else if (a.type === "openLote" && a.loteId) {
       openBatchDetail(a.loteId);
+    } else if (a.type === "goClima") {
+      if (a.roomId && ROOMS_CONFIG[a.roomId]) setSelectedClimateRoom(a.roomId);
+      goTab("clima");
     }
   };
   const [notifyPermission, setNotifyPermission] = useState(() => {
@@ -7135,7 +7159,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "3457c5dbb394" : null;
+    const appVersion = true ? "4520a02c529d" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -9657,7 +9681,7 @@ BATCH (${numBags}×${kgBag} kg):
       const roomBagsActive = roomBagsList.length ? roomBagsList.filter((b) => b.estado !== "descartada" && b.estado !== "contaminada").length : roomBatches.reduce((sum, l) => sum + (parseInt(l.numBolsas, 10) || 0), 0);
       const roomBagsTotal = roomBagsList.length || roomBatches.reduce((sum, l) => sum + (parseInt(l.numBolsas, 10) || 0), 0);
       return /* @__PURE__ */ React.createElement("button", { key: c.id, type: "button", "data-testid": "sensor-module-card", "data-room-id": roomId || void 0, disabled: !roomId, className: `climate-module-card ${roomId === selectedClimateRoom ? "on" : ""}`, onClick: () => setSelectedClimateRoom(roomId), "aria-pressed": roomId === selectedClimateRoom }, /* @__PURE__ */ React.createElement("span", { className: "climate-module-top" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { background: c.estadoAccent } }), c.name), /* @__PURE__ */ React.createElement("b", null, c.estadoLabel)), /* @__PURE__ */ React.createElement("span", { className: "climate-module-meta" }, "Zona ", c.zona, " · ", c.sppName, " · ", c.count, " activos"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-readings" }, [["temperature_c", "Temp.", "°C"], ["rh_pct", "HR", "%"], ["co2_ppm", "CO₂", " ppm"]].map(([metric, label, unit]) => /* @__PURE__ */ React.createElement("span", { key: metric, "data-metric": metric }, /* @__PURE__ */ React.createElement("small", null, label), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(cardSample[metric]) ? `${cardSample[metric]}${unit}` : "—"), Number.isFinite(cardSample[metric]) ? /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric, roomLive: cardLive }) : /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sin lectura")))), !cardHasLive && /* @__PURE__ */ React.createElement("span", { className: "climate-module-reference" }, roomId ? "Sin telemetría conectada · sin lectura" : "Módulo sin sala de sensores asignada"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, roomBatches.length, " lote", roomBatches.length === 1 ? "" : "s", " · ", roomBagsActive, "/", roomBagsTotal, " bolsas"), /* @__PURE__ */ React.createElement("span", { className: "climate-occupancy" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { width: `${c.occupancy}%`, background: c.estadoAccent } })), /* @__PURE__ */ React.createElement("b", null, c.occupancy, "% ocupado")), c.hasLiveAlert && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert" }, c.liveAlertNote));
-    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude), lotesSinSala.length > 0 && /* @__PURE__ */ React.createElement("div", { "data-testid": "climate-lotes-sin-sala", role: "status", style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--accent-terracotta-dark)", marginTop: 4 } }, lotesSinSala.length === 1 ? "1 lote activo sin sala asignada" : `${lotesSinSala.length} lotes activos sin sala asignada`, " (", lotesSinSala.map((l) => l.codigo || l.id).join(", "), "): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora."), roomLive && roomLive.health && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: roomLive.health.overallStatus === "healthy" ? "var(--status-ok)" : roomLive.health.overallStatus === "stale" ? "var(--ink-2)" : "var(--accent-terracotta)" } }, "SALUD: ", roomLive.health.overallStatus.toUpperCase()), roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d]) => /* @__PURE__ */ React.createElement("span", { key: devId }, devId, ": ", /* @__PURE__ */ React.createElement("strong", { style: { color: d.status === "healthy" ? "var(--status-ok)" : "var(--ink-1)" } }, d.status.toUpperCase()))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
+    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude), serverClimateAlerts.filter((a) => a && a.roomId === selectedClimateRoom).length > 0 && /* @__PURE__ */ React.createElement("ul", { "data-testid": "climate-server-alerts", role: "status", style: { listStyle: "none", margin: "6px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 4 } }, serverClimateAlerts.filter((a) => a && a.roomId === selectedClimateRoom).map((a) => /* @__PURE__ */ React.createElement("li", { key: a.id, "data-alert-kind": a.kind, style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("strong", null, a.kind === "sensor_stale" ? "Sensor sin lecturas" : "Clima fuera de banda"), " · ", a.detail || "", " ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-2)" } }, "(aviso del servidor)")))), lotesSinSala.length > 0 && /* @__PURE__ */ React.createElement("div", { "data-testid": "climate-lotes-sin-sala", role: "status", style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--accent-terracotta-dark)", marginTop: 4 } }, lotesSinSala.length === 1 ? "1 lote activo sin sala asignada" : `${lotesSinSala.length} lotes activos sin sala asignada`, " (", lotesSinSala.map((l) => l.codigo || l.id).join(", "), "): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora."), roomLive && roomLive.health && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: roomLive.health.overallStatus === "healthy" ? "var(--status-ok)" : roomLive.health.overallStatus === "stale" ? "var(--ink-2)" : "var(--accent-terracotta)" } }, "SALUD: ", roomLive.health.overallStatus.toUpperCase()), roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d]) => /* @__PURE__ */ React.createElement("span", { key: devId }, devId, ": ", /* @__PURE__ */ React.createElement("strong", { style: { color: d.status === "healthy" ? "var(--status-ok)" : "var(--ink-1)" } }, d.status.toUpperCase()))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",

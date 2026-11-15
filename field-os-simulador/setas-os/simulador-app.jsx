@@ -7497,6 +7497,21 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
   // más larga que la referencia. Se calculan aquí, fuera del render de Hoy,
   // porque también alimentan las notificaciones.
+  // Alertas abiertas por la función de servidor alertasClima (climate_alerts).
+  // Llegan aunque la app haya estado cerrada cuando se abrieron.
+  const [serverClimateAlerts,setServerClimateAlerts]=useState([]);
+  useEffect(()=>{
+    if(typeof window==='undefined') return;
+    let unsub=null;
+    const attach=()=>{
+      if(unsub||!window.SetasFirebase||typeof window.SetasFirebase.subscribeToClimateAlerts!=='function') return;
+      try{unsub=window.SetasFirebase.subscribeToClimateAlerts(list=>setServerClimateAlerts(Array.isArray(list)?list:[]));}
+      catch(e){console.warn('[Hoy] no se pudo escuchar las alertas de clima',e);}
+    };
+    attach();
+    window.addEventListener('setas-firebase-data-ready',attach);
+    return ()=>{window.removeEventListener('setas-firebase-data-ready',attach);if(typeof unsub==='function')unsub();};
+  },[]);
   const todayExceptions=(()=>{
     const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
     const queueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
@@ -7510,6 +7525,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         remoteSync:{...remoteSync,online:deviceOnline},
         overdrawnLots:invLotes.filter(l=>(Number(l.sobregiroKg)||0)>0).map(l=>({...l,name:(INGS.find(g=>g.id===l.ingredienteId)||{}).name})),
         rejected:liveTelemetry.rejected||[],
+        serverAlerts:serverClimateAlerts,
+        roomNames:Object.fromEntries(Object.values(ROOMS_CONFIG).map(r=>[r.id,r.name])),
       });
     }catch(e){console.warn('[Hoy] no se pudieron calcular las excepciones',e);return [];}
   })();
@@ -7525,6 +7542,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
+    else if(a.type==='goClima'){if(a.roomId&&ROOMS_CONFIG[a.roomId])setSelectedClimateRoom(a.roomId);goTab('clima');}
   };
 
   // Notificaciones del sistema para alarmas nuevas (Banda 1 y clima crítico).
@@ -12826,6 +12844,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)',marginTop:2}}>
               Nodo IoT: <code>{room.device}</code> · Sensores: {room.sensors} · Altitud: {room.altitude}
             </div>
+            {serverClimateAlerts.filter(a=>a&&a.roomId===selectedClimateRoom).length>0 && (
+              <ul data-testid="climate-server-alerts" role="status" style={{listStyle:'none',margin:'6px 0 0',padding:0,display:'flex',flexDirection:'column',gap:4}}>
+                {serverClimateAlerts.filter(a=>a&&a.roomId===selectedClimateRoom).map(a=>(
+                  <li key={a.id} data-alert-kind={a.kind} style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--status-error)'}}>
+                    <strong>{a.kind==='sensor_stale'?'Sensor sin lecturas':'Clima fuera de banda'}</strong> · {a.detail||''} <span style={{color:'var(--ink-2)'}}>(aviso del servidor)</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             {lotesSinSala.length>0 && (
               <div data-testid="climate-lotes-sin-sala" role="status" style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--accent-terracotta-dark)',marginTop:4}}>
                 {lotesSinSala.length===1?'1 lote activo sin sala asignada':`${lotesSinSala.length} lotes activos sin sala asignada`} ({lotesSinSala.map(l=>l.codigo||l.id).join(', ')}): no se evalúan contra el clima de ninguna sala. Asignarles sala en Bitácora.

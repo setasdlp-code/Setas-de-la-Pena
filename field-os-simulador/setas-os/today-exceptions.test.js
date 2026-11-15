@@ -129,3 +129,39 @@ test('incubación: usa el vocabulario canónico de la ficha (activo = inoculado;
   assert.equal(T.buildTodayExceptions({ now: NOW, lotes: [{ ...base, estado: 'activo' }] }).length, 1);
   assert.equal(T.buildTodayExceptions({ now: NOW, lotes: [{ ...base, estado: 'incubacion', lifecycleState: 'fruiting' }] }).length, 0);
 });
+
+test('alertas del servidor: solo las abiertas llegan a Hoy, como alarma con su detalle', () => {
+  const serverAlerts = [
+    { id: 'martha_01__sensor_stale', roomId: 'martha_01', kind: 'sensor_stale', status: 'open',
+      detail: 'Última lectura hace 42 min.', openedAt: NOW - 30 * 60000 },
+    { id: 'martha_01__out_of_band_rh_pct', roomId: 'martha_01', kind: 'out_of_band', metric: 'rh_pct', status: 'pending',
+      detail: 'Humedad relativa por debajo de la banda del ciclo: 70 % (banda 85–95 %).' },
+    { id: 'cloudlab_844__out_of_band_temperature_c', roomId: 'cloudlab_844', kind: 'out_of_band', metric: 'temperature_c', status: 'resolved',
+      detail: 'x' },
+  ];
+  const out = T.buildTodayExceptions({ now: NOW, serverAlerts });
+  assert.deepEqual(out.map(e => e.id), ['servidor:clima:martha_01__sensor_stale']);
+  const [e] = out;
+  assert.equal(e.kind, 'clima');
+  assert.equal(e.severity, 'alarma');
+  assert.equal(e.title, 'Sala martha_01: sensor sin lecturas');
+  assert.match(e.detail, /Última lectura hace 42 min\./);
+  assert.match(e.detail, /Aviso del servidor, abierto hace 30 min/);
+  assert.deepEqual(e.action, { type: 'goClima', roomId: 'martha_01', label: 'Ver sala' });
+});
+
+test('alertas del servidor: fuera de banda usa el nombre de la sala cuando se conoce', () => {
+  const [e] = T.buildTodayExceptions({
+    now: NOW,
+    roomNames: { cloudlab_844: 'Cloudlab 844' },
+    serverAlerts: [{ id: 'c__t', roomId: 'cloudlab_844', kind: 'out_of_band', status: 'open',
+      detail: 'Temperatura por encima de la banda del ciclo: 21 °C (banda 14–18 °C).', openedAt: NOW }],
+  });
+  assert.equal(e.title, 'Cloudlab 844: clima fuera de banda');
+  assert.match(e.detail, /^Temperatura por encima de la banda/);
+});
+
+test('alertas del servidor: entradas inválidas se ignoran', () => {
+  assert.deepEqual(T.buildTodayExceptions({ now: NOW, serverAlerts: [null, {}, { status: 'open' }] }), []);
+  assert.deepEqual(T.buildTodayExceptions({ now: NOW, serverAlerts: 'x' }), []);
+});

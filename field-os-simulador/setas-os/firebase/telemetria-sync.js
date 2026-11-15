@@ -100,3 +100,23 @@ export function subscribeToLiveClimate(db, onUpdate) {
     console.warn("[TelemetriaSync] Error en la suscripción en vivo a telemetría:", err);
   });
 }
+
+/**
+ * Escucha las alertas de clima abiertas por la función `alertasClima`
+ * (colección climate_alerts). Solo lectura: el estado lo escribe el servidor.
+ *
+ * @param {Object} db - Instancia de Firestore
+ * @param {Function} onUpdate - Recibe un arreglo de alertas abiertas
+ * @returns {Function} unsubscribe
+ */
+export function subscribeToClimateAlerts(db, onUpdate) {
+  if (!db || typeof onUpdate !== "function") return () => {};
+  const q = query(collection(db, "climate_alerts"), where("status", "==", "open"));
+  return onSnapshot(q, (snapshot) => {
+    const alerts = [];
+    snapshot.forEach((docSnap) => alerts.push({ ...docSnap.data(), id: docSnap.id }));
+    onUpdate(alerts);
+  }, (err) => {
+    console.warn("[TelemetriaSync] Error en la suscripción a alertas de clima:", err);
+  });
+}
