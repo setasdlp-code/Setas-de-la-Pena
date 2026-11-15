@@ -239,7 +239,12 @@ test('auth state gates the protected runtime and publishes a mount signal', () =
   assert.match(src, /new CustomEvent\(AUTH_STATE_EVENT,\s*\{\s*detail:\s*\{\s*authenticated\s*\}\s*\}\)/, 'debe publicar el cambio de auth');
   assert.match(src, /syncAuthGatedResources\(authenticated\)/, 'debe hidratar recursos solo con sesión válida');
   assert.match(src, /querySelectorAll\("\[data-auth-src\]"\)/, 'debe localizar recursos diferidos');
-  assert.match(src, /node\.setAttribute\("src",\s*node\.dataset\.authSrc\)/, 'debe iniciar el iframe solo al autenticar');
+  // El src sale de data-auth-src (resuelto por resolveImg cuando existe) y
+  // solo se asigna en la rama autenticada.
+  const sync = src.slice(src.indexOf('function syncAuthGatedResources'), src.indexOf('function setAuthGatedResources'));
+  const authedBranch = sync.slice(sync.indexOf('if (authenticated)'), sync.indexOf('} else {'));
+  assert.match(authedBranch, /node\.dataset\.authSrc/, 'debe tomar el src de data-auth-src');
+  assert.match(authedBranch, /node\.setAttribute\("src",\s*resolved\)/, 'debe iniciar el iframe solo al autenticar');
   assert.match(src, /node\.removeAttribute\("src"\)/, 'debe liberar el iframe al cerrar sesión');
 
   assert.match(shell, /<html[^>]*data-setas-auth-state="pending"/, 'el shell debe empezar protegido antes de que Firebase responda');
