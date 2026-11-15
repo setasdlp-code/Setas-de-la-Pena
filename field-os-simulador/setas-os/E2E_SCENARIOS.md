@@ -1,6 +1,6 @@
 # Setas OS — catálogo de escenarios E2E
 
-Los 11 escenarios (E2E-01 a E2E-11) están implementados con Playwright en `e2e/*.spec.js` y pasan contra la app real (`npx playwright test`, proyectos `chromium` y `mobile`/WebKit). Este documento sigue siendo la referencia de diseño de cada escenario; no hay job de CI wireado todavía (ver "Próximo paso").
+Los escenarios E2E-01 a E2E-11 están implementados con Playwright en `e2e/*.spec.js` y pasan contra la app real (`npx playwright test`, proyectos `chromium` y `mobile`/WebKit). E2E-12 vive en `e2e/node-automation.browser.cjs`, con el arnés propio de `run-browser-tests.cjs`. Este documento sigue siendo la referencia de diseño de cada escenario; no hay job de CI wireado todavía (ver "Próximo paso").
 
 ## Convenciones de la suite
 
@@ -37,6 +37,8 @@ Atributos nuevos recomendados (no añadidos todavía) para dejar de depender de 
 **E2E-10 — Mobile: la barra de especie nunca tapa la navegación.** Intersección geométrica entre `species-bridge` y `.app-rail` debe ser cero; los 4 botones del rail deben responder al clic sin interceptación.
 
 **E2E-11 — Navegación repetida no acumula desincronización.** Secuencia hostil: Formular → Recetario → cargar receta → Producción → Bodega → Bitácora → lote → Control → Hoy → Formular, repetida dos veces sin recargar. En cada paso deben coincidir rail/pestaña/breadcrumb/contenido; el segundo recorrido debe producir el mismo estado que el primero. Captura errores dependientes de orden.
+
+**E2E-12 — Una alarma del nodo publicada aparece en Hoy y la ficha de sala la explica.** Implementado en `e2e/node-automation.browser.cjs` (corre con `node run-browser-tests.cjs node-automation`), a 1280 y 390 px. Transporte SIMULADO: el test empuja un snapshot de `telemetria_salas` por la misma puerta que la suscripción de Firestore (`SetasFirebase.subscribeToLiveClimate` → `bridge.onSnapshot`) con un `node_status` (`setas.node-status.v1`) de `cloudlab_844`; no hay hardware, Firestore, publicador ni Hub IoT, así que no prueba que un nodo real publique ese contrato. Con un ciclo de sala activo sembrado (banda de temperatura 13–24 °C, `kb-operational`): (1) sin estado no hay fila de nodo; (2) al publicar `over_temperature` aparece exactamente una fila de nodo con severidad alarma (qué / objeto / «Por qué ahora» / «Siguiente», texto ≥16 px, botón «Abrir sala» ≥48 px) y Hoy no dice «Sin excepciones fuera de banda»; (3) «Abrir sala» lleva a Clima con la sala seleccionada y el panel muestra relés comandados («Apagado (comandado)»), la alarma con su descripción del perfil, la consigna y el origen de la banda («Consigna aprobada (KB)»); (4) discrepancia de consigna (techo 22 °C frente a 24 °C del ciclo): fila «vigilar» y aviso que pide recompilar el firmware; (5) estado de hace 3 min = «Obsoleto», de hace 30 min = «Sin enlace» (umbrales de `sensor-health.js`); (6) sin estado: «Sin datos del nodo» (cloudlab) y «Sala sin automatización» (Martha), sin relés pintados; Martha sin ciclo: toda banda dice «predeterminado de la app, sin fuente»; (7) ficha de lote con dos ciclos: «Datos insuficientes · cobertura 0 %» para la etapa sin telemetría y «6 h fuera de banda de 71,5 h con datos» para la que tiene cobertura. En todas las superficies: ningún `button/input/select` de escritura en el panel del nodo ni en las horas fuera de banda.
 
 ## Próximo paso
 

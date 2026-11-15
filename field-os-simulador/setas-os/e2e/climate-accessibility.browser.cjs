@@ -37,9 +37,11 @@ const root=path.resolve(__dirname,'..');
    assert.ok(await panel.evaluate(el=>el.scrollWidth<=el.clientWidth),`dashboard overflow at ${width}`);
    const small=await panel.evaluate(el=>[...el.querySelectorAll('button,select,input')].filter(e=>e.getBoundingClientRect().height).filter(e=>e.getBoundingClientRect().height<44).map(e=>e.textContent.slice(0,40)));
    assert.deepEqual(small,[],`controls smaller than 44px at ${width}`);
-   // Los actuadores son de solo lectura (DEC-001): sin estado de un nodo, solo el aviso y ningún control.
+   // Los actuadores son de solo lectura (DEC-001): Martha no tiene perfil de nodo, así que
+   // se declara "sala sin automatización" y ningún control.
    const actuators=panel.getByTestId('climate-actuators-panel');
-   await expect(actuators).toHaveText('Sin datos de actuadores para esta sala');
+   await expect(actuators).toHaveAttribute('data-automation-state','no-automation');
+   await expect(actuators.getByTestId('node-no-automation')).toContainText('Sala sin automatización');
    assert.equal(await actuators.locator('button,input,select,[role="switch"]').count(),0,'el panel de actuadores no debe tener controles');
    assert.equal(await panel.getByRole('img').count(),4);
    await temp.scrollIntoViewIfNeeded();await page.screenshot({path:`/tmp/setas-climate-accessibility-${width}.png`});
