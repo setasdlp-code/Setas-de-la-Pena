@@ -1,156 +1,138 @@
-# Calidad por cosecha en el registro de lote — diseño
+# Calidad por cosecha en el registro de lote — diseño (rev. 2)
 
-Estado: pendiente de aprobación. Fecha: 2026-11-14.
+Estado: pendiente de aprobación. Fecha: 2026-11-15.
+Sustituye a la rev. 1 (evento `harvest_quality` por la cola de campo), descartada tras auditoría: ver "Por qué cambió".
 
 ## Intención
 
-Hoy solo se mide cantidad (EB). Sin calidad comparable entre lotes no se puede saber qué decisiones mejoran el producto. Cada cosecha debe quedar con un bloque de calidad capturado en campo, offline, en menos de 30 s y con una mano en móvil, y proyectado en `setas.lot-record.v1`.
+Hoy solo se mide cantidad (EB). Sin calidad comparable entre lotes no se puede saber qué decisiones mejoran el producto. Cada cosecha debe quedar con un bloque de calidad capturado en campo en menos de 30 s, con una mano en móvil, y proyectado en `setas.lot-record.v1`.
 
 ## Metas
 
-- Bloque de calidad por cosecha: grado (primera / segunda / descarte), kg por grado, diámetro de píleo, firmeza, color y defectos (lista cerrada de 6).
-- Captura desde la hoja de acción de campo (`views/field-action-modal.jsx`).
-- Transporte por `field-event-queue` (offline, idempotente, con recibo y reintentos).
-- `lot-record.js` proyecta el bloque y declara huecos cuando falta.
+- Bloque de calidad por cosecha: grado (primera / segunda / descarte), peso por grado, diámetro de píleo, firmeza, color y defectos (lista cerrada de 6).
+- Captura en el formulario de cosecha de Bitácora, al que la hoja de acción de campo ya da acceso ("Cosecha parcial" → `openHarvestCapture`).
+- Funciona offline con el mecanismo que ya tiene la cosecha de Bitácora (almacenamiento local + `sync-queue.js`).
+- `lot-record.js` proyecta el bloque y declara los huecos.
 
 ## No metas
 
-- No se definen criterios de grado por especie. El usuario los define más adelante.
-- No se cambia `scoring.js`, ranking ni Escenarios. La calidad es evidencia para Perito, nunca insumo de ranking (`agronomic-claims`, ADR-0004).
-- No se edita `knowledge_base/` ni `phenotype_dictionary_v0.1.md` sin autorización.
-- No se migran cosechas históricas.
-- No hay adjuntos ni fotos (el contrato v1 exige `attachmentIds` vacío).
+- No se definen criterios de grado por especie (el usuario los define más adelante).
+- No se cambia `scoring.js`, ranking ni Escenarios. La calidad es evidencia para Perito, nunca insumo de ranking (ADR-0004, skill `agronomic-claims`).
+- No se crea evento de campo nuevo; no se toca el servidor, `field-event-queue.js`, `field-event-contracts.js` ni `firestore.rules`.
+- No se edita `knowledge_base/` ni `phenotype_dictionary_v0.1.md`.
+- No se migran cosechas históricas; los campos nuevos son opcionales y aditivos.
+- Sin fotos ni adjuntos.
 
 ## Anti-metas (fallo aunque funcione)
 
-- Presentar un grado como medición objetiva o comparable entre especies mientras no existan criterios.
-- Rellenar en silencio un campo faltante o corregir kg que no suman.
-- Que un evento de calidad bloquee o desordene transiciones de estado del lote.
-- Duplicar la fuente de verdad de la cosecha.
+- Presentar un grado como medición o como comparable entre especies mientras no existan criterios.
+- Rellenar en silencio un campo vacío o corregir pesos que no suman.
+- Crear un enum de defectos o de fenotipo paralelo al canónico (ADR-0008).
+- Que la calidad entre en `scoring.js`, ranking o calibración.
 
-## Hallazgos que fijan el diseño
+## Por qué cambió (auditoría de la rev. 1)
 
-1. El criterio de grado no existe en `knowledge_base/`. `06_operations/quality_control.md` solo define Premium / Estándar / Descarte de forma cualitativa y difiere los límites a compradores y validación local. Único valor numérico: eryngii Grado A > 80 g/unidad (`01_species/pleurotus_eryngii.md`).
-2. El diccionario `09_research/phenotype_dictionary_v0.1.md` fija 12 códigos de defecto y prohíbe ampliarlos desde `lot-record.js`. Coinciden 3 de los 6 pedidos.
-3. La cosecha vive en la bitácora (`bitacora-model.js`: `pesoFresco`, `pesoComercial`, `pesoDescarte`, `capDiameterMm`, `defectCodes`, `phenotypeStage`, `calidad`). `lot-record.js` solo la proyecta.
-4. `functions/accept-field-event.js` trata todo evento v2 con `entityType: 'container'` como transición: siempre incrementa la revisión del contenedor y del lote. Un evento de calidad enviado así provocaría `revision_conflict` en transiciones encoladas. Necesita rama propia.
-5. `validateReceipt` exige `batchRevisionAfter` o `entityRevisionAfter`; admite `null`, pero no 0 ni negativos.
-6. `firestore.rules`: `field_events` solo se escribe por la función de aceptación.
+El evento nuevo exigía arreglar la cola y el servidor, y casi no aportaba, porque la cosecha de Bitácora ya funciona offline:
 
-## Enfoques considerados
+- Un recibo con `batchRevisionAfter: null` lo rechaza `reconcileReceipt` (`field-event-reconcile.js:30`) y, al estar fuera de try/catch en `deliver` (`field-event-sync.js:88`), interrumpe `drain()`.
+- `persistFieldEvent` toma la reserva por lote en todo evento (`field-event-queue.js:77-99`); un evento de calidad en cola bloquearía la siguiente transición del lote.
+- La cosecha de Bitácora ya captura `capDiameterMm`, `stipeLengthMm`, `defectCodes`, `phenotypeStage`, `calidad` (`bitacora-model.js:208-213`), y `lot-record.phenotype` ya los proyecta. ADR-0008 rechazó expresamente "un vocabulario de morfología propio… una segunda verdad".
+- Una clase de procedencia nueva exige ADR y aprobación humana (`AGENTS.md` §4).
 
-- **A. Evento `harvest_quality` por la cola offline v2 (elegido).** Cumple el pedido de usar la cola, es auditable e idempotente. Costo: cambia el servidor y hay que desplegarlo.
-- **B. Ampliar la cosecha de bitácora y su sincronización.** Sin cambios de servidor, pero no usa `field-event-queue` y la hoja tendría que escribir en la bitácora.
-- **C. Ambos.** Descartado: dos fuentes de verdad.
+## Diseño
 
-## Diseño (enfoque A)
+### Campos nuevos en la cosecha (`bitacora-model.js`, `normalizeHarvestCapture`)
 
-### Contrato del evento
+Todos opcionales; vacío se guarda `null`; cero sigue siendo cero (convención de `captureNumber`).
 
-`eventType: 'harvest_quality'`, `schemaVersion: 2`, `entityType: 'batch'`. Se aleja de `container` para no entrar en la rama de transición. Se crea con `createFieldEventV2`; el bloque va en `payload.quality`.
-
-```
-payload.quality = {
-  flush: int >= 1,
-  harvestRecordId: string | null,      // id de la cosecha de bitácora si existe
-  gradeKg: { primera: n|null, segunda: n|null, descarte: n|null },  // kg, >= 0
-  capDiameterMm: n|null,
-  firmness: 1..5 | null,  firmnessMethod: 'tacto_ordinal',
-  color:    1..5 | null,  colorMethod:    'ordinal_anclado',
-  defects: [ ... ],                    // subconjunto de la lista cerrada
-  gradeCriteria: 'provisional_unversioned',
-}
-```
-
-Reglas de validación (compartidas cliente/servidor, en `field-event-contracts.js`):
-
-- Constantes exportadas: `HARVEST_QUALITY_EVENT_TYPE`, `GRADES`, `HARVEST_DEFECT_CODES`, `FIRMNESS_METHOD`, `COLOR_METHOD`, `GRADE_CRITERIA_PROVISIONAL`, y `validateHarvestQuality(quality)`.
-- Cada kg de grado: `null` o número finito >= 0. Al menos un grado con valor. Un grado ausente es `null`, nunca 0 implícito.
-- `defects`: solo códigos de la lista cerrada; sin duplicados. Un código desconocido rechaza el evento (`invalid_harvest_quality`).
-- Firmeza y color: enteros 1–5 o `null`. El método viaja siempre junto al valor.
-- `capDiameterMm`: positivo o `null`.
-- Nuevo código de error `invalid_harvest_quality`, no reintentable.
-
-### Lista cerrada de defectos y su relación con el diccionario
-
-| Código del evento | Etiqueta | Diccionario v0.1 |
+| Campo | Tipo | Notas |
 |---|---|---|
-| `edge_curl_lost` | Borde enrollado perdido | no existe (propuesto v0.2) |
-| `stipe_elongated` | Estípite alargado | no existe (propuesto v0.2) |
-| `bacterial_suspect` | Manchas bacterianas | `bacterial_suspect` (bandera observacional, no identifica organismo) |
-| `surface_dryness` | Deshidratación | `surface_dryness` |
-| `mechanical_damage` | Daño mecánico | `mechanical_damage` |
-| `sporulation` | Esporulación | no existe (propuesto v0.2) |
+| `pesoPrimera` | número ≥ 0 | En la misma unidad (`unit`/`unidad`) que `pesoFresco` (gramos por defecto) |
+| `pesoSegunda` | número ≥ 0 | ídem |
+| `pesoDescarte` | número ≥ 0 | Reutiliza el campo que `lot-record.js:148` y `cycle-evidence.js:35` ya leen |
+| `firmeza` | entero 1–5 | Con `firmezaMetodo: 'tacto_ordinal'` |
+| `colorOrdinal` | entero 1–5 | Con `colorMetodo: 'ordinal_sin_anclar'` (sin anclas fotográficas todavía) |
+| `defectosCampo` | lista de claves | Subconjunto de las 6 claves de la UI (ver abajo) |
+| `criterioGrado` | texto | Constante `'provisional_unversioned'` |
 
-`lot-record.js` ya reporta códigos fuera de su vocabulario como `undeclaredDefectCodes`. Los tres propuestos aparecerán ahí hasta que el diccionario suba a v0.2 con autorización humana. No se amplía `DEFECT_CODES` de `lot-record.js`.
+- `pesoComercial` **no se escribe** ni se deriva: guardar un derivado como observación es un defecto que `OPERATOR_CAPTURE_TASK.md` ya señaló. `cycle-evidence.js` no se modifica.
+- `calidad` 1–5 se conserva sin reinterpretar: puntaje global heredado, independiente del grado.
+- Unidades: kg o g según `unit`, igual que hoy; `lot-record` convierte con `toKg`.
 
-### Servidor (`functions/accept-field-event.js`)
+### Lista cerrada de defectos
 
-Rama nueva para `eventType === 'harvest_quality'`, antes de la rama de contenedor:
+La UI ofrece 6 chips con etiqueta en español. Cada uno se guarda en `defectosCampo` con su clave **y** se mapea a un código v0.1 en `defectCodes` (que `lot-record` ya valida). Así no se pierde información ni se amplía el enum canónico.
 
-- Misma idempotencia por `eventId` y `contentEquals`.
-- Valida el bloque con `validateHarvestQuality` (vía `functions/shared`, agregar `field-event-contracts.js` ya está en `functions:sync`).
-- Exige que el lote exista y no esté borrado.
-- **No** cambia estado y **no** incrementa revisión del lote ni de contenedor. Así no genera `revision_conflict` en transiciones.
-- Recibo: `batchRevisionAfter` = revisión actual si es entero > 0, si no `null`.
-- Rol: cualquier rol conocido puede registrar calidad (incluye `operario`).
-- Un v2 de tipo desconocido debe rechazarse con `invalid_envelope`, no tratarse como transición.
+| Chip (clave en `defectosCampo`) | `defectCodes` (v0.1) | Observación |
+|---|---|---|
+| Manchas bacterianas (`bacterial_suspect`) | `bacterial_suspect` | Bandera observacional; no identifica organismo |
+| Deshidratación (`surface_dryness`) | `surface_dryness` | |
+| Daño mecánico (`mechanical_damage`) | `mechanical_damage` | |
+| Esporulación (`sporulation`) | `overmature` | Aproximación; la clave original se conserva |
+| Estípite alargado (`stipe_elongated`) | `deformation` | Aproximación; la medida de referencia es `cap_stipe_length_ratio` |
+| Borde enrollado perdido (`edge_curl_lost`) | `other_declared` | Sin equivalente v0.1; la clave original se conserva |
 
-### Cliente
+`lot-record` proyecta `defectCodes` (mapeados) y `fieldDefects` (claves originales). Las tres aproximaciones quedan marcadas como "propuestas para v0.2" en la documentación; subir el diccionario es una revisión de `09_research/` y no forma parte de este trabajo.
 
-- `field-event-queue.js`: sin cambios de esquema de IndexedDB. La reserva por lote (`pending_batch_transitions`) **no** se toma para este tipo de evento; solo aplica a transiciones.
-- `field-event-sync.js` / `field-event-reconcile.js`: verificar que un recibo con `batchRevisionAfter: null` no retrocede ni sobrescribe la revisión local confirmada.
-- `field-action-sheet.js`: nuevo constructor del evento de calidad (puro, sin E/S), junto a `buildTransitionEvent`.
-- `views/field-action-modal.jsx`: sección "Calidad de cosecha" (ver Interacción).
+### Interfaz
 
-### Interacción (30 s, una mano)
-
-- Todos los controles en la mitad inferior de la pantalla; objetivos táctiles >= 48 px.
-- Orden por frecuencia: oleada (autollenada, editable con +/−) → kg por grado (tres campos numéricos; teclado numérico) → defectos (chips de selección múltiple, 6) → firmeza y color (segmentos 1–5) → diámetro (opcional).
-- Todo opcional salvo oleada y al menos un grado con kg. Un campo vacío se guarda `null`.
-- Los kg por grado se comparan con el peso fresco de la cosecha de bitácora de esa oleada. Si no suman (tolerancia 1 %), se muestra la diferencia y se guarda el bloque con `mismatchKg`; no se corrige.
-- Borrador local por lote para no perder la captura si se cierra la hoja. Confirmar guarda en la cola aunque no haya red y muestra "En cola" hasta el recibo.
+- Sección "Calidad" en el formulario de cosecha existente (`simulador-app.jsx`, bloque en torno a las líneas 14985–15014), tras el peso fresco.
+- Orden por frecuencia: pesos por grado → chips de defectos → firmeza y color (segmentos 1–5) → diámetro (campo existente).
+- Objetivos táctiles >= 48 px (el estilo de chip actual mide menos); controles agrupados para alcance con el pulgar; sin scroll horizontal a 390 px.
+- Un campo vacío es `null`; no hay autorrelleno de ceros.
+- Guardar usa `persistCapture` (ya revierte si falla la escritura local) y conserva el borrador si falla.
+- Meta de 30 s: se mide en un móvil real con el operario; no se verifica por pruebas automáticas.
 
 ### `lot-record.js`
 
-- Nuevo bloque `quality` por oleada, derivado solo de eventos aceptados o en cola con `harvest_quality`. Incluye `gradeKg`, `gradeFractions` (calculadas en el registro, sobre los kg declarados), `capDiameterMm`, `firmness` + método, `color` + método, `defects`, `gradeCriteria`.
-- `provenance.quality`: `observed_field_operator_declared`, o `missing`. El grado es juicio del operario con criterio provisional; el registro nunca lo presenta como medición instrumental.
-- Un hueco nuevo en `findGaps`: `quality_unrecorded` (cosechas sin bloque) y `grade_criteria_provisional` (mientras `gradeCriteria` sea provisional).
-- No se mezcla con `metrics` ni con `targets`. No toca `bePct`.
-- Esquema documentado en `LOT_RECORD_SCHEMA.md` y versión del esquema: `setas.lot-record.v1` se mantiene (campo aditivo); si un consumidor valida claves cerradas, el builder sube a `v1.1`.
+- Nuevo bloque `quality` por oleada, derivado de las cosechas: `gradeKg`, `gradeFractions`, `firmness` + método, `color` + método, `fieldDefects`, `criteria`.
+- `gradeFractions` solo se calcula si los tres pesos están declarados; si no, `fractionsStatus: 'incomplete'`.
+- Diferencia entre la suma por grado y el peso fresco neto: se **calcula** en `lot-record` (no se guarda) y se reporta como `gradeSumGapKg`; tolerancia `max(1 %, 5 g)`; no se corrige.
+- Procedencia por campo, sin mezclar clases:
+  - `gradeKg`: `operator_declared_grade` (juicio del operario con criterio provisional). **Clase nueva: requiere la enmienda ADR (abajo).**
+  - `firmness`, `color`: `operator_ordinal_unanchored`.
+  - diámetro y defectos: procedencia existente `observed_field_measured`.
+- Huecos nuevos en `findGaps`: `quality_unrecorded` (cosechas sin bloque) y `grade_criteria_provisional` (mientras el criterio sea provisional). Con `blocks`, como los existentes.
+- El esquema sigue en `setas.lot-record.v1` (campo aditivo); `selectForQuestion` excluye lo que no sea `SCHEMA` exacto, por lo que no se sube versión.
+- No se toca `bePct`, `metrics`, `targets` ni `historical-calibration.js`.
 
-## Criterios por especie: lo que falta en `knowledge_base/`
+## Enmienda propuesta a ADR-0008 (borrador para revisión humana; no se aplica hasta tu aprobación)
 
-El usuario pidió listarlos. No hay límite numérico para ninguna especie salvo eryngii (Grado A > 80 g/unidad, sin fuente verificada aquí). Faltan:
+> **Enmienda 2026-11: calidad por cosecha.** El bloque de fenotipo de la cosecha se amplía con peso por grado (`pesoPrimera`, `pesoSegunda`, `pesoDescarte`), firmeza y color ordinales y los defectos de campo. Se añade una clase de procedencia, `operator_declared_grade`, para el grado: es un juicio del operario contra un criterio provisional (`criterioGrado: provisional_unversioned`), no una medición. Firmeza y color son ordinales sin anclas y se rotulan `operator_ordinal_unanchored`. Diámetro y defectos conservan `observed_field_measured`. Ninguno de estos campos entra en `scoring.js`, ranking ni Escenarios (ADR-0004). Los grados no se comparan entre especies ni contra el KPI "Grade A Yield ≥80 %" del CANON hasta que existan criterios versionados validados con compradores. Alternativa descartada: evento de campo nuevo con enum de defectos propio (segunda verdad, ADR-0008).
 
-- Diámetro de píleo para primera/segunda/descarte: *P. ostreatus*, *P. djamor*, *P. eryngii* (segunda y descarte), *L. edodes*, *H. erinaceus*, *G. lucidum*.
-- Firmeza: método y escala por especie (el diccionario v0.1 exige registrar el método; no hay método canónico).
-- Color: referencia o calibración por especie (el diccionario prefiere `cap_color_Lab`).
-- Definiciones operativas de los defectos nuevos (borde enrollado perdido, estípite alargado, esporulación).
-- Relación entre Premium/Estándar provisional de `quality_control.md` y primera/segunda.
+## Criterios por especie que faltan en `knowledge_base/`
 
-Hasta que se definan, `gradeCriteria` es `provisional_unversioned` y no se hacen comparaciones entre especies.
+No existe límite numérico de diámetro, firmeza ni color para ninguna especie. Faltan:
 
-## Decisiones tomadas por el diseñador (no confirmadas con el usuario)
+- Diámetro de píleo (y masa unitaria) para primera/segunda/descarte: *P. ostreatus*, *P. djamor*, *P. eryngii* (solo hay Grado A > 80 g/unidad, un umbral de masa, `01_species/pleurotus_eryngii.md:98`), *L. edodes*, *H. erinaceus*, *G. lucidum*.
+- Firmeza: método y escala por especie (`firmness_proxy` exige registrar el método; la propuesta de `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md` queda pendiente del comprador).
+- Color: referencia o calibración por especie (el diccionario prefiere `cap_color_Lab` o anclas fotográficas).
+- Definición operativa de esporulación, estípite alargado y borde enrollado perdido.
+- Equivalencia entre Premium/Estándar provisional (`06_operations/quality_control.md`) y primera/segunda.
+- Relación con el KPI "Grade A Yield ≥80 %" (`SETAS_DE_LA_PENA_CANON.md:268`; hipótesis en `auditoria_seleccion_inoculo_shiitake_2026-11-03.md:73`).
+- Criterio de cosecha por lote (`CURRENT_OPERATIONS.md:98`: "Pendiente") y plantilla `06_operations/batch_tracking.md:115` sin umbrales.
 
-- `entityType: 'batch'` para el evento y sin incrementar revisiones.
-- Firmeza y color como ordinales 1–5, con método declarado (`tacto_ordinal`, `ordinal_anclado`).
-- Tolerancia 1 % para la suma de kg por grado; diferencia guardada, no corregida.
-- Códigos en inglés snake_case para los tres defectos nuevos.
-- Cualquier rol conocido puede registrar calidad.
+Hasta que se definan, `criterioGrado` es `provisional_unversioned`.
+
+## Decisiones tomadas por el diseñador (no confirmadas)
+
+- Pesos por grado en la unidad de la cosecha; sin derivar `pesoComercial`.
+- Firmeza y color ordinales 1–5 con método declarado; color rotulado "sin anclar".
+- Tolerancia de suma `max(1 %, 5 g)`, calculada y no guardada.
+- Mapeo de los tres defectos sin equivalente exacto (esporulación → `overmature`, estípite alargado → `deformation`, borde enrollado → `other_declared`), conservando la clave original.
+- `gradeFractions` solo con los tres pesos declarados.
+- `calidad` 1–5 queda como puntaje global heredado.
 
 ## Pruebas
 
-- `field-event-contracts.test.js`: validación del bloque (rangos, lista cerrada, duplicados, kg `null` frente a 0).
-- `tests/functions/accept-field-event.test.js`: idempotencia, rechazo de bloque inválido, no incremento de revisión, v2 desconocido rechazado, lote borrado.
-- `field-action-sheet.test.js`, `field-event-queue.test.js`, `field-event-reconcile.test.js`: evento creado sin reserva de lote; recibo con revisión `null`.
-- `lot-record.test.js`: bloque `quality`, proveniencia, huecos nuevos, defectos propuestos como `undeclaredDefectCodes`.
-- Navegador (`e2e`): captura en 390 px, offline, una mano.
-- Cadena: `node build.js` (JSX cambia), `npm run functions:sync`, `npm run test:unit`, `npm run test:gates`.
+- `bitacora-model.test.js`: normalización de campos nuevos (vacío → `null`, cero → 0, rangos 1–5, claves fuera de la lista cerrada rechazadas o descartadas, unidad).
+- `lot-record.test.js`: bloque `quality`, fracciones incompletas, `gradeSumGapKg`, procedencia por campo, mapeo de defectos, huecos nuevos, esquema `v1` intacto.
+- Navegador (`e2e`): captura a 390 px y sin conexión, objetivos >= 48 px, borrador conservado ante fallo de guardado.
+- Cadena: `node build.js` (cambia JSX: bundle y `sw.js`), `npm run test:unit`, `npm run test:gates`.
+- Sin corpus de campo: nada de esto toca `analyze()`, `scoring.js` ni `perito-scenarios.js`; no se requiere regresión de Perito.
 
-## Riesgos y trabajo pendiente del builder
+## Riesgos
 
-- Despliegue de la función antes de que el cliente envíe el evento; si el servidor viejo lo recibe, lo trataría como transición. El cliente debe verificar una versión de contrato o el servidor rechazar tipos desconocidos antes del despliegue del cliente.
-- Verificar en `field-event-sync.js` y `field-event-reconcile.js` el manejo de recibos sin revisión.
-- Medir el tiempo de captura en móvil real (objetivo < 30 s); no se verifica con pruebas automáticas.
-- `corpus` ausente: nada de esto toca `analyze()`, `scoring.js` ni `perito-scenarios.js`, por lo que no requiere regresión de Perito.
+- El bundle (`simulador-app.js`) y `sw.js` están versionados: fusionar `main` con `sh scripts/git/merge-main.sh`.
+- Los chips de defecto actuales usan estilo propio de menos de 48 px; hay que cambiarlos sin romper `harvest-quality-choice` ni las pruebas existentes.
+- El grado como juicio del operario puede variar entre operarios hasta que haya criterios y anclas; por eso viaja marcado como provisional.
