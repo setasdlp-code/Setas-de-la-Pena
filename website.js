@@ -28,13 +28,6 @@ function applyFilters() {
     reason.hidden = card.hidden || !entry;
     if (!reason.hidden) {
       reason.append(entry.text);
-      const note = document.createElement('sup');
-      const citation = document.createElement('a');
-      citation.href = '#source-culinary';
-      citation.textContent = '[1]';
-      citation.setAttribute('aria-label', 'Ver nota 1: referencia culinaria');
-      note.append(citation);
-      reason.append(' ', note);
       if (entry.link) {
         const link = document.createElement('a');
         link.className = 'text-link';
@@ -60,7 +53,8 @@ document.querySelectorAll('[data-prep]').forEach(button => button.addEventListen
 document.querySelector('#filter-reset').addEventListener('click', () => {
   filterState.prep = 'any';
   applyFilters();
-  document.querySelector('[data-prep="any"]').focus();
+  const guide = document.querySelector('#prep-guide');
+  guide.querySelector(guide.open ? '[data-prep="any"]' : 'summary').focus();
 });
 document.querySelector('#prep-guide').hidden = false;
 document.querySelector('#year').textContent = new Date().getFullYear();
