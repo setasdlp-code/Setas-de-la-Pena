@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: d333508b5a8e59b62539b8899339e7487b7803dcf23a59e53ac43cbfa389913c
+// source-hash: 3457c5dbb3948ec258622a50eb2aea75a2807c5e79cfeb837ab60b6ccb69455a
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -5192,6 +5192,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("sdp_lotes", JSON.stringify(updated));
       } catch (e) {
+        bitQuotaWarn();
       }
       return updated;
     });
@@ -5201,6 +5202,7 @@ function SimuladorShell(props) {
         try {
           localStorage.setItem("sdp_compras", JSON.stringify(upd));
         } catch (e) {
+          bitQuotaWarn();
         }
         return upd;
       });
@@ -5211,6 +5213,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("sdp_prov_override", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
     }
     const am = parseFloat(alertaMin);
@@ -5220,6 +5223,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("sdp_alertas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
     }
     setEditingRowId(null);
@@ -5231,6 +5235,7 @@ function SimuladorShell(props) {
         try {
           localStorage.setItem("sdp_lotes", JSON.stringify(upd));
         } catch (e) {
+          bitQuotaWarn();
         }
         return upd;
       });
@@ -5264,6 +5269,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("sdp_lotes", JSON.stringify(updated));
       } catch (e) {
+        bitQuotaWarn();
       }
       return updated;
     });
@@ -5298,6 +5304,7 @@ function SimuladorShell(props) {
           try {
             localStorage.setItem("sdp_inv_reservas", JSON.stringify(vigentes));
           } catch (e) {
+            bitQuotaWarn();
           }
         }
       }
@@ -5343,6 +5350,7 @@ function SimuladorShell(props) {
         try {
           localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
         } catch (e) {
+          bitQuotaWarn();
         }
       }
     };
@@ -5564,6 +5572,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("sdp_sync_queue", queueApi.serialize(next));
       } catch (e) {
+        bitQuotaWarn();
       }
     } else if (a.type === "goBodega") {
       setInvTab("stock");
@@ -5838,6 +5847,7 @@ function SimuladorShell(props) {
         try {
           localStorage.setItem("setas_v6", JSON.stringify(migradas));
         } catch (e2) {
+          bitQuotaWarn();
         }
       }
     } catch (e) {
@@ -5910,6 +5920,7 @@ function SimuladorShell(props) {
     try {
       localStorage.setItem("setas_v6", JSON.stringify(u));
     } catch (e2) {
+      bitQuotaWarn();
     }
     setSaveName("");
     setFlash(true);
@@ -5930,6 +5941,7 @@ function SimuladorShell(props) {
           try {
             localStorage.setItem("setas_v6", JSON.stringify(upd));
           } catch (e3) {
+            bitQuotaWarn();
           }
           return upd;
         });
@@ -5960,6 +5972,7 @@ function SimuladorShell(props) {
         try {
           localStorage.setItem("setas_v6", JSON.stringify(u));
         } catch (e) {
+          bitQuotaWarn();
         }
       }
       setSKey(targetSKey);
@@ -6021,6 +6034,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
       } catch (e) {
+        bitQuotaWarn();
       }
       setNewVersionFor(null);
       setSKey(nueva.sKey);
@@ -6051,6 +6065,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
       } catch (e) {
+        bitQuotaWarn();
       }
     } catch (err) {
       setNoticeDlg({ title: "No se pudo cambiar el estado", msg: err.message });
@@ -6071,6 +6086,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
       } catch (e) {
+        bitQuotaWarn();
       }
       if (receta?.firestoreId && window.SetasDB?.deleteReceta) {
         window.SetasDB.deleteReceta(receta.firestoreId).catch((err) => console.warn("No se pudo borrar la receta en Firestore:", err));
@@ -6089,6 +6105,7 @@ function SimuladorShell(props) {
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
       } catch (e) {
+        bitQuotaWarn();
       }
     } });
   };
@@ -6555,6 +6572,7 @@ function SimuladorShell(props) {
         try {
           localStorage.setItem("setas_v6", JSON.stringify(u));
         } catch (e2) {
+          bitQuotaWarn();
         }
         setNoticeDlg({ msg: `Guardada como prueba: ${nm}` });
       } });
@@ -7090,7 +7108,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     runLanzamientoProduccion();
   });
-  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar." });
+  const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El cambio no quedó guardado en este dispositivo: el almacenamiento local está lleno o no está disponible. Al recargar se perdería. Descargar un respaldo, liberar espacio del navegador y volver a intentar." });
   const encolarSync = ({ type, key, args }) => {
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!syncQueueApi) {
@@ -7117,7 +7135,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "d333508b5a8e" : null;
+    const appVersion = true ? "3457c5dbb394" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7157,6 +7175,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
           try {
             localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
           } catch (e) {
+            bitQuotaWarn();
           }
           return upd;
         });
@@ -7302,6 +7321,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7322,6 +7342,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         try {
           localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
         } catch (e) {
+          bitQuotaWarn();
         }
         return upd;
       });
@@ -7331,6 +7352,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7339,6 +7361,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7358,6 +7381,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7372,6 +7396,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         try {
           localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
         } catch (e) {
+          bitQuotaWarn();
         }
         return purged;
       });
@@ -7402,10 +7427,12 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem("sdp_bit_tasks", "[]");
     } catch (e) {
+      bitQuotaWarn();
     }
     try {
       localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER, (/* @__PURE__ */ new Date()).toISOString());
     } catch (e) {
+      bitQuotaWarn();
     }
     await Promise.all(cleanup);
     await new Promise((r) => setTimeout(r, 300));
@@ -7458,6 +7485,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem("sdp_proveedores", JSON.stringify(list));
     } catch (e) {
+      bitQuotaWarn();
     }
   };
   const saveCompras = (list) => {
@@ -7465,6 +7493,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem("sdp_compras", JSON.stringify(list));
     } catch (e) {
+      bitQuotaWarn();
     }
   };
   const saveLotes = (list) => {
@@ -7472,6 +7501,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem("sdp_lotes", JSON.stringify(list));
     } catch (e) {
+      bitQuotaWarn();
     }
   };
   const saveMovimientos = (list) => {
@@ -7479,6 +7509,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem("sdp_movimientos", JSON.stringify(list));
     } catch (e) {
+      bitQuotaWarn();
     }
   };
   const readInvOps = () => {
@@ -7494,6 +7525,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY, JSON.stringify(q));
     } catch (e) {
+      bitQuotaWarn();
     }
   };
   const invSyncRef = useRef({ inFlight: null, again: false });
@@ -7526,6 +7558,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7548,6 +7581,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7570,6 +7604,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       try {
         localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7589,6 +7624,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         try {
           localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
         } catch (e) {
+          bitQuotaWarn();
         }
         return upd;
       });
@@ -7629,6 +7665,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       localStorage.setItem("sdp_correos_compra", JSON.stringify(upd));
     } catch (e) {
+      bitQuotaWarn();
     }
     return upd;
   });
@@ -8681,6 +8718,7 @@ BATCH (${numBags}×${kgBag} kg):
       try {
         localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
       } catch (e) {
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -8966,6 +9004,7 @@ BATCH (${numBags}×${kgBag} kg):
         try {
           localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
         } catch (e) {
+          bitQuotaWarn();
         }
       } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "data-testid": "sync-export-stuck", style: { minHeight: 44 }, onClick: exportarSyncPendientes }, "Exportar"));
     })())));
@@ -9023,6 +9062,7 @@ BATCH (${numBags}×${kgBag} kg):
         try {
           localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
         } catch (e) {
+          bitQuotaWarn();
         }
       }, style: { marginLeft: 6 } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "sync-export-stuck", onClick: exportarSyncPendientes, style: { marginLeft: 6, minHeight: 44, minWidth: 44 } }, "Exportar"));
     })()), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-editorial)", fontWeight: 700, fontSize: 20, color: "var(--text-primary)", marginTop: 4 } }, (sheet ? sheet.species : lote.especie) || "Especie sin registrar", (sheet ? sheet.speciesScientific : lote.especieCientifico) && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("i", { style: { fontWeight: 400, fontSize: 14, color: "var(--text-secondary)" } }, sheet ? sheet.speciesScientific : lote.especieCientifico))), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__status", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge sdp-badge--${loteBadge}` }, stateLabel, sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : "")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__meta", style: { gridTemplateColumns: "1fr 1fr", marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Sala"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, roomName || "Sin asignar")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Bolsas activas"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || "—"}`)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Receta"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ""}` : "Sin vincular")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Spawn"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : "Sin vincular"))))), hasExceptions && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks-mobile", style: { marginTop: 14, borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 14 } }, "Excepciones"), isException && /* @__PURE__ */ React.createElement("div", { className: "sdp-badge sdp-badge--quarantine", style: { marginBottom: 8 } }, stateLabel, " · ", state === "quarantine" ? "Sospecha de contaminación" : "Lifecycle detenido"), sheet && sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: `anom-${i}`, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, a.severity === "critical" ? "Crítico" : "Atención")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, a.detail))), sheet && sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: b.code, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, "Bloqueo")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, b.detail))), actions.some((a) => a.action === "inspection" || a.action === "contamination") && /* @__PURE__ */ React.createElement(
@@ -9954,6 +9994,7 @@ BATCH (${numBags}×${kgBag} kg):
       try {
         localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
       } catch (e) {
+        bitQuotaWarn();
       }
     } }, "Reintentar"));
   })())), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
@@ -10364,6 +10405,7 @@ BATCH (${numBags}×${kgBag} kg):
           try {
             localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
           } catch (e) {
+            bitQuotaWarn();
           }
         }, style: { cursor: "pointer", minHeight: 48, padding: "0 14px", background: "var(--paper-0)", color: "var(--coral-700)", border: "1px solid var(--coral-700)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Reintentar")
       );
@@ -10830,6 +10872,7 @@ Click para ver análisis completo`
           try {
             localStorage.setItem("setas_prices_v1", JSON.stringify(n));
           } catch (err) {
+            bitQuotaWarn();
           }
         }
       }

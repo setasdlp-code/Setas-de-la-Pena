@@ -71,3 +71,12 @@ test('getFieldOperatorRole sigue siendo la única puerta al rol', () => {
   assert.match(APP, /mapWorkflowRole/,
     'debe traducir con la tabla compartida que aplica la Cloud Function');
 });
+
+test('ninguna escritura a localStorage ignora su fallo en silencio', () => {
+  // Un `catch` vacío tras localStorage.setItem deja el cambio visible en
+  // pantalla pero sin guardar: al recargar se pierde y nadie se entera.
+  const silent = APP.split('\n')
+    .map((line, i) => ({ line, n: i + 1 }))
+    .filter(({ line }) => /localStorage\.setItem\(/.test(line) && /catch\s*(\([\w$]*\))?\s*\{\s*\}/.test(line));
+  assert.deepEqual(silent.map(x => x.n), [], 'escrituras con catch vacío en simulador-app.jsx');
+});

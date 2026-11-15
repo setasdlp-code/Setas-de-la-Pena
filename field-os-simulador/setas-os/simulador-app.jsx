@@ -7179,27 +7179,27 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:nuevoDisponible,cantidadKgTotal:Math.max(l.cantidadKgTotal,nuevoDisponible),precioPorKgCOP:pr};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){bitQuotaWarn();}
       return updated;
     });
     // Reasignar en compras si cambió el tipo
     if(nuevoId){
       setInvCompras(prev=>{
         const upd=prev.map(c=>({...c,items:c.items.map(it=>it.ingredienteId===ingredienteId?{...it,ingredienteId:nuevoId}:it)}));
-        try{localStorage.setItem('sdp_compras',JSON.stringify(upd));}catch(e){}
+        try{localStorage.setItem('sdp_compras',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
         return upd;
       });
     }
     // Proveedor override
     if(proveedorId){
       const upd={...provOverride,[targetId]:proveedorId};
-      setProvOverride(upd);try{localStorage.setItem('sdp_prov_override',JSON.stringify(upd));}catch(e){}
+      setProvOverride(upd);try{localStorage.setItem('sdp_prov_override',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
     }
     // Alerta mínima
     const am=parseFloat(alertaMin);
     if(!isNaN(am)&&am>=0){
       const upd={...alertaConfig,[targetId]:am};
-      setAlertaConfig(upd);try{localStorage.setItem('sdp_alertas',JSON.stringify(upd));}catch(e){}
+      setAlertaConfig(upd);try{localStorage.setItem('sdp_alertas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
     }
     setEditingRowId(null);
   };
@@ -7208,7 +7208,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const doDelete=()=>{
       setInvLotes(prev=>{
         const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
-        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
+        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
         return upd;
       });
       // Limpiar pantry
@@ -7239,7 +7239,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           return{...l,cantidadKgDisponible:Math.round(kg*fraccion*100)/100};
         });
       }
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
+      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){bitQuotaWarn();}
       return updated;
     });
   };
@@ -7272,7 +7272,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const vigentes=ledgerApi?ledgerApi.expireDue(parsedReservas,Date.now()):parsedReservas;
         setInvReservas(vigentes);
         if(ledgerApi&&JSON.stringify(vigentes)!==JSON.stringify(parsedReservas)){
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){bitQuotaWarn();}
         }
       }
       const sq=localStorage.getItem('sdp_sync_queue');
@@ -7337,7 +7337,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(cancelled) return;
         syncQueueRef.current=updatedQueue;
         setSyncQueue(updatedQueue);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
+        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){bitQuotaWarn();}
       }
     };
 
@@ -7521,7 +7521,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const next=queueApi.retryStuck(syncQueueRef.current,Date.now());
       syncQueueRef.current=next;
       setSyncQueue(next);
-      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
+      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){bitQuotaWarn();}
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
@@ -7876,7 +7876,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const migradas=crudas.map(r=>lifecycle.migrateLegacyRecipe(r));
       setSaved(migradas);
       const cambio=migradas.some((r,i)=>r!==crudas[i]);
-      if(cambio){ try{localStorage.setItem('setas_v6',JSON.stringify(migradas));}catch(e2){} }
+      if(cambio){ try{localStorage.setItem('setas_v6',JSON.stringify(migradas));}catch(e2){bitQuotaWarn();} }
     }catch(e){}
   },[]);
   useEffect(()=>{ if(props.onSavedChange) props.onSavedChange(saved); },[saved]);
@@ -7933,7 +7933,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
     const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
-    const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
+    const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){bitQuotaWarn();}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
     // así que un fallo de red no bloquea al operador; solo se avisa si no sincronizó.
@@ -7947,7 +7947,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       }).then(docRef=>{
         setSaved(prev=>{
           const upd=prev.map(r=>r.id===e.id?{...r,firestoreId:docRef.id}:r);
-          try{localStorage.setItem('setas_v6',JSON.stringify(upd));}catch(e3){}
+          try{localStorage.setItem('setas_v6',JSON.stringify(upd));}catch(e3){bitQuotaWarn();}
           return upd;
         });
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
@@ -7977,7 +7977,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(recetaObj&&recetaObj.id){
         const u=saved.map(s=>s.id===recetaObj.id?{...s,esProduccion:true,fechaPromocion:new Date().toLocaleDateString('es-CO')}:s);
         setSaved(u);
-        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){bitQuotaWarn();}
       }
       setSKey(targetSKey);
       setRecipe(targetRecipe);
@@ -8022,7 +8022,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const nueva=lifecycle.newVersionFrom(newVersionFor,{},{actor:fieldOperatorRole,at:new Date().toISOString()});
       const u=[{...nueva,id:Date.now()},...saved];
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){bitQuotaWarn();}
       setNewVersionFor(null);
       setSKey(nueva.sKey);setRecipe(nueva.recipe);setLockedIds([]);
       openBuilderSubTab('formular');goTab('formular');
@@ -8045,7 +8045,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       });
       const u=saved.map(s=>s.id===receta.id?{...actualizada,id:receta.id}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){bitQuotaWarn();}
     }catch(err){ setNoticeDlg({title:'No se pudo cambiar el estado',msg:err.message}); }
   };
   // Protección de UI: solo evita el clic accidental de un operador de campo en
@@ -8060,7 +8060,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const delR=id=>{
     setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
       const receta=saved.find(r=>r.id===id);
-      const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){bitQuotaWarn();}
       // Sin esto el documento en recetas/ (Firestore) queda huérfano para
       // siempre: no hay UI ni proceso que lo purgue — igual que el bug de
       // Bitácora con public_lotes/. Si la receta se guardó antes de este fix
@@ -8086,7 +8086,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const ebReal=Math.round(n*10)/10;
       const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
-      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){bitQuotaWarn();}
     }});
   };
 
@@ -8508,7 +8508,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
               {<>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){bitQuotaWarn();}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
                           <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
@@ -9238,7 +9238,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     runLanzamientoProduccion();
   });
 
-  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'});
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El cambio no quedó guardado en este dispositivo: el almacenamiento local está lleno o no está disponible. Al recargar se perdería. Descargar un respaldo, liberar espacio del navegador y volver a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
   // guardado local y la confirmación de la interfaz ya ocurrieron antes de
   // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
@@ -9301,7 +9301,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(ledgerApi&&!loteEraDescartado){
         setInvReservas(prev=>{
           const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción descartado',at:new Date().toISOString()});
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
           return upd;
         });
       }
@@ -9434,7 +9434,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // pública para siempre — nadie más va a volver a pedir su borrado.
     const cosecha=bitCosechas.find(c=>c.id===id);
     const lote=cosecha&&bitLotes.find(l=>l.id===cosecha.loteId);
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
     // La cola de sync (arriba) es solo bitacora_* — la ficha pública
     // (public_lotes) es una colección aparte que nadie más limpia: sin
@@ -9458,18 +9458,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(ledgerApi){
       setInvReservas(prev=>{
         const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
         return upd;
       });
     }
-    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     // Las fotos de las bolsas borradas salen también de IndexedDB.
     if(bagPhotoStoreRef.current&&bagPhotoStoreRef.current.available&&bolsaIds.length){
       publicCleanup.push(bagPhotoStoreRef.current.removeMany(bolsaIds).catch(()=>{}));
       setBagPhotos(prev=>{const next={...prev};bolsaIds.forEach(id=>{delete next[id];});return next;});
     }
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
     // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
     // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
@@ -9481,7 +9481,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(syncQueueApi){
       setSyncQueue(prev=>{
         const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
-        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
+        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){bitQuotaWarn();}
         return purged;
       });
     }
@@ -9511,8 +9511,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     catch(e){throw Error('No se pudo descargar el respaldo; no se borró nada. '+(e.message||''));}
     const cleanup=plan.map(p=>purgeBitLote(p.loteId));
     setBitTasks([]);
-    try{localStorage.setItem('sdp_bit_tasks','[]');}catch(e){}
-    try{localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());}catch(e){}
+    try{localStorage.setItem('sdp_bit_tasks','[]');}catch(e){bitQuotaWarn();}
+    try{localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());}catch(e){bitQuotaWarn();}
     await Promise.all(cleanup);
     // Deja que React aplique los cambios encolados (cola de sync, reservas)
     // antes de recargar.
@@ -9562,16 +9562,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 
   // ── v4: helpers persistencia inventario
-  const saveProveedores=list=>{setInvProveedores(list);try{localStorage.setItem('sdp_proveedores',JSON.stringify(list));}catch(e){}};
-  const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
-  const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
-  const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+  const saveProveedores=list=>{setInvProveedores(list);try{localStorage.setItem('sdp_proveedores',JSON.stringify(list));}catch(e){bitQuotaWarn();}};
+  const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){bitQuotaWarn();}};
+  const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){bitQuotaWarn();}};
+  const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){bitQuotaWarn();}};
 
   // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
   // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
   const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
   const [invOps,setInvOps]=useState(readInvOps);
-  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){bitQuotaWarn();}};
   // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
   // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
   // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
@@ -9601,7 +9601,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!ledgerApi||!nuevas.length) return;
     setInvReservas(prev=>{
       const upd=ledgerApi.addReservations(prev,nuevas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   };
@@ -9624,7 +9624,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const yaTiene=prev.some(r=>r&&r.batchId===loteId&&r.status==='held');
       if(yaTiene) return prev;
       const upd=ledgerApi.addReservations(prev,reservas);
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
     return true;
@@ -9642,7 +9642,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
     setInvMovimientos(prev=>{
       const upd=[...prev,...r.movimientos];
-      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){}
+      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
     // Libro de reservas: CIERRA las reservas que dejó la planificación, con
@@ -9661,7 +9661,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           aCerrar=reservas;
         }
         upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
-        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
         return upd;
       });
     }
@@ -9693,7 +9693,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // pueden escribir en el mismo tick.
   const saveCorreos=fn=>setInvCorreos(prev=>{
     const upd=inboxApi?inboxApi.compactCorreos(fn(prev)):fn(prev);
-    try{localStorage.setItem('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
+    try{localStorage.setItem('sdp_correos_compra',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
     return upd;
   });
   useEffect(()=>{
@@ -11233,7 +11233,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const at=new Date().toISOString();
       let upd=prev;
       descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
-      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
   },[bitLotes]);
@@ -11803,7 +11803,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);
-                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
               }}>Reintentar</button>}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" data-testid="sync-export-stuck" style={{minHeight:44}} onClick={exportarSyncPendientes}>Exportar</button>}
             </div>;
@@ -11903,7 +11903,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {st.stuck>0&&<button type="button" onClick={()=>{
                     const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                     setSyncQueue(next);
-                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
                   }} style={{marginLeft:6}}>Reintentar</button>}
                   {st.stuck>0&&<button type="button" data-testid="sync-export-stuck" onClick={exportarSyncPendientes} style={{marginLeft:6,minHeight:44,minWidth:44}}>Exportar</button>}
                 </span>;
@@ -13617,7 +13617,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                       const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                       setSyncQueue(next);
-                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
                     }}>Reintentar</button>}
                   </span>;
                 })()}
@@ -14338,7 +14338,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {st.stuck>0&&<button type="button" onClick={()=>{
                           const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                           setSyncQueue(next);
-                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
                         }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
                       </span>;
                     })()}
@@ -15704,7 +15704,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               const v=Math.max(0,parseInt(e.target.value)||0);
                               const n={...priceOverrides,[ing.id]:v};
                               setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
+                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){bitQuotaWarn();}
                             }}
                           />
                         </div>
