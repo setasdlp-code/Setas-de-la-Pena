@@ -1,0 +1,43 @@
+{
+  "_comment": "Benchmark EXPLORATORIO de literatura para el Perito. No son lotes de Setas de la Peña ni sustituyen ground-truth-fixtures.json. Sirve para comparar variantes del modelo; no valida ni aprueba cambios. Fuentes: docs/research/ingredientes_cn_verificacion_2026-10-09.md (tabla 3) y knowledge_base/09_research/tendencias_cultivo_shiitake_2026-11-08.md (H1).",
+  "schema": "setas.literature-eb-benchmark.v1",
+  "entries": [
+    {
+      "id": "sebaaly2024-roble-80-20", "study": "El Sebaaly 2024", "sKey": "shiitake",
+      "recipe": [{ "id": "aserrin_roble", "p": 80 }, { "id": "salvado_trigo", "p": 20 }],
+      "ebReported": 59.7, "tier": "Tier 1, un estudio",
+      "source": "El Sebaaly et al. 2024, PLoS One, PMC11575786; citado en docs/research/ingredientes_cn_verificacion_2026-10-09.md §3",
+      "strain": "no consignada en la KB", "flushes": null, "ebBasis": "BE declarada por el estudio; denominador sin confirmar en la KB",
+      "process": "sin confirmar en la KB", "verification": "secondary_kb", "useInMetrics": true,
+      "notes": "Roble libanés; especie y procedencia distintas a las de Tenjo. Receta sin carbonato registrado."
+    },
+    {
+      "id": "sebaaly2024-eucalipto-80-20", "study": "El Sebaaly 2024", "sKey": "shiitake",
+      "recipe": [{ "id": "aserrin_eucalipto", "p": 80 }, { "id": "salvado_trigo", "p": 20 }],
+      "ebReported": 65.0, "tier": "Tier 1, un estudio",
+      "source": "El Sebaaly et al. 2024, PLoS One, PMC11575786; citado en docs/research/ingredientes_cn_verificacion_2026-10-09.md §3",
+      "strain": "no consignada en la KB", "flushes": null, "ebBasis": "BE declarada por el estudio; denominador sin confirmar en la KB",
+      "process": "sin confirmar en la KB", "verification": "secondary_kb", "useInMetrics": true,
+      "notes": "No difiere significativamente de roble según el estudio."
+    },
+    {
+      "id": "sebaaly2024-eucalipto-roble-40-40-20", "study": "El Sebaaly 2024", "sKey": "shiitake",
+      "recipe": [{ "id": "aserrin_eucalipto", "p": 40 }, { "id": "aserrin_roble", "p": 40 }, { "id": "salvado_trigo", "p": 20 }],
+      "ebReported": 74.1, "tier": "Tier 1, un estudio",
+      "source": "El Sebaaly et al. 2024, PLoS One, PMC11575786; citado en docs/research/ingredientes_cn_verificacion_2026-10-09.md §3",
+      "strain": "no consignada en la KB", "flushes": null, "ebBasis": "BE declarada por el estudio; denominador sin confirmar en la KB",
+      "process": "sin confirmar en la KB", "verification": "secondary_kb", "useInMetrics": true,
+      "notes": "Mezcla 400:400:200 del estudio."
+    },
+    {
+      "id": "zhou2025-roble-78-20-yeso-cal", "study": "Zhou 2025", "sKey": "shiitake",
+      "recipe": [{ "id": "aserrin_roble", "p": 78 }, { "id": "salvado_trigo", "p": 20 }, { "id": "yeso", "p": 1.5 }, { "id": "carbonato_calcio", "p": 0.5 }],
+      "ebReported": 92.42, "tier": "Tier 1 según tendencias_cultivo_shiitake_2026-11-08 (H1); lectura parcial según retamo_espinoso_shiitake_2026-10-31",
+      "source": "Zhou et al. 2025, Fermentation 11(5):245",
+      "strain": "0912", "flushes": 5, "ebBasis": "sobre peso fresco; la KB la declara no comparable con otros denominadores (SH08)",
+      "process": "sin confirmar en la KB", "verification": "conflicting", "useInMetrics": false,
+      "excludedReason": "Denominador de EB no comparable (SH08) e identidad de la 'cal' sin confirmar; carbonato es supuesto de reconstrucción.",
+      "notes": "Se lista para no perderla; no entra en error medio, máximo ni cobertura."
+    }
+  ]
+}

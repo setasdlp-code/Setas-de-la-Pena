@@ -1,9 +1,22 @@
 # Perito: predicción de EB para shiitake y medición en el piloto
 
-Fecha: 2026-11-12. Revisión 2: 2026-11-13, tras la auditoría de diseño del 2026-11-13.
-Estado: borrador para aprobación de Sebastián. Rama: `claude/blissful-lamport-4d1o3k`.
+Fecha: 2026-11-12. Revisión 2: 2026-11-13, tras la auditoría de diseño del 2026-11-13. Revisión 3: 2026-11-14, tras autoauditoría contra `main` @ `6939cba`.
+Estado: **[Decisión]** Sebastián pidió auditar e implementar (2026-11-14). Rama: `claude/blissful-lamport-4d1o3k`.
 
 Convención: **[Decisión]** la tomó Sebastián. **[Mi decisión]** la tomé yo al redactar y debe revisarse. Toda confianza citada nombra su escala (ADR-0007).
+
+## 00. Revisión 3: autoauditoría contra `main` @ `6939cba`
+
+`main` incorporó #509 (perfil provisional de pellets Weber Hickory y sensibilidad de composición) después de la revisión 2. Cambios:
+
+| Revisión 2 | Revisión 3 | Motivo |
+|---|---|---|
+| Insumo nuevo `pellets_madera_dura`, proxy de roble | Se elimina; se usa `pellets_weber_hickory` | Ya existe, con composición estimada documentada y cuatro proxies publicados de roble. Es el producto que cita el manual Monte Jongas |
+| Contrato `pronostico` nuevo | Registro `forecastSnapshot` (`setas.eb-forecast.v1`) junto al `predictionSnapshot` existente | `setas.experimental-prediction.v1` solo se captura si la receta contiene el pellet Weber; la fórmula de roble no guarda pronóstico. Se generaliza sin duplicar la sensibilidad |
+| `pronosticoPlan` + `pronosticoEjecucion` | Una sola captura al crear el lote | La receta del lote se fija al crearse (`buildLoteRecords` toma la de la preparación) y ninguna ruta la cambia después |
+| Benchmark con cobertura de la banda de `analyze()` | Cobertura de la banda visible (`scoreRecipe().uncertainty.eb`, sin historial) | Es la que ve el usuario |
+| Subagente `firestore-rules-author` | Edición directa con test | El subagente no existe en el repositorio. El despliegue sigue siendo humano |
+| (no previsto) | `cal_hidratada` con `cs:['shiitake']` y test de no alteración de Escenarios | Un insumo nuevo entra al pool de búsqueda; el test exige que las búsquedas de shiitake den el mismo resultado con y sin él |
 
 ## 0. Qué cambió respecto a la revisión 1
 

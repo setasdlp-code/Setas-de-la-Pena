@@ -109,7 +109,11 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{...(estimatedCompositionIds.length?{estimatedCompositionIds}:{}),tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,requiresSterilization:Boolean(sp?.requires_sterilization),trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 
-const api = { analyze, EB_PENALTY_BALANCE_BAND };
+// Versión del modelo heurístico de EB. Incrementar con cada cambio a analyze()
+// o a valores de catálogo que muevan la EB: los pronósticos congelados en los
+// lotes (eb-forecast-record.js) la citan para saber con qué modelo se hicieron.
+const EB_MODEL_VERSION = 'eb-heuristic-1';
+const api = { analyze, EB_PENALTY_BALANCE_BAND, EB_MODEL_VERSION };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.SetasSubstrateAnalysis = api;
 
