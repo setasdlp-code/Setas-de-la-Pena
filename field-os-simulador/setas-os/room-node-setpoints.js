@@ -133,7 +133,79 @@
     };
   };
 
-  const api = { SCHEMA, CONTROL_METRIC, buildNodeSubstitutions };
+  // Precisión con la que buildNodeSubstitutions escribe una consigna (redondeo a
+  // 3 decimales, `Math.round(x * 1000) / 1000`): dos valores que difieren menos
+  // que eso son la misma consigna. No es una tolerancia agronómica.
+  const SETPOINT_TOLERANCE_C = 0.001;
+
+  const sameSetpoint = (a, b) => Math.abs(a - b) <= SETPOINT_TOLERANCE_C + Number.EPSILON;
+  const finite = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+  // `consigna_id` = `${cicloId saneado}@${hora compacta}` (ver buildNodeSubstitutions).
+  const cycleIdOfConsigna = id => (typeof id === 'string' && id.includes('@') ? id.slice(0, id.lastIndexOf('@')) : null);
+
+  /**
+   * Compara la consigna que REPORTA el nodo (`node_status.setpoints`) con la
+   * banda de temperatura del ciclo de sala activo, con la misma regla con la que
+   * buildNodeSubstitutions la derivó: techo = max, arranque = min + histéresis
+   * (la histéresis es la que reporta el nodo: Setas OS no la conoce por otro
+   * lado). Solo lectura: no genera consignas ni toca el nodo.
+   *
+   * Estados: `match` | `mismatch` | `no_cycle` | `no_band` | `no_setpoints`.
+   * Una diferencia significa que el firmware se compiló con otra banda: hay que
+   * recompilarlo con las consignas del ciclo activo.
+   *
+   * @param {object} args
+   * @param {object} args.setpoints  { consigna_id, heat_setpoint_c, hysteresis_c, temp_max_c } del nodo
+   * @param {string} args.roomId
+   * @param {object[]} args.cycles   ciclos de sala (room-cycle.v1)
+   * @param {number|Date|Function} [args.now]
+   */
+  const compareNodeSetpoints = ({ setpoints, roomId, cycles = [], now } = {}) => {
+    const nowMs = resolveNow(now);
+    const sp = setpoints && typeof setpoints === 'object' ? setpoints : {};
+    const reported = {
+      consigna_id: typeof sp.consigna_id === 'string' ? sp.consigna_id : null,
+      heat_setpoint_c: finite(sp.heat_setpoint_c),
+      hysteresis_c: finite(sp.hysteresis_c),
+      temp_max_c: finite(sp.temp_max_c),
+    };
+    const out = { state: 'no_cycle', reason: null, cycle: null, band: null, expected: null, reported, differences: [], compiledForCycleId: cycleIdOfConsigna(reported.consigna_id) };
+    if (!Number.isFinite(nowMs) || !roomId) { out.reason = 'reloj o sala inválidos'; return out; }
+
+    const cycle = targets.activeCycleForRoom(cycles, roomId, nowMs);
+    if (!cycle) return out;
+    const cycleErrors = roomCycle.validateRoomCycle(cycle);
+    const normalized = roomCycle.normalizeRoomCycle(cycle);
+    out.cycle = { id: normalized.id, stage: normalized.stage, speciesId: normalized.speciesId };
+    if (cycleErrors.length) { out.state = 'no_band'; out.reason = `ciclo inválido: ${cycleErrors[0]}`; return out; }
+
+    const band = normalized.targets[CONTROL_METRIC];
+    if (!band || band.min == null || band.max == null) { out.state = 'no_band'; out.reason = `falta min o max de ${CONTROL_METRIC}`; return out; }
+    out.band = { min: band.min, max: band.max, source: band.source };
+
+    if (reported.temp_max_c == null && reported.heat_setpoint_c == null) { out.state = 'no_setpoints'; return out; }
+
+    const expected = { temp_max_c: band.max, heat_setpoint_c: null };
+    if (reported.hysteresis_c != null && reported.hysteresis_c > 0) {
+      expected.heat_setpoint_c = Math.round((band.min + reported.hysteresis_c) * 1000) / 1000;
+    }
+    out.expected = expected;
+
+    if (reported.temp_max_c != null && !sameSetpoint(reported.temp_max_c, expected.temp_max_c)) {
+      out.differences.push({ field: 'temp_max_c', label: 'techo de temperatura', reported: reported.temp_max_c, expected: expected.temp_max_c });
+    }
+    // Sin histéresis reportada no se puede derivar el arranque: no se adivina.
+    if (reported.heat_setpoint_c != null && expected.heat_setpoint_c != null && !sameSetpoint(reported.heat_setpoint_c, expected.heat_setpoint_c)) {
+      out.differences.push({ field: 'heat_setpoint_c', label: 'arranque de calefacción', reported: reported.heat_setpoint_c, expected: expected.heat_setpoint_c });
+    }
+    const compared = (reported.temp_max_c != null ? 1 : 0) + (reported.heat_setpoint_c != null && expected.heat_setpoint_c != null ? 1 : 0);
+    // Nada comparable (p. ej. solo el arranque y sin histéresis): no es "coincide".
+    out.state = out.differences.length ? 'mismatch' : (compared ? 'match' : 'no_setpoints');
+    return out;
+  };
+
+  const api = { SCHEMA, CONTROL_METRIC, SETPOINT_TOLERANCE_C, buildNodeSubstitutions, compareNodeSetpoints };
   if (isNode) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasRoomNodeSetpoints = api;
 })();
