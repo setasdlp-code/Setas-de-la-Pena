@@ -1,0 +1,427 @@
+# =============================================================================
+# Paquete ESPHome común — módulo de fructificación con relé de 4 canales
+# Setas de la Peña · Tenjo, Cundinamarca · 2600 m s.n.m.
+# STATUS: BANCO DE PRUEBAS / NO COMISIONADO / NO USAR EN PRODUCCIÓN
+# =============================================================================
+# Lo usa cloudlab_esp32.yaml (CLOUDLAB 844). Una sala nueva (p. ej. Martha) se
+# añade con su propio archivo de nodo que incluya este paquete y una entrada en
+# field-os-simulador/setas-os/node-control-profiles.json: sin cambiar este
+# paquete. Ver esphome/CONTRATO_NODOS.md.
+#
+# PRINCIPIOS (DEC-001, knowledge_base/05_equipment/environmental_control.md)
+#   · El lazo de control y sus protecciones viven en el ESP32. Home Assistant y
+#     Setas OS solo LEEN. No hay ruta de red que escriba en un relé: los cuatro
+#     relés son `internal: true` (no se exponen por la API) y su estado sale en
+#     sensores binarios de solo lectura y en el estado del nodo publicado.
+#   · Las únicas entradas del operador son dos permisos (switch template):
+#     "Calefacción habilitada" y "Circulación continua". El ESP32 decide el relé.
+#   · Todo relé de potencia arranca en OFF tras cualquier reinicio
+#     (`restore_mode: ALWAYS_OFF`). Ver la justificación por relé más abajo.
+#   · Pasada la estabilización del arranque, sin alarmas y con la habilitación
+#     encendida, la calefacción se reanuda sola. Una alarma apaga el calefactor
+#     y la habilitación: el operador debe volver a habilitarla (como la
+#     incubadora piloto).
+#   · NO controla humidificación (CloudForge T7) ni extracción (Cloudline H4):
+#     bloqueados por comisionamiento. Ver "PENDIENTES" al final.
+#
+# REQUISITOS DEL ARCHIVO DE NODO QUE INCLUYE ESTE PAQUETE
+#   · Un sensor `room_temp` (sensor de control) con filtro `timeout` → NaN.
+#   · El paquete de publicación (telemetry-publisher/esphome-publish.package.yaml),
+#     que declara el reloj `setas_publish_clock` y el global `setas_node_status`.
+#   · Las sustituciones de pines relay_luz_pin, relay_circulacion_pin,
+#     relay_calefaccion_pin, relay_reserva_pin.
+# =============================================================================
+
+substitutions:
+  # --- Consignas: SIN valor operativo por defecto ---
+  # Las genera field-os-simulador/setas-os/room-node-setpoints.js a partir del
+  # ciclo de sala activo (room-cycle.v1) y del perfil de la sala. Mientras sean
+  # marcadores la configuración NO valida: el nodo no arranca sin consigna.
+  #   esphome -s heat_setpoint_c <°C> -s histeresis_c <°C> -s temp_max_c <°C> \
+  #           -s consigna_id <id> config cloudlab_esp32.yaml
+  heat_setpoint_c: "PENDIENTE_CICLO_SALA"     # objetivo del termostato (°C)
+  histeresis_c: "PENDIENTE_PERFIL_SALA"       # heat_deadband = heat_overrun (°C)
+  temp_max_c: "PENDIENTE_CICLO_SALA"          # techo: sobre él, alarma y calefactor OFF
+  consigna_id: "PENDIENTE_CICLO_SALA"         # trazabilidad: ciclo y generación
+
+  # --- Fotoperiodo: desactivado por defecto (-1) ---
+  # No hay fotoperiodo aprobado en knowledge_base/ para esta sala. Con -1 la luz
+  # queda apagada; el operario lo fija explícitamente (hora local, 0-23).
+  luz_on_hora: "-1"
+  luz_off_hora: "-1"
+
+  # --- Protección del contacto del relé (no es parámetro de proceso) ---
+  # Valores de la plantilla de knowledge_base/05_equipment/environmental_control.md
+  # (DOC-0026, "ESPHome — Prototipo de Incubación"): 300 s / 60 s / 30 s.
+  min_heating_off_time_s: "300"
+  min_heating_run_time_s: "60"
+  min_idle_time_s: "30"
+  # Circulación antes y después del calefactor (misma plantilla: 5 s / 30 s).
+  circulacion_previa_s: "5"
+  circulacion_posterior_s: "30"
+
+  # --- Arranque y validez del sensor (ingeniería, igual que la incubadora) ---
+  arranque_estabilizacion_s: "90"
+  # Los relés se publican como estado comandado; el contacto real no se mide.
+  firmware_comisionado: "false"
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        # Tras cualquier reinicio el calefactor y el termostato arrancan apagados,
+        # aunque el modo se haya restaurado de la memoria flash.
+        - switch.turn_off: rele_calefaccion
+        - switch.turn_off: rele_circulacion
+        - switch.turn_off: rele_luz
+        - switch.turn_off: rele_reserva
+        - climate.control:
+            id: control_termico
+            mode: "OFF"
+        # Fin de la estabilización: desde aquí el interval de seguridad puede
+        # reanudar el control o apagar la habilitación del operador.
+        - delay: ${arranque_estabilizacion_s}s
+        - globals.set:
+            id: arranque_ok
+            value: "true"
+
+globals:
+  # true cuando termina la estabilización posterior al arranque. No se restaura.
+  - id: arranque_ok
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  # true desde que una alarma apagó la habilitación hasta que el operador la
+  # vuelve a encender. No se restaura: tras un reinicio manda la habilitación.
+  - id: bloqueo_por_alarma
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  # Segundos acumulados con cada relé comandado ON desde el arranque.
+  - id: segundos_on_calefaccion
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+  - id: segundos_on_circulacion
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+  - id: segundos_on_luz
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+  - id: segundos_desde_arranque
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+
+# =============================================================================
+# RELÉS — módulo de 4 canales, 5 V, optoacoplado, jumper en disparo ALTO
+# =============================================================================
+# `inverted: false`: GPIO en HIGH = bobina energizada = contacto NA cerrado.
+# La polaridad real se confirma en banco (protocolo, paso 2) antes de conectar
+# cualquier carga. Todos `internal: true`: no se pueden mandar desde la red.
+#
+# Estado seguro tras reinicio (restore_mode: ALWAYS_OFF en los cuatro):
+#   CH1 luz         OFF. La luz no es crítica en minutos; con el reloj aún sin
+#                   sincronizar no se sabe si toca encenderla.
+#   CH2 circulación OFF. La plantilla anterior usaba RESTORE_DEFAULT_ON "por
+#                   seguridad". Se descarta: (1) con polaridad sin verificar, un
+#                   estado restaurado puede energizar el canal equivocado;
+#                   (2) la circulación solo es requisito de seguridad mientras
+#                   calienta, y el calefactor también arranca OFF; (3) perder
+#                   90 s de circulación no tiene efecto biológico medible frente
+#                   al riesgo de un relé encendido sin control. Tras la
+#                   estabilización la vuelve a encender la lógica (calefacción o
+#                   "Circulación continua").
+#   CH3 calefacción OFF. Nunca se calienta sin sensor válido y estabilización.
+#   CH4 reserva     OFF siempre; sin carga ni automatización.
+switch:
+  - platform: gpio
+    id: rele_luz
+    internal: true
+    pin:
+      number: ${relay_luz_pin}
+      inverted: false
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: rele_circulacion
+    internal: true
+    pin:
+      number: ${relay_circulacion_pin}
+      inverted: false
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: rele_calefaccion
+    internal: true
+    pin:
+      number: ${relay_calefaccion_pin}
+      inverted: false
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: rele_reserva
+    internal: true
+    pin:
+      number: ${relay_reserva_pin}
+      inverted: false
+    restore_mode: ALWAYS_OFF
+
+  # Permisos del operador (no son relés). Se restauran tras un corte; una alarma
+  # apaga "Calefacción habilitada" y exige rehabilitarla a mano.
+  - platform: template
+    id: habilitar_calefaccion
+    name: "Calefacción habilitada"
+    icon: "mdi:radiator"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - globals.set:
+          id: bloqueo_por_alarma
+          value: "false"
+  - platform: template
+    id: circulacion_continua
+    name: "Circulación continua"
+    icon: "mdi:fan"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# --- Secuencia calefactor/circulación (plantilla DOC-0026) ---
+script:
+  - id: calefaccion_arrancar
+    mode: restart
+    then:
+      - switch.turn_on: rele_circulacion
+      - delay: ${circulacion_previa_s}s
+      - if:
+          condition:
+            and:
+              - lambda: 'return id(arranque_ok) && id(habilitar_calefaccion).state;'
+              - binary_sensor.is_off: alarma_sensor_invalido
+              - binary_sensor.is_off: alarma_sobretemp
+              - lambda: 'return id(control_termico).action == climate::CLIMATE_ACTION_HEATING;'
+          then:
+            - switch.turn_on: rele_calefaccion
+  - id: calefaccion_parar
+    mode: restart
+    then:
+      - switch.turn_off: rele_calefaccion
+      - delay: ${circulacion_posterior_s}s
+      - if:
+          condition:
+            lambda: 'return !id(rele_calefaccion).state && !id(circulacion_continua).state;'
+          then:
+            - switch.turn_off: rele_circulacion
+
+# --- Termostato (solo calefacción, sobre `room_temp`) ---
+# Con sensor NaN el componente pasa a acción OFF (thermostat_climate.cpp).
+climate:
+  - platform: thermostat
+    id: control_termico
+    name: "Control térmico"
+    sensor: room_temp
+    default_preset: Consigna
+    on_boot_restore_from: default_preset
+    preset:
+      - name: Consigna
+        default_target_temperature_low: ${heat_setpoint_c}
+    heat_deadband: ${histeresis_c}
+    heat_overrun: ${histeresis_c}
+    min_heating_off_time: ${min_heating_off_time_s}s
+    min_heating_run_time: ${min_heating_run_time_s}s
+    min_idle_time: ${min_idle_time_s}s
+    heat_action:
+      - script.stop: calefaccion_parar
+      - script.execute: calefaccion_arrancar
+    idle_action:
+      - script.stop: calefaccion_arrancar
+      - script.execute: calefaccion_parar
+
+# --- Alarmas que cortan la calefacción ---
+binary_sensor:
+  # Sensor de control inválido: NaN por ausencia, desconexión o congelamiento
+  # (el filtro `timeout` del nodo publica NaN si deja de actualizar).
+  - platform: template
+    id: alarma_sensor_invalido
+    name: "ALARMA sensor de control inválido"
+    device_class: problem
+    lambda: |-
+      return std::isnan(id(room_temp).state);
+
+  # Temperatura en o sobre el techo de la banda del ciclo. analog_threshold
+  # valida `temp_max_c` como número al configurar; ante NaN conserva el estado
+  # (el caso NaN lo cubre alarma_sensor_invalido).
+  - platform: analog_threshold
+    id: alarma_sobretemp
+    name: "ALARMA temperatura sobre el techo"
+    device_class: problem
+    sensor_id: room_temp
+    threshold: ${temp_max_c}
+
+  # Bloqueo: una alarma apagó la habilitación y el operador no la ha rehabilitado.
+  - platform: template
+    id: bloqueo_calefaccion
+    name: "Calefacción bloqueada por alarma"
+    device_class: problem
+    lambda: |-
+      return id(bloqueo_por_alarma);
+
+  # Espejos de solo lectura del estado COMANDADO de cada relé.
+  - platform: template
+    name: "Relé CH1 luz (estado)"
+    lambda: 'return id(rele_luz).state;'
+  - platform: template
+    name: "Relé CH2 circulación (estado)"
+    lambda: 'return id(rele_circulacion).state;'
+  - platform: template
+    name: "Relé CH3 calefacción (estado)"
+    lambda: 'return id(rele_calefaccion).state;'
+  - platform: template
+    name: "Relé CH4 reserva (estado)"
+    lambda: 'return id(rele_reserva).state;'
+
+interval:
+  # --- Interbloqueo y reanudación (cada 5 s) ---
+  # Cualquier alarma apaga el relé y el termostato; pasada la estabilización
+  # también apaga la habilitación del operador, que debe reactivarla.
+  # Sin alarmas, la habilitación gobierna el termostato (reanudación tras corte).
+  - interval: 5s
+    then:
+      - lambda: |-
+          id(segundos_desde_arranque) += 5;
+          if (id(rele_calefaccion).state) id(segundos_on_calefaccion) += 5;
+          if (id(rele_circulacion).state) id(segundos_on_circulacion) += 5;
+          if (id(rele_luz).state) id(segundos_on_luz) += 5;
+      - if:
+          condition:
+            or:
+              - binary_sensor.is_on: alarma_sensor_invalido
+              - binary_sensor.is_on: alarma_sobretemp
+          then:
+            - script.stop: calefaccion_arrancar
+            - switch.turn_off: rele_calefaccion
+            - climate.control:
+                id: control_termico
+                mode: "OFF"
+            - if:
+                condition:
+                  lambda: 'return id(arranque_ok) && id(habilitar_calefaccion).state;'
+                then:
+                  - switch.turn_off: habilitar_calefaccion
+                  - globals.set:
+                      id: bloqueo_por_alarma
+                      value: "true"
+          else:
+            - if:
+                condition:
+                  lambda: 'return id(arranque_ok) && id(habilitar_calefaccion).state && id(control_termico).mode != climate::CLIMATE_MODE_HEAT;'
+                then:
+                  - climate.control:
+                      id: control_termico
+                      mode: "HEAT"
+            - if:
+                condition:
+                  lambda: 'return id(arranque_ok) && !id(habilitar_calefaccion).state && id(control_termico).mode != climate::CLIMATE_MODE_OFF;'
+                then:
+                  - climate.control:
+                      id: control_termico
+                      mode: "OFF"
+      # Circulación continua (permiso del operador), solo tras la estabilización.
+      - if:
+          condition:
+            lambda: 'return id(arranque_ok) && id(circulacion_continua).state && !id(rele_circulacion).state;'
+          then:
+            - switch.turn_on: rele_circulacion
+      - if:
+          condition:
+            lambda: |-
+              return !id(circulacion_continua).state && !id(rele_calefaccion).state &&
+                     !id(calefaccion_arrancar).is_running() && !id(calefaccion_parar).is_running() &&
+                     id(rele_circulacion).state;
+          then:
+            - switch.turn_off: rele_circulacion
+      # Reserva: nunca se enciende.
+      - if:
+          condition:
+            switch.is_on: rele_reserva
+          then:
+            - switch.turn_off: rele_reserva
+
+  # --- Fotoperiodo (hora local del reloj de publicación) ---
+  # Sin reloj sincronizado, o con -1, la luz queda apagada.
+  - interval: 30s
+    then:
+      - lambda: |-
+          const int on_h = ${luz_on_hora};
+          const int off_h = ${luz_off_hora};
+          auto t = id(setas_publish_clock).now();
+          bool debe = false;
+          if (id(arranque_ok) && t.is_valid() && on_h >= 0 && off_h > on_h && off_h <= 24) {
+            debe = t.hour >= on_h && t.hour < off_h;
+          }
+          if (debe && !id(rele_luz).state) id(rele_luz).turn_on();
+          if (!debe && id(rele_luz).state) id(rele_luz).turn_off();
+
+  # --- Estado del nodo (setas.node-status.v1) para el publicador ---
+  # Solo lectura: describe lo que el firmware comanda y por qué. El paquete de
+  # publicación lo adjunta a cada envío como `node_status`.
+  - interval: 10s
+    then:
+      - lambda: |-
+          auto t = id(setas_publish_clock).utcnow();
+          if (!t.is_valid()) { id(setas_node_status) = ""; return; }
+          const bool sensor_inv = id(alarma_sensor_invalido).state;
+          const bool sobretemp = id(alarma_sobretemp).state;
+          const char *estado = "auto";
+          if (!id(arranque_ok)) estado = "starting";
+          else if (sensor_inv || sobretemp) estado = "alarm";
+          else if (id(bloqueo_por_alarma)) estado = "locked";
+          else if (!id(habilitar_calefaccion).state) estado = "disabled";
+          JsonDocument doc;
+          doc["schema"] = "setas.node-status.v1";
+          doc["observed_at"] = t.strftime("%Y-%m-%dT%H:%M:%SZ");
+          doc["commissioned"] = ${firmware_comisionado};
+          doc["control_state"] = estado;
+          doc["heating_enabled"] = id(habilitar_calefaccion).state;
+          doc["uptime_s"] = id(segundos_desde_arranque);
+          auto relays = doc["relays"].to<JsonObject>();
+          relays["light"] = id(rele_luz).state;
+          relays["circulation"] = id(rele_circulacion).state;
+          relays["heat"] = id(rele_calefaccion).state;
+          relays["spare"] = id(rele_reserva).state;
+          auto on_s = doc["relay_on_s"].to<JsonObject>();
+          on_s["light"] = id(segundos_on_luz);
+          on_s["circulation"] = id(segundos_on_circulacion);
+          on_s["heat"] = id(segundos_on_calefaccion);
+          auto alarms = doc["alarms"].to<JsonArray>();
+          if (sensor_inv) alarms.add("sensor_invalid");
+          if (sobretemp) alarms.add("over_temperature");
+          if (id(bloqueo_por_alarma)) alarms.add("heating_locked");
+          auto sp = doc["setpoints"].to<JsonObject>();
+          sp["consigna_id"] = "${consigna_id}";
+          sp["heat_setpoint_c"] = ${heat_setpoint_c};
+          sp["hysteresis_c"] = ${histeresis_c};
+          sp["temp_max_c"] = ${temp_max_c};
+          if (${luz_on_hora} >= 0) {
+            sp["light_on_hour"] = ${luz_on_hora};
+            sp["light_off_hour"] = ${luz_off_hora};
+          }
+          std::string out;
+          serializeJson(doc, out);
+          id(setas_node_status) = out;
+
+# =============================================================================
+# PENDIENTES (bloqueados por comisionamiento; NO añadir sin cerrar cada uno)
+# =============================================================================
+# · Humidificador CloudForge T7: requiere calibración de HR en rango alto y
+#   protección del sensor frente al agua (asignacion_sensores_tres_modulos
+#   2026-11-11 §8). Hoy opera en su modo AUTO nativo; este paquete no lo toca.
+# · Extractor Cloudline H4: requiere medir el caudal efectivo y documentar el
+#   control por CO₂ (cloudlab_esp32.yaml, nota BLOQUEANTE). No se define aquí
+#   interfaz PWM ni 0-10 V: la interfaz eléctrica no está verificada.
+# · Confirmación de flujo de la circulación (tacómetro/corriente): sin ella un
+#   ventilador detenido NO bloquea la calefacción. Antes de conectar una carga
+#   de calefacción real se exige protección térmica física independiente
+#   (termostato de corte y fusible térmico, DOC-0026).
