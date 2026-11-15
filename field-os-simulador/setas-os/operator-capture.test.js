@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {captureNumber,captureError,normalizeTrialCapture,normalizeHarvestCapture,persistCapture,calcLoteStats}=require('./bitacora-model');
+const {captureNumber,captureError,normalizeTrialCapture,normalizeHarvestCapture,persistCapture,calcLoteStats,HARVEST_QUALITY,fieldDefectsFor,harvestGradeGap}=require('./bitacora-model');
 test('capture distinguishes missing, zero, invalid and fractional counts',()=>{
  assert.equal(captureNumber(''),null);assert.equal(captureNumber('  '),null);assert.equal(captureNumber('0'),0);
  assert.equal(captureError('',{required:true}),'Campo obligatorio.');assert.equal(captureError('0',{min:0}),'');
@@ -82,4 +82,48 @@ test('normalizeHarvestCapture calculates net weight with verified tara and rejec
   assert.equal(missingTare.pesoFresco, null);
   assert.equal(missingTare.pesoFrescoGramos, null);
   assert.equal(missingTare.netCalculationStatus, 'blocked_missing_tare');
+});
+
+test('quality fields: vacío es null, cero es 0, firmeza lleva método y escala solo si existe',()=>{
+  const c=normalizeHarvestCapture({pesoFresco:'500',flush:'1',pesoPrimera:'',pesoSegunda:'0',pesoDescarte:'30',firmeza:'3'});
+  assert.equal(c.pesoPrimera,null);assert.equal(c.pesoSegunda,0);assert.equal(c.pesoDescarte,30);
+  assert.equal(c.firmeza,3);assert.equal(c.firmezaMetodo,'tacto_ordinal');assert.equal(c.firmezaEscala,'v0_texto');
+  const s=normalizeHarvestCapture({pesoFresco:'500',flush:'1'});
+  assert.equal(s.firmeza,null);assert.equal(s.firmezaMetodo,null);assert.equal(s.firmezaEscala,null);
+});
+test('criterioGrado solo cuando hay pesos por grado',()=>{
+  assert.equal(normalizeHarvestCapture({pesoFresco:'500',pesoSegunda:'0'}).criterioGrado,'provisional_unversioned');
+  assert.equal(normalizeHarvestCapture({pesoFresco:'500'}).criterioGrado,null);
+});
+test('defectosCampo se deduplica, conserva claves desconocidas y suma solo coincidencias exactas a defectCodes',()=>{
+  const c=normalizeHarvestCapture({pesoFresco:'500',defectosCampo:['sporulation','bacterial_suspect','bacterial_suspect','xyz'],defectCodes:['abort']});
+  assert.deepEqual(c.defectosCampo,['sporulation','bacterial_suspect','xyz']);
+  assert.deepEqual(c.defectCodes,['abort','bacterial_suspect']);
+  assert.deepEqual(normalizeHarvestCapture({pesoFresco:'500'}).defectosCampo,[]);
+});
+test('no existe campo de color',()=>{
+  assert.equal('colorOrdinal' in normalizeHarvestCapture({pesoFresco:'500',colorOrdinal:3}),false);
+});
+test('harvestGradeGap',()=>{
+  assert.equal(harvestGradeGap({pesoFresco:500}).status,'no_grades');
+  assert.equal(harvestGradeGap({pesoFresco:500,pesoPrimera:300}).status,'incomplete');
+  assert.equal(harvestGradeGap({pesoFresco:null,pesoPrimera:300}).status,'no_net_weight');
+  const ok=harvestGradeGap({pesoFresco:500,pesoPrimera:300,pesoSegunda:150,pesoDescarte:50});
+  assert.equal(ok.status,'ok');assert.equal(ok.sumG,500);assert.equal(ok.netG,500);assert.equal(ok.gapG,0);
+  assert.equal(harvestGradeGap({pesoFresco:500,pesoPrimera:300,pesoSegunda:150,pesoDescarte:110}).status,'over_tolerance');
+  assert.equal(harvestGradeGap({pesoFresco:100,pesoPrimera:60,pesoSegunda:30,pesoDescarte:14}).status,'ok');
+  assert.equal(harvestGradeGap({pesoFresco:100,pesoPrimera:60,pesoSegunda:30,pesoDescarte:16}).status,'over_tolerance');
+  assert.equal(harvestGradeGap({pesoFresco:0.5,unit:'kg',pesoPrimera:0.5}).sumG,500);
+  const str=harvestGradeGap({pesoFresco:'500',pesoPrimera:'300',pesoSegunda:'150',pesoDescarte:'50'});
+  assert.equal(str.status,'ok');
+});
+test('fieldDefectsFor',()=>{
+  assert.equal(fieldDefectsFor('p_ostreatus_gris').length,6);
+  assert.equal(fieldDefectsFor(null).length,6);
+  for(const k of ['lions_mane','reishi'])
+    assert.deepEqual(fieldDefectsFor(k).map(d=>d.key),['bacterial_suspect','surface_dryness','mechanical_damage']);
+});
+test('las 3 claves sin v01Code no están en el diccionario',()=>{
+  assert.deepEqual(HARVEST_QUALITY.FIELD_DEFECTS.filter(d=>d.v01Code===null).map(d=>d.key),['sporulation','stipe_elongated','edge_curl_lost']);
+  assert.ok(Object.isFrozen(HARVEST_QUALITY));
 });
