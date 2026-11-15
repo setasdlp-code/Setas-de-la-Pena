@@ -390,7 +390,7 @@
     cosechas.forEach((c) => {
       const flush = Math.trunc(num(c.flush) ?? 1) || 1;
       if (!byFlush.has(flush)) {
-        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, firm: [], defects: [], undeclared: [], harvests: [] });
+        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, partialGrades: false, firm: [], defects: [], undeclared: [], harvests: [] });
       }
       const f = byFlush.get(flush);
       const factor = (c.unit || c.unidad) === 'kg' ? 1000 : 1;
@@ -404,6 +404,9 @@
         f.grams[k] = (f.grams[k] ?? 0) + w * factor;
       });
       if (declaredGrade) {
+        // Una cosecha con grados a medias invalida las fracciones de toda la
+        // oleada; las que no declaran ningún grado no cuentan (no aportan nada).
+        if (GRADE_KEYS.some(([, field]) => sane[field] == null)) f.partialGrades = true;
         anyQuality = true;
         if (c.criterioGrado === HQ.CRITERIA) provisional = true;
       }
@@ -421,7 +424,7 @@
 
     const flushes = [...byFlush.values()].sort((a, b) => a.flush - b.flush).map((f) => {
       const g = f.grams;
-      const complete = GRADE_KEYS.every(([k]) => g[k] != null);
+      const complete = !f.partialGrades && GRADE_KEYS.every(([k]) => g[k] != null);
       const total = complete ? g.primera + g.segunda + g.descarte : 0;
       const kg = (v) => (v == null ? null : v / 1000);
       return {

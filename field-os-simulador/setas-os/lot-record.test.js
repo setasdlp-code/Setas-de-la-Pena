@@ -423,3 +423,13 @@ test('quality: procedencia por campo y esquema v1', () => {
   assert.equal(rec.schema, 'setas.lot-record.v1');
   assert.equal(LR.selectForQuestion([rec], LR.QUESTIONS.EB_BY_SPECIES_AND_FLUSH).eligibleN, 1);
 });
+
+test('quality: oleada con cosechas de grados complementarios es incompleta', () => {
+  const f = qRec([
+    harvest({ id: 'H-1', pesoFresco: 300, pesoPrimera: 300 }),
+    harvest({ id: 'H-2', pesoFresco: 200, pesoSegunda: 150, pesoDescarte: 50 }),
+  ]).quality.flushes[0];
+  assert.deepEqual(f.gradeKg, { primera: 0.3, segunda: 0.15, descarte: 0.05 });
+  assert.equal(f.gradeFractions, null);
+  assert.equal(f.fractionsStatus, 'incomplete');
+});
