@@ -48,7 +48,8 @@ test('el benchmark del repo: Zhou excluida, H-B fuera de límites por presets de
   assert.ok(out.excluded.some((x) => x.id.startsWith('zhou2025')));
   const hb = out.variants.find((v) => v.key === 'H-B');
   assert.equal(hb.limits.withinLimits, false);
-  assert.ok(hb.limits.presetShiftsOverLimit.some((s) => s.id === 'melena_leon_bioest'));
+  assert.ok(hb.limits.presetShiftsOverLimit.some((s) => s.id === 'nameko_balanceado'));
+  assert.ok(hb.limits.treatmentsWorsened.some((t) => t.id === 'sebaaly2024-roble-80-20'));
   assert.ok(out.header.includes('No valida'));
 });
 
