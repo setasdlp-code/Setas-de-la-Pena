@@ -3435,6 +3435,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [harvestTareSource, setHarvestTareSource] = useState('unverified');
   const [harvestFlush, setHarvestFlush] = useState(1);
   const [harvestCalidad, setHarvestCalidad] = useState(1);
+  const EMPTY_HARVEST_QUALITY = { pesoPrimera: '', pesoSegunda: '', pesoDescarte: '', firmeza: '', defectosCampo: [] };
+  const [harvestQuality, setHarvestQuality] = useState(EMPTY_HARVEST_QUALITY);
   const [harvestError, setHarvestError] = useState('');
   const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
   const [sweepQueue, setSweepQueue] = useState([]);
@@ -3718,6 +3720,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           harvestId: 'COS_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
         });
         setHarvestGrossInput('');
+        setHarvestQuality(EMPTY_HARVEST_QUALITY);
         setHarvestTareInput(resolved.taraGramos !== null ? String(resolved.taraGramos) : '');
         setHarvestTareSource(resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'));
         setHarvestError('');
@@ -3880,6 +3883,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         taraSource: tare !== null ? harvestTareSource : 'unverified',
         flush: harvestFlush,
         calidad: harvestCalidad,
+        ...harvestQuality,
         fecha: new Date().toISOString().slice(0, 10),
         createdAt: new Date().toISOString(),
         operador: uid,
@@ -3896,6 +3900,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         playSweepBeep(1200, 80);
         triggerHaptic([30, 40]);
         setHarvestActiveCrate(null);
+        setHarvestQuality(EMPTY_HARVEST_QUALITY);
         isDecodingPausedRef.current = false;
       }
     } catch (err) {
@@ -5159,6 +5164,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
             harvestId:'COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
           });
           setHarvestGrossInput('');
+          setHarvestQuality(EMPTY_HARVEST_QUALITY);
           setHarvestTareInput(resolved.taraGramos!==null?String(resolved.taraGramos):'');
           setHarvestTareSource(resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'));
         }
@@ -15403,6 +15409,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           ))}
                         </div>
                       </div>
+                    </div>
+
+                    <div style={{ marginBottom: 12 }}>
+                      <HarvestQualityFields
+                        idPrefix="crate"
+                        defaultOpen={false}
+                        value={harvestQuality}
+                        onChange={patch => setHarvestQuality(p => ({ ...p, ...patch }))}
+                        speciesKey={harvestSpeciesKeyOf(bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0])}
+                        netGrams={harvestTareInput && parseFloat(harvestTareInput) < parseFloat(harvestGrossInput) ? parseFloat(harvestGrossInput) - parseFloat(harvestTareInput) : null}
+                      />
                     </div>
 
                     {harvestError && (
