@@ -57,7 +57,7 @@ Todos opcionales; vacío se guarda `null`; cero sigue siendo cero (convención d
 | `criterioGrado` | texto | constante `'provisional_unversioned'` |
 
 - `pesoComercial` **no se escribe ni se deriva**. `cycle-evidence.js` no se modifica; como lee `pesoDescarte` como `trimKg` (recorte), el esquema documenta la diferencia de significado (`LOT_RECORD_SCHEMA.md`) y ese valor se persiste vía `production-learning-bridge.js:98-103`.
-- Las anclas de texto de firmeza 1, 3 y 5 son texto operativo provisional; **las redacta el builder y las aprueba el usuario antes de usarse**.
+- Las anclas de texto de firmeza 1, 3 y 5 ("Blando: cede con presión leve", "Firme: resiste presión moderada", "Muy firme: no cede al presionar") fueron **aprobadas por el usuario el 2026-11-16**.
 - `calidad` 1–5 se conserva como puntaje global heredado, independiente del grado. La etiqueta de las estrellas pasa a "Puntaje global (heredado)" para no chocar con la sección nueva.
 
 ### Lista cerrada de defectos

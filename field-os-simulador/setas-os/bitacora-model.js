@@ -159,7 +159,7 @@
     CRITERIA: 'provisional_unversioned',
     FIRMNESS_METHOD: 'tacto_ordinal',
     FIRMNESS_SCALE: 'v0_texto',
-    // provisional: pendiente de aprobación del usuario
+    // Anclas de texto aprobadas por el usuario el 2026-11-16.
     FIRMNESS_ANCHORS: Object.freeze({
       1: 'Blando: cede con presión leve',
       3: 'Firme: resiste presión moderada',

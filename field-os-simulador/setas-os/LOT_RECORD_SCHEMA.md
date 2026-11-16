@@ -174,8 +174,9 @@ criterio provisional. Se conservan separadas para no fundir clases de dato
 
 - **Color:** diferido; no existe ningún campo (`colorOrdinal` se descarta en
   `normalizeHarvestCapture`).
-- **Anclas de firmeza** (`HARVEST_QUALITY.FIRMNESS_ANCHORS`, 1/3/5): texto
-  provisional pendiente de aprobación del usuario.
+- **Anclas de firmeza** (`HARVEST_QUALITY.FIRMNESS_ANCHORS`, 1/3/5): textos
+  aprobados por el usuario el 2026-11-16; la escala sigue siendo `v0_texto`
+  hasta que haya criterio por especie.
 - **Criterios de grado por especie** (diámetro, masa unitaria, firmeza,
   longitud de pie, definiciones operativas): pendientes; ver la lista en
   `docs/superpowers/specs/2026-11-14-harvest-quality-design.md`, sección
