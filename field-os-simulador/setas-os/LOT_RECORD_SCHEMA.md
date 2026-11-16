@@ -124,6 +124,60 @@ medida no generan observación vacía.
 | `vocabulary` | `'phenotype_dictionary_v0.1'` |
 | `promotionStatus` | `'experimental_not_canonical'` — el diccionario tiene compuerta de promoción |
 
+### `harvestQuality` (aditivo dentro de v1)
+
+Resumen de calidad de cosecha del lote (`setas.lot-quality-summary.v1`), calculado por
+`harvest-quality.js` a partir del bloque `quality` de cada cosecha. Los consumidores
+que no lo conocen lo ignoran; no bloquea ninguna de las tres preguntas ni añade un
+código a `gaps`.
+
+| Campo | Nota |
+|---|---|
+| `cumulative`, `byFlush[]` | `harvests {total, withQuality, withoutQuality, unsupported, withMismatch, withGradedKg}`, `coverage`, `kgByGrade`, `gradedKg`, `firstGradePct`, `status`, `insufficientReasons` |
+| `firstGradePct` | % de primera sobre los kg con grado capturado. **`null` con `status: 'insufficient'`** si hay menos cosechas con kg por grado que `policy.minGradedHarvests` o cobertura menor que `policy.minCoverage` |
+| `defects` | `{nAssessed, withoutDefects, status, rows[{code, count, nAssessed, frequency, severities}]}`. El conteo siempre; la frecuencia solo con `nAssessed >= minAssessedHarvests` |
+| `species` | `{key, criteriaStatus: documented\|partial\|undocumented, criteriaSource, note}` |
+| `policy` | umbrales de presentación usados. **Sin fuente en la KB**: `source: 'unsourced_default_pending_owner_decision'` |
+
+### Bloque de calidad por cosecha: `setas.harvest-quality.v1`
+
+Vive en la cosecha (`cosecha.quality`), no en un almacén aparte, y viaja por la misma
+ruta offline que la cosecha (`sdp_bit_cosechas` + cola `guardarCosecha`, key
+`cosecha:<id>`). Es atómico: dos equipos que lo editan a la vez se resuelven en
+`sync-merge.js` como un solo campo (gana el local).
+
+| Campo | Nota |
+|---|---|
+| `schema`, `schemaVersion` | `'setas.harvest-quality.v1'`, `1` |
+| `capturedAt`, `operatorId` | reloj inyectado |
+| `species` | `{key, criteriaStatus, criteriaSource}`: instantánea del criterio vigente al capturar |
+| `grade` | `primera`\|`segunda`\|`descarte`\|`null`: grado de TODA la cosecha (juicio). Si no hay kg por grado, el peso neto se atribuye a este grado al agregar |
+| `gradeBasis` | siempre `'operator_judgement'` |
+| `kgByGrade` | `{primera, segunda, descarte}` en **kg**; cada uno `null` (no pesado) o número (el 0 es un cero medido). La entrada de la UI es en gramos |
+| `capDiameterMm` | mm, `null` si no se midió, nunca 0 |
+| `firmness`, `color` | escalas ordinales de juicio del operario (`firme/intermedia/blanda`, `coherente/variable`); `observerScale: 'operator_judgement'`. La KB no documenta escala calibrada |
+| `defects` | `null` = sin evaluar · `[]` = evaluado, sin defectos · `[{code, severity}]`. Lista cerrada: `borde_enrollado_perdido`, `estipite_alargado`, `manchas_bacterianas`, `deshidratacion`, `dano_mecanico`, `esporulacion`; severidad `leve/moderada/severa` o `null` |
+| `consistencyAtCapture` | instantánea de lo que la persona vio al guardar; la consistencia vigente se recalcula al leer |
+
+Equivalencia con `phenotype_dictionary_v0.1`: `dano_mecanico`→`mechanical_damage`
+(directa), `manchas_bacterianas`→`bacterial_suspect` y `deshidratacion`→`surface_dryness`
+(aproximadas). `borde_enrollado_perdido`, `estipite_alargado` y `esporulacion` **no existen
+en el diccionario**: son una propuesta de ampliación que pasa por su compuerta de promoción.
+El bloque y el fenotipo experimental (`defectCodes`, 12 códigos) coexisten sin escribirse
+entre sí.
+
+**Consistencia con los pesos de la cosecha (§13).** Σ kg por grado se compara con el peso
+neto (`pesoFresco`); primera+segunda con `pesoComercial` y descarte con `pesoDescarte` si
+existen. Resultado `consistent | partial | mismatch | unverifiable | no_weights` con el
+desfase en kg. **No se corrige**: se muestra, se guarda marcado y la cosecha con desfase
+queda fuera del porcentaje (se cuenta aparte). Tolerancia: `policy.toleranceG` (resolución
+de la báscula, por defecto 1 g, configurable).
+
+**Versionado y migración.** Una cosecha sin `quality` es válida (`qualityStatus: 'none'`) y
+no se reescribe. Un bloque con versión futura se conserva intacto y no se agrega
+(`unsupported_version`). Un bloque malformado se lee como `invalid` sin lanzar.
+La calificación heredada `calidad` (1–5 estrellas) no se mezcla con el grado.
+
 ### `gaps[]` y `provenance`
 
 `gaps`: `{code, blocks: [pregunta, …], detail}`. Códigos:
@@ -153,8 +207,9 @@ medida no generan observación vacía.
 Dos campos en el alta de lote: **ID de cepa** y **Lote de semilla**. Ninguno
 obligatorio, pero sin ID de cepa el lote no entra en comparaciones por cepa.
 
-Un bloque colapsado **Fenotipo · opcional** en la cosecha: diámetro de píleo,
-largo de estípite, códigos de defecto y etapa de observación. Todo opcional por
+Un bloque colapsado **Fenotipo · opcional** en la cosecha: largo de estípite,
+códigos de defecto y etapa de observación. El diámetro de píleo pasó al paso opcional
+de calidad (`quality.capDiameterMm`); la fenotipia lo lee de ahí si la raíz no lo trae. Todo opcional por
 diseño — un campo obligatorio que estorba se llena con cualquier cosa.
 
 Las ventanas por etapa no se capturan: se derivan de los eventos

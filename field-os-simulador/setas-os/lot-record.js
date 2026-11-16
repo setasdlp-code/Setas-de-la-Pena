@@ -43,6 +43,8 @@
     ? require('./telemetry-contract.js') : globalThis.SetasTelemetry;
   const getRoomCycle = () => (typeof module !== 'undefined' && module.exports)
     ? require('./room-cycle.js') : globalThis.SetasRoomCycle;
+  const getQuality = () => (typeof module !== 'undefined' && module.exports)
+    ? require('./harvest-quality.js') : globalThis.SetasHarvestQuality;
   const getHistory = () => (typeof module !== 'undefined' && module.exports)
     ? require('./historical-calibration.js') : globalThis.SetasHistoricalCalibration;
 
@@ -330,7 +332,9 @@
   // Estas medidas NO son canónicas todavía: el diccionario tiene una compuerta
   // de promoción explícita. Viajan marcadas como experimentales.
   const phenotypeObservations = (cosechas) => cosechas.map((c) => {
-    const capDiameterMm = positive(c.capDiameterMm);
+    // El diámetro de píleo se captura ahora en el bloque de calidad
+    // (`setas.harvest-quality.v1`); las cosechas anteriores lo traen en la raíz.
+    const capDiameterMm = positive(c.capDiameterMm ?? (c.quality && c.quality.capDiameterMm));
     const stipeLengthMm = positive(c.stipeLengthMm);
     const declared = Array.isArray(c.defectCodes) ? c.defectCodes : [];
     const known = [];
@@ -449,6 +453,13 @@
     const stages = environmentByStage(lote, effectiveCycles, telemetry);
     const phenotype = phenotypeObservations(loteCosechas);
     const gaps = findGaps({ genetics, be, stages, phenotype, finalOutcome });
+    // Calidad de cosecha: agregado por lote (ver harvest-quality.js). Es aditivo
+    // dentro de v1: los consumidores que no lo conocen lo ignoran. No bloquea
+    // ninguna de las tres preguntas.
+    const hq = getQuality();
+    const harvestQuality = hq ? hq.aggregateLotQuality(loteCosechas, {
+      speciesKey: lote.sKey || (lote.recipeRef && lote.recipeRef.sKey) || null,
+    }) : null;
 
     const blocked = new Set(gaps.flatMap((g) => g.blocks));
     const answers = Object.fromEntries(
@@ -472,6 +483,7 @@
       biologicalEfficiency: be,
       environmentByStage: stages,
       phenotype,
+      harvestQuality,
       gaps,
       // `answers` no dice que el lote pruebe nada: dice si puede ENTRAR en el
       // análisis de esa pregunta. Un lote elegible sigue siendo una
