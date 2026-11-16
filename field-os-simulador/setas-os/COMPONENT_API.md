@@ -297,7 +297,7 @@ All three components work in dark mode via existing token definitions. No specia
 
 ## Chip / Pill / Badge
 
-**Purpose**: Compact status/category markers. Setas OS uses three near-identical patterns under different names (`.p-chip`, `.fos-chip`, `.pantry-chip`, `.opt-pill`, `.econ-pill`, `.ing-badge`, `.climate-actuator-badge`) — this section is the canonical spec new chips should follow instead of inventing a fourth variant.
+**Purpose**: Compact status/category markers. Setas OS uses three near-identical patterns under different names (`.p-chip`, `.fos-chip`, `.pantry-chip`, `.opt-pill`, `.econ-pill`, `.ing-badge`) — this section is the canonical spec new chips should follow instead of inventing a fourth variant.
 
 ### When to use which term
 
