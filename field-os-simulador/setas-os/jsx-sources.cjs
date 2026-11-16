@@ -19,6 +19,8 @@
 // hash de build.test.js y a los hooks.
 module.exports = [
   'culture-lineage.js',
+  'harvest-quality-criteria.js',
+  'harvest-quality.js',
   'views/culture-lineage.jsx',
   'views/app-icon.jsx',
   'views/lab.jsx',
@@ -26,5 +28,6 @@ module.exports = [
   'views/iot-hub-modal.jsx',
   'views/field-action-modal.jsx',
   'views/node-automation-panels.jsx',
+  'views/harvest-quality.jsx',
   'simulador-app.jsx',
 ];

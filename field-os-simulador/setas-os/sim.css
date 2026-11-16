@@ -6897,6 +6897,41 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1; }
 }
 
+/* Calidad de cosecha (setas.harvest-quality.v1): paso opcional del diálogo de cosecha y
+   panel de la ficha del lote. Contrato de campo: una columna, objetivos de 48 px
+   (los controles del diálogo heredan --field-cell-min-height), texto >= 16 px,
+   sin hover ni gestos. El estado "elegido" no depende solo del color: lleva marca. */
+.hq-step { padding-inline: env(safe-area-inset-left) env(safe-area-inset-right); }
+.hq-step .hq-field { margin-bottom: var(--space-2); }
+.hq-step .hq-field > .inv-label { display: block; margin-bottom: var(--space-half); }
+.hq-step .inv-label, .hq-step .harvest-capture-context, .hq-step .harvest-capture-save-note { font-size: var(--size-body); }
+.hq-step .inv-input { font-size: var(--size-body); }
+.hq-step .hq-weight { margin-bottom: var(--space-1); }
+.hq-step .hq-weight .inv-input { width: 100%; box-sizing: border-box; }
+.hq-step #hq-cap-diameter { width: 100%; box-sizing: border-box; }
+.hq-seg, .hq-defects { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: var(--space-1); }
+.hq-defects { grid-template-columns: 1fr; }
+.hq-defect { display: grid; gap: var(--space-half); }
+.hq-defect .hq-seg { padding-left: var(--space-2); }
+.hq-seg-btn { font: var(--t-body); font-size: var(--size-body); font-weight: var(--weight-semibold); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-1) var(--space-2); text-align: left; white-space: normal; min-width: 0; }
+.hq-seg-btn[aria-pressed="true"] { background: var(--action-primary); color: var(--text-inverse); border-color: var(--action-primary); }
+.hq-seg-btn[aria-pressed="true"]::before { content: "\2713\00a0"; }
+.hq-seg-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.hq-note { font: var(--t-body); font-size: var(--size-body); margin: 0 0 var(--space-2); padding: var(--space-1); border: var(--rule-hairline); }
+.hq-note--warn { background: var(--status-warn-bg); color: var(--status-warn-text); }
+.hq-note--error { background: var(--status-error-bg); color: var(--status-error); border-color: var(--status-error); }
+.hq-hint { font: var(--t-body); font-size: var(--size-body); color: var(--text-secondary); margin: var(--space-half) 0 0; }
+.hq-error { display: block; color: var(--coral-700); font-size: var(--size-body); }
+.hq-balance { font: var(--t-body); font-size: var(--size-body); margin: var(--space-half) 0 var(--space-1); color: var(--text-secondary); overflow-wrap: anywhere; }
+.hq-balance--mismatch { color: var(--status-error); font-weight: var(--weight-semibold); }
+.hq-criteria { font: var(--t-body); font-size: var(--size-body); margin-bottom: var(--space-2); border: var(--rule-hairline); padding: var(--space-1); }
+.hq-criteria summary { cursor: pointer; font-weight: var(--weight-semibold); }
+.hq-criteria ul { margin: var(--space-half) 0 var(--space-1); padding-left: var(--space-3); }
+.hq-panel .hq-line { font: var(--t-body); font-size: var(--size-body); margin: 0 0 var(--space-1); overflow-wrap: anywhere; }
+.hq-panel .hq-flushes { margin: 0 0 var(--space-1); padding-left: var(--space-3); font-size: var(--size-body); }
+.hq-panel .hq-pending { display: grid; gap: var(--space-1); margin-top: var(--space-1); }
+.hq-panel .hq-rate { justify-content: flex-start; text-align: left; font: var(--t-body); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-normal); text-transform: none; white-space: normal; }
+
 /* Recipe editing keeps the main flow separate from optional settings. */
 .sim-root .builder-wrap .recipe-start-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .sim-root .builder-wrap .recipe-edit-options{margin-bottom:8px;border:1px solid var(--border-soft);background:var(--paper-0)}
