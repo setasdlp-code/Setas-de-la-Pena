@@ -456,11 +456,16 @@ const contamColor=(pct,fallback='inherit')=>CONTAM_LEVEL_COLOR[contamLevelOf(pct
 // especies: cada una contra sus umbrales y se muestra la peor.
 const BE_LIT_NOTE='Color de EB: meta por especie según literatura (KB 2026-10), no medida en la finca.';
 const BE_STATUS_COLOR={optimal:'var(--moss-700)',ok:'var(--moss-500)',warn:'var(--ochre-600)',alert:'var(--coral-700)'};
+// Clave SPP del lote: sKey/speciesKey/recipeRef y, si no hay, el nombre (lotes manuales).
+const loteSppKeyOf=lote=>{
+  if(!lote)return undefined;
+  const key=[lote.sKey,lote.speciesKey,lote.recipeRef?.sKey].find(k=>k&&SPP[k]);
+  return key||Object.keys(SPP).find(k=>SPP[k].name===lote.especie);
+};
 const beSpeciesKeyOf=lote=>{
   if(!SetasKpiThresholdsApi||!lote)return null;
   // Lanzados desde Formulador guardan la clave en recipeRef.sKey; los creados a mano solo el nombre.
-  const key=[lote.sKey,lote.speciesKey,lote.recipeRef?.sKey].find(k=>k&&SPP[k]);
-  const sp=key?SPP[key]:Object.values(SPP).find(x=>x.name===lote.especie);
+  const sp=SPP[loteSppKeyOf(lote)];
   return SetasKpiThresholdsApi.beKeyFromScientific(sp?.scientific);
 };
 const beWorstOf=entries=>SetasKpiThresholdsApi?SetasKpiThresholdsApi.worstBeStatus(entries):null;
@@ -3864,6 +3869,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       setHarvestError(`La tara (${tare}g) no puede exceder el peso bruto (${gross}g).`);
       return;
     }
+    const qualityError = window.SetasBitacora.harvestQualityError(harvestQuality);
+    if (qualityError) {
+      setHarvestError(qualityError);
+      return;
+    }
     const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
     if (!activeLot) {
       setHarvestError('No hay un lote seleccionado para registrar la cosecha.');
@@ -4349,9 +4359,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     'harvest-flush':[bitCosechaForm.flush,{required:true,min:1,integer:true}],
     'harvest-date':[bitCosechaForm.fecha,{required:true},'text'],
     'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}],
-    'harvest-peso-primera':[bitCosechaForm.pesoPrimera,{min:0}],
-    'harvest-peso-segunda':[bitCosechaForm.pesoSegunda,{min:0}],
-    'harvest-peso-descarte':[bitCosechaForm.pesoDescarte,{min:0}],
+    'harvest-peso-primera':[bitCosechaForm.pesoPrimera,{min:0,integer:true}],
+    'harvest-peso-segunda':[bitCosechaForm.pesoSegunda,{min:0,integer:true}],
+    'harvest-peso-descarte':[bitCosechaForm.pesoDescarte,{min:0,integer:true}],
     'harvest-firmeza':[bitCosechaForm.firmeza,{min:1,max:5,integer:true}]
   };
   const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Campo obligatorio.':''):SetasBitacora.captureError(f[0],f[1]);};

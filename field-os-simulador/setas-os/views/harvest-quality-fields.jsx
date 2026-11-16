@@ -13,8 +13,7 @@ const HARVEST_QUALITY_WEIGHTS = [
 // Clave de especie del lote para filtrar los defectos de campo (undefined si el
 // lote solo trae texto libre: entonces se ofrecen todos los defectos).
 const harvestSpeciesKeyOf = lote => {
-  const l = lote || {};
-  const k = [l.sKey, l.speciesKey, l.recipeRef && l.recipeRef.sKey].find(x => x && SPP[x]);
+  const k = loteSppKeyOf(lote);
   return k ? normSpp(k) : undefined;
 };
 
@@ -30,7 +29,7 @@ const HarvestQualityFields = ({ value, onChange, speciesKey, netGrams, idPrefix 
     pesoFresco: Number.isFinite(netGrams) ? netGrams : null,
   });
   const fmt = n => Math.round(n * 10) / 10;
-  const weightError = raw => (raw === '' || raw == null ? '' : bit.captureError(raw, { min: 0 }));
+  const weightError = raw => (raw === '' || raw == null ? '' : bit.captureError(raw, { min: 0, integer: true }));
   const toggleDefect = key => onChange({ defectosCampo: picked.includes(key) ? picked.filter(k => k !== key) : [...picked, key] });
 
   return (
@@ -50,10 +49,10 @@ const HarvestQualityFields = ({ value, onChange, speciesKey, netGrams, idPrefix 
                 id={id}
                 name={id}
                 type="number"
-                inputMode="decimal"
+                inputMode="numeric"
                 className="inv-input"
                 min={0}
-                step="any"
+                step={1}
                 autoComplete="off"
                 aria-invalid={!!err}
                 aria-describedby={err ? `${id}-error` : undefined}

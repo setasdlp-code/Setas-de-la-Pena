@@ -6931,24 +6931,25 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .harvest-capture-dialog .inv-label { font: var(--t-small); letter-spacing: var(--tracking-normal); text-transform: none; color: var(--text-secondary); }
 .harvest-capture-dialog .inv-row > div { min-width: 0; }
 .sim-root .harvest-capture-dialog .inv-btn { min-height: var(--field-cell-min-height) !important; font: var(--t-body); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-normal); text-transform: none; padding: var(--space-1) var(--space-2); }
-.harvest-capture-dialog .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
-.harvest-capture-dialog .harvest-quality-choice { font: var(--t-data); font-size: var(--size-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half); }
-.harvest-capture-dialog .harvest-quality-choice[data-filled="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
-.harvest-capture-dialog .harvest-quality-choice:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.sim-root .harvest-quality :is(input, select, button, summary) { min-height: var(--field-cell-min-height) !important; }
+:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
+:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice { font: var(--t-data); font-size: var(--size-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half); }
+:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice[data-filled="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
+:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .harvest-capture-dialog .harvest-capture-save-note { border-top: var(--rule-hairline); padding-top: var(--space-2); margin-bottom: var(--space-2); font: var(--t-small); color: var(--text-secondary); }
 .harvest-capture-dialog .harvest-capture-save-note p { margin: 0 0 var(--space-1); }
 .harvest-capture-dialog .harvest-capture-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); position: sticky; bottom: 0; z-index: var(--z-raised); background: var(--surface-panel); border-top: var(--rule-hairline); padding: var(--space-1) 0; margin-top: var(--space-1); }
-.harvest-capture-dialog .harvest-quality { margin-bottom: var(--space-2); border: var(--rule-hairline); padding: var(--space-1); }
-.harvest-capture-dialog .harvest-quality-summary { font: var(--t-body); font-weight: var(--weight-semibold); cursor: pointer; display: flex; align-items: center; }
-.harvest-capture-dialog .harvest-quality-weights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); margin-bottom: var(--space-1); }
-.harvest-capture-dialog .harvest-quality-block { margin-top: var(--space-2); }
-.harvest-capture-dialog .harvest-quality-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-top: var(--space-half); }
-.harvest-capture-dialog .harvest-quality-chip { font: var(--t-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half) var(--space-1); }
-.harvest-capture-dialog .harvest-quality-chip[aria-pressed="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
-.harvest-capture-dialog .harvest-quality-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.harvest-capture-dialog .harvest-quality-anchors { list-style: none; margin: var(--space-1) 0 0; padding: 0; font: var(--t-small); color: var(--text-secondary); }
-.harvest-capture-dialog .harvest-quality-warning { font: var(--t-small); border-left: 3px solid var(--coral-700); padding: var(--space-half) var(--space-1); margin: var(--space-1) 0; }
-.harvest-capture-dialog .harvest-quality-error { font: var(--t-small); color: var(--coral-700); margin: 0; }
+.harvest-quality { margin-bottom: var(--space-2); border: var(--rule-hairline); padding: var(--space-1); }
+.harvest-quality-summary { font: var(--t-body); font-weight: var(--weight-semibold); cursor: pointer; display: flex; align-items: center; }
+.harvest-quality-weights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); margin-bottom: var(--space-1); }
+.harvest-quality-block { margin-top: var(--space-2); }
+.harvest-quality-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-top: var(--space-half); }
+.harvest-quality-chip { font: var(--t-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half) var(--space-1); }
+.harvest-quality-chip[aria-pressed="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
+.harvest-quality-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.harvest-quality-anchors { list-style: none; margin: var(--space-1) 0 0; padding: 0; font: var(--t-small); color: var(--text-secondary); }
+.harvest-quality-warning { font: var(--t-small); border-left: 3px solid var(--coral-700); padding: var(--space-half) var(--space-1); margin: var(--space-1) 0; }
+.harvest-quality-error { font: var(--t-small); color: var(--coral-700); margin: 0; }
 .harvest-capture-dialog .harvest-capture-actions .inv-btn { min-width: 0; white-space: normal; }
 .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1 / -1; grid-row: 1; background: var(--action-primary); color: var(--text-inverse); border-color: var(--action-primary); }
 @media (max-width: 560px) {

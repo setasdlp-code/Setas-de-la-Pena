@@ -22,7 +22,7 @@ test('el formulario usa HarvestQualityFields con idPrefix="harvest"', () => {
 
 test('captureFields valida los cuatro campos nuevos', () => {
   for (const id of ['peso-primera', 'peso-segunda', 'peso-descarte']) {
-    assert.match(app, new RegExp(`'harvest-${id}':\\[[^\\]]*\\{min:0\\}\\]`), id);
+    assert.match(app, new RegExp(`'harvest-${id}':\\[[^\\]]*\\{min:0,integer:true\\}\\]`), id);
   }
   assert.match(app, /'harvest-firmeza':\[[^\]]*\{min:1,max:5,integer:true\}\]/);
 });
@@ -56,4 +56,23 @@ test('la canastilla ofrece calidad opcional colapsada sin tocar el selector 1ra/
   assert.match(app, /onClick=\{\(\) => setHarvestCalidad\(q\.val\)\}/);
   const i = app.indexOf('const harvestRecord = {');
   assert.ok(i > 0 && /\.\.\.harvestQuality/.test(app.slice(i, i + 900)));
+});
+
+test('la canastilla valida la calidad antes de guardar (peso negativo o decimal, firmeza)', () => {
+  const i = app.indexOf('const handleSaveHarvestCrate');
+  assert.ok(i > 0);
+  const body = app.slice(i, i + 2200);
+  assert.match(body, /harvestQualityError\(harvestQuality\)/);
+  assert.ok(body.indexOf('harvestQualityError') < body.indexOf('const harvestRecord'));
+});
+
+test('los pesos por grado son gramos enteros', () => {
+  assert.match(component, /inputMode="numeric"/);
+  assert.match(component, /step=\{1\}/);
+  assert.ok(!component.includes('step="any"'));
+});
+
+test('el filtro de defectos reutiliza la clave de especie del lote (incluido el nombre)', () => {
+  assert.match(component, /loteSppKeyOf\(lote\)/);
+  assert.match(app, /const loteSppKeyOf=lote=>/);
 });

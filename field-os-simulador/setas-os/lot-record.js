@@ -390,7 +390,7 @@
     cosechas.forEach((c) => {
       const flush = Math.trunc(num(c.flush) ?? 1) || 1;
       if (!byFlush.has(flush)) {
-        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, partialGrades: false, firm: [], defects: [], undeclared: [], harvests: [] });
+        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, anyGrade: false, ungraded: false, firm: [], defects: [], undeclared: [], harvests: [] });
       }
       const f = byFlush.get(flush);
       const factor = (c.unit || c.unidad) === 'kg' ? 1000 : 1;
@@ -403,12 +403,15 @@
         declaredGrade = true;
         f.grams[k] = (f.grams[k] ?? 0) + w * factor;
       });
+      // Una cosecha sin los tres grados (a medias o sin ninguno) deja sin
+      // reparto una parte de la masa de la oleada. Si otra cosecha de la misma
+      // oleada sí declara grados, las fracciones no representan la oleada.
+      if (GRADE_KEYS.some(([, field]) => sane[field] == null)) f.ungraded = true;
       if (declaredGrade) {
-        // Una cosecha con grados a medias invalida las fracciones de toda la
-        // oleada; las que no declaran ningún grado no cuentan (no aportan nada).
-        if (GRADE_KEYS.some(([, field]) => sane[field] == null)) f.partialGrades = true;
+        f.anyGrade = true;
         anyQuality = true;
-        if (c.criterioGrado === HQ.CRITERIA) provisional = true;
+        // No existe criterio versionado: declarar cualquier grado es provisional.
+        provisional = true;
       }
       const firm = validFirmness(c.firmeza);
       if (firm != null) { f.firm.push(firm); anyQuality = true; }
@@ -424,7 +427,7 @@
 
     const flushes = [...byFlush.values()].sort((a, b) => a.flush - b.flush).map((f) => {
       const g = f.grams;
-      const complete = !f.partialGrades && GRADE_KEYS.every(([k]) => g[k] != null);
+      const complete = !(f.anyGrade && f.ungraded) && GRADE_KEYS.every(([k]) => g[k] != null);
       const total = complete ? g.primera + g.segunda + g.descarte : 0;
       const kg = (v) => (v == null ? null : v / 1000);
       return {

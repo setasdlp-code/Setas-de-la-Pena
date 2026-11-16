@@ -433,3 +433,45 @@ test('quality: oleada con cosechas de grados complementarios es incompleta', () 
   assert.equal(f.gradeFractions, null);
   assert.equal(f.fractionsStatus, 'incomplete');
 });
+
+test('quality: una oleada con una cosecha graduada y otra sin grados es incompleta', () => {
+  const f = qRec([
+    harvest({ id: 'H-A', pesoFresco: 500, pesoPrimera: 100, pesoSegunda: 100, pesoDescarte: 300 }),
+    harvest({ id: 'H-B', pesoFresco: 4500 }),
+  ]).quality.flushes[0];
+  assert.equal(f.fractionsStatus, 'incomplete');
+  assert.equal(f.gradeFractions, null);
+  assert.deepEqual(f.gradeKg, { primera: 0.1, segunda: 0.1, descarte: 0.3 });
+});
+
+test('quality: oleada solo con cosechas sin grados no cambia', () => {
+  const f = qRec([harvest({ id: 'H-A', pesoFresco: 500 }), harvest({ id: 'H-B', pesoFresco: 300 })]).quality.flushes[0];
+  assert.equal(f.fractionsStatus, 'incomplete');
+  assert.equal(f.gradeFractions, null);
+  assert.deepEqual(f.gradeKg, { primera: null, segunda: null, descarte: null });
+});
+
+test('quality: grados declarados sin criterioGrado igual marcan grade_criteria_provisional', () => {
+  const rec = qRec([harvest({ pesoFresco: 500, pesoPrimera: 300, pesoSegunda: 150, pesoDescarte: 50 })]);
+  assert.ok(rec.quality.gaps.some((g) => g.code === 'grade_criteria_provisional'));
+  const none = qRec([harvest({ pesoFresco: 500 })]);
+  assert.ok(!none.quality.gaps.some((g) => g.code === 'grade_criteria_provisional'));
+});
+
+test('quality: un chip con código v0.1 exacto alimenta fenotipo; uno sin código no', () => {
+  const one = qRec([harvest({ defectCodes: undefined, defectosCampo: ['mechanical_damage'] })]);
+  // El volcado a defectCodes lo hace el normalizador de captura (spec).
+  const norm = require('./bitacora-model.js').normalizeHarvestCapture(
+    { pesoFresco: 500, flush: 1, defectosCampo: ['mechanical_damage'] });
+  assert.deepEqual(norm.defectCodes, ['mechanical_damage']);
+  const withCodes = qRec([harvest({ defectCodes: norm.defectCodes, defectosCampo: norm.defectosCampo })]);
+  assert.deepEqual(withCodes.phenotype[0].defectCodes, ['mechanical_damage']);
+  assert.ok(!withCodes.gaps.some((g) => g.code === 'phenotype_unrecorded'));
+  assert.ok(one.quality.flushes[0].fieldDefects.includes('mechanical_damage'));
+  const spo = require('./bitacora-model.js').normalizeHarvestCapture(
+    { pesoFresco: 500, flush: 1, defectosCampo: ['sporulation'] });
+  assert.deepEqual(spo.defectCodes, []);
+  const spoRec = qRec([harvest({ defectCodes: spo.defectCodes, defectosCampo: spo.defectosCampo })]);
+  assert.equal(spoRec.phenotype.length, 0);
+  assert.ok(spoRec.gaps.some((g) => g.code === 'phenotype_unrecorded'));
+});

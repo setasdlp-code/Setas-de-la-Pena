@@ -139,23 +139,27 @@ preguntas ni cambia `answers` de lotes existentes. El esquema sigue siendo `v1`.
 | `flushes[].gradeFractions` | `{primera, segunda, descarte}` (fracción de la suma de grados) o `null` |
 | `flushes[].fractionsStatus` | `'complete'` o `'incomplete'` |
 | `flushes[].firmness` | `{values[], method: 'tacto_ordinal', scale: 'v0_texto'}` o `null`. Ordinal 1–5 |
-| `flushes[].fieldDefects[]` | claves de `HARVEST_QUALITY.FIELD_DEFECTS` |
+| `flushes[].fieldDefects[]` | cada entrada es la `key` de un objeto de `HARVEST_QUALITY.FIELD_DEFECTS` (`{key, label, v01Code}`) |
 | `flushes[].undeclaredFieldDefects[]` | claves fuera de la lista: dato de campo, no basura |
 | `flushes[].harvests[]` | `{harvestId, gap}` por cosecha |
 | `harvests[].gap` | `harvestGradeGap()`: `{status, sumG, netG, gapG, toleranceG}` en gramos. `status`: `no_grades` · `no_net_weight` · `incomplete` · `ok` · `over_tolerance`. Tolerancia `max(1 % del neto, 5 g)`, calculada y no guardada; fuera de tolerancia avisa y no bloquea |
-| `gaps[]` | `quality_unrecorded` (ninguna cosecha declara grados, firmeza ni defectos) · `grade_criteria_provisional` (alguna cosecha con grados usa criterio provisional) |
+| `gaps[]` | `quality_unrecorded` (ninguna cosecha declara grados, firmeza ni defectos) · `grade_criteria_provisional` (alguna cosecha declara algún peso por grado: no existe criterio versionado, con o sin `criterioGrado`) |
 | `provenance` | `gradeKg: 'operator_declared_grade'` · `firmness: 'operator_ordinal_text_anchored'` · `capDiameter: 'observed_field_measured'` · `defects: 'observed_field_measured'` |
 
 **Regla de fracciones.** Una oleada es `'incomplete'` (y `gradeFractions` es
-`null`) si alguna cosecha que declara algún grado no declara los tres
-(`pesoPrimera`, `pesoSegunda`, `pesoDescarte`). Las cosechas sin ningún peso por
-grado se ignoran. También es `'incomplete'` si algún grado de la oleada es
-`null` o la suma es 0. La diferencia contra el neto se calcula por cosecha, no
+`null`) en cuanto la oleada tiene alguna cosecha que declara algún peso por
+grado y alguna otra cosecha de esa oleada no declara los tres (`pesoPrimera`,
+`pesoSegunda`, `pesoDescarte`), incluidas las que no declaran ninguno: una
+submuestra con grados no representa la oleada entera. Si ninguna cosecha de la
+oleada declara grados, no hay fracciones (`'incomplete'`, `gradeKg` en `null`).
+También es `'incomplete'` si algún grado de la oleada es `null` o la suma es 0.
+`gradeKg` sigue sumando lo declarado. La diferencia contra el neto se calcula por cosecha, no
 sumando la oleada, para que dos errores opuestos no se compensen.
 
 **`pesoDescarte` significa "fruta entera rechazada"**, y es distinto de
-`trimKg` en `cycle-evidence.js` (recorte/merma de limpieza, persistido por
-`production-learning-bridge.js:98-103`). No se deben igualar ni sumar.
+`trimKg` (recorte/merma de limpieza), que `cycle-evidence.js:35-47` calcula a
+partir del mismo campo `pesoDescarte` y que `production-learning-bridge.js:98-103`
+solo persiste como evidencia. No se deben igualar ni sumar.
 `pesoFresco` sigue siendo el total cosechado con el descarte incluido.
 
 **El mismo número aparece en dos sitios con procedencia distinta.** Bajo

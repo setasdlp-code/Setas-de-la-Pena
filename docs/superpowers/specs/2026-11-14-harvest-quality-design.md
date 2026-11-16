@@ -1,6 +1,6 @@
 # Calidad por cosecha en el registro de lote — diseño (rev. 3)
 
-Estado: pendiente de aprobación. Fecha: 2026-11-15.
+Estado: aprobado por el usuario el 2026-11-15. Fecha: 2026-11-15.
 Historial: la rev. 1 (evento `harvest_quality` por la cola de campo) se descartó tras la primera auditoría. La rev. 2 (campos en la cosecha de Bitácora) se corrigió tras la segunda. Esta rev. 3 incorpora las decisiones del usuario: **el color se difiere** y **la captura por canastilla entra en el alcance**.
 
 ## Intención

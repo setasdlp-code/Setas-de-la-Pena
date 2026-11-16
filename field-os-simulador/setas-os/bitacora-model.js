@@ -195,6 +195,18 @@
     const toleranceG = Math.max(HARVEST_QUALITY.GAP_TOLERANCE_PCT * netG, HARVEST_QUALITY.GAP_TOLERANCE_G);
     return { status: gapG <= toleranceG ? 'ok' : 'over_tolerance', sumG, netG, gapG, toleranceG };
   };
+  // Valida los campos de calidad antes de guardar (la captura por canastilla no
+  // pasa por captureFields). Devuelve '' o el primer error, en español.
+  const harvestQualityError = q => {
+    const v = q || {};
+    const labels = { pesoPrimera: 'Primera', pesoSegunda: 'Segunda', pesoDescarte: 'Descarte' };
+    for (const f of HARVEST_QUALITY.GRADE_FIELDS) {
+      const e = captureError(v[f], { min: 0, integer: true });
+      if (e) return `Peso ${labels[f]}: ${e}`;
+    }
+    const e = captureError(v.firmeza, { min: 1, max: 5, integer: true });
+    return e ? `Firmeza: ${e}` : '';
+  };
   const normalizeHarvestCapture = form => {
     const rawPesoFresco = captureNumber(form.pesoFresco ?? form.pesoFrescoGramos);
     const bruto = captureNumber(form.pesoBrutoGramos ?? form.pesoBruto);
@@ -305,7 +317,7 @@
     const previous = Array.isArray(bolsa && bolsa.lecturasSuperficie) ? bolsa.lecturasSuperficie : [];
     return { ok: true, reading, lecturasSuperficie: [...previous, reading].slice(-SURFACE_READING_LIMIT) };
   };
-  const api = { appendSurfaceReading, economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture, HARVEST_QUALITY, fieldDefectsFor, harvestGradeGap };
+  const api = { appendSurfaceReading, economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture, HARVEST_QUALITY, fieldDefectsFor, harvestGradeGap, harvestQualityError };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasBitacora = api;
 })();
