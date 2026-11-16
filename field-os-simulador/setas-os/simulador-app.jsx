@@ -1452,11 +1452,11 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
 // public-traceability-modal.jsx: vive en views/public-traceability-modal.jsx (ver jsx-sources.cjs).
 
 // ── IOT INTEGRATION HUB & FIRMWARE GENERATOR ──────────────────────────────────────────
-// Vive en iot-firmware.js: nodos por defecto y generadores de firmware/payload
+// Vive en iot-firmware.js: generadores de firmware/payload
 // (ESPHome, Arduino, curl). Son texto puro, sin React; se extrajeron para poder
 // probarlos por comportamiento en vez de por regex sobre este archivo.
 const SetasIotFirmwareApi=(typeof SetasIotFirmware!=='undefined'?SetasIotFirmware:(typeof require!=='undefined'?require('./iot-firmware.js'):null));
-const {DEFAULT_IOT_NODES,generateESPHomeYaml,generateArduinoIno,generateCurlPayload}=SetasIotFirmwareApi;
+const {generateESPHomeYaml,generateArduinoIno,generateCurlPayload}=SetasIotFirmwareApi;
 
 // iot-hub-modal.jsx: vive en views/iot-hub-modal.jsx (ver jsx-sources.cjs).
 
@@ -18103,6 +18103,7 @@ interval:
             onClose={() => {setShowIoTHub(false);requestAnimationFrame(()=>iotHubTriggerRef.current?.focus());}}
             liveTelemetry={liveTelemetry}
             selectedRoomId={selectedClimateRoom}
+            nodeRooms={Array.from(new Set([...Object.keys(ROOMS_CONFIG),...(nodeAutomationApi?Object.keys(nodeAutomationApi.PROFILES):[])])).map(id=>buildRoomNodeAutomation(id)).filter(Boolean)}
             onInjectReading={(r) => {
               setInjectedClimateReadings(prev => ({
                 ...prev,

@@ -43,7 +43,7 @@ const MODULES = [
   { path: '../substrate-diagnosis.js', names: ['diagnose'] },
   { path: '../species-editorial.js', names: ['SPP_DIFFICULTY', 'SPP_DETAILS', 'SPECIES_GASTRONOMY', 'SPP_SUBSTRATE_GUIDE', 'SPP_FAMILY', 'SPP_HR', 'SPP_CODE'] },
   { path: '../thermal-label.js', names: ['generateQrSvgDataUrl', 'THERMAL_PX_PER_MM', 'CSS_PX_PER_MM', 'cssPxToCanvas', 'FONT_EDITORIAL', 'FONT_SANS', 'FONT_MONO', 'THERMAL_LABEL_SPECS', 'wrapCanvasText', 'drawQrToCanvas', 'THERMAL_WORDMARK_URL', 'loadThermalWordmark', 'formatThermalDate', 'thermalVerticalText', 'thermalCardTypeVars', 'drawThermalLabelVertical', 'drawThermalLabelToCanvas', 'buildThermalShareCanvas'] },
-  { path: '../iot-firmware.js', names: ['DEFAULT_IOT_NODES', 'generateESPHomeYaml', 'generateArduinoIno', 'generateCurlPayload'] },
+  { path: '../iot-firmware.js', names: ['generateESPHomeYaml', 'generateArduinoIno', 'generateCurlPayload'] },
 ];
 
 const fromModules = {};

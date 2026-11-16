@@ -1,53 +1,12 @@
 (function () {
 'use strict';
-// Nodos IoT por defecto y generadores de plantillas de telemetría y payloads de
-// prueba para el Hub IoT. Solo produce texto: no abre conexiones ni escribe en
+// Generadores de plantillas de telemetría y payloads de prueba para el Hub IoT. Solo produce texto: no abre conexiones ni escribe en
 // Firestore. Las plantillas son SOLO de sensores: no emiten relés ni control de
 // actuadores (el control vive en el firmware del nodo, DEC-001) y no incluyen la
 // autenticación del publicador real (telemetry-publisher/, que exige
 // X-Setas-Device + Bearer y `observed_at`); revisarlas antes de flashear.
-
-const DEFAULT_IOT_NODES = [
-  {
-    id: 'node_martha_01',
-    name: 'Nodo Carpa 01 · Fructificación Orellanas',
-    roomId: 'martha_01',
-    mcu: 'esp32dev',
-    ip: '192.168.1.101',
-    mac: '24:6F:28:B4:72:01',
-    rssi: -58,
-    status: 'online',
-    sensors: ['sht3xd', 'scd30'],
-    lastSeen: 'hace 12s',
-    metrics: { temp: 18.2, rh: 89.5, co2: 720, subTemp: 19.1 }
-  },
-  {
-    id: 'node_martha_02',
-    name: 'Nodo Carpa 02 · Fructificación Shiitake',
-    roomId: 'martha_02',
-    mcu: 'esp32c3',
-    ip: '192.168.1.102',
-    mac: '24:6F:28:C9:14:02',
-    rssi: -64,
-    status: 'online',
-    sensors: ['sht45', 'scd30'],
-    lastSeen: 'hace 18s',
-    metrics: { temp: 17.5, rh: 85.0, co2: 840, subTemp: 18.0 }
-  },
-  {
-    id: 'node_incubacion',
-    name: 'Nodo Incubación · Sala Oscura Térmica',
-    roomId: 'incubacion_01',
-    mcu: 'sonoff_th16',
-    ip: '192.168.1.105',
-    mac: 'E8:DB:84:9A:88:05',
-    rssi: -52,
-    status: 'online',
-    sensors: ['dht22', 'ds18b20'],
-    lastSeen: 'hace 35s',
-    metrics: { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8 }
-  }
-];
+// No hay lista de nodos de ejemplo: los nodos que muestra el Hub salen del
+// estado real que llega por el puente en vivo (node-automation.js).
 
 const generateESPHomeYaml = ({ deviceName = 'setas-carpa-01', roomId = 'martha_01', mcu = 'esp32dev', sensors = ['sht3xd', 'scd30'], wifiSsid = 'SetasPeña_2.4G', wifiPass = '**********', serverHost = '192.168.1.100', serverPort = '8080' }) => {
   return `# ==============================================================================
@@ -236,7 +195,7 @@ curl -X POST "http://${serverHost}:${serverPort}/api/telemetry" \\
   }'`;
 };
 
-const api = { DEFAULT_IOT_NODES, generateESPHomeYaml, generateArduinoIno, generateCurlPayload };
+const api = { generateESPHomeYaml, generateArduinoIno, generateCurlPayload };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.SetasIotFirmware = api;
 

@@ -109,7 +109,8 @@ const DEVICE = 'setas-cloudlab-01';
   const openRoomFromRow = async (page, row) => {
     const btn = row.getByRole('button', { name: 'Abrir sala' });
     const box = await btn.boundingBox();
-    assert.ok(box && box.height >= 48, `"Abrir sala" mide ${box && box.height} px (<48)`);
+    // Tolerancia de 0,01 px: el layout fraccionario daba 47,99993 px de forma intermitente.
+    assert.ok(box && box.height >= 47.99, `"Abrir sala" mide ${box && box.height} px (<48)`);
     await btn.click();
     await expect(page.getByTestId('climate-actuators-panel')).toBeVisible();
     await expect(page.getByTestId('room-card').and(page.locator(`[data-room-id="${ROOM}"]`))).toHaveAttribute('aria-pressed', 'true');
@@ -270,8 +271,44 @@ const DEVICE = 'setas-cloudlab-01';
         assert.deepEqual(errors, [], `errores de página: ${errors.join(' | ')}`);
         await page.close();
       }
+
+      // ── 6. Hub IoT: la pestaña de nodos solo lee el estado real; sin estado no hay nodos "en línea" ──
+      {
+        const { page, errors } = await openPage(width, 'clima');
+        await page.getByRole('button', { name: 'Hub IoT & Firmware' }).click();
+        const hub = page.getByRole('dialog', { name: 'Hub de Integración IoT & Telemetría' });
+        const tabs = hub.getByRole('tablist', { name: 'Secciones del Hub IoT' });
+        const nodesTab = tabs.getByRole('tab', { name: /Nodos de control/ });
+        await expect(nodesTab).toContainText('(0)');
+        await expect(tabs.getByRole('tab', { name: /Reglas/ })).toHaveCount(0);
+        const panel = hub.getByTestId('iot-hub-nodos');
+        const rooms = panel.getByTestId('iot-hub-room');
+        await expect(rooms).toHaveCount(3);
+        await expect(rooms.and(page.locator('[data-room-id="martha_01"]'))).toContainText('Sala sin automatización');
+        await expect(rooms.and(page.locator('[data-room-id="incubacion_01"]'))).toContainText('Sala sin automatización');
+        await expect(rooms.and(page.locator(`[data-room-id="${ROOM}"]`))).toContainText('Sin datos del nodo');
+        assert.equal(await panel.getByTestId('node-card').count(), 0, 'sin estado recibido no hay tarjeta de nodo');
+        assert.equal(await panel.locator('[data-relay]').count(), 0, 'sin estado no se pintan relés');
+        const text = await panel.innerText();
+        assert.doesNotMatch(text, /online|RSSI|MAC:|IP:|Excelente/i, 'la pestaña no muestra datos de red inventados');
+        // Con un estado real (simulado por el transporte) el nodo aparece, con su antigüedad y solo lectura.
+        await publish(page, { ageMs: 20000 });
+        await expect(nodesTab).toContainText('(1)');
+        const card = panel.getByTestId('node-card');
+        await expect(card).toHaveCount(1);
+        await expect(card).toHaveAttribute('data-link-state', 'fresh');
+        await expect(card.locator('[data-relay="heat"]')).toContainText('Encendido (comandado)');
+        await expect(rooms.and(page.locator(`[data-room-id="${ROOM}"]`))).not.toContainText('Sin datos del nodo');
+        await assertReadOnly(card, 'tarjeta de nodo en el Hub');
+        // "Ver sala en Clima" lleva a la sala y cierra el Hub.
+        await rooms.and(page.locator(`[data-room-id="${ROOM}"]`)).getByRole('button', { name: 'Ver sala en Clima' }).click();
+        await expect(hub).toHaveCount(0);
+        await expect(page.getByTestId('room-card').and(page.locator(`[data-room-id="${ROOM}"]`))).toHaveAttribute('aria-pressed', 'true');
+        assert.deepEqual(errors, [], `errores de página: ${errors.join(' | ')}`);
+        await page.close();
+      }
     }
-    console.log('PASS node-automation: alarma del nodo → fila en Hoy → ficha de sala; sin dato / sin automatización; obsoleto y sin enlace; consigna distinta (recompilar); origen de bandas; horas fuera de banda del lote con datos insuficientes; solo lectura, a 1280 y 390 px (transporte simulado).');
+    console.log('PASS node-automation: alarma del nodo → fila en Hoy → ficha de sala; sin dato / sin automatización; obsoleto y sin enlace; consigna distinta (recompilar); origen de bandas; horas fuera de banda del lote con datos insuficientes; pestaña de nodos del Hub IoT solo de lectura (sin nodos inventados); solo lectura, a 1280 y 390 px (transporte simulado).');
   } finally {
     if (browser) await browser.close();
     server.close();

@@ -16,9 +16,32 @@ test('Setas OS — Hub de Integración IoT de Bajo Costo (ESP32 / Sonoff / Webho
   await t.test('IoTHubModal is integrated in simulador-app.jsx with node list, firmware generator, and webhook tester', () => {
     assert.match(jsx, /const IoTHubModal\s*=\s*\(\{/);
     assert.match(jsx, /Hub de Integración IoT/);
+    assert.match(jsx, /Nodos de control/);
     assert.match(jsx, /Generador de Firmware/);
     assert.match(jsx, /Consola Webhook/);
-    assert.match(jsx, /Reglas de Automatización/);
+    assert.match(jsx, /Conexión en Vivo/);
+  });
+
+  await t.test('la pestaña de nodos es de solo lectura y sale del estado real, no de nodos de ejemplo', () => {
+    const modal = fs.readFileSync(path.join(__dirname, 'views', 'iot-hub-modal.jsx'), 'utf8');
+    // Sin lista fija ni métricas, IP, MAC o RSSI inventados, y sin estado "online" propio.
+    assert.doesNotMatch(jsx, /DEFAULT_IOT_NODES|Nodos en Finca|iot-node-badge/);
+    assert.doesNotMatch(modal, /RSSI|MAC:|IP:|● \{n\.status\}/);
+    // El modal recibe las salas ya armadas por node-automation.js (buildRoomAutomation).
+    assert.match(modal, /nodeRooms = null/);
+    assert.match(modal, /<NodeAutomationCard key=/);
+    assert.match(jsx, /nodeRooms=\{Array\.from\(new Set\(\[\.\.\.Object\.keys\(ROOMS_CONFIG\)/);
+    assert.match(jsx, /buildRoomNodeAutomation\(id\)/);
+    // Sin estado recibido el texto es honesto (los textos viven en node-automation.js).
+    assert.match(modal, /Sin nodos registrados/);
+    assert.match(modal, /view\.noDataLabel/);
+  });
+
+  await t.test('el Hub no tiene pestaña ni controles de reglas de automatización (el control vive en el firmware del nodo)', () => {
+    const modal = fs.readFileSync(path.join(__dirname, 'views', 'iot-hub-modal.jsx'), 'utf8');
+    assert.doesNotMatch(jsx, /Reglas de Automatización|Reglas Actualizadas|Guardar Parámetros de Automatización|iot-rule-|autoFaeDuration|autoRhMin|autoCo2Max|autoSubTempMax/);
+    assert.doesNotMatch(modal, /'reglas'/);
+    assert.match(modal, /const keys=\['nodos','firmware','webhook','conexion'\];/);
   });
 
   await t.test('el Hub consume los generadores de firmware desde iot-firmware.js', () => {

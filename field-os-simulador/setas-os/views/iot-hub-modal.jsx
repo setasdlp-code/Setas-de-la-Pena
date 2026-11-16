@@ -1,4 +1,6 @@
-// Hub de integración IoT: lista de nodos, generador de firmware y consola webhook.
+// Hub de integración IoT: estado de nodos (solo lectura), generador de plantillas
+// de telemetría, consola webhook y conexión en vivo. Sin reglas ni control de
+// actuadores: el control vive en el firmware del nodo (DEC-001).
 // Parte de simulador-app: build.js concatena este archivo con los demás de
 // jsx-sources.cjs en un solo ámbito y genera simulador-app.js. No se carga solo.
 
@@ -49,9 +51,8 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
   }
 };
 
-const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectReading, setSelectedClimateRoom, setNoticeDlg, liveTelemetry = null }) => {
+const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectReading, setSelectedClimateRoom, setNoticeDlg, liveTelemetry = null, nodeRooms = null }) => {
   const [tab, setTab] = useState('nodos');
-  const [nodes, setNodes] = useState(DEFAULT_IOT_NODES);
   const [fwMcu, setFwMcu] = useState('esp32dev');
   const [fwSensors, setFwSensors] = useState(['sht3xd', 'scd30']);
   const [fwRoom, setFwRoom] = useState(selectedRoomId || 'martha_01');
@@ -74,12 +75,10 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   const [webhookJson, setWebhookJson] = useState(`{\n  "room_id": "${selectedRoomId || 'martha_01'}",\n  "temperature_c": 18.4,\n  "rh_pct": 89.2,\n  "co2_ppm": 710,\n  "substrate_temperature_c": 19.3\n}`);
   const [webhookFeedback, setWebhookFeedback] = useState(null);
 
-  // Automation rules
-  const [autoRhMin, setAutoRhMin] = useState(85);
-  const [autoRhTarget, setAutoRhTarget] = useState(90);
-  const [autoCo2Max, setAutoCo2Max] = useState(900);
-  const [autoFaeDuration, setAutoFaeDuration] = useState(35);
-  const [autoSubTempMax, setAutoSubTempMax] = useState(28.0);
+  // Salas con su automatización de solo lectura (node-automation.buildRoomAutomation).
+  // Nada de esto se inventa: sin estado recibido el nodo no aparece como en línea.
+  const nodeRoomViews = Array.isArray(nodeRooms) ? nodeRooms : [];
+  const receivedNodeCount = nodeRoomViews.reduce((n, r) => n + ((r && r.nodes) ? r.nodes.length : 0), 0);
 
   if (!isOpen) return null;
 
@@ -119,7 +118,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
       <div className="iot-hub-navigation">
         <div className="iot-hub-pills" role="tablist" aria-label="Secciones del Hub IoT" onKeyDown={e=>{
-          const keys=['nodos','firmware','webhook','conexion','reglas'];
+          const keys=['nodos','firmware','webhook','conexion'];
           const index=keys.indexOf(tab);
           const next=e.key==='ArrowRight'?(index+1)%keys.length:e.key==='ArrowLeft'?(index+keys.length-1)%keys.length:e.key==='Home'?0:e.key==='End'?keys.length-1:null;
           if(next===null)return;
@@ -127,11 +126,10 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
           e.currentTarget.querySelector(`#iot-hub-tab-${keys[next]}`)?.focus();
         }}>
           {[
-            ['nodos',`Nodos en Finca (${nodes.length})`,'radio'],
+            ['nodos',`Nodos de control (${receivedNodeCount})`,'radio'],
             ['firmware','Generador de Firmware','bolt'],
             ['webhook','Consola Webhook / Test','flask'],
             ['conexion','Conexión en Vivo','plug'],
-            ['reglas','Reglas de Automatización','gear'],
           ].map(([key,label,icon])=><button key={key} type="button" id={`iot-hub-tab-${key}`} role="tab" aria-selected={tab===key} aria-controls="iot-hub-panel" tabIndex={tab===key?0:-1} className={`iot-hub-pill ${tab===key?'on':''}`} onClick={()=>setTab(key)}>
             <AppIcon name={icon} size={14} style={{marginRight:6}}/>{label}
           </button>)}
@@ -140,74 +138,55 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
       <div className="iot-hub-body" role="tabpanel" id="iot-hub-panel" aria-labelledby={`iot-hub-tab-${tab}`} tabIndex={0}>
         {tab === 'nodos' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-2)' }}>
-                Nodos ESP32 y microcontroladores transmitiendo telemetría activa en las carpas de Tenjo:
+          <div data-testid="iot-hub-nodos">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-2)', flex: '1 1 100%' }}>
+                Estado que reportan los nodos de control de cada sala, solo lectura. El control vive en el firmware del nodo: Setas OS no manda nada a un relé. Un nodo aparece aquí únicamente cuando ha llegado su estado real; no hay nodos de ejemplo.
               </div>
               <button
                 type="button"
                 className="btn btn--sm btn--secondary"
                 onClick={() => setTab('firmware')}
-                style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, flex: '0 0 auto', width: 'auto' }}
               >
-                + Configurar Nuevo Dispositivo
+                Generar plantilla de telemetría
               </button>
             </div>
 
-            {nodes.map(n => (
-              <div key={n.id} className="iot-node-card">
-                <div className="iot-node-header">
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--ink-0)' }}>
-                        {n.name}
-                      </span>
-                      <span className="iot-node-badge online">
-                        ● {n.status}
-                      </span>
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
-                      IP: {n.ip} · MAC: {n.mac} · RSSI: {n.rssi} dBm (Excelente) · Visto {n.lastSeen}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+            {nodeRoomViews.length === 0 && (
+              <p className="climate-node-line" data-testid="iot-hub-nodos-empty" role="status">
+                <strong>Sin nodos registrados.</strong> No hay salas con estado de nodo que mostrar.
+              </p>
+            )}
+
+            {nodeRoomViews.map(view => {
+              const kind = view.automation === 'none' ? 'no-automation' : view.noData ? 'no-data' : 'nodes';
+              return (
+                <section key={view.roomId} className="iot-hub-room" data-testid="iot-hub-room" data-room-id={view.roomId} data-automation-state={kind} aria-label={`Sala ${view.roomName || view.roomId}`} style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, margin: 0, color: 'var(--ink-0)' }}>{view.roomName || view.roomId}</h3>
                     <button
                       type="button"
                       className="btn btn--sm"
-                      style={{ fontSize: 11, padding: '3px 8px' }}
+                      style={{ fontSize: 11, padding: '3px 12px', flex: '0 0 auto', width: 'auto' }}
                       onClick={() => {
-                        if (typeof setSelectedClimateRoom === 'function') setSelectedClimateRoom(n.roomId);
+                        if (typeof setSelectedClimateRoom === 'function') setSelectedClimateRoom(view.roomId);
                         onClose();
                       }}
                     >
-                      Ver Sala en Clima
+                      Ver sala en Clima
                     </button>
                   </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginTop: 10 }}>
-                  <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Temperatura</div>
-                    <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.temp.toFixed(1)}°C</div>
-                  </div>
-                  <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Humedad Relativa</div>
-                    <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.rh.toFixed(1)}%</div>
-                  </div>
-                  <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Dióxido de Carbono</div>
-                    <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.co2} ppm</div>
-                  </div>
-                  {n.metrics.subTemp != null && (
-                    <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Sonda Sustrato</div>
-                      <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.subTemp.toFixed(1)}°C</div>
-                    </div>
+                  {kind === 'no-automation' && (
+                    <p className="climate-node-line" data-testid="iot-hub-room-no-automation"><strong>{view.label}.</strong> Esta sala no tiene perfil de nodo de control: no hay relés ni alarmas que mostrar.</p>
                   )}
-                </div>
-              </div>
-            ))}
+                  {kind === 'no-data' && (
+                    <p className="climate-node-line" data-testid="iot-hub-room-no-data"><strong>{view.noDataLabel}.</strong> La sala tiene perfil de nodo ({view.profile && view.profile.deviceId}{view.profile && view.profile.commissioned === false ? ', banco de pruebas, no comisionado' : ''}) pero no ha llegado ningún estado. No se muestra ningún relé, alarma ni consigna.</p>
+                  )}
+                  {kind === 'nodes' && view.nodes.map(n => <NodeAutomationCard key={n.deviceId || 'nodo'} node={n} />)}
+                </section>
+              );
+            })}
           </div>
         )}
 
@@ -458,76 +437,6 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   </span>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {tab === 'reglas' && (
-          <div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', marginBottom: 14 }}>
-              Configurar los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
-              <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  <AppIcon name="droplet" size={13} style={{marginRight:6}} /> Humidificación (Bang-Bang con Histéresis)
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div>
-                    <label htmlFor="iot-rule-rh-min" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Mínima de Arranque (%)</label>
-                    <input type="number" id="iot-rule-rh-min" name="iot-rule-rh-min" className="field-input" value={autoRhMin} onChange={e => setAutoRhMin(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
-                  </div>
-                  <div>
-                    <label htmlFor="iot-rule-rh-target" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Target de Reposo (%)</label>
-                    <input type="number" id="iot-rule-rh-target" name="iot-rule-rh-target" className="field-input" value={autoRhTarget} onChange={e => setAutoRhTarget(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  <AppIcon name="wind" size={13} style={{marginRight:6}} /> Renovación de Aire FAE (Extractor Cloudline)
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div>
-                    <label htmlFor="iot-rule-co2-max" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Límite Máximo CO2 (ppm)</label>
-                    <input type="number" id="iot-rule-co2-max" name="iot-rule-co2-max" className="field-input" value={autoCo2Max} onChange={e => setAutoCo2Max(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
-                  </div>
-                  <div>
-                    <label htmlFor="iot-rule-fae-duration" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Duración Pulso FAE (segundos)</label>
-                    <input type="number" id="iot-rule-fae-duration" name="iot-rule-fae-duration" className="field-input" value={autoFaeDuration} onChange={e => setAutoFaeDuration(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  <AppIcon name="temp" size={13} style={{marginRight:6}} /> Seguridad Biológica de Sustrato
-                </div>
-                <div>
-                  <label htmlFor="iot-rule-sub-temp" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
-                  <input type="number" step="0.5" id="iot-rule-sub-temp" name="iot-rule-sub-temp" className="field-input" value={autoSubTempMax} onChange={e => setAutoSubTempMax(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ink-2)', marginTop: 4 }}>
-                    Si la temperatura de sustrato supera 28 °C durante incubación, se dispara alerta de riesgo de daño al micelio.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => {
-                  if (typeof setNoticeDlg === 'function') {
-                    setNoticeDlg({ title: 'Reglas Actualizadas', msg: 'Las reglas de automatización climática para carpas han sido guardadas.' });
-                  }
-                  onClose();
-                }}
-              >
-                Guardar Parámetros de Automatización
-              </button>
             </div>
           </div>
         )}

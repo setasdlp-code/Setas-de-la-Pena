@@ -99,7 +99,10 @@ test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.today-climate-strip/);
   assert.match(css, /\.climate-svg-wrap/);
   assert.match(css, /\.climate-actuators-panel/);
-  assert.match(css, /\.climate-actuator-card/);
+  // Los controles de relé (.climate-actuator-*) eran CSS muerto de un panel que fingía
+  // control; el panel vigente es de solo lectura (.climate-node-*).
+  assert.doesNotMatch(css, /\.climate-actuator-(card|head|badge|meta|btn|logs)|\.climate-actuators-grid|\.climate-log-row/);
+  assert.match(css, /\.climate-node-card/);
 });
 
 test('el panel de actuadores es de solo lectura: lee el estado del nodo; sin él dice que no hay datos', () => {

@@ -5260,101 +5260,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .climate-node-card { max-width: 72ch; }
 }
 
-.sim-root .climate-actuators-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px;
-}
-
-.sim-root .climate-actuator-card {
-  padding: 14px var(--space-2);
-  background: var(--paper-0, var(--surface-cream));
-  border: 1px solid var(--border-hairline, var(--color-species-name));
-  border-radius: var(--sim-radius-sm, 2px);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.sim-root .climate-actuator-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sim-root .climate-actuator-badge {
-  padding: 3px var(--space-1);
-  border-radius: var(--sim-radius-sm);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: .04em;
-}
-
-.sim-root .climate-actuator-badge.on {
-  background: var(--moss-700, var(--color-dark-secondary));
-  color: var(--text-on-dark);
-}
-
-.sim-root .climate-actuator-badge.pulse {
-  background: var(--status-info);
-  color: var(--text-on-dark);
-}
-
-.sim-root .climate-actuator-badge.off {
-  background: var(--paper-200);
-  color: var(--ink-1);
-}
-
-.sim-root .climate-actuator-meta {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  color: var(--ink-1);
-  line-height: 1.4;
-}
-
-.sim-root .climate-actuator-btn {
-  padding: var(--space-1) 12px;
-  background: var(--paper-0);
-  border: 1px solid var(--border-hairline, var(--color-species-name));
-  border-radius: var(--sim-radius-sm, 2px);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--ink-0);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background var(--duration-standard), border-color var(--duration-standard);
-}
-
-.sim-root .climate-actuator-btn:hover {
-  background: var(--paper-1);
-  border-color: var(--moss-700);
-}
-
-.sim-root .climate-actuator-logs {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: var(--space-half);
-}
-
-.sim-root .climate-log-row {
-  padding: 6px 10px;
-  background: var(--paper-1);
-  border-left: 3px solid var(--moss-700, var(--color-dark-secondary));
-  border-radius: var(--sim-radius-sm);
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--ink-0);
-}
-
 /* ── Lanzador de Producción Unificado ────────────────────────────────────────── */
 .sim-root .btn-launch-prod {
   padding: 10px 18px;
@@ -5701,38 +5606,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   color: var(--paper-50);
   border-color: var(--accent-olive);
   font-weight: 700;
-}
-.sim-root .iot-node-card {
-  background: var(--paper-50);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--sim-radius-sm);
-  padding: 14px var(--space-2);
-  margin-bottom: 12px;
-}
-.sim-root .iot-node-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-bottom: 10px;
-}
-.sim-root .iot-node-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: .15em;
-  padding: 2px var(--space-1);
-  border-radius: var(--sim-radius-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.sim-root .iot-node-badge.online {
-  background: color-mix(in oklab, var(--moss-600) 15%, var(--paper-0));
-  color: var(--accent-olive-hover);
-  border: 1px solid var(--moss-500);
 }
 .sim-root .iot-code-box {
   background: var(--ink-900);
@@ -6784,14 +6657,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .climate-dashboard :is(button,select,input,[role="button"]):focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
 .sim-root .climate-dashboard canvas { max-width:100%; height:auto; }
 .sim-root .climate-dashboard .climate-range-pills { flex-wrap:wrap; }
-.sim-root .climate-dashboard .climate-actuator-head { flex-wrap:wrap; gap:var(--space-1); }
-.sim-root .climate-dashboard .climate-actuator-card > div:has(> button) { flex-wrap:wrap; }
 .sim-root .climate-dashboard .climate-cycle-banner > div { min-width:0; }
 @media(max-width:560px) {
- .sim-root .climate-dashboard .climate-actuators-grid { grid-template-columns:minmax(0,1fr); }
  .sim-root .climate-dashboard .climate-cycle-banner { flex-direction:column; align-items:stretch; }
  .sim-root .climate-dashboard .climate-cycle-banner button { flex:1 1 100%; }
- .sim-root .climate-dashboard .climate-log-row { flex-wrap:wrap; gap:var(--space-half); }
 }
 .sim-root .climate-dashboard input[type="range"] { background:transparent; }
 .sim-root .climate-dashboard input[type="range"]::-webkit-slider-runnable-track { height:6px; background:var(--line-1); }
@@ -6825,7 +6694,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .iot-hub-body { padding:var(--space-2); }
   .sim-root .iot-hub-body > div > div[style*="grid-template-columns"] { grid-template-columns:minmax(0,1fr)!important; }
   .sim-root .iot-hub-server-fields { grid-template-columns:minmax(0,1fr); }
-  .sim-root .iot-hub-dialog .iot-node-header { flex-direction:column; }
 }
 
 .sim-root .inv-modal-bg.iot-hub-backdrop { padding:var(--space-2)!important; align-items:center!important; }
