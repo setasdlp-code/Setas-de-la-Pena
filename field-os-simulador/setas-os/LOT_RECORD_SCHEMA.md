@@ -124,6 +124,62 @@ medida no generan observación vacía.
 | `vocabulary` | `'phenotype_dictionary_v0.1'` |
 | `promotionStatus` | `'experimental_not_canonical'` — el diccionario tiene compuerta de promoción |
 
+### `quality`
+
+Calidad de la cosecha declarada por el operario, agrupada por oleada. Vive en
+`record.quality`, **no** en `gaps`/`answers`: ninguna de las tres preguntas
+depende de ella, así que `quality.gaps` **no bloquea** ninguna de las tres
+preguntas ni cambia `answers` de lotes existentes. El esquema sigue siendo `v1`.
+
+| Campo | Nota |
+|---|---|
+| `criteria` | `'provisional_unversioned'` (`HARVEST_QUALITY.CRITERIA`): no hay criterios de grado versionados por especie |
+| `flushes[]` | uno por oleada, ordenado por `flush` |
+| `flushes[].gradeKg` | `{primera, segunda, descarte}` en **kg**. Un grado no declarado es `null`, nunca `0` |
+| `flushes[].gradeFractions` | `{primera, segunda, descarte}` (fracción de la suma de grados) o `null` |
+| `flushes[].fractionsStatus` | `'complete'` o `'incomplete'` |
+| `flushes[].firmness` | `{values[], method: 'tacto_ordinal', scale: 'v0_texto'}` o `null`. Ordinal 1–5 |
+| `flushes[].fieldDefects[]` | claves de `HARVEST_QUALITY.FIELD_DEFECTS` |
+| `flushes[].undeclaredFieldDefects[]` | claves fuera de la lista: dato de campo, no basura |
+| `flushes[].harvests[]` | `{harvestId, gap}` por cosecha |
+| `harvests[].gap` | `harvestGradeGap()`: `{status, sumG, netG, gapG, toleranceG}` en gramos. `status`: `no_grades` · `no_net_weight` · `incomplete` · `ok` · `over_tolerance`. Tolerancia `max(1 % del neto, 5 g)`, calculada y no guardada; fuera de tolerancia avisa y no bloquea |
+| `gaps[]` | `quality_unrecorded` (ninguna cosecha declara grados, firmeza ni defectos) · `grade_criteria_provisional` (alguna cosecha con grados usa criterio provisional) |
+| `provenance` | `gradeKg: 'operator_declared_grade'` · `firmness: 'operator_ordinal_text_anchored'` · `capDiameter: 'observed_field_measured'` · `defects: 'observed_field_measured'` |
+
+**Regla de fracciones.** Una oleada es `'incomplete'` (y `gradeFractions` es
+`null`) si alguna cosecha que declara algún grado no declara los tres
+(`pesoPrimera`, `pesoSegunda`, `pesoDescarte`). Las cosechas sin ningún peso por
+grado se ignoran. También es `'incomplete'` si algún grado de la oleada es
+`null` o la suma es 0. La diferencia contra el neto se calcula por cosecha, no
+sumando la oleada, para que dos errores opuestos no se compensen.
+
+**`pesoDescarte` significa "fruta entera rechazada"**, y es distinto de
+`trimKg` en `cycle-evidence.js` (recorte/merma de limpieza, persistido por
+`production-learning-bridge.js:98-103`). No se deben igualar ni sumar.
+`pesoFresco` sigue siendo el total cosechado con el descarte incluido.
+
+**El mismo número aparece en dos sitios con procedencia distinta.** Bajo
+`flushes[].rejectedKg` (en `biologicalEfficiency`, procedencia
+`measured_calculated_from_bitacora`) y bajo `quality.flushes[].gradeKg.descarte`
+(`operator_declared_grade`). Es deliberado: la primera clase es lo que Bitácora
+midió y calculó para la EB; la segunda es el juicio del operario contra un
+criterio provisional. Se conservan separadas para no fundir clases de dato
+(ADR-0006); no se deduplican.
+
+**Pendientes, sin campo hoy:**
+
+- **Color:** diferido; no existe ningún campo (`colorOrdinal` se descarta en
+  `normalizeHarvestCapture`).
+- **Anclas de firmeza** (`HARVEST_QUALITY.FIRMNESS_ANCHORS`, 1/3/5): texto
+  provisional pendiente de aprobación del usuario.
+- **Criterios de grado por especie** (diámetro, masa unitaria, firmeza,
+  longitud de pie, definiciones operativas): pendientes; ver la lista en
+  `docs/superpowers/specs/2026-11-14-harvest-quality-design.md`, sección
+  "Criterios por especie que faltan en `knowledge_base/`".
+
+Nada de `quality` entra en `scoring.js`, ranking, Escenarios ni calibración
+(ADR-0004).
+
 ### `gaps[]` y `provenance`
 
 `gaps`: `{code, blocks: [pregunta, …], detail}`. Códigos:
