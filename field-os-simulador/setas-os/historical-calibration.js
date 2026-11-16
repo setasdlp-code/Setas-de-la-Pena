@@ -282,7 +282,7 @@ const weightedCalibration = (recipe, rows, recipeDistanceFn, options = {}) => {
   };
 };
 
-const api = { finiteEB, confirmedOutcome, classifyOutcome, assessHistory, describeHistory, batchOutcome, bitacoraObservations, bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration, parseRowDate, RECENCY_WINDOW_DAYS };
+const api = { EXCLUSION_LABELS, finiteEB, confirmedOutcome, classifyOutcome, assessHistory, describeHistory, batchOutcome, bitacoraObservations, bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration, parseRowDate, RECENCY_WINDOW_DAYS };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

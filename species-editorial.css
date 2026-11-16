@@ -133,3 +133,46 @@
 .pilot-log-status { display: inline-block; font: 500 13px/1.4 var(--font-mono); margin-bottom: 12px; }
 .pilot-log-kitchen { overflow-wrap: anywhere; }
 .pilot-log-empty[hidden] { display: none; }
+
+/* The species essays share the public shell; typography and the plates carry the hierarchy. */
+.editorial-page.minimal-public { --brand-primary: var(--text-primary); --brand-accent: #EAEAEA; --border-hairline: #EAEAEA; --rule-hairline: 1px solid #EAEAEA; }
+.editorial-data > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding-block: 12px; border-bottom: 1px solid #EAEAEA; list-style: none; cursor: pointer; font: 400 16px/1.6 var(--font-sans); }
+.editorial-data > summary::-webkit-details-marker { display: none; }
+.editorial-data[open] > summary > span { font-size: 0; }
+.editorial-data[open] > summary > span::after { content: '−'; font-size: 16px; }
+.editorial-data .editorial-register { margin-block: 20px; }
+.editorial-recipe-entry { margin-top: 16px; min-height: 44px; justify-content: flex-start; gap: 12px; font: 400 16px/1.6 var(--font-sans); }
+@media screen {
+  .editorial-page.minimal-public .masthead { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 32px; border: 0; }
+  .editorial-page.minimal-public .masthead nav:not([hidden]) { display: flex; flex-basis: auto; width: auto; gap: 32px; border: 0; padding: 0; }
+  .editorial-page.minimal-public .masthead nav a { padding-inline: 0; }
+  .editorial-page.minimal-public .editorial-main { width: min(1100px, calc(100% - 96px)); }
+  .editorial-page.minimal-public .editorial-utility { padding-block: 0 24px; }
+  .editorial-page.minimal-public .editorial-sheet { border: 1px solid #EAEAEA; padding: 32px 40px; }
+  .editorial-page.minimal-public .editorial-columns { padding-top: 32px; column-gap: 40px; }
+  .editorial-page.minimal-public .editorial-cover h1 { font-weight: 500; font-size: clamp(44px, 5vw, 68px); line-height: 1.1; border: 0; padding: 0; }
+  .editorial-page.minimal-public .editorial-latin { font-size: 22px; margin-block: 12px 20px; }
+  .editorial-page.minimal-public .editorial-lede { font: 400 18px/1.6 var(--font-sans); }
+  .editorial-page.minimal-public .editorial-plate-frame { border: 0; outline: 0; padding: 0; }
+  .editorial-page.minimal-public .editorial-plate img { max-height: 280px; }
+  .editorial-page.minimal-public .editorial-toc { position: static; background: transparent; }
+  .editorial-page.minimal-public .editorial-section { scroll-margin-top: 24px; }
+}
+@media screen and (max-width: 760px) {
+  .editorial-page.minimal-public .editorial-main { width: calc(100% - 48px); }
+  .editorial-page.minimal-public .editorial-sheet { padding: 24px; }
+  .editorial-page.minimal-public .editorial-columns { column-gap: 24px; }
+}
+@media screen and (max-width: 650px) {
+  .editorial-page.minimal-public .masthead { gap: 12px; }
+  .editorial-page.minimal-public .masthead nav:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; width: 100%; flex-basis: 100%; gap: 4px 24px; padding-top: 24px; }
+  .editorial-page.minimal-public .editorial-sheet { padding: 20px; }
+  .editorial-page.minimal-public .editorial-cover h1 { font-size: clamp(34px, 10vw, 48px); }
+  .editorial-page.minimal-public .editorial-columns { padding-top: 24px; }
+  .editorial-page.minimal-public .editorial-plate { margin-block: 24px; }
+  .editorial-page.minimal-public .editorial-plate img { height: 180px; }
+  .editorial-page.minimal-public .editorial-section { margin-top: 28px; padding-top: 24px; }
+}
+@media print {
+  .editorial-recipe-entry, .editorial-data > summary { display: none; }
+}

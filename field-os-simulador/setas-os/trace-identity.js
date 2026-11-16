@@ -111,6 +111,16 @@
       return emptyResult(rawInput, 'unknown', false, 'empty_payload');
     }
 
+    // Las identidades de cultivo requieren intención explícita; nunca se infieren de un lote.
+    if (/[?&]culture=/.test(raw)) {
+      const params = parseQueryParams(raw.split('?')[1]?.split('#')[0] || '');
+      if (Object.keys(params).some(k => !['culture','view'].includes(k))) return emptyResult(raw,'unknown',false,'ambiguous-target');
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(params.culture || '')) return emptyResult(raw,'unknown',false,'invalid-code-format');
+      return resolveTraceIdentity('setas:culture:'+params.culture);
+    }
+    const cultureMatch = raw.match(/^setas:culture:([A-Za-z0-9_-]{1,64})$/);
+    if (cultureMatch) return Object.freeze({kind:'culture', intent:'culture', cultureId:cultureMatch[1], batchCode:null, bagCode:null, bagNumber:null, crateCode:null, flush:null, raw, valid:true, reason:null});
+
     let candidate = raw;
     let explicitIntent = null; // 'crate' | 'batch' | 'bag' | null
     let queryParams = Object.create(null);
@@ -433,6 +443,7 @@
   function buildSetasOSUrl(identity, baseUrl = '../Setas OS v5.dc.html') {
     if (!identity || !identity.valid) return `${baseUrl}?view=bitacora`;
 
+    if (identity.kind === 'culture' && identity.cultureId) return `${baseUrl}?view=bitacora&culture=${encodeURIComponent(identity.cultureId)}`;
     if (identity.kind === 'crate' && identity.crateCode) {
       return `${baseUrl}?view=bitacora&crate=${encodeURIComponent(identity.crateCode)}`;
     }

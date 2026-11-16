@@ -244,7 +244,12 @@ service cloud.firestore {
       allow update: if signedIn()
         && transicionIntacta()
         && (!('lifecycleState' in resource.data)
-            || request.resource.data.get('estado', null) == resource.data.get('estado', null));
+            || request.resource.data.get('estado', null) == resource.data.get('estado', null))
+        // Pronóstico del Perito congelado al crear el lote (setas.eb-forecast.v1):
+        // escritura única. Mide después cuánto acertó; si se pudiera reescribir,
+        // la comparación con la cosecha no valdría nada.
+        && (!('forecastSnapshot' in resource.data)
+            || request.resource.data.get('forecastSnapshot', null) == resource.data.forecastSnapshot);
       // Un lote borrado en la app es una lápida (ADR-0009), nunca un delete.
       allow delete: if false;
     }

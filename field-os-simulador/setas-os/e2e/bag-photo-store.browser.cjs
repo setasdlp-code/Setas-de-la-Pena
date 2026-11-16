@@ -33,7 +33,7 @@ const PNG='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEh
     {id:'FOTO-B02',loteId:'FOTO',codigo:'FOTO-B02',estado:'sana'}]));sessionStorage.setItem('fixture-init','1');}},PNG);
   const stored=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_bolsas')));
   const idbKeys=()=>page.evaluate(()=>window.SetasBagPhotos.createStore().getAll().then(m=>Object.keys(m).sort()));
-  const open=async()=>{await page.getByText('FOTO',{exact:true}).click();await page.getByRole('button',{name:'Ver tabla de bolsas',exact:true}).click();};
+  const open=async()=>{await page.locator('.sdp-lote[data-lote-id="FOTO"]').click();await page.getByRole('button',{name:'Ver tabla de bolsas',exact:true}).click();};
   await page.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=bitacora`);await open();
   const remove1=page.getByRole('button',{name:'Quitar foto de la bolsa FOTO-B01',exact:true});
   const remove2=page.getByRole('button',{name:'Quitar foto de la bolsa FOTO-B02',exact:true});

@@ -129,9 +129,9 @@
     ],
     "proxyOf": "DOC-0127 pellets 80 / salvado 20 / Ca(OH)2 1 — pellets y cal hidratada no están en el catálogo",
     "analyze": {
-      "eb": 45.2,
-      "ebLow": 35,
-      "ebHigh": 56,
+      "eb": 53.1,
+      "ebLow": 44,
+      "ebHigh": 63,
       "cn": 76.6,
       "avgN": 0.6,
       "cost": 3439.1,
@@ -140,9 +140,9 @@
     "score": {
       "score": 49,
       "eb": {
-        "low": 30,
-        "high": 60,
-        "central": 45,
+        "low": 38,
+        "high": 68,
+        "central": 53,
         "confidence": "low"
       }
     },
@@ -181,10 +181,10 @@
           "id": "carton_corrugado",
           "delta": 10
         },
-        "deltaEb": -2.7,
+        "deltaEb": -10.6,
         "deltaEbRange": [
-          -32.7,
-          27.3
+          -40.6,
+          19.4
         ]
       },
       {
