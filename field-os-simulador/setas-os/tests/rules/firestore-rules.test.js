@@ -169,6 +169,19 @@ test('sin etapa aceptada, el estado en español sigue siendo editable', async ()
   await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_3'), { estado: 'incubacion' }));
 });
 
+test('el pronóstico congelado de un lote no se reemplaza ni se borra', async () => {
+  const f = { schema: 'setas.eb-forecast.v1', shown: { central: 46, low: 31, high: 61 } };
+  await seed('bitacora_lotes/b_fc', { codigo: 'B-9', estado: 'planificado', forecastSnapshot: f });
+  await assertFails(updateDoc(doc(asOperator(), 'bitacora_lotes/b_fc'), { forecastSnapshot: { ...f, shown: { central: 80, low: 60, high: 100 } } }));
+  await assertFails(setDoc(doc(asOperator(), 'bitacora_lotes/b_fc'), { codigo: 'B-9', estado: 'planificado' }));
+  await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_fc'), { notas: 'ok', forecastSnapshot: f }));
+});
+
+test('un lote sin pronóstico puede recibirlo una vez', async () => {
+  await seed('bitacora_lotes/b_fc2', { codigo: 'B-10', estado: 'planificado' });
+  await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_fc2'), { forecastSnapshot: { schema: 'setas.eb-forecast.v1' } }));
+});
+
 test('un lote de Bitácora se puede marcar como borrado (lápida)', async () => {
   await seed('bitacora_lotes/b_4', { codigo: 'B-7', estado: 'incubacion', lifecycleState: 'incubation', revision: 1 });
   await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_lotes/b_4'), { deleted: true }, { merge: true }));

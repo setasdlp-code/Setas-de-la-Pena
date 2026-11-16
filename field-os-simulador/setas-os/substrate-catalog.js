@@ -43,7 +43,7 @@ const INGS=[
     c:0.6*51.82+0.4*46.8,n:0.6*0.234+0.4*0.100,
     cn:(0.6*51.82+0.4*46.8)/(0.6*0.234+0.4*0.100),
     moisture:8,cra:3,ph:5.4,dig:2,cost:Math.round(120000/(20*0.45359237)),
-    role:'base_carbono',tags:['Base','Pellets','Weber','Experimental','Estimado'],cs:['shiitake'],
+    role:'base_carbono',tags:['Base','Pellets','Weber','Experimental','Estimado'],cs:['shiitake','lions_mane','p_eryngii'],
     compositionStatus:'estimated',analysisProxyId:'aserrin_roble',
     compositionEstimate:{version:1,confidence:'low',method:'derived_hypothesis',
       inputs:[{fraction:0.6,c:51.82,n:0.234,label:'Roble — Koziak et al. 2026, tabla 1',url:'https://www.mdpi.com/1996-1944/19/19/4127'},
@@ -125,6 +125,7 @@ const INGS=[
   {id:'compost_maduro',name:'Compost maduro (>3 meses)',cat:'circ',cn:15,n:2.8,c:42,moisture:35,cra:3.5,ph:7.0,dig:8,role:'suplemento_n',tags:['N alto','Estable'],cost:798,cs:['p_ostreatus_gris','p_ostreatus_blanco'],notes:'Precio $798/kg — Tumatera (Bogotá/Sabana), bulto 50 kg a $39.900 (ago. 2026); la fuente no confirma explícitamente madurez >3 meses. Corregido desde $2.500/kg.'},
   // === ADITIVOS ===
   {id:'carbonato_calcio',name:'Carbonato de calcio',cat:'adit',cn:0,n:0,c:0,moisture:0,cra:0,ph:9.5,dig:0,role:'aditivo_ph',tags:['pH','Mineral'],cost:3000,cs:Object.keys(SPP)},
+  {id:'cal_hidratada',name:'Cal hidratada Ca(OH)₂',cat:'adit',cn:0,n:0,c:0,moisture:0,cra:0,ph:12.4,dig:0,role:'aditivo_ph',tags:['pH','Mineral','Cáustica','pH de mezcla sin medir'],cost:3000,cs:['shiitake'],notes:'Distinta del carbonato de calcio (CaCO₃) y del yeso (CaSO₄). ph 12.4 es el de una solución saturada de Ca(OH)₂, no el del sustrato: el pH de la mezcla que calcula el Formulador es un promedio ponderado y no reemplaza la medición que exige DOC-0127. Costo copiado del carbonato hasta tener cotización. Solo compatible con shiitake (receta DOC-0127).'},
   {id:'yeso',name:'Yeso agrícola',cat:'adit',cn:0,n:0,c:0,moisture:0,cra:0,ph:7.0,dig:0,role:'aditivo_estructura',tags:['Estructura','Ca'],cost:1482,cs:Object.keys(SPP),notes:'Precio $1.482/kg — Yesoplant, bulto 50 kg a $74.100 (ago. 2026). Corregido desde $2.200/kg.'},
   {id:'sulfato_magnesio',name:'Sulfato de magnesio',cat:'adit',cn:0,n:0,c:0,moisture:0,cra:0,ph:7.0,dig:0,role:'aditivo_micronutriente',tags:['Mg','Cofactor'],cost:10000,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','p_eryngii','shiitake','lions_mane']},
   {id:'melaza',name:'Melaza',cat:'adit',cn:76,n:.5,c:38,moisture:25,cra:1,ph:5.5,dig:9,role:'aditivo_arrancador',tags:['Arrancador'],cost:6500,cs:['p_ostreatus_gris','p_ostreatus_blanco'],notes:'Coherencia cn = c/n corregida 2026-10-09 (docs/research/ingredientes_cn_verificacion_2026-10-09.md): se conservan n y c (melaza de caña: N bajo, ~0.4–0.8 % MS) y se recalcula cn 30→76. Valor estimado, sin fuente primaria verificada.'},
@@ -153,6 +154,9 @@ const INGS=[
 ];
 const CATS={all:'Todos',base_carbono:'Carbono',suplemento_n:'N alto',suplemento_medio:'N medio',aireador:'Aireación',aditivo:'Correctores'};
 
+// 2026-11-15 (Sebastián): los presets de shiitake, melena de león y eryngii que usaban
+// aserrín de roble usan pellets Weber Hickory en la misma proporción. Composición del
+// pellet estimada (compositionStatus 'estimated'); EB y costo cambian.
 const PRESETS={
   /* ── RECETAS PRINCIPALES — Proporciones validadas contra C:N objetivo ── */
   // Orellana Gris: C:N ideal 35. Calc: paja_trigo(c45,n0.5)×60 + salvado(c45,n2.8)×28 + borra(c47,n2.0)×7 → C:N≈35.0 ✓
@@ -162,11 +166,13 @@ const PRESETS={
   // Orellana Blanca: C:N ideal 30. paja×55 + afrecho(c42,n3.5)×15 + salvado×15 + borra×8 → C:N≈30.1 ✓
   'orellana_blanca_premium':{name:'Orellana Blanca — Afrecho Premium (C:N≈30)',s:'p_ostreatus_blanco',i:[{id:'paja_trigo',p:55},{id:'afrecho_cerveceria',p:15},{id:'salvado_trigo',p:15},{id:'borra_cafe',p:8},{id:'carbonato_calcio',p:4},{id:'yeso',p:3}]},
   // Eryngii: C:N ideal 30. paja×40 + roble(c50,n0.1)×15 + afrecho×20 + salvado×17 → C:N≈29 ✓ (requiere autoclave)
-  'eringii_tecnico':{name:'Seta de Cardo — Técnico Autoclave (C:N≈29)',s:'p_eryngii',i:[{id:'paja_trigo',p:40},{id:'aserrin_roble',p:15},{id:'afrecho_cerveceria',p:20},{id:'salvado_trigo',p:17},{id:'polvo_hueso',p:3},{id:'carbonato_calcio',p:3},{id:'yeso',p:2}]},
+  'eringii_tecnico':{name:'Seta de Cardo — Técnico Autoclave (C:N≈29) · pellets Weber',s:'p_eryngii',i:[{id:'paja_trigo',p:40},{id:'pellets_weber_hickory',p:15},{id:'afrecho_cerveceria',p:20},{id:'salvado_trigo',p:17},{id:'polvo_hueso',p:3},{id:'carbonato_calcio',p:3},{id:'yeso',p:2}]},
   // Shiitake: C:N ideal 50. roble×62 + guadua(c42,n0.35)×8 + salvado×20 + cascarilla_soya×5 → C:N≈54 ✓
-  'shiitake_clasico':{name:'Shiitake — Tradicional Asiático (C:N≈50)',s:'shiitake',i:[{id:'aserrin_roble',p:62},{id:'guadua',p:8},{id:'salvado_trigo',p:20},{id:'cascarilla_soya',p:5},{id:'polvo_hueso',p:3},{id:'carbonato_calcio',p:2}]},
+  'shiitake_clasico':{name:'Shiitake — Tradicional Asiático (C:N≈50) · pellets Weber',s:'shiitake',i:[{id:'pellets_weber_hickory',p:62},{id:'guadua',p:8},{id:'salvado_trigo',p:20},{id:'cascarilla_soya',p:5},{id:'polvo_hueso',p:3},{id:'carbonato_calcio',p:2}]},
   // Lions Mane: C:N ideal 40. roble×60 + afrecho×12 + salvado×12 + cascarilla_soya×8 → C:N≈39 ✓
-  'melena_leon_bioest':{name:'Melena de León — Master Enriquecido (C:N≈39)',s:'lions_mane',i:[{id:'aserrin_roble',p:60},{id:'afrecho_cerveceria',p:12},{id:'salvado_trigo',p:12},{id:'cascarilla_soya',p:8},{id:'carbonato_calcio',p:5},{id:'yeso',p:3}]},
+  // Microlote DOC-0127 (Monte Jongas): 80/20 de base seca + 1 % de Ca(OH)₂ sobre esa base → 79,21/19,80/0,99 del total. Pellets Weber con composición estimada.
+  'shiitake_microlote_pellets_v1':{name:'Shiitake — Microlote pellets v1 (DOC-0127, sin validar)',s:'shiitake',i:[{id:'pellets_weber_hickory',p:79.21},{id:'salvado_trigo',p:19.8},{id:'cal_hidratada',p:0.99}]},
+  'melena_leon_bioest':{name:'Melena de León — Master Enriquecido (C:N≈39) · pellets Weber',s:'lions_mane',i:[{id:'pellets_weber_hickory',p:60},{id:'afrecho_cerveceria',p:12},{id:'salvado_trigo',p:12},{id:'cascarilla_soya',p:8},{id:'carbonato_calcio',p:5},{id:'yeso',p:3}]},
   // Reishi: C:N ideal 50. roble×55 + corteza(c48,n0.3)×15 + cascarilla_soya×12 + salvado×12 → C:N≈50 ✓
   'reishi_especialista':{name:'Reishi — Ultra Especialista (C:N≈50, 4–6 meses)',s:'reishi',i:[{id:'aserrin_roble',p:55},{id:'corteza_molida',p:15},{id:'cascarilla_soya',p:12},{id:'salvado_trigo',p:12},{id:'carbonato_calcio',p:4},{id:'yeso',p:2}]},
   // Enoki: C:N ideal 27. paja_arroz×35 + pino_comp×15 + afrecho×22 + salvado×15 + cascarilla×5 → C:N≈27 ✓ (5–12°C)
@@ -186,17 +192,17 @@ const PRESETS={
   // Tuza de maíz: tusa_maiz(c45,n0.7)×60 + salvado(c45,n2.8)×25 + borra(c47,n2.0)×8 → C:N≈35.2 ✓
   'tuza_maiz_sabana':{name:'Tuza de Maíz — Estándar Sabana (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'tusa_maiz',p:60},{id:'salvado_trigo',p:25},{id:'borra_cafe',p:8},{id:'carbonato_calcio',p:4},{id:'yeso',p:3}]},
   // Circular: chips_poda×35 + raices_hidrop×15 + roble×25 + cascarilla_soya×8 + salvado×10 → C:N≈39 ✓
-  'circular_hidroponico':{name:'Circular Hidropónico — Economía Circular (C:N≈39)',s:'lions_mane',i:[{id:'chips_poda_urbana',p:35},{id:'raices_hidroponicas',p:15},{id:'aserrin_roble',p:25},{id:'cascarilla_soya',p:8},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'circular_hidroponico':{name:'Circular Hidropónico — Economía Circular (C:N≈39) · pellets Weber',s:'lions_mane',i:[{id:'chips_poda_urbana',p:35},{id:'raices_hidroponicas',p:15},{id:'pellets_weber_hickory',p:25},{id:'cascarilla_soya',p:8},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   /* ── Bodega Tenjo 2026 — formuladas con inventario propio (sin afrecho de cervecería) ── */
   'bodega_gris':{name:'⬡ Bodega — Orellana Gris (C:N≈33, solo inventario)',s:'p_ostreatus_gris',i:[{id:'bagazo_caña',p:50},{id:'salvado_trigo',p:20},{id:'borra_cafe',p:13},{id:'cascarilla_arroz',p:11},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
   'bodega_rosa':{name:'⬡ Bodega — Orellana Rosa (C:N≈42, solo inventario)',s:'p_djamor_rosa',i:[{id:'bagazo_caña',p:60},{id:'cascarilla_arroz',p:10},{id:'borra_cafe',p:9},{id:'cascara_cafe',p:8},{id:'salvado_trigo',p:7},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
   'bodega_blanca':{name:'⬡ Bodega — Orellana Blanca (C:N≈31, esterilizar: suplemento alto)',s:'p_ostreatus_blanco',i:[{id:'bagazo_caña',p:50},{id:'salvado_trigo',p:24},{id:'borra_cafe',p:13},{id:'cascarilla_arroz',p:8},{id:'carbonato_calcio',p:3},{id:'sulfato_magnesio',p:2}]},
   'bodega_blanca_maiz':{name:'⬡ Bodega+ — Blanca con harina de maíz (C:N≈37)',s:'p_ostreatus_blanco',i:[{id:'bagazo_caña',p:50},{id:'harina_maiz',p:16},{id:'salvado_trigo',p:12},{id:'borra_cafe',p:8},{id:'cascarilla_arroz',p:8},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
-  'bodega_melena_mastermix':{name:'⬡ Melena — Master’s Mix roble+soya (C:N≈30, literatura 150–180% EB)',s:'lions_mane',i:[{id:'aserrin_roble',p:55},{id:'cascarilla_soya',p:30},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:3},{id:'sulfato_magnesio',p:2}]},
+  'bodega_melena_mastermix':{name:'⬡ Melena — Master’s Mix pellets Weber+soya (C:N≈30; literatura 150–180 % EB con roble)',s:'lions_mane',i:[{id:'pellets_weber_hickory',p:55},{id:'cascarilla_soya',p:30},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:3},{id:'sulfato_magnesio',p:2}]},
   /* ── Presets clásicos (compatibilidad) ── */
   kk1c:{name:'KK-1c (Sabana clásico)',s:'p_ostreatus_gris',i:[{id:'kikuyo',p:43},{id:'aserrin_eucalipto',p:28},{id:'cascarilla_arroz',p:8},{id:'salvado_trigo',p:8},{id:'yeso',p:2},{id:'carbonato_calcio',p:1}]},
   paja:{name:'Paja + Salvado (básico)',s:'p_ostreatus_gris',i:[{id:'paja_trigo',p:80},{id:'salvado_trigo',p:18},{id:'yeso',p:1},{id:'carbonato_calcio',p:1}]},
-  master:{name:"Master's Mix (Stamets)",s:'lions_mane',i:[{id:'aserrin_roble',p:50},{id:'cascarilla_soya',p:50}]},
+  master:{name:"Master's Mix (Stamets) · pellets Weber",s:'lions_mane',i:[{id:'pellets_weber_hickory',p:50},{id:'cascarilla_soya',p:50}]},
   cafe:{name:'Café + Uchuva (circular)',s:'p_ostreatus_gris',i:[{id:'paja_trigo',p:45},{id:'borra_cafe',p:25},{id:'capacho_uchuva',p:20},{id:'salvado_trigo',p:7},{id:'yeso',p:2},{id:'carbonato_calcio',p:1}]},
   platano:{name:'Plátano + Salvado',s:'p_djamor_rosa',i:[{id:'pseudotallo_platano',p:55},{id:'cascara_platano',p:20},{id:'salvado_trigo',p:15},{id:'carbonato_calcio',p:5},{id:'yeso',p:3},{id:'melaza',p:2}]},
   hojarasca:{name:'Hojarasca UNAL',s:'p_ostreatus_gris',i:[{id:'kikuyo',p:50},{id:'hojarasca',p:30},{id:'rastrojo_frijol',p:10},{id:'carbonato_calcio',p:7},{id:'yeso',p:3}]},

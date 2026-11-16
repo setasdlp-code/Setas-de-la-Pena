@@ -4,7 +4,7 @@
   const toggle = document.querySelector('.menu-toggle');
   const nav = document.querySelector('#primary-nav');
   if (!toggle || !nav) return;
-  const mobile = window.matchMedia(document.body.classList.contains('editorial-page') ? '(max-width: 1000px)' : '(max-width: 650px)');
+  const mobile = window.matchMedia(document.body.classList.contains('editorial-page') && !document.body.classList.contains('minimal-public') ? '(max-width: 1000px)' : '(max-width: 650px)');
   const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
   function setOpen(open, restoreFocus = false) {
     toggle.setAttribute('aria-expanded', String(open));
@@ -26,4 +26,26 @@
   });
   mobile.addEventListener('change', syncLayout);
   syncLayout();
+})();
+
+// Keep content visible without scripting; animate each editorial block once on entry.
+(() => {
+  if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (reducedMotion.matches) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      observer.unobserve(entry.target);
+      if (reducedMotion.matches || entry.target.contains(document.activeElement)) return;
+      entry.target.animate([
+        { opacity: 0, transform: 'translateY(12px)' },
+        { opacity: 1, transform: 'translateY(0)' }
+      ], { duration: 600, delay: Number(entry.target.dataset.revealOrder || 0) * 80, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+    });
+  }, { threshold: 0 });
+  document.querySelectorAll('.species-card, .editorial-cover, .editorial-rail, .editorial-reading, .editorial-explore').forEach((element, index) => {
+    element.dataset.revealOrder = index % 3;
+    observer.observe(element);
+  });
 })();

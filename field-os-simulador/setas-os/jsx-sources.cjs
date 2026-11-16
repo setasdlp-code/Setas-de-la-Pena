@@ -18,6 +18,8 @@
 // Agregar un archivo aquí es todo lo que hace falta para que entre al build, al
 // hash de build.test.js y a los hooks.
 module.exports = [
+  'culture-lineage.js',
+  'views/culture-lineage.jsx',
   'views/app-icon.jsx',
   'views/lab.jsx',
   'views/public-traceability-modal.jsx',

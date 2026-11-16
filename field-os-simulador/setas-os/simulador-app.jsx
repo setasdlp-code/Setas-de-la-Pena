@@ -5518,6 +5518,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const compositionComparison=useMemo(()=>CompositionScenarios.compare({recipe,sKey,ings:effectiveINGS,spp:effectiveSPP}),[recipe,sKey,effectiveINGS,effectiveSPP]);
   const hasCompositionEstimate=CompositionScenarios.hasEstimatedComposition(recipe,effectiveINGS);
   const captureCompositionPrediction=()=>CompositionScenarios.snapshot({recipe,sKey,ings:effectiveINGS,spp:effectiveSPP,at:new Date().toISOString(),forecast:ebForecast,modelVersion:typeof __SETAS_BUILD__!=='undefined'?__SETAS_BUILD__:'development'});
+  // Pronóstico visible congelado al crear el lote (eb-forecast-record.js). Usa
+  // el mismo ebForecast que muestran Formulador y Perito.
+  const captureForecastSnapshot=()=>{
+    const api=typeof window!=='undefined'?window.SetasEbForecast:null;
+    if(!api||!an||!ebForecast) return null;
+    try{return api.captureForecast({forecast:ebForecast,analysis:an,recipe,sKey,ings:effectiveINGS,sp:effectiveSPP[sKey],at:new Date().toISOString(),modelVersion:SetasSubstrateAnalysisApi.EB_MODEL_VERSION||'eb-heuristic-unknown',build:typeof __SETAS_BUILD__!=='undefined'?__SETAS_BUILD__:'development'});}
+    catch(e){return null;}
+  };
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
   const optimalAn=useMemo(()=>{try{
@@ -5904,6 +5912,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           <strong>EB estimada · {ebForecast.central}%</strong> · rango {ebForecast.low}–{ebForecast.high}%
           <div className="os-provenance-line">Confianza de predicción {ebForecast.confidence==='medium'?'media':'baja'} · {ebForecast.history?`${ebForecast.history.n} lote${ebForecast.history.n===1?'':'s'} · peso histórico ${Math.round(ebForecast.history.weight*100)}%`:'modelo heurístico'}</div>
           <div>{ebForecast.note}</div>
+          {sKey==='shiitake'&&<div data-testid="shiitake-eb-unvalidated" className="os-provenance-line">Estimación no validada para bloques de madera: la fórmula de referencia de roble (79/20/1) queda fuera del rango C:N del catálogo y por debajo de las EB publicadas. Usar para comparar recetas, no como rendimiento esperado.</div>}
         </div>}
         {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
 
@@ -6203,7 +6212,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // El lote NACE planificado y sus insumos quedan reservados, no
       // descontados: la bodega se toca al registrar "Preparar mezcla", que es
       // cuando el sustrato se pesa de verdad.
-      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,predictionSnapshot:captureCompositionPrediction(),treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,predictionSnapshot:captureCompositionPrediction(),forecastSnapshot:captureForecastSnapshot(),treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan,selection:selectedTrial}));
       setSelectedTrial(null);
       consumoRegistrado=true;
@@ -6301,6 +6310,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'planificado',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:(compositionComparison?ebForecast.value:an.eb).toFixed(0),score:opt.score,cost:Math.round(an.cost),...(compositionComparison?{predictionSnapshot:captureCompositionPrediction()}:{} )}:null,
+      forecastSnapshot:recipe.length&&balanced?captureForecastSnapshot():null,
       // El snapshot congela lo que este lote debe seguir diciendo aunque la
       // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
       recipeSnapshot:(()=>{
@@ -6495,7 +6505,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try {
       const now = Date.now();
       // Mismo criterio que el otro camino: planificar reserva, preparar descuenta.
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, predictionSnapshot:captureCompositionPrediction(), treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, predictionSnapshot:captureCompositionPrediction(), forecastSnapshot:captureForecastSnapshot(), treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan:f.plan,selection:selectedTrial}));
       setSelectedTrial(null);
       consumoRegistrado = true;
@@ -6689,6 +6699,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
       }
     }
+    // El pronóstico congelado del lote es de escritura única (eb-forecast-record.js).
+    if(window.SetasEbForecast) fields=window.SetasEbForecast.protectForecast(bitLotes.find(l=>l.id===loteId),fields);
     setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{writeLocal('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
@@ -9030,6 +9042,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className="econ-metric-value">${Math.round(stats.ingresoRealTotal).toLocaleString('es-CO')}</span>
               <span className="econ-metric-sub">{stats.totalFresco.toFixed(2)} kg hongo fresco</span>
             </div>
+            {(()=>{const ev=window.SetasEbForecast?window.SetasEbForecast.evaluateForecast(lote,cosechas):null;const f=ev?.forecast;return(
+            <div className="econ-metric-box" data-testid="lote-eb-forecast" data-forecast-status={ev?ev.status:'sin-modulo'}>
+              <span className="econ-metric-label">Pronóstico del Perito al crear</span>
+              <span className="econ-metric-value">{f?`${f.shown.central}%`:'—'}</span>
+              <span className="econ-metric-sub">{!f?'Sin pronóstico registrado':`rango ${f.shown.low}–${f.shown.high}% · ${f.modelVersion} · `+(ev.status==='evaluado'?`real ${ev.actualEB.toFixed(0)}% · error ${ev.errorAbs.toFixed(0)} pts · ${ev.inBand?'dentro':'fuera'} del rango`:'real: pendiente de cierre')}</span>
+            </div>);})()}
             <div className="econ-metric-box">
               <span className="econ-metric-label">EB Real vs Estimada</span>
               <span className="econ-metric-value">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</span>
@@ -10895,6 +10913,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
 
+            <CultureLineageView lotes={bitLotes} bolsas={bitBolsas} cosechas={bitCosechas} onOpenBatch={id=>{setBitActiveLoteId(id);goBitTab('bit_ficha',true);}} onLink={(id,spawnGenerationId,cultureRecords)=>updateBitLote(id,{spawnGenerationId,cultureRecords})}/>
             {bitTab==='bit_dash'&&(
               <div className="panel">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
