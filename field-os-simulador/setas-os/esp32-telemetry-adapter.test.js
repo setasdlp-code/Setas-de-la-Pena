@@ -2,15 +2,15 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
   METRIC_ALIASES,
   findActiveCycle,
   evaluateCycleTargets,
   adaptESP32Payload,
-  createTelemetryBuffer,
-  createTelemetryServer
+  createTelemetryBuffer
 } = require('./esp32-telemetry-adapter.js');
 
 const sampleCycle = {
@@ -125,112 +125,13 @@ test('createTelemetryBuffer acumula y vacía lecturas en ventana', (t, done) => 
   assert.equal(buffer.size(), 2);
 });
 
-test('createTelemetryServer atiende POST /api/telemetry, GET /active-cycles y GET /health', async () => {
-  const { EventEmitter } = require('node:events');
-  let receivedReadings = [];
-  const serverInst = createTelemetryServer({
-    port: 8080,
-    getActiveCycles: () => [sampleCycle],
-    onReadings: (readings) => { receivedReadings = readings; }
-  });
-
-  // 1. Test GET /health
-  const reqHealth = new EventEmitter();
-  reqHealth.method = 'GET';
-  reqHealth.url = '/health';
-
-  let healthStatus = 0;
-  let healthBody = '';
-  const resHealth = {
-    setHeader: () => {},
-    writeHead: (st) => { healthStatus = st; },
-    end: (data) => { healthBody = data; }
-  };
-
-  serverInst.server.emit('request', reqHealth, resHealth);
-  assert.equal(healthStatus, 200);
-  const healthJson = JSON.parse(healthBody);
-  assert.equal(healthJson.status, 'ok');
-
-  // 2. Test GET /api/active-cycles
-  const reqCycles = new EventEmitter();
-  reqCycles.method = 'GET';
-  reqCycles.url = '/api/active-cycles';
-
-  let cyclesStatus = 0;
-  let cyclesBody = '';
-  const resCycles = {
-    setHeader: () => {},
-    writeHead: (st) => { cyclesStatus = st; },
-    end: (data) => { cyclesBody = data; }
-  };
-
-  serverInst.server.emit('request', reqCycles, resCycles);
-  assert.equal(cyclesStatus, 200);
-  const cyclesJson = JSON.parse(cyclesBody);
-  assert.equal(cyclesJson.cycles.length, 1);
-  assert.equal(cyclesJson.cycles[0].id, 'CYCLE_MARTHA_01');
-
-  // 3. Test POST /api/telemetry
-  const reqPost = new EventEmitter();
-  reqPost.method = 'POST';
-  reqPost.url = '/api/telemetry';
-
-  let postStatus = 0;
-  let postBody = '';
-  const resPost = {
-    setHeader: () => {},
-    writeHead: (st) => { postStatus = st; },
-    end: (data) => { postBody = data; }
-  };
-
-  serverInst.server.emit('request', reqPost, resPost);
-  reqPost.emit('data', JSON.stringify({
-    room_id: 'martha_01',
-    device_id: 'esp32_martha_01',
-    observed_at: '2026-08-25T14:30:00.000Z',
-    temperature: 17.5,
-    humidity: 92.0
-  }));
-  reqPost.emit('end');
-
-  assert.equal(postStatus, 200);
-  const postJson = JSON.parse(postBody);
-  assert.equal(postJson.success, true);
-  assert.equal(postJson.count, 2);
-  assert.equal(receivedReadings.length, 2);
-  // Solo telemetría: la respuesta no lleva comandos ni estado de actuadores (DEC-001).
-  assert.equal('commands' in postJson, false);
-  assert.equal('actuator_state' in postJson, false);
-  assert.equal(serverInst.getActuatorStates, undefined);
-
-  // 4. Las rutas de actuadores ya no existen (antes: sin autenticación y con CORS abierto).
-  const requestStatus = (method, url, payload) => {
-    const req = new EventEmitter();
-    req.method = method;
-    req.url = url;
-    const out = { status: 0, body: '' };
-    const res = {
-      setHeader: () => {},
-      writeHead: (st) => { out.status = st; },
-      end: (data) => { out.body = data; }
-    };
-    serverInst.server.emit('request', req, res);
-    if (payload !== undefined) req.emit('data', JSON.stringify(payload));
-    req.emit('end');
-    return out;
-  };
-  const removed = [
-    ['GET', '/api/actuators/status'],
-    ['GET', '/actuators/status'],
-    ['POST', '/api/actuators/override', { room_id: 'martha_01', relay_ch1: 'ON', relay_ch2: 'ON' }],
-    ['POST', '/actuators/override', { room_id: 'martha_01', relay_ch1: 'ON', relay_ch2: 'ON' }]
-  ];
-  removed.forEach(([method, url, payload]) => {
-    const out = requestStatus(method, url, payload);
-    assert.equal(out.status, 404, `${method} ${url} debe responder 404`);
-    assert.equal(JSON.parse(out.body).error, 'Ruta no encontrada');
-  });
+test('el adaptador solo adapta: no expone servidor HTTP ni rutas de actuadores (DEC-001)', () => {
+  const adapter = require('./esp32-telemetry-adapter.js');
+  assert.deepEqual(Object.keys(adapter).sort(), [
+    'METRIC_ALIASES', 'adaptESP32Payload', 'createTelemetryBuffer', 'evaluateCycleTargets', 'findActiveCycle'
+  ]);
+  assert.equal(adapter.createTelemetryServer, undefined);
+  // La ingesta HTTP real, autenticada, es telemetry-publisher/; aquí no hay red.
+  const source = fs.readFileSync(path.join(__dirname, 'esp32-telemetry-adapter.js'), 'utf8');
+  assert.doesNotMatch(source, /node:http|createServer|Access-Control|actuators|override/);
 });
-
-

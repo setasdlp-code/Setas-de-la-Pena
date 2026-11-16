@@ -253,84 +253,12 @@
     };
   };
 
-  /**
-   * Crea un servidor HTTP ligero en Node.js para recibir peticiones POST de telemetría del ESP32.
-   * Solo adapta y entrega lecturas: no decide ni expone comandos de actuadores (el control vive en el firmware del nodo).
-   */
-  const createTelemetryServer = ({ port = 8080, onReadings, getActiveCycles } = {}) => {
-    if (!isNode) throw new Error('createTelemetryServer solo está disponible en entorno Node.js.');
-    const http = require('node:http');
-
-    const server = http.createServer((req, res) => {
-      // CORS headers para pruebas locales
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-      if (req.method === 'OPTIONS') {
-        res.writeHead(204);
-        res.end();
-        return;
-      }
-
-      if (req.method === 'GET' && req.url === '/health') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', service: 'setas-esp32-telemetry-adapter', time: new Date().toISOString() }));
-        return;
-      }
-
-      if (req.method === 'GET' && (req.url === '/api/active-cycles' || req.url === '/active-cycles')) {
-        const cycles = typeof getActiveCycles === 'function' ? (getActiveCycles() || []) : [];
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ cycles }));
-        return;
-      }
-
-      if (req.method === 'POST' && (req.url === '/api/telemetry' || req.url === '/telemetry')) {
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        req.on('end', () => {
-          try {
-            const parsed = JSON.parse(body);
-            const cycles = typeof getActiveCycles === 'function' ? (getActiveCycles() || []) : [];
-            const adapted = adaptESP32Payload(parsed, { cycles });
-
-            if (typeof onReadings === 'function') {
-              onReadings(adapted);
-            }
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-              success: true,
-              count: adapted.length,
-              readings: adapted
-            }));
-          } catch (err) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'JSON inválido', detail: err.message }));
-          }
-        });
-        return;
-      }
-
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Ruta no encontrada' }));
-    });
-
-    return {
-      server,
-      listen: (cb) => server.listen(port, cb),
-      close: (cb) => server.close(cb)
-    };
-  };
-
   const api = {
     METRIC_ALIASES,
     findActiveCycle,
     evaluateCycleTargets,
     adaptESP32Payload,
-    createTelemetryBuffer,
-    createTelemetryServer
+    createTelemetryBuffer
   };
 
   if (isNode) module.exports = api;
