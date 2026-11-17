@@ -18,7 +18,7 @@ Canonical token reference for `sim.css`. These tokens define the visual language
 #### Ingredient Categories
 
 > **Defined in the design system**, not `sim.css`: see
-> `_ds/<bundle>/tokens/colors.css`, section "Ingredient categories".
+> `_ds/<bundle>/tokens/colors.css`, section "Ingredient categories" (that `_ds/` folder is not in this repository as of 2026-11-17; the reference is to the external design-system bundle).
 > The values and WCAG rationale below are mirrored there verbatim; edit that
 > file, not `sim.css`.
 
