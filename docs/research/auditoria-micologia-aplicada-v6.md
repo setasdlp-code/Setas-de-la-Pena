@@ -78,3 +78,4 @@ Aplicado en `docs/libro-micologia-aplicada/`: fuente reconstruida (`libro.md`, `
 ## 8. Verificación de fuentes (2026-11-17)
 
 Confirmadas por registro editorial: Huang 2020 y 2022, Tang 2022, Kobayashi 2023, Lu 2024, Xie 2018, Song 2025 (mini-revisión, AMB 109:63), Atila 2021, Teste 2004, Schill 2021, NIST TN 2156 (2021), Lee 2007 (J. Life Sci. 17(1):82–90, no 17(1):81), Zeng 2013 (Indian J. Microbiol. 53:181–186). Sin confirmar: Yu 2013 (sin registro accesible) y Ryu 2005 (datos de segunda mano). Crossref, PMC y KoreaScholar están bloqueados por la red de la sesión.
+- 2026-11-17 (2): con Crossref, PMC y KoreaScholar permitidos se confirmaron autores de todas las fuentes con DOI, Ryu 2005 (J. Mushrooms 3(3):95–99; cifras del libro correctas) y Zeng 2013 (DOI 10.1007/s12088-012-0320-9). Yu 2013 sigue sin registro en Crossref (404).
