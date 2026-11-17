@@ -5258,6 +5258,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .batch-oob-row__metric { font-weight: 700; }
 .sim-root .batch-oob-row__band, .sim-root .batch-oob-row__cov { color: var(--ink-1); font-weight: 400; }
 .sim-root .batch-oob-row__value--none { color: var(--status-warn-text); }
+/* Panel «Calidad de cosecha» de la ficha de lote: solo lectura, una columna, todo el texto a 16 px. */
+.sim-root .hq-note { margin: var(--space-1) 0; font-family: var(--font-sans); font-size: var(--size-body); line-height: var(--leading-normal); color: var(--ink-1); }
+.sim-root .hq-note--foot { margin-top: var(--space-2); padding-top: var(--space-1); border-top: 1px solid var(--border-hairline, var(--color-species-name)); }
+.sim-root .hq-scope { margin-top: var(--space-2); padding-top: var(--space-1); border-top: 1px solid var(--border-hairline, var(--color-species-name)); }
+.sim-root .hq-scope__title { margin: 0 0 var(--space-1); font-family: var(--font-mono); font-size: var(--size-body); text-transform: uppercase; letter-spacing: .06em; }
+.sim-root .hq-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.sim-root .hq-lines li { font-family: var(--font-sans); font-size: var(--size-body); line-height: var(--leading-normal); overflow-wrap: anywhere; }
+.sim-root .hq-gap, .sim-root .hq-defect { display: inline; }
 @media (min-width: 900px) {
   .sim-root .batch-oob-row { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
   .sim-root .climate-node-card { max-width: 72ch; }

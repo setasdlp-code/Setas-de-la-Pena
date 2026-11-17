@@ -9198,6 +9198,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </section>
         );
       })()}
+      <HarvestQualityPanel summary={lotHarvestQuality(lote, cosechas)}/>
       <LotOutOfBandPanel roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id,r])=>[id,r.name]))} result={lotOutOfBand({lote,cycles:roomCycles,now:cycleClock})}/>
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className="sdp-provenance" data-provenance={e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
@@ -9492,6 +9493,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+
+        <HarvestQualityPanel mobile summary={lotHarvestQuality(lote, (bitCosechas || []).filter(c => c.loteId === lote.id))} />
 
         <LotOutOfBandPanel mobile roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id, r]) => [id, r.name]))} result={lotOutOfBand({ lote, cycles: roomCycles, now: cycleClock })} />
 
