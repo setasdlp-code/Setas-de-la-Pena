@@ -5187,6 +5187,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   gap: var(--space-1);
 }
 .sim-root .climate-node-title h3 { margin: 0; font-size: var(--text-lg); }
+/* La etiqueta de procedencia hereda nowrap del sistema de diseño; en 320 px y con una
+   fuente de reemplazo más ancha desbordaba el panel. Que parta línea dentro de su caja. */
+.sim-root .climate-node-title .sdp-provenance { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
 .sim-root .climate-node-card {
   display: flex;
   flex-direction: column;
