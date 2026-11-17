@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-16
+last_reviewed: 2026-11-17
 confidence: high
 primary_sources:
   - Internal records
@@ -284,3 +284,13 @@ Setas OS ya captura peso por grado (primera/segunda/descarte), firmeza ordinal 1
 | CQ07 | El CANON (`SETAS_DE_LA_PENA_CANON.md:268`, "Grade A Yield ≥80 %") y `quality_control.md` ("umbral pendiente") se contradicen | Decisión humana; el 80 % es hipótesis (`auditoria_seleccion_inoculo_shiitake_2026-11-03.md:73`) | Abierta |
 
 Hasta cerrar CQ01–CQ07, los grados no se comparan entre especies ni contra el KPI "Grade A Yield".
+
+Verificación 2026-11-17 (CQ01–CQ07): dos búsquedas independientes confirman que **ninguna de las siete preguntas queda cerrada**. El acceso a los textos completos falló (EUR-Lex, UNECE, FAO, PMC, doi.org: sin resolución de nombres; MDPI: 403 del proxy), así que todo lo siguiente proviene de fragmentos de búsqueda y es **unverified**; sirve como pista de lectura, no como evidencia.
+
+- CQ01/CQ05/CQ06/CQ07: UNECE FFV-24 y la norma UE de setas cultivadas calibran por diámetro de sombrero y definen clases Extra/I/II (tres, frente a las dos de Setas), probablemente solo para *Agaricus*. No se halló norma para *Lentinula* ni *Pleurotus* ni una definición de "Grade A". Pistas por leer: UNECE FFV-24, Reg. (CE) 1863/2004 y su sucesor vigente, Codex CXS 38-1981, clases de diámetro ASEAN para ostra y shiitake, grados de tamaño de *Hericium* en un estudio de visión artificial.
+- CQ02: hay métodos instrumentales (penetración/compresión con analizador de textura) y un antecedente de escala 1–5 por tacto del cosechador anclada a un analizador de textura (Tier 3, patente). No se halló validación revisada por pares de una escala por presión del dedo ni valores por especie. Riesgo anotado: "muy firme" puede confundirse con inmaduro; registrar la madurez aparte.
+- CQ03: método L*a*b* (colorímetro, tono, índice de pardeamiento); sin tabla de referencia por especie ni anclas fotográficas.
+- CQ04: la mancha bacteriana tiene una escala 0–5 publicada; esporulación y borde enrollado perdido no tienen definición ni escala citable (el borde curvado aparece como marcador de madurez, no como defecto); estípite alargado asociado a CO₂ se vio en *Flammulina*, no en *Pleurotus*.
+- Siguen requiriendo acuerdo con comprador o validación local: unidad de muestreo y n por cosecha, longitud de pie, clases y umbral de Grade A.
+
+Para cerrar la verificación hay que permitir esos hosts en la red de la sesión y leer los textos primarios.
