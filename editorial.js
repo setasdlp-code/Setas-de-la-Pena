@@ -1,6 +1,8 @@
 'use strict';
 // Editorial pages remain fully readable without scripting.
-document.querySelectorAll('.editorial-data').forEach(details => { details.open = false; });
+// Keep the overview open on a wide screen; native details stay open without JS.
+const editorialWide = window.matchMedia('(min-width: 1000px)');
+document.querySelectorAll('.editorial-data').forEach(details => { details.open = editorialWide.matches; });
 const printEditorial = document.querySelector('#print-editorial');
 if (printEditorial) {
   printEditorial.hidden = false;
