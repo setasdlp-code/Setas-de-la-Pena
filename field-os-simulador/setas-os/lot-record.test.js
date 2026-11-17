@@ -320,20 +320,3 @@ test('recordedAt es inyectable para que el registro sea determinista', () => {
   const rec = LR.buildLotRecord({ lote: closedLote(), cosechas: [harvest()], recordedAt: '2026-10-02T00:00:00.000Z' });
   assert.equal(rec.recordedAt, '2026-10-02T00:00:00.000Z');
 });
-
-test('la calidad de cosecha se agrega al registro sin tocar las tres preguntas; cosechas antiguas siguen válidas', () => {
-  const HQ = require('./harvest-quality.js');
-  const old = harvest({ id: 'H-OLD' });
-  const h = harvest({ id: 'H-Q', pesoFresco: 400 });
-  const { block } = HQ.buildQualityBlock({ grade: 'primera', capDiameterMm: '55', defects: [] }, { clock: () => new Date('2026-01-01T00:00:00Z'), harvest: h, speciesKey: 'shiitake' });
-  const rec = LR.buildLotRecord({ lote: closedLote(), cosechas: [old, HQ.withQuality(h, block)] });
-  assert.equal(rec.schema, 'setas.lot-record.v1');
-  assert.equal(rec.harvestQuality.schema, 'setas.lot-quality-summary.v1');
-  assert.equal(rec.harvestQuality.cumulative.harvests.withQuality, 1);
-  assert.equal(rec.harvestQuality.cumulative.harvests.withoutQuality, 1);
-  assert.equal(rec.harvestQuality.cumulative.firstGradePct, null, 'n bajo: datos insuficientes');
-  // El diámetro del bloque alimenta el fenotipo sin duplicar la captura.
-  assert.equal(rec.phenotype.find((o) => o.harvestId === 'H-Q').capDiameterMm, 55);
-  const base = LR.buildLotRecord({ lote: closedLote(), cosechas: [old] });
-  assert.deepEqual(base.answers, rec.answers);
-});

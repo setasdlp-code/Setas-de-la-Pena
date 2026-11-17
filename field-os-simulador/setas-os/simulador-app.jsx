@@ -1481,7 +1481,7 @@ const AccessibleModal=({onClose,label,title,ariaLabel,children,backdropClassName
   };
   return(
     <div className={backdropClassName} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div id={id} onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha','Calidad de la cosecha'].includes(resolvedLabel)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={resolvedLabel} style={Object.keys(mergedStyle).length>0?mergedStyle:undefined}>
+      <div id={id} onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha'].includes(resolvedLabel)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={resolvedLabel} style={Object.keys(mergedStyle).length>0?mergedStyle:undefined}>
         {children}
       </div>
     </div>
@@ -4342,10 +4342,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [bitNuevoForm,setBitNuevoForm]=useCaptureDraft('bitNuevoForm',{});
   const [showBitCosecha,setShowBitCosecha]=useState(false);
   const [bitCosechaForm,setBitCosechaForm]=useCaptureDraft('bitCosechaForm',{});
-  // Paso opcional de calidad dentro del mismo diálogo de cosecha (sin pantalla ni pestaña nuevas).
-  const [qualityStepId,setQualityStepId]=useState(null);
-  const [bitQualityForm,setBitQualityForm]=useCaptureDraft('bitQualityForm',()=>harvestQualityBlankDraft(null));
-  useEffect(()=>{if(!showBitCosecha)setQualityStepId(null);},[showBitCosecha]);
   const [captureErrors,setCaptureErrors]=useState({});
   const [captureSaveError,setCaptureSaveError]=useState('');
   const captureFields={
@@ -4375,12 +4371,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setBitCosechaForm(form);
   };
   const clearHarvestCapture=()=>{try{sessionStorage.removeItem(harvestDraftKey(bitCosechaForm));}catch{}setBitCosechaForm({});};
-  const openHarvestQuality=harvestId=>{
-    setCaptureSaveError('');
-    setBitQualityForm(prev=>prev&&prev.harvestId===harvestId?prev:harvestQualityBlankDraft(harvestId));
-    setQualityStepId(harvestId);
-    setShowBitCosecha(true);
-  };
   const [showBatchSheetModal,setShowBatchSheetModal]=useState(false);
   const [batchSheetModalLote,setBatchSheetModalLote]=useState(null);
   const [prodBagType,setProdBagType]=useCaptureDraft('prodBagType','bolsa_20x50'); // tipo de contenedor activo
@@ -6831,19 +6821,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(loteCosecha?.codigo){
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
     }
-    // Devuelve el id (truthy) para que el paso opcional de calidad apunte a esta cosecha.
-    return e.id;
-  };
-  // Calidad de cosecha (setas.harvest-quality.v1): se añade como bloque a la cosecha
-  // ya guardada y reutiliza su misma ruta offline (persistencia local primero y
-  // cola de sincronización con key 'cosecha:<id>'). La cosecha original se
-  // conserva si el guardado falla; re-guardar sobrescribe el mismo documento.
-  const saveHarvestQuality=(harvestId,block)=>{
-    let next;
-    try{next=window.SetasHarvestQuality.applyQualityToList(bitCosechas,harvestId,block);}catch(err){setCaptureSaveError('No se encontró la cosecha para guardar su calidad.');return false;}
-    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',next]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; liberar espacio y reintentar.');return false;}
-    setBitCosechas(next);
-    encolarSync({type:'guardarCosecha',key:'cosecha:'+harvestId,args:[next.find(c=>c.id===harvestId)]});
     return true;
   };
   const deleteBitCosecha=(id)=>{
@@ -9204,7 +9181,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         );
       })()}
       <LotOutOfBandPanel roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id,r])=>[id,r.name]))} result={lotOutOfBand({lote,cycles:roomCycles,now:cycleClock})}/>
-      <HarvestQualityPanel cosechas={cosechas} speciesKey={window.SetasHarvestQualityCriteria.resolveSpeciesKey(lote,SPP)} speciesLabel={lote.especie||''} onRate={openHarvestQuality} />
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className="sdp-provenance" data-provenance={e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
@@ -9500,9 +9476,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         <LotOutOfBandPanel mobile roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id, r]) => [id, r.name]))} result={lotOutOfBand({ lote, cycles: roomCycles, now: cycleClock })} />
-        <div style={{ marginTop: 14 }}>
-          <HarvestQualityPanel cosechas={bitCosechas.filter(c => c.loteId === lote.id)} speciesKey={window.SetasHarvestQualityCriteria.resolveSpeciesKey(lote, SPP)} speciesLabel={lote.especie || ''} onRate={openHarvestQuality} />
-        </div>
 
         <section style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
@@ -14981,27 +14954,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label={qualityStepId?"Calidad de la cosecha":"Registrar cosecha"} dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
-              {qualityStepId?(()=>{
-                const qHarvest=bitCosechas.find(c=>c.id===qualityStepId)||null;
-                const qLote=bitLotes.find(l=>l.id===(qHarvest?.loteId||bitActiveLoteId))||null;
-                const qSpeciesKey=window.SetasHarvestQualityCriteria.resolveSpeciesKey(qLote,SPP);
-                return qHarvest?(
-                  <HarvestQualityStep
-                    harvest={qHarvest}
-                    lote={qLote}
-                    speciesKey={qSpeciesKey}
-                    speciesLabel={qLote?.especie||''}
-                    draft={bitQualityForm}
-                    onDraftChange={setBitQualityForm}
-                    operatorId={qLote?.operatorId||qLote?.operador||'operario_local'}
-                    isOnline={isOnline}
-                    saveError={captureSaveError}
-                    onSave={block=>{if(saveHarvestQuality(qualityStepId,block)){try{sessionStorage.removeItem('setas_capture_v1:bitQualityForm');}catch{}setBitQualityForm(harvestQualityBlankDraft(null));setShowBitCosecha(false);}}}
-                    onSkip={()=>setShowBitCosecha(false)}
-                  />
-                ):(<p role="alert">No se encontró la cosecha. Cierre y vuelva a abrir la ficha del lote.</p>);
-              })():(<>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <header className="harvest-capture-header">
                 <h2 className="harvest-capture-title">Registrar cosecha</h2>
                 <p className="harvest-capture-context">Lote <span>{bitLotes.find(l=>l.id===(bitCosechaForm.loteId||bitActiveLoteId))?.codigo||bitCosechaForm.loteId||bitActiveLoteId}</span></p>
@@ -15027,9 +14980,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',margin:'6px 0 10px'}}>
                   Vocabulario <code>phenotype_dictionary_v0.1</code>. Aún no canónico: estas medidas se usan para construir evidencia propia, no como objetivo de cultivo.
                 </p>
-                <div style={{marginBottom:10}}>
-                  <label className="inv-label" htmlFor="harvest-stipe-length">Largo de estípite (mm)</label><input id="harvest-stipe-length" name="harvestStipeLength" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 30…" value={bitCosechaForm.stipeLengthMm??''} onChange={e=>setBitCosechaForm(p=>({...p,stipeLengthMm:e.target.value}))}/>
-                  {/* El diámetro de píleo se captura en el paso de calidad (bloque setas.harvest-quality.v1). */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                  <div><label className="inv-label" htmlFor="harvest-cap-diameter">Diámetro de píleo (mm)</label><input id="harvest-cap-diameter" name="harvestCapDiameter" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 60…" value={bitCosechaForm.capDiameterMm??''} onChange={e=>setBitCosechaForm(p=>({...p,capDiameterMm:e.target.value}))}/></div>
+                  <div><label className="inv-label" htmlFor="harvest-stipe-length">Largo de estípite (mm)</label><input id="harvest-stipe-length" name="harvestStipeLength" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 30…" value={bitCosechaForm.stipeLengthMm??''} onChange={e=>setBitCosechaForm(p=>({...p,stipeLengthMm:e.target.value}))}/></div>
                 </div>
                 <div style={{marginBottom:10}}>
                   <span className="inv-label">Códigos de defecto</span>
@@ -15149,20 +15102,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button
                   type="button"
-                  data-testid="btn-save-and-rate-quality"
-                  onClick={()=>{
-                    if(!validateCapture('harvest'))return;
-                    const savedId=addBitCosecha(SetasBitacora.normalizeHarvestCapture(bitCosechaForm));
-                    if(!savedId)return;clearHarvestCapture();
-                    openHarvestQuality(savedId);
-                  }}
-                  className="inv-btn inv-btn-sec"
-                  title="Guardar la cosecha y registrar su calidad (paso opcional)"
-                >
-                  Guardar y calificar calidad
-                </button>
-                <button
-                  type="button"
                   onClick={()=>{
                     if(!validateCapture('harvest'))return;
                     const cData = SetasBitacora.normalizeHarvestCapture(bitCosechaForm);
@@ -15177,7 +15116,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </button>
 
               </div>
-              </>)}
           </AccessibleModal>
         )}
         {/* MODAL DE CIERRE DE JORNADA — vive en el árbol principal, junto a los

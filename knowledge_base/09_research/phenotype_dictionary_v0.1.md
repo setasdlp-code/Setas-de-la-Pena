@@ -92,27 +92,20 @@ Key derived comparisons: cap thickness vs diameter; stipe proportion; cracking p
 Suspected biological contamination labels are observational flags and do not constitute organism identification.
 
 ### Defect vocabulary additions (2026-11-17)
-Three codes are added to the vocabulary because the Setas OS harvest-quality record (`setas.harvest-quality.v1`) already captures them as a closed list and they had no dictionary counterpart. They are observational flags: no numeric threshold, grade or setpoint is attached to any of them, and a flag is recorded as present or absent for a harvest, never inferred from an instrument. Status of the three: `experimental_unpromoted`; they follow the promotion gate below before any of them is used as a canonical metric, as a grade criterion or as a control target.
+Three codes are added to the vocabulary because the Setas OS harvest capture already records them in its closed list of six field defects (`defectosCampo`, per-harvest quality block) and they had no dictionary counterpart. They are observational flags: no numeric threshold, grade or setpoint is attached to any of them, and a flag is recorded as present or absent for a harvest, never inferred from an instrument. Status of the three: `experimental_unpromoted`; they follow the promotion gate below before any of them is used as a canonical metric, as a grade criterion or as a control target.
 
 | Code | Meaning when flagged | Related measurement already in this dictionary |
 |---|---|---|
-| `margin_curl_lost` | The cap margin is no longer rolled/incurved at harvest, as judged by the observer. | `cap_curvature_score` (Pleurotus spp.); anchored photographs are preferred over free text. |
+| `edge_curl_lost` | The cap margin is no longer rolled/incurved at harvest, as judged by the observer. | `cap_curvature_score` (Pleurotus spp.); anchored photographs are preferred over free text. |
 | `stipe_elongated` | The stipe is disproportionately long relative to the cap, as judged by the observer. | `stipe_length_mm`, `cap_stipe_length_ratio` (Pleurotus spp.): when measured, record those values instead of relying on the flag. |
 | `sporulation` | Spore release or a visible spore deposit is present at harvest. | None. Related to `overmature`, which remains a separate flag. |
 
-The vocabulary is now: `abort`, `surface_dryness`, `cracking_excess`, `yellowing`, `deformation`, `mechanical_damage`, `water_damage`, `bacterial_suspect`, `mold_suspect`, `overmature`, `undersized`, `other_declared`, `margin_curl_lost`, `stipe_elongated`, `sporulation`.
+The vocabulary is now: `abort`, `surface_dryness`, `cracking_excess`, `yellowing`, `deformation`, `mechanical_damage`, `water_damage`, `bacterial_suspect`, `mold_suspect`, `overmature`, `undersized`, `other_declared`, `edge_curl_lost`, `stipe_elongated`, `sporulation`.
 
-### Mapping to the Setas OS harvest-quality codes
-| Setas OS code | Dictionary code | Equivalence |
-|---|---|---|
-| `dano_mecanico` | `mechanical_damage` | direct |
-| `manchas_bacterianas` | `bacterial_suspect` | approximate: an observational flag, not identification of the organism |
-| `deshidratacion` | `surface_dryness` | approximate: the dictionary term refers to the surface |
-| `borde_enrollado_perdido` | `margin_curl_lost` | direct |
-| `estipite_alargado` | `stipe_elongated` | direct |
-| `esporulacion` | `sporulation` | direct |
+### Mapping to the Setas OS field-defect keys
+The six keys of `defectosCampo` in the harvest capture use the same strings as the dictionary codes, so no translation is needed: `mechanical_damage`, `bacterial_suspect` (an observational flag, not identification of the organism), `surface_dryness`, `edge_curl_lost`, `stipe_elongated` and `sporulation`. Until 2026-11-17 the last three had no dictionary counterpart and were kept only in the field-defect list; with this addition the app can project them to `defectCodes` as a follow-up, which is a change to the per-lot recording schema and is outside this dictionary edit.
 
-Firmness and colour in the same record are ordinal operator judgements (firm / intermediate / soft; coherent / variable) and are not interchangeable with `firmness_proxy` or `cap_color_Lab`, which require the method to be recorded.
+Firmness in the harvest capture is an ordinal operator judgement on a text-anchored scale (1–5, method `tacto_ordinal`). It is not interchangeable with `firmness_proxy`, which requires an instrument or method to be recorded. Colour is not captured yet; when it is, it follows `cap_color_Lab` or a calibrated proxy.
 
 ## Imaging minimum
 Each observation should contain a stable primary view, secondary angle where geometry requires it, visible scale, stable background, declared camera/device, fixed or recorded distance, and stable illumination. Image processing must retain the original image and algorithm version.
