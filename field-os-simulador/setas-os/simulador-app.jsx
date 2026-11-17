@@ -456,11 +456,16 @@ const contamColor=(pct,fallback='inherit')=>CONTAM_LEVEL_COLOR[contamLevelOf(pct
 // especies: cada una contra sus umbrales y se muestra la peor.
 const BE_LIT_NOTE='Color de EB: meta por especie según literatura (KB 2026-10), no medida en la finca.';
 const BE_STATUS_COLOR={optimal:'var(--moss-700)',ok:'var(--moss-500)',warn:'var(--ochre-600)',alert:'var(--coral-700)'};
+// Clave SPP del lote: sKey/speciesKey/recipeRef y, si no hay, el nombre (lotes manuales).
+const loteSppKeyOf=lote=>{
+  if(!lote)return undefined;
+  const key=[lote.sKey,lote.speciesKey,lote.recipeRef?.sKey].find(k=>k&&SPP[k]);
+  return key||Object.keys(SPP).find(k=>SPP[k].name===lote.especie);
+};
 const beSpeciesKeyOf=lote=>{
   if(!SetasKpiThresholdsApi||!lote)return null;
   // Lanzados desde Formulador guardan la clave en recipeRef.sKey; los creados a mano solo el nombre.
-  const key=[lote.sKey,lote.speciesKey,lote.recipeRef?.sKey].find(k=>k&&SPP[k]);
-  const sp=key?SPP[key]:Object.values(SPP).find(x=>x.name===lote.especie);
+  const sp=SPP[loteSppKeyOf(lote)];
   return SetasKpiThresholdsApi.beKeyFromScientific(sp?.scientific);
 };
 const beWorstOf=entries=>SetasKpiThresholdsApi?SetasKpiThresholdsApi.worstBeStatus(entries):null;
@@ -3434,7 +3439,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [harvestTareInput, setHarvestTareInput] = useState('');
   const [harvestTareSource, setHarvestTareSource] = useState('unverified');
   const [harvestFlush, setHarvestFlush] = useState(1);
-  const [harvestCalidad, setHarvestCalidad] = useState(1);
+  const EMPTY_HARVEST_QUALITY = { pesoPrimera: '', pesoSegunda: '', pesoDescarte: '', firmeza: '', defectosCampo: [] };
+  const [harvestQuality, setHarvestQuality] = useState(EMPTY_HARVEST_QUALITY);
   const [harvestError, setHarvestError] = useState('');
   const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
   const [sweepQueue, setSweepQueue] = useState([]);
@@ -3718,6 +3724,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           harvestId: 'COS_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
         });
         setHarvestGrossInput('');
+        setHarvestQuality(EMPTY_HARVEST_QUALITY);
         setHarvestTareInput(resolved.taraGramos !== null ? String(resolved.taraGramos) : '');
         setHarvestTareSource(resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'));
         setHarvestError('');
@@ -3861,6 +3868,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       setHarvestError(`La tara (${tare}g) no puede exceder el peso bruto (${gross}g).`);
       return;
     }
+    const qualityError = window.SetasBitacora.harvestQualityError(harvestQuality);
+    if (qualityError) {
+      setHarvestError(qualityError);
+      return;
+    }
     const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
     if (!activeLot) {
       setHarvestError('No hay un lote seleccionado para registrar la cosecha.');
@@ -3879,7 +3891,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         taraGramos: tare,
         taraSource: tare !== null ? harvestTareSource : 'unverified',
         flush: harvestFlush,
-        calidad: harvestCalidad,
+        ...harvestQuality,
         fecha: new Date().toISOString().slice(0, 10),
         createdAt: new Date().toISOString(),
         operador: uid,
@@ -3896,6 +3908,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         playSweepBeep(1200, 80);
         triggerHaptic([30, 40]);
         setHarvestActiveCrate(null);
+        setHarvestQuality(EMPTY_HARVEST_QUALITY);
         isDecodingPausedRef.current = false;
       }
     } catch (err) {
@@ -4343,7 +4356,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     'harvest-bag':[bitBolsas.some(b=>b.id===bitCosechaForm.bolsaId&&b.loteId===bitCosechaForm.loteId)?bitCosechaForm.bolsaId:'',{required:true},'text'],
     'harvest-flush':[bitCosechaForm.flush,{required:true,min:1,integer:true}],
     'harvest-date':[bitCosechaForm.fecha,{required:true},'text'],
-    'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}]
+    'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}],
+    'harvest-peso-primera':[bitCosechaForm.pesoPrimera,{min:0,integer:true}],
+    'harvest-peso-segunda':[bitCosechaForm.pesoSegunda,{min:0,integer:true}],
+    'harvest-peso-descarte':[bitCosechaForm.pesoDescarte,{min:0,integer:true}],
+    'harvest-firmeza':[bitCosechaForm.firmeza,{min:1,max:5,integer:true}]
   };
   const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Campo obligatorio.':''):SetasBitacora.captureError(f[0],f[1]);};
   const validateCaptureField=id=>setCaptureErrors(p=>({...p,[id]:captureFieldError(id)}));
@@ -5155,6 +5172,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
             harvestId:'COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
           });
           setHarvestGrossInput('');
+          setHarvestQuality(EMPTY_HARVEST_QUALITY);
           setHarvestTareInput(resolved.taraGramos!==null?String(resolved.taraGramos):'');
           setHarvestTareSource(resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'));
         }
@@ -8433,7 +8451,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         loteId: lote.id,
         bolsaId: bag ? bag.id : '',
         codigo: bag ? bag.codigo : '',
-        flush: 1,
+        flush: (bag ? (bitCosechas || []).filter(c => c.bolsaId === bag.id).length : 0) + 1,
         fecha: new Date().toISOString().split('T')[0],
         pesoFresco: '',
         calidad: '',
@@ -14992,7 +15010,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <p className="harvest-capture-context">Lote <span>{bitLotes.find(l=>l.id===(bitCosechaForm.loteId||bitActiveLoteId))?.codigo||bitCosechaForm.loteId||bitActiveLoteId}</span></p>
               </header>
               {captureSaveError&&<p role="alert">{captureSaveError}</p>}
-              <p id="harvest-weight-help" className="harvest-capture-help">Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición.</p>
+              <p id="harvest-weight-help" className="harvest-capture-help">Peso en gramos (1000 g = 1 kg). Peso fresco es el total cosechado, descarte incluido. Cero registra una medición de 0 g; vacío no registra una medición.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" aria-invalid={!!captureErrors["harvest-bag"]} aria-describedby={captureErrors["harvest-bag"]?"harvest-bag-error":undefined} onBlur={()=>validateCaptureField("harvest-bag")} name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select>{captureErrorNode("harvest-bag")}</div>
                 <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" aria-invalid={!!captureErrors["harvest-flush"]} aria-describedby={captureErrors["harvest-flush"]?"harvest-flush-error":undefined} onBlur={()=>validateCaptureField("harvest-flush")} name="harvestFlush" type="number" inputMode="numeric" className="inv-input" min={1} value={bitCosechaForm.flush??''} onChange={e=>setBitCosechaForm(p=>({...p,flush:e.target.value}))}/>{captureErrorNode("harvest-flush")}</div>
@@ -15001,7 +15019,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" aria-invalid={!!captureErrors["harvest-date"]} aria-describedby={captureErrors["harvest-date"]?"harvest-date-error":undefined} onBlur={()=>validateCaptureField("harvest-date")} name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/>{captureErrorNode("harvest-date")}</div>
                 <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-help harvest-weight-error":"harvest-weight-help"} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" className="harvest-quality-options">{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} type="button" className="harvest-quality-choice" data-filled={(bitCosechaForm.calidad||0)>=n}>{n}</button>))}</div></div>
+              <div style={{marginBottom:12}}><HarvestQualityFields idPrefix="harvest" defaultOpen={true} value={bitCosechaForm} onChange={patch=>setBitCosechaForm(p=>({...p,...patch}))} speciesKey={harvestSpeciesKeyOf(bitLotes.find(l=>l.id===(bitCosechaForm.loteId||bitActiveLoteId)))} netGrams={parseFloat(bitCosechaForm.pesoFresco)}/></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Puntaje global (heredado) · opcional, sin evaluar hasta seleccionar</span><div role="group" aria-label="Calidad de la cosecha" className="harvest-quality-options">{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} type="button" className="harvest-quality-choice" data-filled={(bitCosechaForm.calidad||0)>=n}>{n}</button>))}</div></div>
               {/* Fenotipo · phenotype_dictionary_v0.1. Todo opcional: es la
                   variable de respuesta que falta para relacionar la exposición a
                   CO₂ con la morfología, y ninguna fuente publicada trae la curva
@@ -15379,8 +15398,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       );
                     })()}
 
-                    {/* FLUSH & CALIDAD */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                    {/* FLUSH */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginBottom: 12 }}>
                       <div>
                         <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
                         <div style={{ display: 'flex', gap: 3 }}>
@@ -15397,26 +15416,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           ))}
                         </div>
                       </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Calidad:</label>
-                        <div style={{ display: 'flex', gap: 3 }}>
-                          {[
-                            { val: 1, lbl: '1ra' },
-                            { val: 2, lbl: '2da' },
-                            { val: 3, lbl: 'Merma' }
-                          ].map(q => (
-                            <button
-                              key={q.val}
-                              type="button"
-                              className={`inv-btn inv-btn-sm ${harvestCalidad === q.val ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
-                              onClick={() => setHarvestCalidad(q.val)}
-                            >
-                              {q.lbl}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: 12 }}>
+                      <HarvestQualityFields
+                        idPrefix="crate"
+                        defaultOpen={false}
+                        value={harvestQuality}
+                        onChange={patch => setHarvestQuality(p => ({ ...p, ...patch }))}
+                        speciesKey={harvestSpeciesKeyOf(bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0])}
+                        netGrams={harvestTareInput && parseFloat(harvestTareInput) < parseFloat(harvestGrossInput) ? parseFloat(harvestGrossInput) - parseFloat(harvestTareInput) : null}
+                      />
                     </div>
 
                     {harvestError && (

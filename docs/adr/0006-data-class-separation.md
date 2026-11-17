@@ -67,3 +67,7 @@ implementation has moved since ADR-0007 was recorded.
 
 `PRODUCTION_LEARNING_LOOP_V1.md`, "Safety/quality rule"; `cycle-evidence.js`
 (`provenance`); `knowledge_base/AGENTS.md`, "Evidence and authority".
+
+## Enmienda 2026-11 (aprobada por el usuario el 2026-11-15)
+
+**Enmienda 2026-11 a ADR-0006: clases de procedencia de calidad.** Se añaden dos clases. `operator_declared_grade`: el grado (primera/segunda/descarte) y su peso son un juicio del operario contra un criterio provisional (`criterioGrado: provisional_unversioned`); no es una medición. `operator_ordinal_text_anchored`: la firmeza es una escala ordinal con anclas de texto versionadas, sin instrumento. Ninguna se funde con `observed_field_measured`, y ninguna entra en `scoring.js`, ranking, Escenarios ni calibración (ADR-0004). Los grados no se comparan entre especies ni contra el KPI "Grade A Yield ≥80 %" del CANON hasta que existan criterios versionados validados con compradores.
