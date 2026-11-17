@@ -5,12 +5,13 @@
 // playwright.config.cjs, que exigen sesión). Run: node e2e/harvest-quality-devices.browser.cjs
 //
 // Formatos: 320×568, 390×844, 844×390 (horizontal), 768×1024 y 1280×720.
-// Por formato: objetivos >= 48 px, texto >= 16 px, inputs >= 16 px (sin zoom de iOS),
-// sin desborde horizontal y diálogo dentro del alto (dvh).
-//   · Panel de la ficha de lote (nuestro): se exige todo, sin excepciones.
-//   · Formulario de #520 (no se toca): se exigen desborde, alto de objetivos, pisos de
-//     FOS (44 px de ancho, 14 px de texto) y el diálogo dentro del alto; lo que además
-//     incumple el criterio de 16/48 px queda fijado en KNOWN_520_FINDINGS por formato.
+// Por formato, SIN excepciones ni hallazgos «conocidos»: cualquier incumplimiento falla.
+//   · Panel de la ficha de lote: texto >= 16 px, solo lectura, sin desborde.
+//   · Formulario de cosecha con la sección «Calidad» (#520): objetivos >= 48 px de ancho y
+//     alto, texto de la sección >= 16 px, inputs >= 16 px en pantallas táctiles (sin zoom
+//     de iOS al enfocar; `hasTouch` => `pointer: coarse`), sin desborde horizontal, diálogo
+//     dentro del alto (dvh) sin desplazar el fondo y «Guardar cosecha» visible sin desplazar.
+//   · «Sin defectos observados» y los chips de defecto son excluyentes (evaluado vs no evaluado).
 //
 // Solo Chromium: WebKit, Firefox y dispositivos reales (teclado decimal, safe-area,
 // guantes) NO están cubiertos por esta prueba.
@@ -30,24 +31,6 @@ const VIEWPORTS = [
 ];
 const MOBILE_MAX = 859; // mismo corte que isMobileViewport en simulador-app.jsx
 const MIN_TARGET = 48;
-const FOS_FLOOR = 44;
-const DS_SMALL_FLOOR = 14; // --size-small de ds-2026
-// Incumplimientos del formulario de #520 hallados con esta prueba (se reportan, no se
-// corrigen aquí: el formulario de #520 no se toca en esta tarea).
-const FINDING = {
-  width: 'objetivo con ancho < 48 px (firmeza 1-5)',
-  text: 'texto de la sección «Calidad» < 16 px (etiquetas, aviso de suma, anclas de firmeza)',
-  input: 'input con fuente < 16 px (iOS hace zoom al enfocar)',
-  dialog: 'diálogo desplazado: su borde inferior queda fuera de la pantalla (el fondo se desplaza)',
-  save: '«Guardar cosecha» no queda visible sin desplazar',
-};
-const KNOWN_520_FINDINGS = {
-  '320x568': [FINDING.width, FINDING.text],
-  '390x844': [FINDING.text],
-  '844x390 horizontal': [FINDING.input, FINDING.text], // 769-859 px: el 16 px de inputs solo rige hasta 768 px (sim.css:2034, :2093)
-  '768x1024': [FINDING.text],
-  '1280x720': [FINDING.dialog, FINDING.text],
-};
 const MIN_TEXT = 16;
 const EPS = 0.5;
 
@@ -121,7 +104,7 @@ const horizontalOverflow = (rootEl) => {
   try {
     browser = await chromium.launch({ executablePath: process.env.SETAS_CHROMIUM_EXECUTABLE || undefined });
     for (const vp of VIEWPORTS) {
-      const mobile = vp.width <= MOBILE_MAX;
+      const mobile = vp.width <= MOBILE_MAX; // teléfono o tableta: contexto táctil (pointer: coarse)
       const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, hasTouch: mobile });
       const page = await context.newPage();
       const errors = [];
@@ -210,7 +193,10 @@ const horizontalOverflow = (rootEl) => {
         const inputs = [...el.querySelectorAll('input, select, textarea')].filter(visible).map((n) => ({ id: n.id || n.name, size: parseFloat(getComputedStyle(n).fontSize) }));
         const save = [...el.querySelectorAll('button')].find((n) => n.textContent.trim() === 'Guardar cosecha');
         const sb = save.getBoundingClientRect();
+        const backdrop = el.parentElement;
         return {
+          backdropScroll: backdrop.scrollHeight - backdrop.clientHeight,
+          pointerCoarse: matchMedia('(pointer: coarse)').matches,
           innerHeight: window.innerHeight,
           top: r.top, bottom: r.bottom, height: r.height,
           maxHeight: parseFloat(getComputedStyle(el).maxHeight),
@@ -222,34 +208,44 @@ const horizontalOverflow = (rootEl) => {
         };
       }, { smallText: smallText.toString(), horizontalOverflow: horizontalOverflow.toString(), MIN_TEXT });
 
-      // El diálogo respeta el alto de la pantalla (dvh): su alto y su max-height caben.
-      assert.ok(geo.height <= geo.innerHeight + EPS, `${vp.name}: el diálogo mide ${geo.height}px y la pantalla ${geo.innerHeight}px`);
-      assert.ok(geo.maxHeight <= geo.innerHeight + EPS, `${vp.name}: max-height ${geo.maxHeight} > alto ${geo.innerHeight}`);
-      assert.deepEqual(geo.overflow, [], `${vp.name}: el formulario desborda en horizontal`);
-      assert.ok(geo.targets.length >= 12, `${vp.name}: controles de calidad visibles (${geo.targets.length})`);
-      geo.targets.forEach((t) => assert.ok(t.h >= MIN_TARGET - EPS, `${vp.name}: «${t.label}» mide ${t.h}px de alto (< ${MIN_TARGET})`));
-      geo.dialogButtons.forEach((t) => assert.ok(t.h >= MIN_TARGET - EPS, `${vp.name}: botón «${t.label}» mide ${t.h}px de alto (< ${MIN_TARGET})`));
-      // Pisos duros (también para lo ya conocido): ancho de objetivo >= 44 px (piso de FOS,
-      // UX V2 §14) y texto >= 14 px (--size-small de ds-2026).
-      geo.targets.forEach((t) => assert.ok(t.w >= FOS_FLOOR - EPS, `${vp.name}: «${t.label}» mide ${t.w}px de ancho (< piso de ${FOS_FLOOR})`));
-      assert.deepEqual(geo.smallSection.filter((t) => t.size < DS_SMALL_FLOOR), [], `${vp.name}: texto de la sección «Calidad» < ${DS_SMALL_FLOOR}px`);
+      // Sin excepciones: cada formato cumple todo. Se reúnen los hallazgos y la prueba falla con
+      // la lista completa (no con el primero), para ver el estado real de cada formato.
+      const found = [];
+      if (geo.top < -EPS || geo.bottom > geo.innerHeight + EPS) found.push(`diálogo fuera de la pantalla (borde superior ${geo.top}, inferior ${geo.bottom} de ${geo.innerHeight})`);
+      if (geo.height > geo.innerHeight + EPS || geo.maxHeight > geo.innerHeight + EPS) found.push(`diálogo mide ${geo.height}px (max-height ${geo.maxHeight}) en una pantalla de ${geo.innerHeight}px`);
+      if (geo.backdropScroll > 1) found.push(`el fondo del diálogo se desplaza ${geo.backdropScroll}px`);
+      if (geo.saveTop < -EPS || geo.saveBottom > geo.innerHeight + EPS) found.push('«Guardar cosecha» no queda visible sin desplazar');
+      if (geo.overflow.length) found.push(`desborde horizontal ${JSON.stringify(geo.overflow)}`);
+      if (geo.targets.length < 13) found.push(`controles de calidad visibles: ${geo.targets.length} (< 13)`);
+      geo.targets.forEach((t) => {
+        if (t.h < MIN_TARGET - EPS) found.push(`«${t.label}» mide ${t.h}px de alto (< ${MIN_TARGET})`);
+        if (t.w < MIN_TARGET - EPS) found.push(`«${t.label}» mide ${t.w}px de ancho (< ${MIN_TARGET})`);
+      });
+      geo.dialogButtons.forEach((t) => { if (t.h < MIN_TARGET - EPS) found.push(`botón «${t.label}» mide ${t.h}px de alto (< ${MIN_TARGET})`); });
+      geo.smallSection.forEach((t) => found.push(`texto de la sección «Calidad» < ${MIN_TEXT}px: «${t.text}» ${t.size}px`));
+      // El zoom al enfocar es de iOS táctil, a cualquier ancho: la regla es por puntero, no por ancho.
+      assert.equal(geo.pointerCoarse, mobile, `${vp.name}: el contexto táctil debería ${mobile ? '' : 'no '}coincidir con pointer: coarse`);
+      if (geo.pointerCoarse) geo.inputs.filter((i) => i.size < MIN_TEXT).forEach((i) => found.push(`input «${i.id}» con fuente de ${i.size}px (< ${MIN_TEXT}; iOS hace zoom al enfocar)`));
+      assert.deepEqual(found, [], `${vp.name}: incumplimientos del formulario de cosecha`);
 
-      // Lo que el formulario de #520 incumple frente al criterio de 16 px / 48 px. No se
-      // oculta ni se salta: se fija por formato. Un incumplimiento nuevo falla; uno que
-      // desaparece también falla (hay que quitarlo de KNOWN_520_FINDINGS).
-      const found = new Set();
-      if (geo.top < -EPS || geo.bottom > geo.innerHeight + EPS) found.add(FINDING.dialog);
-      if (geo.saveTop < -EPS || geo.saveBottom > geo.innerHeight + EPS) found.add(FINDING.save);
-      if (geo.targets.some((t) => t.w < MIN_TARGET - EPS)) found.add(FINDING.width);
-      // El zoom al enfocar es de iOS táctil: en escritorio un input de 13 px no cuenta.
-      if (mobile && geo.inputs.some((i) => i.size < MIN_TEXT)) found.add(FINDING.input);
-      if (geo.smallSection.some((t) => t.size < MIN_TEXT)) found.add(FINDING.text);
-      const expected = new Set(KNOWN_520_FINDINGS[vp.name] || []);
-      assert.deepEqual([...found].sort(), [...expected].sort(), `${vp.name}: incumplimientos del formulario #520 distintos de los conocidos`);
-      found.forEach((f) => console.log(`CONOCIDO ${vp.name}: ${f}`));
+      // «Sin defectos observados» (evaluado sin hallazgos) y los chips de defecto son excluyentes;
+      // deseleccionar todo deja «no evaluado» (ninguno presionado).
+      const noDefects = dialog.getByRole('button', { name: 'Sin defectos observados', exact: true });
+      const spo = dialog.locator('[data-defect="sporulation"]');
+      await expect(spo, `${vp.name}: esporulación marcada antes`).toHaveAttribute('aria-pressed', 'true');
+      await expect(noDefects).toHaveAttribute('aria-pressed', 'false');
+      await noDefects.click();
+      await expect(noDefects).toHaveAttribute('aria-pressed', 'true');
+      await expect(spo).toHaveAttribute('aria-pressed', 'false');
+      await spo.click();
+      await expect(spo).toHaveAttribute('aria-pressed', 'true');
+      await expect(noDefects).toHaveAttribute('aria-pressed', 'false');
+      await spo.click();
+      await expect(spo).toHaveAttribute('aria-pressed', 'false');
+      await expect(noDefects).toHaveAttribute('aria-pressed', 'false');
       assert.deepEqual(errors, [], `${vp.name}: errores de página`);
       await context.close();
     }
-    console.log(`PASS: calidad de cosecha en ${VIEWPORTS.map((v) => v.name).join(', ')}: panel de la ficha con texto >= ${MIN_TEXT} px, solo lectura y sin desborde; formulario de #520 sin desborde, con objetivos >= ${MIN_TARGET} px de alto, diálogo dentro del alto (dvh) y sus incumplimientos conocidos fijados (ver KNOWN_520_FINDINGS).`);
+    console.log(`PASS: calidad de cosecha en ${VIEWPORTS.map((v) => v.name).join(', ')}: panel de la ficha con texto >= ${MIN_TEXT} px, solo lectura y sin desborde; formulario con objetivos >= ${MIN_TARGET} px de ancho y alto, texto >= ${MIN_TEXT} px, inputs >= ${MIN_TEXT} px en táctil, diálogo dentro del alto (dvh) y sin hallazgos.`);
   } finally { await browser?.close(); await new Promise((resolve) => server.close(resolve)); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

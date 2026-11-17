@@ -14975,7 +14975,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" backdropClassName="inv-modal-bg harvest-capture-backdrop" dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <header className="harvest-capture-header">
                 <h2 className="harvest-capture-title">Registrar cosecha</h2>
                 <p className="harvest-capture-context">Lote <span>{bitLotes.find(l=>l.id===(bitCosechaForm.loteId||bitActiveLoteId))?.codigo||bitCosechaForm.loteId||bitActiveLoteId}</span></p>

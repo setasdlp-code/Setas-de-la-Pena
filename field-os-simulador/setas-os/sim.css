@@ -6894,7 +6894,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .harvest-capture-dialog .inv-row > div { min-width: 0; }
 .sim-root .harvest-capture-dialog .inv-btn { min-height: var(--field-cell-min-height) !important; font: var(--t-body); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-normal); text-transform: none; padding: var(--space-1) var(--space-2); }
 .sim-root .harvest-quality :is(input, select, button, summary) { min-height: var(--field-cell-min-height) !important; }
-:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
+:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(48px, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
 :is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice { font: var(--t-data); font-size: var(--size-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half); }
 :is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice[data-filled="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
 :is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
@@ -6912,6 +6912,27 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .harvest-quality-anchors { list-style: none; margin: var(--space-1) 0 0; padding: 0; font: var(--t-small); color: var(--text-secondary); }
 .harvest-quality-warning { font: var(--t-small); border-left: 3px solid var(--coral-700); padding: var(--space-half) var(--space-1); margin: var(--space-1) 0; }
 .harvest-quality-error { font: var(--t-small); color: var(--coral-700); margin: 0; }
+/* Texto operativo de la sección «Calidad»: 16 px (UX V2 §14), no los 14 px de --t-small.
+   El selector con .harvest-capture-dialog gana a `.harvest-capture-dialog .inv-label`. */
+.sim-root .harvest-quality :is(.inv-label, .harvest-quality-anchors, .harvest-quality-warning, .harvest-quality-error),
+.sim-root .harvest-capture-dialog .harvest-quality .inv-label { font: var(--t-body); letter-spacing: var(--tracking-normal); }
+.sim-root .harvest-quality-chip--none { font-weight: var(--weight-semibold); }
+/* A 320 px la fila de cinco botones de firmeza (mínimo 48 px de ancho) no cabe con el
+   relleno del marco: se le quita ese relleno en vez de achicar los botones. */
+@media (max-width: 360px) {
+  .sim-root .harvest-quality { padding: var(--space-half); }
+}
+/* Pantallas táctiles: iOS hace zoom al enfocar un input con fuente < 16 px. El criterio es
+   el puntero, no el ancho: un teléfono en horizontal (769-859 px) o una tableta quedaban
+   fuera del 16 px de `max-width: 768px`; un escritorio con ratón conserva su densidad. */
+@media (pointer: coarse) {
+  .sim-root .harvest-capture-dialog :is(input, select, textarea) { font-size: max(16px, var(--size-body)); }
+}
+/* El diálogo de cosecha cabe en el alto de la pantalla (maxHeight en dvh, inline): el
+   fondo común deja 40 px arriba y 24 abajo y por eso el diálogo se desplazaba 8 px
+   en 1280×720. Aquí se centra con un margen simétrico que suma lo mismo que el
+   maxHeight (32 px), de modo que el fondo no se desplaza. */
+.sim-root .inv-modal-bg.harvest-capture-backdrop { align-items: center; padding: 16px 12px; }
 .harvest-capture-dialog .harvest-capture-actions .inv-btn { min-width: 0; white-space: normal; }
 .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1 / -1; grid-row: 1; background: var(--action-primary); color: var(--text-inverse); border-color: var(--action-primary); }
 @media (max-width: 560px) {
