@@ -194,6 +194,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
   .editorial-page .species-sheet .origin-note { display:grid;grid-template-columns:100px 1fr;gap:0 24px;align-items:start;padding-top:0 }
   .editorial-page .species-sheet .detail-window { grid-column:1;grid-row:1 / 4;height:130px;width:100px;margin:0 }
   .editorial-page .species-sheet .origin-note>.label, .editorial-page .species-sheet .origin-note>h3, .editorial-page .species-sheet .origin-note>p { grid-column:2 }
+  .editorial-page .species-sheet .origin-note>p+p { grid-column:1 / -1 }
   .editorial-page .species-sheet .origin-note h3 { font-size:26px;margin-block:10px 14px }
   .editorial-page .species-sheet .origin-note p { font-size:15px }
   .editorial-page .species-sheet .reading-detail { margin-top:22px }
