@@ -49,16 +49,17 @@
   });
 
   // Lista cerrada de defectos de cosecha. `dictionaryCode` es la equivalencia con
-  // el vocabulario v0.1 de knowledge_base/09_research/phenotype_dictionary_v0.1.md;
-  // `null` marca un defecto que el diccionario aún no tiene (propuesta de
-  // ampliación: requiere la compuerta de promoción del diccionario).
+  // el vocabulario de knowledge_base/09_research/phenotype_dictionary_v0.1.md
+  // (sección «Defect vocabulary additions», 2026-11-17: los tres códigos nuevos
+  // son `experimental_unpromoted` y siguen la compuerta de promoción antes de
+  // usarse como métrica canónica, criterio de grado o consigna).
   const DEFECTS = Object.freeze([
-    Object.freeze({ code: 'borde_enrollado_perdido', label: 'Borde enrollado perdido', dictionaryCode: null, equivalence: 'none' }),
-    Object.freeze({ code: 'estipite_alargado', label: 'Estípite alargado', dictionaryCode: null, equivalence: 'none' }),
+    Object.freeze({ code: 'borde_enrollado_perdido', label: 'Borde enrollado perdido', dictionaryCode: 'margin_curl_lost', equivalence: 'direct' }),
+    Object.freeze({ code: 'estipite_alargado', label: 'Estípite alargado', dictionaryCode: 'stipe_elongated', equivalence: 'direct' }),
     Object.freeze({ code: 'manchas_bacterianas', label: 'Manchas bacterianas', dictionaryCode: 'bacterial_suspect', equivalence: 'approximate' }),
     Object.freeze({ code: 'deshidratacion', label: 'Deshidratación', dictionaryCode: 'surface_dryness', equivalence: 'approximate' }),
     Object.freeze({ code: 'dano_mecanico', label: 'Daño mecánico', dictionaryCode: 'mechanical_damage', equivalence: 'direct' }),
-    Object.freeze({ code: 'esporulacion', label: 'Esporulación', dictionaryCode: null, equivalence: 'none' }),
+    Object.freeze({ code: 'esporulacion', label: 'Esporulación', dictionaryCode: 'sporulation', equivalence: 'direct' }),
   ]);
   const DEFECT_CODES = Object.freeze(DEFECTS.map((d) => d.code));
 

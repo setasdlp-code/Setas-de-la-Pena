@@ -161,8 +161,10 @@ ruta offline que la cosecha (`sdp_bit_cosechas` + cola `guardarCosecha`, key
 
 Equivalencia con `phenotype_dictionary_v0.1`: `dano_mecanico`→`mechanical_damage`
 (directa), `manchas_bacterianas`→`bacterial_suspect` y `deshidratacion`→`surface_dryness`
-(aproximadas). `borde_enrollado_perdido`, `estipite_alargado` y `esporulacion` **no existen
-en el diccionario**: son una propuesta de ampliación que pasa por su compuerta de promoción.
+(aproximadas). `borde_enrollado_perdido`→`margin_curl_lost`, `estipite_alargado`→`stipe_elongated`
+y `esporulacion`→`sporulation` (directas) se incorporaron al diccionario el 2026-11-17 como
+`experimental_unpromoted`: siguen la compuerta de promoción antes de usarse como métrica
+canónica, criterio de grado o consigna.
 El bloque y el fenotipo experimental (`defectCodes`, 12 códigos) coexisten sin escribirse
 entre sí.
 

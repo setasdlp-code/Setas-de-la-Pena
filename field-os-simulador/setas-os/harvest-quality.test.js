@@ -84,14 +84,26 @@ test('la lista de defectos y las escalas son cerradas: un valor desconocido no s
   assert.deepEqual(HQ.DEFECT_CODES, ['borde_enrollado_perdido', 'estipite_alargado', 'manchas_bacterianas', 'deshidratacion', 'dano_mecanico', 'esporulacion']);
 });
 
-test('la equivalencia con el diccionario de fenotipo v0.1 se declara; lo que no existe en él queda marcado', () => {
+test('cada defecto declara su código en el diccionario de fenotipo y su equivalencia', () => {
   const byCode = Object.fromEntries(HQ.DEFECTS.map((d) => [d.code, d]));
   assert.equal(byCode.dano_mecanico.dictionaryCode, 'mechanical_damage');
   assert.equal(byCode.manchas_bacterianas.dictionaryCode, 'bacterial_suspect');
   assert.equal(byCode.deshidratacion.dictionaryCode, 'surface_dryness');
-  ['borde_enrollado_perdido', 'estipite_alargado', 'esporulacion'].forEach((c) => {
-    assert.equal(byCode[c].dictionaryCode, null);
-    assert.equal(byCode[c].equivalence, 'none');
+  assert.equal(byCode.borde_enrollado_perdido.dictionaryCode, 'margin_curl_lost');
+  assert.equal(byCode.estipite_alargado.dictionaryCode, 'stipe_elongated');
+  assert.equal(byCode.esporulacion.dictionaryCode, 'sporulation');
+  ['borde_enrollado_perdido', 'estipite_alargado', 'esporulacion', 'dano_mecanico'].forEach((c) => {
+    assert.equal(byCode[c].equivalence, 'direct');
+  });
+  ['manchas_bacterianas', 'deshidratacion'].forEach((c) => {
+    assert.equal(byCode[c].equivalence, 'approximate');
+  });
+  // Todo defecto debe tener código de diccionario presente en el propio documento de la KB.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const dict = fs.readFileSync(path.join(__dirname, '..', '..', 'knowledge_base', '09_research', 'phenotype_dictionary_v0.1.md'), 'utf8');
+  HQ.DEFECTS.forEach((d) => {
+    assert.ok(dict.includes('`' + d.dictionaryCode + '`'), `el diccionario no contiene ${d.dictionaryCode}`);
   });
 });
 
