@@ -49,13 +49,14 @@ test('el flush por defecto de la hoja de campo ya no es 1 fijo', () => {
   assert.ok(!/flush:\s*1,/.test(block));
 });
 
-test('la canastilla ofrece calidad opcional colapsada sin tocar el selector 1ra/2da/Merma', () => {
+test('la canastilla ofrece calidad opcional colapsada y ya no tiene el selector 1ra/2da/Merma', () => {
   assert.match(app, /<HarvestQualityFields[^>]*idPrefix="crate"[^>]*defaultOpen=\{false\}|<HarvestQualityFields[^>]*defaultOpen=\{false\}[^>]*idPrefix="crate"/);
   assert.match(app, /const \[harvestQuality, setHarvestQuality\] = useState\(/);
-  assert.match(app, /\{ val: 1, lbl: '1ra' \}/);
-  assert.match(app, /onClick=\{\(\) => setHarvestCalidad\(q\.val\)\}/);
+  assert.ok(!/harvestCalidad|setHarvestCalidad|lbl: '1ra'/.test(app), 'el selector heredado y su estado se retiraron');
   const i = app.indexOf('const harvestRecord = {');
-  assert.ok(i > 0 && /\.\.\.harvestQuality/.test(app.slice(i, i + 900)));
+  const record = app.slice(i, i + 900);
+  assert.ok(i > 0 && /\.\.\.harvestQuality/.test(record));
+  assert.ok(!/calidad:\s*harvestCalidad/.test(record), 'la canastilla ya no escribe calidad 1/2/3');
 });
 
 test('la canastilla valida la calidad antes de guardar (peso negativo o decimal, firmeza)', () => {

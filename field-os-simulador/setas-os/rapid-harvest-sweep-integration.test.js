@@ -91,13 +91,13 @@ test('Integración de Contrato: canastillas -> resolución uniforme -> normaliza
 });
 
 test('canastilla: calidad opcional no cambia el registro sin calidad y alimenta harvestGradeGap con el neto', () => {
-  const base = { crateId: 'crate_CAN-01', crateCode: 'CAN-01', pesoBrutoGramos: 1500, taraGramos: 420, taraSource: 'field_measured', flush: 1, calidad: 1 };
+  const base = { crateId: 'crate_CAN-01', crateCode: 'CAN-01', pesoBrutoGramos: 1500, taraGramos: 420, taraSource: 'field_measured', flush: 1 };
   const plain = bitacoraModel.normalizeHarvestCapture(base);
   assert.equal(plain.criterioGrado, null);
   for (const k of ['pesoPrimera', 'pesoSegunda', 'pesoDescarte', 'firmeza']) {
     assert.ok(plain[k] == null, `${k} no debe traer valor sin calidad`);
   }
-  assert.equal(plain.calidad, 1);
+  assert.equal(plain.calidad, null, 'la canastilla ya no escribe calidad 1/2/3');
 
   const withQ = bitacoraModel.normalizeHarvestCapture({ ...base, pesoPrimera: 900, defectosCampo: ['sobremaduro'] });
   assert.equal(withQ.pesoPrimera, 900);

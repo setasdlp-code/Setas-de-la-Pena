@@ -1,8 +1,8 @@
 'use strict';
 // Calidad opcional en la captura por canastilla (modal "Captura rápida de campo",
 // clase por defecto, NO .harvest-capture-dialog). Verifica que los controles de la
-// sección tengan >= 48 px a 390 y 430 px, que el selector 1ra/2da/Merma siga
-// intacto y que un peso negativo bloquee el guardado.
+// sección tengan >= 48 px a 390 y 430 px, que el selector 1ra/2da/Merma ya no exista
+// y que un peso negativo bloquee el guardado.
 // Run: node e2e/harvest-quality-crate.browser.cjs
 const fs = require('node:fs');
 const path = require('node:path');
@@ -59,10 +59,8 @@ const root = path.resolve(__dirname, '..');
     // Estilos del componente aplicados en este modal (no solo el alto mínimo).
     assert.equal(await sheet.locator('.harvest-quality-options').evaluate((n) => getComputedStyle(n).display), 'grid');
 
-    // El selector heredado 1ra/2da/Merma sigue ahí y funciona.
-    for (const lbl of ['1ra', '2da', 'Merma']) await expect(sheet.getByRole('button', { name: lbl, exact: true })).toBeVisible();
-    await sheet.getByRole('button', { name: '2da', exact: true }).click();
-    await expect(sheet.getByRole('button', { name: '2da', exact: true })).toHaveClass(/inv-btn-pri/);
+    // El selector heredado 1ra/2da/Merma se retiró.
+    for (const lbl of ['1ra', '2da', 'Merma']) await expect(sheet.getByRole('button', { name: lbl, exact: true })).toHaveCount(0);
 
     // Un peso negativo bloquea el guardado con un mensaje en español.
     await sheet.locator('#crate-peso-primera').fill('-50');

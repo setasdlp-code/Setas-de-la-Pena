@@ -170,6 +170,14 @@ midió y calculó para la EB; la segunda es el juicio del operario contra un
 criterio provisional. Se conservan separadas para no fundir clases de dato
 (ADR-0006); no se deduplican.
 
+**Selector heredado de la canastilla (retirado 2026-11-17):** la captura por
+canastilla ya no ofrece «Calidad: 1ra/2da/Merma» ni escribe `calidad`. Ese campo
+usaba una escala distinta (1 = 1ra, 2 = 2da, 3 = merma) a la del formulario de
+cosecha (puntaje global 1–5), y la ficha pública lo publica recortado a 0–5. Las
+cosechas por canastilla anteriores conservan su valor 1/2/3 con ese significado
+heredado; las nuevas llevan `calidad: null` y registran el grado por peso
+(`pesoPrimera`, `pesoSegunda`, `pesoDescarte`).
+
 **Pendientes, sin campo hoy:**
 
 - **Color:** diferido; no existe ningún campo (`colorOrdinal` se descarta en

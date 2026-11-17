@@ -3439,7 +3439,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [harvestTareInput, setHarvestTareInput] = useState('');
   const [harvestTareSource, setHarvestTareSource] = useState('unverified');
   const [harvestFlush, setHarvestFlush] = useState(1);
-  const [harvestCalidad, setHarvestCalidad] = useState(1);
   const EMPTY_HARVEST_QUALITY = { pesoPrimera: '', pesoSegunda: '', pesoDescarte: '', firmeza: '', defectosCampo: [] };
   const [harvestQuality, setHarvestQuality] = useState(EMPTY_HARVEST_QUALITY);
   const [harvestError, setHarvestError] = useState('');
@@ -3892,7 +3891,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         taraGramos: tare,
         taraSource: tare !== null ? harvestTareSource : 'unverified',
         flush: harvestFlush,
-        calidad: harvestCalidad,
         ...harvestQuality,
         fecha: new Date().toISOString().slice(0, 10),
         createdAt: new Date().toISOString(),
@@ -15400,8 +15398,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       );
                     })()}
 
-                    {/* FLUSH & CALIDAD */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                    {/* FLUSH */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginBottom: 12 }}>
                       <div>
                         <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
                         <div style={{ display: 'flex', gap: 3 }}>
@@ -15414,26 +15412,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               onClick={() => setHarvestFlush(f)}
                             >
                               F{f}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Calidad:</label>
-                        <div style={{ display: 'flex', gap: 3 }}>
-                          {[
-                            { val: 1, lbl: '1ra' },
-                            { val: 2, lbl: '2da' },
-                            { val: 3, lbl: 'Merma' }
-                          ].map(q => (
-                            <button
-                              key={q.val}
-                              type="button"
-                              className={`inv-btn inv-btn-sm ${harvestCalidad === q.val ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
-                              onClick={() => setHarvestCalidad(q.val)}
-                            >
-                              {q.lbl}
                             </button>
                           ))}
                         </div>
