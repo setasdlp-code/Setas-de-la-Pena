@@ -74,3 +74,7 @@ El PDF fue generado con WeasyPrint y su fuente HTML no está en el repositorio. 
 ## 7. Estado (2026-11-17)
 
 Aplicado en `docs/libro-micologia-aplicada/`: fuente reconstruida (`libro.md`, `refs.json`, `build.py`), PDF v7 y planilla v7. Pendientes que requieren consultar las fuentes: autoría del estudio de mSystems, revista de Ryu 2005, Lee 2007 y Zeng 2013, títulos de Kobayashi, Lu, Tang y Xie, y la fuente primaria de la nota sobre esporas.
+
+## 8. Verificación de fuentes (2026-11-17)
+
+Confirmadas por registro editorial: Huang 2020 y 2022, Tang 2022, Kobayashi 2023, Lu 2024, Xie 2018, Song 2025 (mini-revisión, AMB 109:63), Atila 2021, Teste 2004, Schill 2021, NIST TN 2156 (2021), Lee 2007 (J. Life Sci. 17(1):82–90, no 17(1):81), Zeng 2013 (Indian J. Microbiol. 53:181–186). Sin confirmar: Yu 2013 (sin registro accesible) y Ryu 2005 (datos de segunda mano). Crossref, PMC y KoreaScholar están bloqueados por la red de la sesión.
