@@ -34,7 +34,7 @@
     try{for(const entry of transaction.entries)storage.setItem(entry.key,entry.after);storage.removeItem(PENDING);}
     catch(error){
       let rolledBack=true;
-      for(const e of transaction.entries){try{e.before===null?storage.removeItem(e.key):storage.setItem(e.key,e.before);}catch{rolledBack=false;}}
+      for(const e of transaction.entries){try{if(storage.getItem(e.key)!==e.before){e.before===null?storage.removeItem(e.key):storage.setItem(e.key,e.before);}}catch{rolledBack=false;}}
       if(rolledBack){try{storage.removeItem(PENDING);}catch{}}
       throw error;
     }

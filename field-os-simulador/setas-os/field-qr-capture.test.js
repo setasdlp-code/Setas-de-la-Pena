@@ -14,6 +14,7 @@ const harness=({failLocal=false,actions=['inspection'],eventWrite=async()=>{},lo
   setDiagLoteId:()=>{},setDiagBolsaId:()=>{},setDiagImageBase64:()=>{},setDiagResult:()=>{},setDiagError:()=>{},setDiagNotes:()=>{},setShowQrSheet:()=>{},setShowFieldActionModal:()=>{},setShowDiagModal:()=>{},bitBolsas:[],
   setBitActiveLoteId:()=>{},openHarvestCapture:()=>{},setShowBitCosecha:()=>{},console,
  };
+ context.writeLocal=(key,value)=>context.localStorage.setItem(key,value);
  const run=vm.runInNewContext(`${jsx.slice(start,end)};reportarEventoCultivo`,context);
  return {run:(event=null,tipo='observacion')=>run(tipo,{id:'L1'},null,'Observación de prueba',event),statuses:()=>statuses,writes,local:()=>local,notices,context};
 };

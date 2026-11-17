@@ -4,8 +4,8 @@ document_id: CANON-001
 authority: highest
 category: architecture
 load_priority: always
-version: 1.3
-last_reviewed: 2026-07-09
+version: 1.4
+last_reviewed: 2026-11-13
 status: canonical
 supersedes: null
 superseded_by: null
@@ -13,7 +13,7 @@ superseded_by: null
 
 # SETAS DE LA PEÑA — CANON
 
-## Architectural Reference Document — v1.2
+## Architectural Reference Document — v1.4
 
 ---
 
@@ -88,7 +88,7 @@ Infrastructure is built to production requirements, not aspirational requirement
 
 Environmental control is applied to production modules rather than entire buildings whenever technically and economically feasible. Conditioning smaller, well-defined volumes reduces biological risk by limiting the consequences of a single control failure, reduces operating costs by minimizing the energy required to maintain target parameters, reduces capital expenditure by deferring building-scale HVAC investment, and reduces energy consumption by matching conditioning capacity to actual biological demand. Module-level control also increases flexibility: individual modules can be taken offline, reconfigured, or operated at different parameters without affecting adjacent production.
 
-Physical infrastructure phases are defined in `04_facility/master_blueprint.md`. No phase is initiated before the preceding phase has produced at least one documented production cycle.
+Physical infrastructure phases are defined in `04_facility/master_blueprint.md`. By default, no phase is initiated before the preceding phase has produced at least one documented production cycle. Starting a phase earlier is a documented deviation (Section 16.1).
 
 ---
 
@@ -98,15 +98,17 @@ Laboratory capability is the technological foundation of this project. It is als
 
 The roadmap is:
 
-**Phase 1** — Still Air Box (SAB). Agar work. Tissue cloning. Commercial spawn. No pressure sterilization. No laminar flow. Operations begin here.
+**Level 1** — Still Air Box (SAB). Agar work. Tissue cloning. Commercial spawn.
 
-**Phase 2** — Internal grain spawn production. Pressure sterilization. Reduced dependency on commercial spawn suppliers.
+**Level 2** — Internal grain spawn production. Reduced dependency on commercial spawn suppliers.
 
-**Phase 3** — Laminar Flow Hood (LAF). Full axenic technique. Contamination risk substantially reduced at scale.
+**Level 3** — Laminar Flow Hood (LAF). Full axenic technique. Contamination risk substantially reduced at scale.
 
-**Phase 4** — Long-term culture library and strain preservation. Proprietary genetics. Multi-species production with internally maintained culture stock.
+**Level 4** — Long-term culture library and strain preservation. Proprietary genetics. Multi-species production with internally maintained culture stock.
 
-Laboratory capabilities are unlocked in sequence. No phase is initiated before the preceding phase is operationally stable. This sequencing exists to prevent contamination risk expansion before operators have the skills to manage it.
+Laboratory capabilities are unlocked in sequence by default: a level is not started before the preceding level is operationally stable. This sequencing exists to prevent contamination risk expansion before operators have the skills to manage it. Starting a level out of sequence is a documented deviation (Section 16.1).
+
+Substrate treatment is not a laboratory level. Whether a production substrate is pasteurized or pressure-sterilized is set by the biological requirement of the species and substrate in production (Section 15) and recorded in `DECISIONS.md` and the relevant SOP.
 
 Laminar flow is an operational evolution, not a prerequisite for beginning agar work. Agar technique is developed under SAB discipline in Phase 1 precisely so that the skills are in place before the equipment arrives.
 
@@ -124,7 +126,7 @@ A batch that does not meet quality thresholds is not sold. It is composted, and 
 
 Acceptance thresholds are defined in `06_operations/quality_control.md`. Batch tracking procedures are defined in `06_operations/batch_tracking.md`.
 
-Production of a second species is not initiated before the primary species has completed a minimum of three documented production cycles with BE within the defined acceptance range.
+By default, production of a second species is not initiated before the primary species has completed a minimum of three documented production cycles with BE within the defined acceptance range. Changing the primary species, or starting a second one earlier, is a documented deviation (Section 16.1).
 
 ---
 
@@ -146,11 +148,7 @@ No single control point governs all production modules. If the central Home Assi
 
 Automation architecture is defined in `05_equipment/environmental_control.md`. ESPHome configuration templates are maintained in that document.
 
-The following sensor decisions are permanent until superseded by field-validated alternatives:
-
-- VIVOSUN H05 integrated humidity sensor: **disqualified**. Bias of +30–35% relative humidity renders its readings operationally invalid.
-- SCD30 CO₂ sensor: configured with `altitude_compensation: 2600` at all times.
-- SHT3x (Sensirion): primary temperature and humidity sensor for all production modules.
+Sensor selection, disqualification, and configuration are decisions, not principles. They are recorded in `DECISIONS.md` (DEC-002, DEC-003) and specified in `05_equipment/environmental_control.md`.
 
 ---
 
@@ -223,7 +221,7 @@ The knowledge base follows a strict document hierarchy. Each document type has a
 | Operational Snapshot | Current state, priorities, constraints | `FARM_BRAIN.md` |
 | SOP | How a specific procedure is performed | `02_substrates/pasteurization.md` |
 | Species Profile | Stable biological parameters per species | `01_species/*.md` |
-| Decision Log | Why a specific decision was made | Embedded in `FARM_BRAIN.md` decisions table |
+| Decision Log | Why a specific decision was made | `DECISIONS.md` |
 | Research Entry | What the literature states, with evidence rating | `09_research/literature_database.md` |
 | Batch Log | What happened in a specific production cycle | `06_operations/batch_tracking.md` |
 | Metadata | Structured data for programmatic access | `metadata/*.yaml` |
@@ -389,12 +387,29 @@ Simplest acceptable solution (defined as: lowest complexity that satisfies all h
   ↓
 Measurement plan (how success will be evaluated and over what timeframe)
   ↓
-Documentation (decision, rationale, and measurement results recorded in FARM_BRAIN.md)
+Documentation (decision, rationale, and measurement results recorded in DECISIONS.md)
 ```
 
 No decision is permanent. Every decision is subject to revision when new Tier 1 evidence, changed operational constraints, or measured performance data justifies revision. The revision process follows the same sequence as the original decision.
 
 Reversing a previous decision requires the same documentation as making the original decision. Undocumented reversals are treated as decision-making failures, not operational flexibility.
+
+`FARM_BRAIN.md` reflects the state that results from a decision; it does not hold the decision record.
+
+## 16.1 Documented Deviation
+
+Some rules in this document are sequencing or coverage defaults: the infrastructure phase order (Section 4), the laboratory level order (Section 5), the second-species rule (Section 6), the redundancy policy (Section 17), and the measurement cycle (Section 18). They describe the path of lowest risk, and project constraints can justify leaving it.
+
+A deviation from one of these defaults is valid only when a `DECISIONS.md` entry made through the process above records:
+
+1. the default being set aside and the constraint that motivates it;
+2. the risk accepted, stated in operational terms;
+3. the controls that remain in force;
+4. the review criterion that ends or re-evaluates the deviation.
+
+A deviation without such an entry is a violation of this document. An entry of this kind does not conflict with this document under Section 14.
+
+The Core Principles (Section 3), the Strategic Priorities (Section 12), and the Engineering priority order (Section 15) are not defaults and cannot be set aside by a deviation. Changing them requires a revision of this document (Section 21).
 
 ---
 
@@ -403,7 +418,7 @@ Reversing a previous decision requires the same documentation as making the orig
 Risk management in this project is governed by the principle that reducing systemic risk is more important than maximizing production output. A production decision that increases contamination risk, sensor failure probability, or operator error rate is not justified by projected yield increases.
 
 **Redundancy policy:**
-Every critical measurement point has a backup sensor. Every critical actuator (humidifier, extractor) has a defined manual fallback procedure. Redundancy is not optional for parameters that directly govern biological outcomes.
+Every critical measurement point has a backup sensor. Every critical actuator (humidifier, extractor) has a defined manual fallback procedure. Operating a critical measurement point without redundancy, or without the measurement, is a documented deviation (Section 16.1); the missing value is recorded as missing, never estimated.
 
 **Single points of failure:**
 System design explicitly identifies single points of failure and documents the failure consequence and recovery procedure. A component is classified as a single point of failure if its failure stops production in more than one module simultaneously or destroys active batch data.
@@ -429,10 +444,12 @@ The cycle is:
 **Identify** → specific gap between current performance and target threshold.
 **Hypothesize** → specific, testable explanation for the gap.
 **Test** → controlled change to a single variable while holding others constant.
-**Measure** → performance under modified conditions over a statistically meaningful number of cycles.
+**Measure** → performance under modified conditions over enough cycles to separate the effect from batch-to-batch variation.
 **Document** → results, conclusions, and decision to adopt, reject, or iterate.
 
 Changes to SOPs, equipment configuration, or species parameters are implemented only after this cycle produces documented evidence of improvement. Simultaneous changes to multiple variables in the same production cycle invalidate the measurement cycle.
+
+This cycle governs optimization of a process that already has a measured baseline. Establishing a first procedure where no baseline exists, correcting a safety or containment defect, and adopting a change as provisional when the production scale cannot yet supply enough cycles are documented deviations (Section 16.1); a provisional change is labeled as such in the SOP until the cycle is completed.
 
 ---
 
@@ -483,9 +500,9 @@ A proposed revision to this document must demonstrate that an existing principle
 
 ---
 
-*Document version: 1.3*
-*Effective date: 2026-07-09*
+*Document version: 1.4*
+*Effective date: 2026-11-13*
 *Next scheduled review: 2026-12-29*
 *Authority: Chief Knowledge Architect — Setas de la Peña*
-*Supersedes: v1.2*
+*Supersedes: v1.3*
 *This document may only be revised through the decision process defined in Section 16.*

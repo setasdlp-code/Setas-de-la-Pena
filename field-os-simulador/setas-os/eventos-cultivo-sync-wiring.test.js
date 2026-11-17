@@ -49,7 +49,7 @@ test('reportarEventoCultivo confirma guardado local y respalda el log del lote',
   const end = jsx.indexOf('// Registra la acción elegida en la ficha');
   const body = jsx.slice(start, end);
   assert.match(body, /appendBatchEvent\(previousLog/);
-  assert.match(body, /localStorage\.setItem\('sdp_bit_lotes'/);
+  assert.match(body, /writeLocal\('sdp_bit_lotes'/);
   assert.match(body, /actualizarLote\(lote\.id,\{lifecycleEvents:nextLog\}\)/);
 });
 

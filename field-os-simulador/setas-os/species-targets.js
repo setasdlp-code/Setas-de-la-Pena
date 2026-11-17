@@ -8,7 +8,7 @@
 const BASIS = 'mix_dry_excl_additives';
 const SUPPLEMENTED_MIN_PCT = 2;
 const SUPPLEMENT_WEIGHT = { suplemento_n: 1, suplemento_medio: 0.6 };
-const HARDWOOD_IDS = new Set(['aserrin_roble', 'aserrin_alamo', 'aserrin_eucalipto']);
+const HARDWOOD_IDS = new Set(['pellets_weber_hickory', 'aserrin_roble', 'aserrin_alamo', 'aserrin_eucalipto']);
 
 const CITATIONS = {
   li2024: { authors: 'Li et al.', year: 2024, title: 'Ginkgo leaf powder in Pleurotus eryngii cultivation (Life)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11123215/' },

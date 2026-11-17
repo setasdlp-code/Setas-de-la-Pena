@@ -20,14 +20,21 @@ function setup(t, env, fail = false) {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const state = path.join(dir, 'state.json');
   fs.writeFileSync(state, 'stale prior authenticated state');
-  const calls = { launched: 0, closed: 0 };
+  const calls = { launched: 0, closed: 0, snapshots:0, persistenceWaits:0 };
+  const authenticatedState={origins:[{origin:'http://local.test',indexedDB:[{name:'firebaseLocalStorageDb',stores:[{name:'firebaseLocalStorage',records:[{key:'auth',value:{fbase_key:'firebase:authUser:synthetic',value:{uid:'test-uid'}}}]}]}]}]};
   const page = {
     goto: async () => { if (fail) throw Error('sensitive mocked browser error'); },
     locator: () => ({ waitFor: async () => {}, fill: async () => {}, click: async () => {} }),
-    waitForTimeout: async () => {},
+    evaluate: async () => {
+      calls.persistenceWaits++;
+      return calls.persistenceWaits>1;
+    },
     context: () => ({ storageState: async options => {
       assert.equal(options.indexedDB, true);
-      fs.writeFileSync(options.path, JSON.stringify({ origins: ['authenticated'] }));
+      calls.snapshots++;
+      assert.equal(calls.persistenceWaits,2,'Auth must be durable before exporting the session');
+      fs.writeFileSync(options.path,JSON.stringify(authenticatedState));
+      return authenticatedState;
     } }),
   };
   const chromium = { launch: async () => {
@@ -35,7 +42,7 @@ function setup(t, env, fail = false) {
     return { newPage: async () => page, close: async () => { calls.closed++; } };
   } };
   const policy = load('auth-policy.cjs', env);
-  const run = load('global-setup.js', env, { '@playwright/test': { chromium }, './auth-policy.cjs': policy });
+  const run = load('global-setup.js', env, { '@playwright/test': { chromium }, './auth-storage.cjs':require('./e2e/auth-storage.cjs'), './auth-policy.cjs': policy });
   return { run: () => run({ projects: [{ use: { baseURL: 'http://local.test', storageState: state } }] }), state, calls };
 }
 
@@ -77,7 +84,9 @@ test('successful login resets an inherited skip flag and saves IndexedDB auth st
   const s = setup(t, env);
   await s.run();
   assert.equal(env.E2E_AUTH_UNAVAILABLE, undefined);
-  assert.deepEqual(JSON.parse(fs.readFileSync(s.state)), { origins: ['authenticated'] });
+  assert.deepEqual(JSON.parse(fs.readFileSync(s.state)), { origins: [{origin:'http://local.test',indexedDB:[{name:'firebaseLocalStorageDb',stores:[{name:'firebaseLocalStorage',records:[{key:'auth',value:{fbase_key:'firebase:authUser:synthetic',value:{uid:'test-uid'}}}]}]}]}] });
+  assert.equal(s.calls.persistenceWaits,2);
+  assert.equal(s.calls.snapshots,1);
   assert.equal(s.calls.closed, 1);
 });
 

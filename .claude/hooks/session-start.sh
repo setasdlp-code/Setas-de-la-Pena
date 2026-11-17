@@ -27,7 +27,7 @@ echo "rama:    $branch (${dirty} archivo(s) sin commitear)"
 # editar evita descubrirlo al final, con el diff ya armado.
 if [ -f "$APP/simulador-app.js" ] && [ -f "$APP/simulador-app.jsx" ] && command -v node >/dev/null 2>&1; then
   banner=$(sed -n 's|^// source-hash: \([0-9a-f]\{64\}\)$|\1|p' "$APP/simulador-app.js" | head -1)
-  actual=$(node -e 'const c=require("node:crypto"),f=require("node:fs");process.stdout.write(c.createHash("sha256").update(f.readFileSync(process.argv[1])).digest("hex"))' "$APP/simulador-app.jsx" 2>/dev/null)
+  actual=$(cd "$APP" && node -e 'const b=require("./build.js");process.stdout.write(b.sourceHash(b.readSources()))' 2>/dev/null)
   if [ -z "$banner" ]; then
     echo "bundle:  SIN BANNER — correr 'node build.js'"
   elif [ "$banner" = "$actual" ]; then
@@ -46,13 +46,20 @@ else
   echo "corpus:  AUSENTE — cambios a analyze()/scoring.js/perito-scenarios.js no son verificables"
 fi
 
+# Dependencias: sin node_modules, unos tests unitarios fallan con "Cannot find
+# module" (yaml, fake-indexeddb). Es entorno, no producto; decirlo evita leerlo
+# como regresión.
+if [ -f "$APP/package.json" ] && [ ! -d "$APP/node_modules" ]; then
+  echo "deps:    node_modules AUSENTE — correr 'npm ci' en field-os-simulador/setas-os antes de los tests"
+fi
+
 # Gates de navegador: fallan por build de Chromium desalineado, no por código.
 if [ -n "$SETAS_CHROMIUM_EXECUTABLE" ] && [ -x "$SETAS_CHROMIUM_EXECUTABLE" ]; then
   echo "gates:   Chromium vía SETAS_CHROMIUM_EXECUTABLE"
 else
-  shell_bin=$(ls -d /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell 2>/dev/null | head -1)
+  shell_bin=$(ls -d /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell /opt/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell 2>/dev/null | head -1)
   if [ -n "$shell_bin" ]; then
-    echo "gates:   si 'npm run test:gates' falla por ejecutable ausente:"
+    echo "gates:   si 'npm run test:gates' o 'test:browser' fallan por ejecutable ausente:"
     echo "         export SETAS_CHROMIUM_EXECUTABLE=$shell_bin"
   fi
 fi

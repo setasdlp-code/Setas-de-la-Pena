@@ -98,3 +98,48 @@ test('unchanged retries preserve receipt time; conflicts cannot rewrite measured
   ] })).status, 409);
   assert.equal(JSON.stringify([...docs]), original);
 });
+
+test('two nodes in one room keep their own readings, positions and a spread between them', async t => {
+  const { db, docs } = memoryFirestore();
+  const publish = createFirestorePublisher({ db, serverTimestamp: () => 'server-time' });
+  const roomDevices = {
+    'nodo-bloques': { roomId: 'cloudlab_844', token: TOKEN, position: 'altura bloques' },
+    'nodo-niebla': { roomId: 'cloudlab_844', token: TOKEN, position: 'salida de niebla' },
+  };
+  const server = http.createServer(createPublisherHandler({ devices: roomDevices, publish }));
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const send = (device, data) => fetch(`http://127.0.0.1:${server.address().port}/api/telemetry`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Setas-Device': device, Authorization: `Bearer ${TOKEN}` }, body: JSON.stringify(data) });
+  const at = new Date().toISOString();
+  // A node cannot relabel itself: the position in its own packet is ignored.
+  assert.equal((await send('nodo-bloques', { observed_at: at, temperature_c: 18, rh_pct: 86, position: 'inventada' })).status, 200);
+  assert.equal((await send('nodo-niebla', { observed_at: at, temperature_c: 16.5, rh_pct: 95 })).status, 200);
+  const doc = docs.get('telemetria_salas/cloudlab_844');
+  assert.equal(doc.device_readings['nodo-bloques'].position, 'altura bloques');
+  assert.equal(doc.device_readings['nodo-bloques'].metrics.temperature_c.value, 18);
+  assert.equal(doc.device_readings['nodo-niebla'].metrics.rh_pct.value, 95);
+  const history = [...docs].filter(([ref]) => ref.startsWith('telemetria_lecturas/')).map(([, data]) => data);
+  assert.equal(history.length, 4);
+  assert.ok(history.every(row => row.position === roomDevices[row.device_id].position));
+
+  let snapshot;
+  const bridge = createLiveTelemetryBridge({ transports: [{ kind: 'firestore' }], factories: { firestore: (cfg, handlers) => { snapshot = handlers.onSnapshot; return { close() {} }; } } });
+  bridge.start();
+  t.after(() => bridge.stop());
+  snapshot({ cloudlab_844: doc });
+  const room = bridge.getSnapshot().rooms.cloudlab_844;
+  assert.deepEqual(Object.keys(room.devices).sort(), ['nodo-bloques', 'nodo-niebla']);
+  assert.equal(room.devices['nodo-niebla'].position, 'salida de niebla');
+  assert.equal(room.devices['nodo-bloques'].latest.temperature_c.value, 18);
+  assert.equal(room.devices['nodo-bloques'].freshMetrics.temperature_c, true);
+  assert.equal(room.spread.temperature_c.delta, 1.5);
+  assert.equal(room.spread.rh_pct.count, 2);
+  assert.equal(room.spread.co2_ppm, undefined, 'no spread without two fresh nodes');
+});
+
+test('device position must be a short plain label', () => {
+  const base = { roomId: 'martha_01', token: TOKEN };
+  assert.throws(() => createPublisherHandler({ devices: { n: { ...base, position: '<script>' } }, publish: async () => {} }), /position/);
+  assert.throws(() => createPublisherHandler({ devices: { n: { ...base, position: 'x'.repeat(41) } }, publish: async () => {} }), /position/);
+  assert.doesNotThrow(() => createPublisherHandler({ devices: { n: { ...base, position: 'Estante 2, atrás' } }, publish: async () => {} }));
+});

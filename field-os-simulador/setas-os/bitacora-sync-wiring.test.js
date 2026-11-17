@@ -74,7 +74,7 @@ test('cada mutador de Bitácora encola su operación en vez de dispararla y olvi
     const start = jsx.indexOf(ancla);
     assert.ok(start > -1, `no se encontró ${ancla}`);
     const body = jsx.slice(start, start + 2600);
-    assert.match(body, new RegExp(`encolarSync\\(\\{\\s*type:\\s*'${tipo}'`),
+    assert.match(body, new RegExp(`(?:encolarSync|syncQueueApi\\.createOperation)\\(\\{\\s*type:\\s*'${tipo}'`),
       `${nombre} debe encolar una operación ${tipo}`);
   });
 });

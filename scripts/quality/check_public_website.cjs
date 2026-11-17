@@ -216,12 +216,12 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(new URL(page.url()).pathname, '/setas');
     assert.equal(await page.locator('h1').count(), 1);
     assert.equal(await page.locator('#collection-title').evaluate(el => el.tagName), 'H1');
-    assert.deepEqual(await page.locator('.species-card h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
-    // Approved reduced home keeps its preparation guide collapsed and species dialog.
+    assert.deepEqual(await page.locator('.species-card .t-species').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
+    // The catalogue keeps the guide collapsed and links directly to species pages.
     assert.equal(await page.locator('#prep-guide').isVisible(), true);
     await page.locator('#prep-guide summary').click();
     await page.locator('[data-prep="asar"]').click();
-    assert.equal(await page.locator('.species-card:not([hidden]) h3').innerText(), 'Eryngii');
+    assert.equal(await page.locator('.species-card:not([hidden]) .t-species').innerText(), 'Eryngii');
     assert.equal(await page.locator('#species-dialog').count(), 0);
     await page.locator('#filter-reset').click();
     assert.equal(await page.locator('.species-card:not([hidden])').count(), 3);
@@ -325,7 +325,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.equal(new URL(page.url()).pathname, `/especies/${slug}`);
       assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
       assert.equal(await page.locator('h1').innerText(), name);
-      assert.equal(await page.locator('.editorial-sources li').count(), 6);
+      assert.ok(await page.locator('.editorial-sources li').count() >= 6, `${slug}: retain species sources and research references`);
       assert.equal(await page.locator('.editorial-other').count(), 2);
       await page.locator('.editorial-toc a[href="#cocina"]').click();
       assert.equal(new URL(page.url()).hash, '#cocina');
@@ -349,7 +349,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.recipe-status').count(), 1, 'one general development note per recetario');
     report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'direct catalogue entries for three species', 'two chef steps', 'nine links in the optional recipe index', 'one general note without repeated trial labels'] });
     // Fase 4: guía de preparación sobre la colección.
-    const visibleSpecies = () => page.locator('.species-card:not([hidden]) h3').allTextContents();
+    const visibleSpecies = () => page.locator('.species-card:not([hidden]) .t-species').allTextContents();
     await visit(page, 'setas#coleccion');
     assert.equal(await page.locator('#prep-guide').isVisible(), true);
     if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
@@ -362,7 +362,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.equal(await page.locator('#filter-reset').isVisible(), true);
     }
     await page.locator('[data-prep="asar"]').click();
-    assert.equal(await page.locator('.species-card:not([hidden]) .card-reason sup a').getAttribute('href'), '#source-culinary');
+    assert.equal(await page.locator('.card-reason sup').count(), 0, 'recipe recommendations link to their own recipes rather than citing the general species profile');
     await page.locator('[data-prep="sopa"]').click();
     assert.match(await page.locator('#filter-status').textContent(), /2 especies visibles para sopa o caldo/);
     await page.locator('.species-card:not([hidden]) .card-reason a.text-link').first().click();
@@ -376,6 +376,13 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#filter-empty').isVisible(), false);
     assert.equal(await page.locator('[data-prep="any"]').getAttribute('aria-pressed'), 'true');
     assert.equal(await page.locator('.card-reason:visible').count(), 0);
+    assert.equal(await page.locator('[data-prep="any"]').evaluate(el => el === document.activeElement), true, 'reset focuses Todas while the guide is open');
+    await page.locator('[data-prep="asar"]').click();
+    await page.locator('#prep-guide summary').click();
+    await page.locator('#filter-reset').click();
+    assert.equal(await page.locator('#prep-guide summary').evaluate(el => el === document.activeElement), true, 'reset focuses the visible summary when the guide is closed');
+    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Eryngii']);
+    await page.locator('#prep-guide summary').click();
     await page.locator('[data-prep="sopa"]').focus();
     await page.keyboard.press('Enter');
     assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león']);
@@ -387,6 +394,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       await visit(page, 'setas#coleccion');
       if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
       await page.locator('[data-prep="asar"]').click();
+      assert.deepEqual(await page.locator('.species-card:visible .t-species').allTextContents(), ['Eryngii'], `mobile filter hides the other cards at ${width}`);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= width, `guide overflow ${width}`);
       if (width === 390) await capture(page, 'guia-asar-390.png', '#coleccion');
     }
@@ -755,7 +763,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await staticPage.locator('.card-recipes').count(), 3);
     assert.equal(await staticPage.locator('#source-culinary').count(), 1);
     await staticPage.goto(base + 'setas');
-    assert.deepEqual(await staticPage.locator('.species-card:not([hidden]) h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
+    assert.deepEqual(await staticPage.locator('.species-card:not([hidden]) .t-species').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
     assert.equal(await staticPage.locator('#prep-guide').isVisible(), false);
     assert.equal(await staticPage.locator('.specimen-link[data-species="shiitake"]').isVisible(), true);
     await staticPage.locator('.specimen-link[data-species="shiitake"]').click();
@@ -779,7 +787,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await techniquesPage.locator('.knowledge-art').count(), 4);
     await visit(techniquesPage, 'cultivo');
     assert.equal(await techniquesPage.locator('#primary-nav a[aria-current="page"]').textContent(), 'Cultivo');
-    assert.equal(await techniquesPage.locator('.cultivation-system article').count(), 6);
+    assert.equal(await techniquesPage.locator('#sistema .cultivation-story').count(), 1);
+    assert.equal(await techniquesPage.locator('#sistema h2').textContent(), 'Tecnología al servicio del cultivo.');
+    assert.equal(await techniquesPage.locator('#sistema h3, #sistema article').count(), 0);
+    assert.equal(await techniquesPage.locator('#sistema .cultivation-ensemble img').count(), 7);
+    assert.match(await techniquesPage.locator('#sistema .cultivation-status').textContent(), /Estamos en preproducción/);
     assert.equal(await techniquesPage.locator('#del-cultivo .knowledge-art').count(), 4);
     await visit(techniquesPage, 'cocina#tecnicas');
     assert.equal(await techniquesPage.locator('#tecnicas a[href="/tecnicas"]').count(), 1);

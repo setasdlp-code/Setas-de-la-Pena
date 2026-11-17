@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const ROOT = __dirname;
 const JSX_PATH = path.join(ROOT, 'simulador-app.jsx');
 const JS_PATH = path.join(ROOT, 'simulador-app.js');
-const jsx = fs.readFileSync(JSX_PATH, 'utf8');
+const jsx = require('./test-support/jsx-source.js').readJsxSource();
 const js = fs.readFileSync(JS_PATH, 'utf8');
 
 const sweepJournal = require('./sweep-journal.js');
@@ -88,4 +88,24 @@ test('Integración de Contrato: canastillas -> resolución uniforme -> normaliza
   assert.equal(normMissing.pesoBrutoGramos, 1500);
   assert.equal(normMissing.pesoFrescoGramos, null);
   assert.equal(normMissing.netCalculationStatus, 'blocked_missing_tare');
+});
+
+test('canastilla: calidad opcional no cambia el registro sin calidad y alimenta harvestGradeGap con el neto', () => {
+  const base = { crateId: 'crate_CAN-01', crateCode: 'CAN-01', pesoBrutoGramos: 1500, taraGramos: 420, taraSource: 'field_measured', flush: 1 };
+  const plain = bitacoraModel.normalizeHarvestCapture(base);
+  assert.equal(plain.criterioGrado, null);
+  for (const k of ['pesoPrimera', 'pesoSegunda', 'pesoDescarte', 'firmeza']) {
+    assert.ok(plain[k] == null, `${k} no debe traer valor sin calidad`);
+  }
+  assert.equal(plain.calidad, null, 'la canastilla ya no escribe calidad 1/2/3');
+
+  const withQ = bitacoraModel.normalizeHarvestCapture({ ...base, pesoPrimera: 900, defectosCampo: ['sobremaduro'] });
+  assert.equal(withQ.pesoPrimera, 900);
+  assert.ok(Array.isArray(withQ.defectosCampo));
+  const gap = bitacoraModel.harvestGradeGap(withQ);
+  assert.notEqual(gap.status, 'no_net_weight');
+
+  const noTare = bitacoraModel.normalizeHarvestCapture({ ...base, taraGramos: null, taraSource: 'unverified', pesoPrimera: 900 });
+  assert.equal(noTare.pesoFrescoGramos, null);
+  assert.equal(bitacoraModel.harvestGradeGap(noTare).status, 'no_net_weight');
 });

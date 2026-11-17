@@ -20,9 +20,8 @@ que nada lo señale. Este skill corre el detector de esa divergencia.
   en `Setas OS v5.dc.html`.
 - Periódicamente como auditoría, incluso sin cambios recientes — la
   divergencia se acumula en silencio.
-- Nunca como gate de CI todavía: no está cableado en
-  `scripts/quality/run.sh` ni en `.github/workflows/quality.yml` (ver
-  «Por qué no es un gate todavía»).
+- Ya corre como compuerta: `scripts/quality/run.sh` lo ejecuta con
+  `--fail-on-mismatch` (ver «Qué bloquea la compuerta»).
 
 ## Cómo correrlo
 
@@ -97,18 +96,17 @@ default: la decisión de cuál corregir es humana.
   aparecerá como no parseado (sin candidatos) en vez de como número
   incorrecto — revisa el texto fuente si ves eso.
 
-## Por qué no es un gate todavía
+## Qué bloquea la compuerta
 
-La primera corrida real produjo ruido esperado, en particular:
-`extraction-factors.json` completo no tiene ninguna fuente en
-`knowledge_base/` — sus `yield_factor`, `optimal_alcohol_pct`, etc. no están
-documentados en ningún archivo de especie ni de investigación. Eso es un
-hueco de documentación real, pero cablear el checker como gate bloqueante
-antes de triar ese ruido rompería el primer PR que lo toque por una razón
-que no tiene nada que ver con ese PR. Cuando el ruido conocido esté triado
-(documentar las fuentes que faltan, o marcar explícitamente el gap como
-aceptado), agregar la línea a `scripts/quality/run.sh` y a
-`.github/workflows/quality.yml` es la única extensión pendiente.
+`scripts/quality/run.sh` corre `check_kb_sync.py --fail-on-mismatch`. Bloquea
+solo un `value_mismatch` de severidad `real`. Las diferencias de representación
+y los parámetros que existen en un solo lado son informativos.
+
+Hueco conocido y abierto: `extraction-factors.json` completo no tiene fuente en
+`knowledge_base/` (`yield_factor`, `optimal_alcohol_pct`, etc.). Aparece como
+`present_in_app_absent_from_kb` y no bloquea. Cerrarlo exige documentar las
+fuentes en el knowledge base —edición canónica, con autorización— o retirar esos
+valores del app; no se resuelve inventando una referencia.
 
 ## Extender el catálogo de puntos de comparación
 

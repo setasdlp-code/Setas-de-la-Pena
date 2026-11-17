@@ -153,6 +153,60 @@
     fechaMezcla:form.fechaMezcla||null,fechaInoculacion:form.fechaInoculacion||null,
     tratamiento:form.tratamiento||null
   });
+  // Calidad de cosecha: pesos por grado, firmeza ordinal y defectos de campo.
+  // Los criterios de grado no tienen versión ni aprobación: se declaran como tales.
+  const HARVEST_QUALITY = Object.freeze({
+    CRITERIA: 'provisional_unversioned',
+    FIRMNESS_METHOD: 'tacto_ordinal',
+    FIRMNESS_SCALE: 'v0_texto',
+    // Anclas de texto aprobadas por el usuario el 2026-11-16.
+    FIRMNESS_ANCHORS: Object.freeze({
+      1: 'Blando: cede con presión leve',
+      3: 'Firme: resiste presión moderada',
+      5: 'Muy firme: no cede al presionar',
+    }),
+    GRADE_FIELDS: Object.freeze(['pesoPrimera', 'pesoSegunda', 'pesoDescarte']),
+    GAP_TOLERANCE_PCT: 0.01,
+    GAP_TOLERANCE_G: 5,
+    FIELD_DEFECTS: Object.freeze([
+      Object.freeze({ key: 'bacterial_suspect', label: 'Manchas bacterianas', v01Code: 'bacterial_suspect' }),
+      Object.freeze({ key: 'surface_dryness', label: 'Deshidratación', v01Code: 'surface_dryness' }),
+      Object.freeze({ key: 'mechanical_damage', label: 'Daño mecánico', v01Code: 'mechanical_damage' }),
+      Object.freeze({ key: 'sporulation', label: 'Esporulación', v01Code: null }),
+      Object.freeze({ key: 'stipe_elongated', label: 'Estípite alargado', v01Code: null }),
+      Object.freeze({ key: 'edge_curl_lost', label: 'Borde enrollado perdido', v01Code: null }),
+    ]),
+  });
+  const fieldDefectsFor = speciesKey =>
+    HARVEST_QUALITY.FIELD_DEFECTS.filter(d => d.v01Code !== null || (speciesKey !== 'lions_mane' && speciesKey !== 'reishi'));
+  const harvestGradeGap = cosecha => {
+    const c = cosecha || {};
+    const factor = (c.unit || c.unidad) === 'kg' ? 1000 : 1;
+    const toG = v => { const n = captureNumber(v); return n === null || !Number.isFinite(n) ? null : n * factor; };
+    const grades = HARVEST_QUALITY.GRADE_FIELDS.map(f => toG(c[f]));
+    const declared = grades.filter(g => g !== null);
+    const netG = toG(c.pesoFrescoGramos ?? c.pesoFresco);
+    const out = { status: null, sumG: null, netG, gapG: null, toleranceG: null };
+    if (!declared.length) return { ...out, status: 'no_grades' };
+    const sumG = declared.reduce((a, b) => a + b, 0);
+    if (netG === null) return { ...out, sumG, status: 'no_net_weight' };
+    if (declared.length < grades.length) return { ...out, sumG, status: 'incomplete' };
+    const gapG = Math.abs(sumG - netG);
+    const toleranceG = Math.max(HARVEST_QUALITY.GAP_TOLERANCE_PCT * netG, HARVEST_QUALITY.GAP_TOLERANCE_G);
+    return { status: gapG <= toleranceG ? 'ok' : 'over_tolerance', sumG, netG, gapG, toleranceG };
+  };
+  // Valida los campos de calidad antes de guardar (la captura por canastilla no
+  // pasa por captureFields). Devuelve '' o el primer error, en español.
+  const harvestQualityError = q => {
+    const v = q || {};
+    const labels = { pesoPrimera: 'Primera', pesoSegunda: 'Segunda', pesoDescarte: 'Descarte' };
+    for (const f of HARVEST_QUALITY.GRADE_FIELDS) {
+      const e = captureError(v[f], { min: 0, integer: true });
+      if (e) return `Peso ${labels[f]}: ${e}`;
+    }
+    const e = captureError(v.firmeza, { min: 1, max: 5, integer: true });
+    return e ? `Firmeza: ${e}` : '';
+  };
   const normalizeHarvestCapture = form => {
     const rawPesoFresco = captureNumber(form.pesoFresco ?? form.pesoFrescoGramos);
     const bruto = captureNumber(form.pesoBrutoGramos ?? form.pesoBruto);
@@ -180,9 +234,23 @@
     }
 
     const bagId = form.bagId || form.bolsaId || null;
+    const pesoPrimera = captureNumber(form.pesoPrimera);
+    const pesoSegunda = captureNumber(form.pesoSegunda);
+    const pesoDescarte = captureNumber(form.pesoDescarte);
+    const firmeza = captureNumber(form.firmeza);
+    const defectCodes = Array.isArray(form.defectCodes)
+      ? [...new Set(form.defectCodes.map(d => String(d || '').trim()).filter(Boolean))]
+      : [];
+    const defectosCampo = Array.isArray(form.defectosCampo)
+      ? [...new Set(form.defectosCampo.map(d => String(d || '').trim()).filter(Boolean))]
+      : [];
+    // Solo coincidencias exactas con el vocabulario v0.1 pasan a defectCodes.
+    const v01 = new Set(HARVEST_QUALITY.FIELD_DEFECTS.map(d => d.v01Code).filter(Boolean));
+    defectosCampo.forEach(d => { if (v01.has(d) && !defectCodes.includes(d)) defectCodes.push(d); });
+    const { colorOrdinal: _noColor, ...rest } = form;
 
     return {
-      ...form,
+      ...rest,
       bagId,
       bolsaId: bagId,
       crateId: form.crateId || null,
@@ -207,9 +275,15 @@
       // normaliza la captura, no juzga el contenido.
       capDiameterMm: captureNumber(form.capDiameterMm),
       stipeLengthMm: captureNumber(form.stipeLengthMm),
-      defectCodes: Array.isArray(form.defectCodes)
-        ? [...new Set(form.defectCodes.map(d => String(d || '').trim()).filter(Boolean))]
-        : [],
+      defectCodes,
+      pesoPrimera,
+      pesoSegunda,
+      pesoDescarte,
+      criterioGrado: [pesoPrimera, pesoSegunda, pesoDescarte].some(v => v !== null) ? HARVEST_QUALITY.CRITERIA : null,
+      firmeza,
+      firmezaMetodo: firmeza !== null ? HARVEST_QUALITY.FIRMNESS_METHOD : null,
+      firmezaEscala: firmeza !== null ? HARVEST_QUALITY.FIRMNESS_SCALE : null,
+      defectosCampo,
       phenotypeStage: form.phenotypeStage || null,
       observerNotes: form.observerNotes || null,
     };
@@ -221,7 +295,29 @@
     try { entries.forEach(([key,value])=>storage.setItem(key,JSON.stringify(value))); }
     catch(error) { before.forEach(([key,value])=>{try{value===null?storage.removeItem(key):storage.setItem(key,value);}catch{}}); throw error; }
   };
-  const api = { economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture };
+  // Lectura manual de temperatura de SUPERFICIE de una bolsa (termómetro
+  // infrarrojo). No es temperatura de núcleo: sirve para comparar bolsa contra
+  // aire, bolsa contra bolsa y visita contra visita (DEC-023). Se agrega al
+  // historial de la bolsa; nunca reemplaza una lectura anterior.
+  const SURFACE_READING_LIMIT = 200;
+  const appendSurfaceReading = (bolsa, { tempC, airC = null, at, operador } = {}) => {
+    const surface = captureNumber(tempC);
+    if (!Number.isFinite(surface) || surface < -10 || surface > 80) return { ok: false, error: 'Superficie: ingresar una temperatura entre -10 y 80 °C.' };
+    const hasAir = airC !== null && airC !== undefined && String(airC).trim() !== '';
+    const air = hasAir ? captureNumber(airC) : null;
+    if (hasAir && (!Number.isFinite(air) || air < -10 || air > 60)) return { ok: false, error: 'Aire: ingresar una temperatura entre -10 y 60 °C o dejar vacío.' };
+    const when = new Date(at || Date.now());
+    if (isNaN(when.getTime())) return { ok: false, error: 'Fecha de lectura inválida.' };
+    const reading = {
+      tempC: surface, airC: air,
+      deltaC: air === null ? null : Math.round((surface - air) * 10) / 10,
+      at: when.toISOString(), operador: String(operador || 'operario_local'),
+      metodo: 'infrarrojo_superficie',
+    };
+    const previous = Array.isArray(bolsa && bolsa.lecturasSuperficie) ? bolsa.lecturasSuperficie : [];
+    return { ok: true, reading, lecturasSuperficie: [...previous, reading].slice(-SURFACE_READING_LIMIT) };
+  };
+  const api = { appendSurfaceReading, economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture, HARVEST_QUALITY, fieldDefectsFor, harvestGradeGap, harvestQualityError };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasBitacora = api;
 })();

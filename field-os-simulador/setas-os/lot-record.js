@@ -46,6 +46,9 @@
   const getHistory = () => (typeof module !== 'undefined' && module.exports)
     ? require('./historical-calibration.js') : globalThis.SetasHistoricalCalibration;
 
+  const getBitacora = () => (typeof module !== 'undefined' && module.exports)
+    ? require('./bitacora-model.js') : globalThis.SetasBitacora;
+
   // ── EB: la base del denominador, declarada ────────────────────────────────
   //
   // `calcLoteStats` calcula `be = fresco / peseSeco * 100`, con `peseSeco` =
@@ -357,6 +360,110 @@
     };
   }).filter((o) => o.measured);
 
+  // ── calidad de cosecha ────────────────────────────────────────────────────
+  //
+  // Pesos por grado, firmeza ordinal y defectos de campo, agrupados por
+  // oleada. Va en `record.quality`, NO en `gaps`/`answers`: ninguna pregunta de
+  // QUESTIONS depende de la calidad, así que sus huecos (`quality.gaps`) no
+  // pueden bloquear elegibilidad. Mezclarlos con `record.gaps` cambiaría las
+  // respuestas de lotes existentes por un dato que ninguna pregunta usa.
+  //
+  // Un grado no declarado es null, nunca 0: un 0 implícito inventaría que no
+  // hubo descarte. La diferencia contra el neto se calcula por cosecha —sumar
+  // la oleada dejaría que dos errores opuestos se compensen.
+  const GRADE_KEYS = [['primera', 'pesoPrimera'], ['segunda', 'pesoSegunda'], ['descarte', 'pesoDescarte']];
+  const gradeWeight = (value) => {
+    const n = num(value);
+    return n != null && Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  const validFirmness = (value) => {
+    const n = num(value);
+    return Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
+  };
+  const qualityBlock = (cosechas) => {
+    const HQ = getBitacora().HARVEST_QUALITY;
+    const knownDefects = new Set(HQ.FIELD_DEFECTS.map((d) => d.key));
+    const byFlush = new Map();
+    let anyQuality = false;
+    let provisional = false;
+
+    cosechas.forEach((c) => {
+      const flush = Math.trunc(num(c.flush) ?? 1) || 1;
+      if (!byFlush.has(flush)) {
+        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, anyGrade: false, ungraded: false, firm: [], defects: [], undeclared: [], harvests: [] });
+      }
+      const f = byFlush.get(flush);
+      const factor = (c.unit || c.unidad) === 'kg' ? 1000 : 1;
+      const sane = { ...c };
+      let declaredGrade = false;
+      GRADE_KEYS.forEach(([k, field]) => {
+        const w = gradeWeight(c[field]);
+        sane[field] = w;
+        if (w == null) return;
+        declaredGrade = true;
+        f.grams[k] = (f.grams[k] ?? 0) + w * factor;
+      });
+      // Una cosecha sin los tres grados (a medias o sin ninguno) deja sin
+      // reparto una parte de la masa de la oleada. Si otra cosecha de la misma
+      // oleada sí declara grados, las fracciones no representan la oleada.
+      if (GRADE_KEYS.some(([, field]) => sane[field] == null)) f.ungraded = true;
+      if (declaredGrade) {
+        f.anyGrade = true;
+        anyQuality = true;
+        // No existe criterio versionado: declarar cualquier grado es provisional.
+        provisional = true;
+      }
+      const firm = validFirmness(c.firmeza);
+      if (firm != null) { f.firm.push(firm); anyQuality = true; }
+      const defects = Array.isArray(c.defectosCampo)
+        ? c.defectosCampo.map((d) => String(d || '').trim()).filter(Boolean) : [];
+      if (defects.length) anyQuality = true;
+      defects.forEach((d) => {
+        const list = knownDefects.has(d) ? f.defects : f.undeclared;
+        if (!list.includes(d)) list.push(d);
+      });
+      f.harvests.push({ harvestId: c.id || null, gap: getBitacora().harvestGradeGap(sane) });
+    });
+
+    const flushes = [...byFlush.values()].sort((a, b) => a.flush - b.flush).map((f) => {
+      const g = f.grams;
+      const complete = !(f.anyGrade && f.ungraded) && GRADE_KEYS.every(([k]) => g[k] != null);
+      const total = complete ? g.primera + g.segunda + g.descarte : 0;
+      const kg = (v) => (v == null ? null : v / 1000);
+      return {
+        flush: f.flush,
+        gradeKg: { primera: kg(g.primera), segunda: kg(g.segunda), descarte: kg(g.descarte) },
+        gradeFractions: complete && total > 0
+          ? { primera: g.primera / total, segunda: g.segunda / total, descarte: g.descarte / total } : null,
+        fractionsStatus: complete && total > 0 ? 'complete' : 'incomplete',
+        firmness: f.firm.length
+          ? { values: f.firm, method: HQ.FIRMNESS_METHOD, scale: HQ.FIRMNESS_SCALE } : null,
+        fieldDefects: f.defects,
+        undeclaredFieldDefects: f.undeclared,
+        harvests: f.harvests,
+      };
+    });
+
+    const gaps = [];
+    if (!anyQuality) {
+      gaps.push({ code: 'quality_unrecorded', detail: 'Ninguna cosecha registra pesos por grado, firmeza ni defectos de campo.' });
+    }
+    if (provisional) {
+      gaps.push({ code: 'grade_criteria_provisional', detail: 'Los criterios de grado son provisionales y sin versión aprobada.' });
+    }
+    return {
+      criteria: HQ.CRITERIA,
+      flushes,
+      gaps,
+      provenance: {
+        gradeKg: 'operator_declared_grade',
+        firmness: 'operator_ordinal_text_anchored',
+        capDiameter: 'observed_field_measured',
+        defects: 'observed_field_measured',
+      },
+    };
+  };
+
   // ── huecos ────────────────────────────────────────────────────────────────
   //
   // Lo que este lote NO puede responder, y por qué. Mismo patrón que
@@ -473,6 +580,7 @@
       environmentByStage: stages,
       phenotype,
       gaps,
+      quality: qualityBlock(loteCosechas),
       // `answers` no dice que el lote pruebe nada: dice si puede ENTRAR en el
       // análisis de esa pregunta. Un lote elegible sigue siendo una
       // observación, no un experimento controlado (ver experiment-model.js).

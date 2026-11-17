@@ -14,6 +14,7 @@ related_documents:
   - pricing.md
   - 08_brand/identity.md
   - ../09_research/colombia_mushroom_market_synthesis_2026-11-03.md
+  - ../09_research/intake/precios_competitivos_shiitake_melena_2026-11-09.md
 ---
 
 # Executive Summary

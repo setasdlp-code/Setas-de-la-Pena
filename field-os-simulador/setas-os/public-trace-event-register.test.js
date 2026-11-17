@@ -214,7 +214,7 @@ test('Deep-Linking: navigation-state.js expone resolveOperationalTarget compatib
 });
 
 test('Setas OS: simulador-app.jsx implementa bitLotesLoaded e initialDeepLinkHandled para evitar drop de deep links', () => {
-  const appSource = fs.readFileSync(SIMULADOR_APP_PATH, 'utf8');
+  const appSource = require('./test-support/jsx-source.js').readJsxSource();
 
   assert.match(appSource, /const \[bitLotesLoaded,\s*setBitLotesLoaded\]\s*=\s*useState\(false\);/);
   assert.match(appSource, /const initialDeepLinkHandled\s*=\s*useRef\(false\);/);
@@ -277,7 +277,7 @@ test('Round-Trip: De identidad a URL pública, luego deep-link de Setas OS, lueg
 // ────────────────────────────────────────────────────────────────────────────
 
 test('Setas OS: Bitácora expone sincronización de fichas públicas y soporte de canastillas', () => {
-  const appSource = fs.readFileSync(SIMULADOR_APP_PATH, 'utf8');
+  const appSource = require('./test-support/jsx-source.js').readJsxSource();
 
   // Función de sincronización administrativa
   assert.match(appSource, /const sincronizarFichasPublicas = async/);

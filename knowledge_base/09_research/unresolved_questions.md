@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-17
 confidence: high
 primary_sources:
   - Internal records
@@ -268,3 +268,29 @@ Una pregunta se cierra únicamente cuando existe:
 ## Evidencia consultiva añadida — 2026-11-08
 
 `09_research/tendencias_cultivo_shiitake_2026-11-08.md` (DOC-0144) abre SH16 (luz) y SH17 (sustitución por tusa/bagazo). Aporta evidencia indirecta a SH02/SH07 (la cepa domina la BE), SH05 (pasteurización sin validar en rendimiento; mantener 121 °C) y SH08 (otro caso de BE declarada en base seca y calculada en base húmeda). No cierra preguntas.
+
+## Criterios de calidad por cosecha — 2026-11-16
+
+Setas OS ya captura peso por grado (primera/segunda/descarte), firmeza ordinal 1–5 y defectos de campo por cosecha, marcados `provisional_unversioned`. Fuente: `docs/superpowers/specs/2026-11-14-harvest-quality-design.md` (sección "Criterios por especie que faltan"). Estas preguntas siguen abiertas y no cierran ningún umbral:
+
+| ID | Pregunta | Evidencia requerida | Estado |
+|---|---|---|---|
+| CQ01 | ¿Qué diámetro de píleo y masa unitaria separan primera, segunda y descarte para *L. edodes* (especie activa) y luego *P. ostreatus*, *P. djamor*, *P. eryngii*? *H. erinaceus* no tiene píleo (usa `bounding_*_mm`, `compactness_index`, `spine_length_mm`); *G. lucidum* no figura en `phenotype_dictionary_v0.1.md` | Especificación acordada con compradores y unidad de muestreo (individuo o distribución, `size_uniformity_cv`, `fruit_count`) | Abierta |
+| CQ02 | ¿Qué método y escala de firmeza se usa por especie, y a qué corresponde 1/3/5 fuera del tacto? | Método repetible (`firmness_proxy` exige registrar el método); `calidad_poscosecha_economia_shiitake_2026-11-04.md` pide no imponer diámetro sin evidencia comercial | Abierta |
+| CQ03 | ¿Qué referencia de color (`cap_color_Lab` o anclas fotográficas) se adopta? Diferido en Setas OS | Calibración por especie | Abierta |
+| CQ04 | Definición operativa de esporulación, estípite alargado y borde enrollado perdido (campos canónicos cercanos: `edge_dryness_score`, `edge_damage_fraction`, `cap_curvature_score`) | Anclas fotográficas y acuerdo de observadores | Abierta |
+| CQ05 | Longitud de corte de pie acordada con el comprador | Especificación del comprador | Abierta |
+| CQ06 | Equivalencia entre primera/segunda y Premium/Estándar provisional de `06_operations/quality_control.md` | Decisión humana | Abierta |
+| CQ07 | El CANON (`SETAS_DE_LA_PENA_CANON.md:268`, "Grade A Yield ≥80 %") y `quality_control.md` ("umbral pendiente") se contradicen | Decisión humana; el 80 % es hipótesis (`auditoria_seleccion_inoculo_shiitake_2026-11-03.md:73`) | Abierta |
+
+Hasta cerrar CQ01–CQ07, los grados no se comparan entre especies ni contra el KPI "Grade A Yield".
+
+Verificación 2026-11-17 (CQ01–CQ07): dos búsquedas independientes confirman que **ninguna de las siete preguntas queda cerrada**. El acceso a los textos completos falló (EUR-Lex, UNECE, FAO, PMC, doi.org: sin resolución de nombres; MDPI: 403 del proxy), así que todo lo siguiente proviene de fragmentos de búsqueda y es **unverified**; sirve como pista de lectura, no como evidencia.
+
+- CQ01/CQ05/CQ06/CQ07: UNECE FFV-24 y la norma UE de setas cultivadas calibran por diámetro de sombrero y definen clases Extra/I/II (tres, frente a las dos de Setas), probablemente solo para *Agaricus*. No se halló norma para *Lentinula* ni *Pleurotus* ni una definición de "Grade A". Pistas por leer: UNECE FFV-24, Reg. (CE) 1863/2004 y su sucesor vigente, Codex CXS 38-1981, clases de diámetro ASEAN para ostra y shiitake, grados de tamaño de *Hericium* en un estudio de visión artificial.
+- CQ02: hay métodos instrumentales (penetración/compresión con analizador de textura) y un antecedente de escala 1–5 por tacto del cosechador anclada a un analizador de textura (Tier 3, patente). No se halló validación revisada por pares de una escala por presión del dedo ni valores por especie. Riesgo anotado: "muy firme" puede confundirse con inmaduro; registrar la madurez aparte.
+- CQ03: método L*a*b* (colorímetro, tono, índice de pardeamiento); sin tabla de referencia por especie ni anclas fotográficas.
+- CQ04: la mancha bacteriana tiene una escala 0–5 publicada; esporulación y borde enrollado perdido no tienen definición ni escala citable (el borde curvado aparece como marcador de madurez, no como defecto); estípite alargado asociado a CO₂ se vio en *Flammulina*, no en *Pleurotus*.
+- Siguen requiriendo acuerdo con comprador o validación local: unidad de muestreo y n por cosecha, longitud de pie, clases y umbral de Grade A.
+
+Para cerrar la verificación hay que permitir esos hosts en la red de la sesión y leer los textos primarios.

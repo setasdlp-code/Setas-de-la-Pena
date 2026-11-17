@@ -102,6 +102,8 @@ Identificar cada sonda física y marcar aire a altura de carga, cara superior de
 | Mapa térmico y núcleo | No se confirmó stock de DS18B20 ni direcciones de sondas. Las exigencias de calificación siguen vigentes; el SHT45 de aire no las sustituye. No habilitar lecturas de núcleo o sustrato a partir de valores de ejemplo. |
 | CO₂ | El único MH-Z19C registrado está propuesto para Cloudlab. No asignar CO₂ a esta incubadora por defecto. La propiedad de SCD30 sigue en contradicción entre documentos y no se presupone resuelta. |
 
+**Actualización 2026-11-12 (DEC-023):** el propietario decidió no usar sondas de núcleo ni DS18B20 por ahora. Los puntos de medición de superficie indicados arriba (acero, extremos, juntas, apoyos de madera, piso) se toman a mano con termómetro infrarrojo sobre parches fijos de cinta mate, y cada bolsa en un punto marcado. Son lecturas comparativas, no temperatura de núcleo, y no sustituyen las protecciones de la sección 5.
+
 El perfil [esphome-incubacion.yaml](../../field-os-simulador/setas-os/telemetry-publisher/esphome-incubacion.yaml) propone I²C con SDA en GPIO21, SCL en GPIO22 y dirección `0x44`. Confirmar el pinout y la alimentación de la sonda concreta antes de conectar; estos valores de firmware no identifican colores ni terminales de un cable físico. El perfil es **solo de telemetría**: no reemplaza el firmware de control térmico ni añade acciones de relé.
 
 La ruta propuesta es **SHT45 → ESP32/ESPHome → HTTPS en Raspberry Pi Zero 2 W → Firestore → Módulos de Setas OS**. El Pi 4 conserva su función de Home Assistant. El sistema operativo, alimentación, almacenamiento, dirección de red y certificado del Pi Zero aún requieren verificación; su existencia en inventario no demuestra que el publicador esté instalado.

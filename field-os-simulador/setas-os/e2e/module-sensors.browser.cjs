@@ -85,6 +85,15 @@ const root = path.resolve(__dirname, '..');
       await expect(unknown.locator('[data-metric="temperature_c"] strong')).toHaveText('—');
       await cloud.click();
       await expect(cloud).toHaveAttribute('aria-pressed', 'true');
+      // A second node in the same room keeps its own row; the spread uses both.
+      await send({ room_id: 'cloudlab_844', device_id: 'sensor-cloud-2', observed_at: at, temperature_c: 19 });
+      const perDevice = page.getByTestId('room-device-readings');
+      await expect(perDevice.locator('[data-device-id="sensor-cloud"] [data-metric="temperature_c"]')).toHaveText('21°C');
+      await expect(perDevice.locator('[data-device-id="sensor-cloud-2"] [data-metric="temperature_c"]')).toHaveText('19°C');
+      await expect(perDevice.locator('[data-device-id="sensor-cloud-2"] [data-metric="rh_pct"]')).toHaveText('—');
+      await expect(page.getByTestId('room-device-spread').locator('[data-metric="temperature_c"]')).toHaveText('2°C');
+      await expect(page.getByTestId('climate-bands-provisional')).toHaveAttribute('data-band-origin', 'room');
+      await expect(page.getByTestId('climate-substrate-missing')).toContainText('sin sensor de núcleo');
       await expect(martha.locator('[data-metric="temperature_c"] strong')).toHaveText('19°C');
       assert.deepEqual(errors, []);
       await page.close();

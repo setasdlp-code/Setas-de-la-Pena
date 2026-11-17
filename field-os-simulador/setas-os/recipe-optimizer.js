@@ -1041,6 +1041,20 @@
     });
 
     items.sort((a, b) => (b.predictedScore ?? -1) - (a.predictedScore ?? -1));
+    if(an.estimatedCompositionIds?.length||recipe.some(r=>Number(r.p)>0&&effectiveINGS.find(g=>g.id===r.id)?.compositionStatus==='estimated')) {
+      const compositionIcons=new Set(['↓C:N','↑C:N','↑N','↓N','↑pH','↓pH','↑EB','Ca','Dig','→N','→C','$↓']);
+      items.forEach(item=>{
+        if(!item.apply&&!item.comboApply&&!compositionIcons.has(item.icon)) return;
+        delete item.apply; delete item.comboApply; delete item.morphTargetRecipe;
+        delete item.alternativeFor; delete item.sameAdjustmentAs;
+        delete item.effect; delete item.delta; delete item.comboPredictedScore;
+        item.compositionPending=true;
+        item.riskIfIgnored='No reformular a partir de una composición estimada sin validar el insumo.';
+        item.action='Composición estimada: revisar sensibilidad y conservar la receta de referencia antes de decidir dosis.';
+        delete item.predictedScore;
+      });
+      items.push({priority:'info',icon:'≈',label:'Composición provisional',action:'C y N son hipótesis bibliográficas, no mediciones de estos pellets. No aplicar una reformulación automática.'});
+    }
     return { score, status: statusFromScore, items };
   };
 

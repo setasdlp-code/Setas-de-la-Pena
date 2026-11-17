@@ -46,7 +46,13 @@ const PROTECTED_APP_SCRIPTS = [
   // cargarse, así que el orden entre estos dos importa.
   "../substrate-catalog.js",
   "../substrate-analysis.js",
+  "../perito-composition-scenarios.js",
   "../substrate-diagnosis.js",
+  // Datos y generadores de texto extraídos del JSX; sin dependencias de carga.
+  "../species-editorial.js",
+  "../iot-firmware.js",
+  // Usa window.QRMini al llamar, no al cargar.
+  "../thermal-label.js",
   "../scoring.js",
   "../bitacora-model.js",
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada
@@ -85,6 +91,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../post-harvest-engine.js",
   "../perito-workbench-core.js",
   "../historical-calibration.js",
+  "../eb-forecast-record.js",
   "../operational-metrics.js",
   "../species-targets.js",
   "../kpi-thresholds.js",
@@ -110,10 +117,15 @@ const PROTECTED_APP_SCRIPTS = [
   "../room-cycle.js",
   "../room-cycle-targets.js",
   "../room-state.js",
+  // Fotos de bolsas en IndexedDB (fuera de la cuota de localStorage).
+  "../bag-photo-store.js",
   "../provenance.js",
   "../perito-context.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Presentación de Escenarios del generador (duplicados, «No ejecutar»,
+  // búsquedas vacías). simulador-app.js lo lee al cargarse.
+  "../generator-presentation.js",
   // Vista "Mejor con Bodega" del Formulador; lee SetasPeritoScenarios y
   // SetasEconomy en cada llamada, no al cargar.
   "../formulador-best.js",

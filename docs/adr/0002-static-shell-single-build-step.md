@@ -1,6 +1,6 @@
 # ADR-0002: Static shell, with one esbuild step for simulador-app.jsx
 
-Status: Accepted
+Status: Accepted — amended by ADR-0011 (the build now reads several JSX files; still one step and one bundle)
 Date: recorded 2026-08-30
 
 ## Context

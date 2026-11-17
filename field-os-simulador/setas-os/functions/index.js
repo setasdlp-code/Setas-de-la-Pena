@@ -67,3 +67,33 @@ exports.importarCorreosCompra = onSchedule({
   const resumen = await importar();
   console.log('[importarCorreosCompra]', JSON.stringify(resumen));
 });
+
+// ── Alertas de clima fuera de la app ──────────────────────────────────────
+// Cada 10 minutos compara la última lectura de cada sala con ciclo activo
+// contra las bandas de ese ciclo y avisa por correo si el sensor dejó de
+// reportar o el clima lleva fuera de banda dos corridas seguidas. No actúa
+// sobre la sala ni cambia consignas. Configuración: ver docs/alertas-clima.md.
+const { createCheckClimateAlerts } = require('./climate-alerts.js');
+const { createGmailNotifier } = require('./gmail-smtp.js');
+
+// Destinatarios separados por coma. Vacío = la misma cuenta GMAIL_USER.
+const CLIMATE_ALERT_EMAIL = defineString('CLIMATE_ALERT_EMAIL', { default: '' });
+
+exports.alertasClima = onSchedule({
+  schedule: 'every 10 minutes',
+  timeZone: 'America/Bogota',
+  secrets: [GMAIL_APP_PASSWORD],
+  timeoutSeconds: 60,
+  memory: '256MiB',
+}, async () => {
+  const revisar = createCheckClimateAlerts({
+    db,
+    notify: createGmailNotifier({
+      user: GMAIL_USER.value(),
+      password: GMAIL_APP_PASSWORD.value(),
+      to: CLIMATE_ALERT_EMAIL.value(),
+    }),
+  });
+  const resumen = await revisar();
+  console.log('[alertasClima]', JSON.stringify(resumen));
+});

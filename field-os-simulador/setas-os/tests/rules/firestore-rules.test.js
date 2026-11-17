@@ -12,7 +12,7 @@ const {
   assertFails,
   assertSucceeds,
 } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, deleteDoc } = require('firebase/firestore');
+const { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } = require('firebase/firestore');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -169,6 +169,19 @@ test('sin etapa aceptada, el estado en español sigue siendo editable', async ()
   await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_3'), { estado: 'incubacion' }));
 });
 
+test('el pronóstico congelado de un lote no se reemplaza ni se borra', async () => {
+  const f = { schema: 'setas.eb-forecast.v1', shown: { central: 46, low: 31, high: 61 } };
+  await seed('bitacora_lotes/b_fc', { codigo: 'B-9', estado: 'planificado', forecastSnapshot: f });
+  await assertFails(updateDoc(doc(asOperator(), 'bitacora_lotes/b_fc'), { forecastSnapshot: { ...f, shown: { central: 80, low: 60, high: 100 } } }));
+  await assertFails(setDoc(doc(asOperator(), 'bitacora_lotes/b_fc'), { codigo: 'B-9', estado: 'planificado' }));
+  await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_fc'), { notas: 'ok', forecastSnapshot: f }));
+});
+
+test('un lote sin pronóstico puede recibirlo una vez', async () => {
+  await seed('bitacora_lotes/b_fc2', { codigo: 'B-10', estado: 'planificado' });
+  await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_fc2'), { forecastSnapshot: { schema: 'setas.eb-forecast.v1' } }));
+});
+
 test('un lote de Bitácora se puede marcar como borrado (lápida)', async () => {
   await seed('bitacora_lotes/b_4', { codigo: 'B-7', estado: 'incubacion', lifecycleState: 'incubation', revision: 1 });
   await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_lotes/b_4'), { deleted: true }, { merge: true }));
@@ -292,3 +305,44 @@ test('sin sesión no se leen correos de compra', async () => {
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'correos_compra/mail_e')));
   await assertSucceeds(getDoc(doc(asOperator(), 'correos_compra/mail_e')));
 });
+
+
+// Alertas de clima: tanto el estado actual como los episodios son de servidor.
+const CLIMATE_ALERT = {roomId:'martha_01',kind:'out_of_band',status:'open',openedAt:1000};
+const CLIMATE_EPISODE = {...CLIMATE_ALERT,status:'resolved',recordType:'episode',alertId:'martha_01__temperature_c',resolvedAt:2000};
+
+test('con sesión se leen la alerta actual y su historial, también mediante listado', async () => {
+  await seed('climate_alerts/reading_current',CLIMATE_ALERT);
+  await seed('climate_alerts/reading_episode',CLIMATE_EPISODE);
+  const db=asOperator();
+  const current=await assertSucceeds(getDoc(doc(db,'climate_alerts/reading_current')));
+  const episode=await assertSucceeds(getDoc(doc(db,'climate_alerts/reading_episode')));
+  assert.equal(current.data().status,'open');
+  assert.equal(episode.data().recordType,'episode');
+  const listed=await assertSucceeds(getDocs(collection(db,'climate_alerts')));
+  assert.ok(listed.docs.some(d=>d.id==='reading_current'));
+  assert.ok(listed.docs.some(d=>d.id==='reading_episode'));
+});
+
+test('sin sesión no se puede leer ni listar alertas o episodios', async () => {
+  await seed('climate_alerts/anonymous_current',CLIMATE_ALERT);
+  await seed('climate_alerts/anonymous_episode',CLIMATE_EPISODE);
+  const db=env.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(db,'climate_alerts/anonymous_current')));
+  await assertFails(getDoc(doc(db,'climate_alerts/anonymous_episode')));
+  await assertFails(getDocs(collection(db,'climate_alerts')));
+});
+
+for(const role of ['operario','admin','sin_sesion']){
+  test(`un cliente ${role} no crea, modifica ni elimina alertas o episodios`, async () => {
+    if(role==='admin') await seed('usuarios/climate_admin',{rol:'admin'});
+    const db=role==='admin'?env.authenticatedContext('climate_admin').firestore():role==='operario'?asOperator():env.unauthenticatedContext().firestore();
+    for(const [kind,value] of [['current',CLIMATE_ALERT],['episode',CLIMATE_EPISODE]]){
+      const id=`${role}_${kind}`;
+      await seed(`climate_alerts/${id}`,value);
+      await assertFails(setDoc(doc(db,`climate_alerts/new_${id}`),value));
+      await assertFails(updateDoc(doc(db,`climate_alerts/${id}`),{status:'resolved'}));
+      await assertFails(deleteDoc(doc(db,`climate_alerts/${id}`)));
+    }
+  });
+}

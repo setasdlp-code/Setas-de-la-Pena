@@ -29,6 +29,7 @@ const { INGS, SPP } = catalog;
 const EB_PENALTY_BALANCE_BAND={min:95,max:105}; // castigo de EB por balance muy fuera de 100 — no es la tolerancia de guardado
 const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
   if(!recipe.length) return null;
+  const estimatedCompositionIds=recipe.filter(r=>Number(r.p)>0&&ings.find(g=>g.id===r.id)?.compositionStatus==='estimated').map(r=>r.id);
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
   let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
   const DENSOS=['aserrin_roble','aserrin_eucalipto','aserrin_pino','aserrin_pino_compostado','borra_cafe','afrecho_cerveceria','chips_poda_urbana','guadua','carton_corrugado','pulpa_papel'];
@@ -51,7 +52,7 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     if(g.role==='aireador') airP+=p;
     if(g.cat==='cafe') cafeP+=p;
     if(g.cat==='est') manP+=p;
-    if(DENSOS.includes(g.id)) densaP+=p;
+    if(DENSOS.includes(g.analysisProxyId||g.id)) densaP+=p;
     if(sKey&&!g.cs.includes(sKey)&&g.cn>0) incompat.push(g.name);
   });
   const avgN=nP?wN/nP:0,cn=avgN>0?(nP?wC/nP:0)/avgN:0;
@@ -83,7 +84,16 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     }
     // Aireación: riesgo de anaerobiosis con mucho material denso y poco aireador
     var aerF=1;
-    if(densaP>60&&airP<10) aerF=.85;
+    // H-A (Sebastián, 2026-11-15, excepción limitada a shiitake): el bloque de
+    // madera es el sustrato estándar del shiitake, así que no se castiga la
+    // aireación cuando todo el material denso es madera (aserrín o pellets).
+    // Sigue aplicando si hay café, afrecho, cartón u otro denso no leñoso.
+    // Validada solo contra literatura (perito-literature-benchmark.js); revisar
+    // con los lotes del piloto.
+    const woodOnlyDense=sKey==='shiitake'&&densaP>0&&recipe.every(r=>!DENSOS.includes(r.id)||/^aserrin_/.test(r.id)||!(parseFloat(r.p)>0))
+      &&recipe.some(r=>/^aserrin_|^pellets_/.test(r.id)&&parseFloat(r.p)>0);
+    if(woodOnlyDense) aerF=1;
+    else if(densaP>60&&airP<10) aerF=.85;
     else if(densaP>40&&airP<8) aerF=.93;
     // Digestibilidad: sustratos muy lignificados colonizan lento y rinden algo menos
     // F-19: shiitake/reishi son degradadores de lignina — digF no aplica en madera dura
@@ -105,10 +115,14 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,requiresSterilization:Boolean(sp?.requires_sterilization),trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{...(estimatedCompositionIds.length?{estimatedCompositionIds}:{}),tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,requiresSterilization:Boolean(sp?.requires_sterilization),trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 
-const api = { analyze, EB_PENALTY_BALANCE_BAND };
+// Versión del modelo heurístico de EB. Incrementar con cada cambio a analyze()
+// o a valores de catálogo que muevan la EB: los pronósticos congelados en los
+// lotes (eb-forecast-record.js) la citan para saber con qué modelo se hicieron.
+const EB_MODEL_VERSION = 'eb-heuristic-2'; // 2: H-A, sin castigo de aireación para shiitake en madera
+const api = { analyze, EB_PENALTY_BALANCE_BAND, EB_MODEL_VERSION };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.SetasSubstrateAnalysis = api;
 

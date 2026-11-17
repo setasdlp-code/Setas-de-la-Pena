@@ -11,7 +11,7 @@ labels: work-packet
 
 ## Fuentes canónicas
 
-<!-- knowledge_base/, field_os/, SETAS_OS_CANONICAL.md, u otras — qué documento es la verdad para esta tarea -->
+<!-- knowledge_base/, docs/adr/, SETAS_OS_CANONICAL.md, u otras — qué documento es la verdad para esta tarea -->
 
 ## Alcance y exclusiones
 

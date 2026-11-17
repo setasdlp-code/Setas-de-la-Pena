@@ -7,7 +7,7 @@
 // memoria).
 import { db } from "./firebase-init.js";
 import {
-  collection, addDoc, getDocs, query, where, orderBy,
+  collection, addDoc, getDocs, query, where, orderBy, onSnapshot,
   runTransaction, doc, serverTimestamp, updateDoc, setDoc, deleteDoc,
 } from "../vendor/firebase/firebase-firestore.js";
 
@@ -23,6 +23,14 @@ export function computeTot(ingredientes) {
 export function isMassBalanced(ingredientes) {
   const tot = computeTot(ingredientes);
   return Math.abs(tot - 100) <= MASS_BALANCE_TOL;
+}
+
+// Server alerts are read-only for the app. Permission/network failures must
+// never look like an empty successful result; callers display them explicitly.
+export function subscribeClimateAlerts(onNext, onError) {
+  return onSnapshot(collection(db, 'climate_alerts'), {includeMetadataChanges:true}, snap => {
+    onNext({records:snap.docs.map(d=>({...d.data(),id:d.id})),fromCache:snap.metadata.fromCache});
+  }, onError);
 }
 
 // ── Recetas ──────────────────────────────────────────────────────────────
@@ -141,7 +149,7 @@ export async function actualizarIncidencia(id, campos) {
 // así que no puede hacer `import` de este archivo — se expone en window para
 // que ese script pueda llamarlo, igual que firebase-init.js hace con window.SetasFirebase.
 window.SetasDB = {
-  computeTot, isMassBalanced, saveReceta, listRecetas, deleteReceta,
+  computeTot, isMassBalanced, saveReceta, listRecetas, deleteReceta, subscribeClimateAlerts,
   crearLoteProduccion, guardarConsumoInventario,
   guardarRoomCycle, guardarTelemetry, guardarTelemetryBatch, guardarCycleEvidence, listCycleEvidence,
   registrarIncidencia, actualizarIncidencia,

@@ -13,7 +13,7 @@ const vm = require('node:vm');
 const ROOT = __dirname;
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-const jsx = read('simulador-app.jsx');
+const jsx = require('./test-support/jsx-source.js').readJsxSource();
 const css = read('sim.css');
 const authGate = read('firebase/auth-gate.js');
 const shell = read('Setas OS v5.dc.html');
