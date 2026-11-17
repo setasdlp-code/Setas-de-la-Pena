@@ -44,3 +44,15 @@ Stop when: notas incorporadas y publicación verificada.
 - `check_public_delivery.cjs`: 60 comprobaciones, sin errores.
 - Se revisaron las notas en móvil y escritorio para las tres especies; se preservan los IDs y enlaces anteriores, así como el contenido de investigación, conservación y registro del cultivo.
 - `git diff --check`: sin errores. El paquete exportado contiene 340 archivos; la comprobación pública general no se declara validada por el fallo de Chromium documentado en la revisión anterior.
+
+## Relatos visibles en las fichas
+
+Continuación del 17 de noviembre de 2026 desde `main` (`9f7df105`), rama `codex/species-historical-stories`. Se desarrolla un relato breve en cada ficha, visible desde el HTML y sin necesidad de desplegar un acordeón. Las notas etimológicas permanecen junto al relato; se reducen las repeticiones entre ambas columnas.
+
+- **Shiitake, «Cuando el cultivo esperaba al viento».** Cornell, «About Shiitake Mushrooms» y «Basics of Shiitake Production»: práctica antigua con troncos y esporas, investigación posterior en Japón y China y uso de micelio cultivado. Tier 1, extensión universitaria; confianza alta para el relato atribuido. Se mantiene sin fecha ni localidad inicial precisa.
+- **Melena, «Un nombre entre los senderos de montaña».** Se conservan MAFF y Japan Tourism Agency para el nombre, los yamabushi y la banda con pompones *yuigesa*. Se añade [UNESCO, montes Kii](https://whc.unesco.org/en/list/1142/), «Brief synthesis» y «Authenticity», para el paisaje y sus más de 1.200 años de tradición de montañas sagradas. Tier 2, fuente institucional de patrimonio; confianza alta para ese contexto. La antigüedad del paisaje no fecha el nombre de la seta ni demuestra consumo o efectos sobre la meditación.
+- **Eryngii, «Un cardo en una flora francesa».** [Index Fungorum, registro 468015](https://www.indexfungorum.org/names/NamesRecord.asp?RecordID=468015), encabezado y «Host-Substratum/Locality»: *Flore française*, 1815, raíces muertas de *Eryngium* y Francia. Se combina con el registro 170772 ya citado para la combinación de Quélet de 1872. Tier 2, registro curado; confianza alta. No se atribuye el descubrimiento de la especie a esa publicación.
+
+Los relatos no añaden escenas imaginadas, diálogos, personajes o leyendas presentadas como hechos. Cocina, conservación, investigación clínica, recetas y registro del cultivo quedan fuera de esta edición.
+
+Verificación de los relatos: `check_public_species.cjs` completó 15 disposiciones en cinco anchos y seis recorridos sin errores de navegador. La comprobación específica de los relatos completó otros 15 casos: visibles al cargar, enlaces y contenido protegido conservados y diez referencias por especie. Los tres PDFs sin JavaScript incluyen el relato. El paquete de 340 archivos pasó 84 comprobaciones de exportación y 60 de entrega; `git diff --check` no detectó errores. Evidencia de esta continuación en `/workspace/reports/species-stories-20261117/`.
