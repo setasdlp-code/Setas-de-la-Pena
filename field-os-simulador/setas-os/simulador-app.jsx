@@ -10508,7 +10508,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 <span className="sdp-provenance">Estimado · derivado de T° y HR</span>
                 <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
-                  {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
+                  {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración en banda objetivo' : 'Fuera de Rango'}
                 </span>
               </div>
             </div>
@@ -17045,7 +17045,7 @@ interval:
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
-                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temperatura Óptima</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temperatura objetivo</div>
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.tempC}°C
                         </div>
@@ -17192,7 +17192,7 @@ interval:
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
                     <span>70% Seco</span>
-                    <span>90% Óptimo</span>
+                    <span>90% Objetivo</span>
                     <span>98% Saturado</span>
                   </div>
                 </div>
