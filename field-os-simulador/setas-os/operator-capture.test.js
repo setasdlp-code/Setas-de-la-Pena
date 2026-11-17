@@ -101,6 +101,19 @@ test('defectosCampo se deduplica, conserva claves desconocidas y suma solo coinc
   assert.deepEqual(c.defectCodes,['abort','bacterial_suspect']);
   assert.deepEqual(normalizeHarvestCapture({pesoFresco:'500'}).defectosCampo,[]);
 });
+test('defectosEvaluados: solo true se persiste; lo demás es null y no altera defectosCampo ni defectCodes',()=>{
+  const ok=normalizeHarvestCapture({pesoFresco:'500',defectosCampo:[],defectosEvaluados:true});
+  assert.equal(ok.defectosEvaluados,true);assert.deepEqual(ok.defectosCampo,[]);assert.deepEqual(ok.defectCodes,[]);
+  for(const v of [undefined,null,false,'true',1,'',0])assert.equal(normalizeHarvestCapture({pesoFresco:'500',defectosCampo:[],defectosEvaluados:v}).defectosEvaluados,null,String(v));
+  assert.equal(normalizeHarvestCapture({pesoFresco:'500'}).defectosEvaluados,null);
+  // Una lista no vacía sin marca no se rellena en silencio: lot-record la lee como evaluada.
+  const noMark=normalizeHarvestCapture({pesoFresco:'500',defectosCampo:['sporulation']});
+  assert.equal(noMark.defectosEvaluados,null);assert.deepEqual(noMark.defectosCampo,['sporulation']);
+  // Claves fuera de lista y unión con defectCodes v0.1 siguen igual con la marca.
+  const withKeys=normalizeHarvestCapture({pesoFresco:'500',defectosEvaluados:true,defectosCampo:['sporulation','bacterial_suspect','xyz'],defectCodes:['abort']});
+  assert.deepEqual(withKeys.defectosCampo,['sporulation','bacterial_suspect','xyz']);
+  assert.deepEqual(withKeys.defectCodes,['abort','bacterial_suspect']);
+});
 test('no existe campo de color',()=>{
   assert.equal('colorOrdinal' in normalizeHarvestCapture({pesoFresco:'500',colorOrdinal:3}),false);
 });

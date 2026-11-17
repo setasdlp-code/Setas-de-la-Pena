@@ -219,6 +219,9 @@ test('ningún estado insuficiente trae un porcentaje (barrido de casos)', () => 
   });
 });
 
+// «Sin defectos observados»: lista vacía CON la marca `defectosEvaluados`.
+const none = (over = {}) => graded({ defectosCampo: [], defectosEvaluados: true, ...over });
+
 test('defectos: «k de n» siempre, porcentaje solo con n y cobertura suficientes', () => {
   const low = summary([
     graded({ defectosCampo: ['sporulation', 'mechanical_damage'] }),
@@ -228,14 +231,18 @@ test('defectos: «k de n» siempre, porcentaje solo con n y cobertura suficiente
   assert.deepEqual(rows.map((d) => [d.key, d.count, d.n]), [['sporulation', 2, 2], ['mechanical_damage', 1, 2]]);
   assert.equal(rows[0].label, 'Esporulación');
   rows.forEach((d) => { assert.equal(d.fraction, null); assert.equal(d.fractionStatus, 'insufficient_data'); });
-  assert.equal(low.total.defects.nBasis, 'harvests_with_any_quality_field');
+  assert.equal(low.total.defects.nBasis, 'harvests_with_defects_evaluated');
+  assert.equal(low.total.defects.fractionStatus, 'insufficient_data');
 
   const enough = summary([
     graded({ defectosCampo: ['sporulation'] }), graded({ defectosCampo: ['sporulation'] }),
-    graded({ defectosCampo: [] }), graded({ defectosCampo: ['xyz'] }), plain(),
+    none(), graded({ defectosCampo: ['xyz'] }), plain(),
   ]);
   const er = enough.total.defects.rows;
   assert.equal(enough.total.defects.n, 4);
+  assert.equal(enough.total.defects.total, 5);
+  assert.equal(enough.total.defects.notEvaluated, 1);
+  assert.equal(enough.total.defects.fractionStatus, 'ok');
   const spo = er.find((d) => d.key === 'sporulation');
   assert.equal(spo.fraction, 0.5);
   const unk = er.find((d) => d.key === 'xyz');
@@ -245,10 +252,46 @@ test('defectos: «k de n» siempre, porcentaje solo con n y cobertura suficiente
   assert.equal(enough.total.harvests.withoutQuality, 1);
 });
 
-test('defectos: solo cosechas con calidad registrada cuentan en n', () => {
+test('defectos: n cuenta solo cosechas con defectos evaluados (marca o lista no vacía)', () => {
   const s = summary([plain(), plain(), graded({ defectosCampo: ['surface_dryness'] })]);
   assert.equal(s.total.defects.n, 1);
   assert.equal(s.total.defects.rows[0].fraction, null);
+});
+
+test('defectos: lista vacía SIN marca es «no evaluada» y no cuenta en n; con marca cuenta sin hallazgos', () => {
+  const s = summary([
+    none(), none(), none(),
+    graded({ defectosCampo: [] }), graded({ defectosCampo: [] }),   // no evaluadas: ni marca ni defectos
+    graded({ defectosCampo: ['sporulation'] }),
+  ]);
+  assert.equal(s.total.harvests.total, 6);
+  assert.equal(s.total.defects.n, 4);
+  assert.equal(s.total.defects.notEvaluated, 2);
+  const spo = s.total.defects.rows.find((d) => d.key === 'sporulation');
+  assert.equal(spo.count, 1);
+  assert.equal(spo.n, 4);
+  assert.equal(spo.fraction, 0.25);
+  // Evaluadas sin hallazgos en todas: n = 3, sin filas de defecto.
+  const clean = summary([none(), none(), none(), graded({ defectosCampo: [] })]);
+  assert.equal(clean.total.defects.n, 3);
+  assert.deepEqual(clean.total.defects.rows, []);
+});
+
+test('defectos: con n insuficiente el conteo «k de n» se informa y el porcentaje es null', () => {
+  // 3 evaluadas de 8 cosechas: cobertura 0,375 < 0,5.
+  const s = summary([
+    graded({ defectosCampo: ['sporulation'] }), none(), none(),
+    plain(), plain(), plain(), plain(), plain(),
+  ]);
+  assert.equal(s.total.defects.n, 3);
+  assert.equal(s.total.defects.fractionStatus, 'insufficient_data');
+  const spo = s.total.defects.rows[0];
+  assert.equal(spo.count, 1);
+  assert.equal(spo.fraction, null);
+  // Mismo caso con solo 2 evaluadas (n < mínimo).
+  const two = summary([graded({ defectosCampo: ['sporulation'] }), none()]);
+  assert.equal(two.total.defects.n, 2);
+  assert.equal(two.total.defects.rows[0].fraction, null);
 });
 
 test('firmeza: conteo por nivel ordinal, sin media; un valor inválido de otro dispositivo no entra', () => {

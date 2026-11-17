@@ -11,7 +11,8 @@
  *   - % de primera sobre el peso con grado declarado, SOLO si el n y la
  *     cobertura alcanzan; si no, `status: 'insufficient_data'` y `fraction: null`
  *     (nunca un porcentaje con datos insuficientes);
- *   - frecuencia de cada defecto de campo como «k de n cosechas»;
+ *   - frecuencia de cada defecto de campo como «k de n cosechas evaluadas»
+ *     (n = cosechas con los defectos evaluados, no «con alguna calidad»);
  *   - firmeza como conteo por nivel de una escala ordinal (sin media: un
  *     promedio de una escala ordinal no es una medición).
  *
@@ -133,27 +134,29 @@
     }
     const ok = reasons.length === 0;
 
-    // Frecuencia de defectos. n = cosechas con alguna captura de calidad: el
-    // modelo de #520 no distingue «sin defectos» de «no evaluado» (ambos son una
-    // lista vacía), así que n es el límite superior de cosechas evaluadas.
+    // Frecuencia de defectos. n = cosechas con los defectos EVALUADOS
+    // (`defectsEvaluated` de lot-record: marca «sin defectos observados» o lista
+    // no vacía). Una cosecha con lista vacía y sin marca es «no evaluada»: no
+    // cuenta en n, porque no se sabe si tenía defectos.
     const labels = defectLabels();
     const defectCounts = new Map();
     const undeclaredCounts = new Map();
-    withQuality.forEach((h) => {
+    const evaluated = harvests.filter((h) => h && h.defectsEvaluated === true);
+    evaluated.forEach((h) => {
       (Array.isArray(h.fieldDefects) ? h.fieldDefects : []).forEach((k) => defectCounts.set(k, (defectCounts.get(k) || 0) + 1));
       (Array.isArray(h.undeclaredFieldDefects) ? h.undeclaredFieldDefects : []).forEach((k) => undeclaredCounts.set(k, (undeclaredCounts.get(k) || 0) + 1));
     });
-    const qualityCoverage = total > 0 ? withQuality.length / total : null;
-    const defectsGateOk = withQuality.length >= thresholds.minHarvestsWithGrades
-      && qualityCoverage != null && qualityCoverage >= thresholds.minCoverage;
+    const evaluatedCoverage = total > 0 ? evaluated.length / total : null;
+    const defectsGateOk = evaluated.length >= thresholds.minHarvestsWithGrades
+      && evaluatedCoverage != null && evaluatedCoverage >= thresholds.minCoverage;
     const defectRow = (key, count, declared) => ({
       key,
       label: declared ? (labels[key] || key) : key,
       declared,
       count,
-      n: withQuality.length,
+      n: evaluated.length,
       // % solo con n y cobertura suficientes; el conteo «k de n» siempre es un hecho.
-      fraction: defectsGateOk ? count / withQuality.length : null,
+      fraction: defectsGateOk ? count / evaluated.length : null,
       fractionStatus: defectsGateOk ? 'ok' : 'insufficient_data',
     });
     const defects = [
@@ -189,7 +192,15 @@
         eligibleKg,
         reasons,
       },
-      defects: { n: withQuality.length, coverage: qualityCoverage, nBasis: 'harvests_with_any_quality_field', rows: defects },
+      defects: {
+        n: evaluated.length,
+        total,
+        notEvaluated: total - evaluated.length,
+        coverage: evaluatedCoverage,
+        nBasis: 'harvests_with_defects_evaluated',
+        fractionStatus: defectsGateOk ? 'ok' : 'insufficient_data',
+        rows: defects,
+      },
       firmness,
     };
   };

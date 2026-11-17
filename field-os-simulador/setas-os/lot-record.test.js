@@ -412,6 +412,36 @@ test('quality: fieldDefects y desconocidos', () => {
   assert.equal(withDefects.answers[LR.QUESTIONS.CO2_DOSE_RESPONSE], base.answers[LR.QUESTIONS.CO2_DOSE_RESPONSE]);
 });
 
+test('quality: defectos evaluados vs no evaluados, por cosecha, oleada y total', () => {
+  const rec = qRec([
+    harvest({ id: 'H-NE', flush: 1, defectosCampo: [] }),                              // lista vacía sin marca: no evaluada
+    harvest({ id: 'H-OK', flush: 1, defectosCampo: [], defectosEvaluados: true }),     // evaluada sin hallazgos
+    harvest({ id: 'H-LEG', flush: 1, defectosCampo: ['sporulation'] }),                // lista no vacía sin marca: evaluada
+    harvest({ id: 'H-F2', flush: 2, defectosCampo: ['xyz'], defectosEvaluados: true }),
+    harvest({ id: 'H-F2B', flush: 2 }),                                                // sin nada
+  ]);
+  const hv = (id) => rec.quality.flushes.flatMap((f) => f.harvests).find((h) => h.harvestId === id);
+  assert.equal(hv('H-NE').defectsEvaluated, false);
+  assert.equal(hv('H-NE').hasQuality, false);
+  assert.equal(hv('H-OK').defectsEvaluated, true);
+  assert.equal(hv('H-OK').hasQuality, true);
+  assert.deepEqual(hv('H-OK').fieldDefects, []);
+  assert.equal(hv('H-LEG').defectsEvaluated, true);
+  assert.equal(hv('H-F2').defectsEvaluated, true);
+  assert.equal(hv('H-F2B').defectsEvaluated, false);
+  assert.deepEqual(rec.quality.flushes.map((f) => f.defectsEvaluatedCount), [2, 1]);
+  assert.equal(rec.quality.defectsEvaluatedCount, 3);
+  // Marcar «sin defectos» es calidad registrada: no se emite quality_unrecorded.
+  const only = qRec([harvest({ defectosEvaluados: true })]);
+  assert.equal(only.quality.gaps.some((g) => g.code === 'quality_unrecorded'), false);
+  assert.equal(qRec([harvest({ defectosCampo: [] })]).quality.gaps.some((g) => g.code === 'quality_unrecorded'), true);
+  // Ni la marca ni la evaluación tocan las tres preguntas existentes ni el fenotipo.
+  const base = qRec([harvest({})]);
+  assert.deepEqual(only.answers, base.answers);
+  assert.deepEqual(only.gaps, base.gaps);
+  assert.deepEqual(only.phenotype, base.phenotype);
+});
+
 test('quality: procedencia por campo y esquema v1', () => {
   const rec = qRec([harvest(GRADED)]);
   assert.deepEqual(rec.quality.provenance, {

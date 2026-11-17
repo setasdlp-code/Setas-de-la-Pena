@@ -57,15 +57,18 @@ const EPS = 0.5;
 //   oleada 2: C6 con grado y C7 sin calidad -> oleada incompleta, datos insuficientes
 //   oleada 3: C5 sin calidad
 //   acumulado: n = 4 de 7 (57 %), primera 900 de 2000 g = 45 %
+// Defectos: n = cosechas con defectos evaluados. C1, C3 y C6 traen defectos, C2 lleva la marca
+// «sin defectos observados» y C4 tiene lista vacía SIN marca (no evaluada): n = 4 de 7 en el
+// acumulado y 3 de 4 en la oleada 1; C4, C5 y C7 no cuentan.
 const lote = { id: 'HQ1', codigo: 'SDP-HQ1', especie: 'Orellana Gris', estado: 'activo', numBolsas: 3, fechaInoculacion: '2026-09-10', operador: 'fixture', lifecycleEvents: [] };
 const bolsas = [1, 2, 3].map((n) => ({ id: `HQ1-B0${n}`, loteId: 'HQ1', codigo: `SDP-HQ1-B0${n}`, estado: 'sana' }));
 const cos = (id, flush, fecha, over) => ({ id, loteId: 'HQ1', bolsaId: 'HQ1-B01', bagId: 'HQ1-B01', fecha, flush, unit: 'g', unidad: 'g', pesoFresco: 500, ...over });
 const GRADE = { criterioGrado: 'provisional_unversioned' };
 const cosechas = [
   cos('HQ-C1', 1, '2026-10-01', { ...GRADE, pesoPrimera: 300, pesoSegunda: 150, pesoDescarte: 50, firmeza: 3, firmezaMetodo: 'tacto_ordinal', firmezaEscala: 'v0_texto', defectosCampo: ['sporulation'] }),
-  cos('HQ-C2', 1, '2026-10-02', { ...GRADE, pesoPrimera: 200, pesoSegunda: 200, pesoDescarte: 100, firmeza: 3, firmezaMetodo: 'tacto_ordinal', firmezaEscala: 'v0_texto', defectosCampo: [] }),
+  cos('HQ-C2', 1, '2026-10-02', { ...GRADE, pesoPrimera: 200, pesoSegunda: 200, pesoDescarte: 100, firmeza: 3, firmezaMetodo: 'tacto_ordinal', firmezaEscala: 'v0_texto', defectosCampo: [], defectosEvaluados: true }), // evaluada sin defectos
   cos('HQ-C3', 1, '2026-10-03', { ...GRADE, pesoPrimera: 100, pesoSegunda: 300, pesoDescarte: 100, firmeza: 5, firmezaMetodo: 'tacto_ordinal', firmezaEscala: 'v0_texto', defectosCampo: ['sporulation', 'mechanical_damage'] }),
-  cos('HQ-C4', 1, '2026-10-04', { ...GRADE, pesoPrimera: 400, pesoSegunda: 200, pesoDescarte: 0, defectosCampo: [] }),
+  cos('HQ-C4', 1, '2026-10-04', { ...GRADE, pesoPrimera: 400, pesoSegunda: 200, pesoDescarte: 0, defectosCampo: [] }), // lista vacía SIN marca: defectos no evaluados, no cuenta en n
   cos('HQ-C6', 2, '2026-10-20', { ...GRADE, pesoPrimera: 300, pesoSegunda: 100, pesoDescarte: 100, defectosCampo: ['stipe_elongated'] }),
   cos('HQ-C7', 2, '2026-10-21', { pesoFresco: 400 }),
   cos('HQ-C5', 3, '2026-11-05', { pesoFresco: 450 }),
@@ -152,10 +155,16 @@ const horizontalOverflow = (rootEl) => {
       await expect(total.getByTestId('hq-first-grade')).toContainText('n = 4 de 7 cosechas');
       await expect(total.getByTestId('hq-gap-excluded')).toContainText('HQ-C4');
       await expect(total.getByTestId('hq-firmness')).toContainText('no es una medición instrumental');
-      await expect(total.getByTestId('hq-defects')).toContainText('Esporulación 2 de 5');
+      await expect(total.getByTestId('hq-defects')).toContainText('Esporulación 2 de 4');
+      await expect(total.getByTestId('hq-defects')).toContainText('n = 4 de 7 cosechas evaluadas');
+      await expect(total.getByTestId('hq-defects')).not.toContainText('de 5');
+      await expect(total.getByTestId('hq-defects')).toHaveAttribute('data-defects-n', '4');
       const flushes = panel.getByTestId('hq-flush');
       await expect(flushes).toHaveCount(3);
       await expect(flushes.nth(0).getByTestId('hq-first-grade')).toContainText('Primera: 40 %');
+      await expect(flushes.nth(0).getByTestId('hq-defects')).toHaveAttribute('data-defects-n', '3');
+      await expect(flushes.nth(0).getByTestId('hq-defects')).toContainText('n = 3 de 4 cosechas evaluadas');
+      await expect(panel.getByTestId('hq-provenance')).not.toContainText('no distingue');
       await expect(flushes.nth(1).getByTestId('hq-first-grade')).toContainText('Datos insuficientes');
       await expect(flushes.nth(1).getByTestId('hq-first-grade')).not.toContainText('%');
       await expect(flushes.nth(2).getByTestId('hq-no-grades')).toBeVisible();

@@ -30,13 +30,21 @@ const HarvestQualityFields = ({ value, onChange, speciesKey, netGrams, idPrefix 
   });
   const fmt = n => Math.round(n * 10) / 10;
   const weightError = raw => (raw === '' || raw == null ? '' : bit.captureError(raw, { min: 0, integer: true }));
-  const toggleDefect = key => onChange({ defectosCampo: picked.includes(key) ? picked.filter(k => k !== key) : [...picked, key] });
+  // «Sin defectos observados» y los chips de defecto son excluyentes. Evaluado
+  // (true) = el operario pulsó «Sin defectos» o eligió algún defecto; sin ninguno
+  // de los dos queda null («no evaluado»), nunca false ni una lista vacía implícita.
+  const noDefects = v.defectosEvaluados === true && picked.length === 0;
+  const toggleDefect = key => {
+    const next = picked.includes(key) ? picked.filter(k => k !== key) : [...picked, key];
+    onChange({ defectosCampo: next, defectosEvaluados: next.length ? true : null });
+  };
+  const toggleNoDefects = () => onChange({ defectosCampo: [], defectosEvaluados: noDefects ? null : true });
 
   return (
     <details className="harvest-quality" open={defaultOpen ? true : undefined}>
       <summary className="harvest-quality-summary">Calidad · opcional</summary>
       <p id={`${idPrefix}-calidad-help`} className="harvest-capture-help">
-        Reparte el peso fresco entre grados. Deja vacío lo que no mediste: no se rellena con ceros.
+        Reparte el peso fresco entre grados. Deja vacío lo que no mediste: no se rellena con ceros. En defectos, «Sin defectos observados» dice que sí los revisaste y no había; si no eliges nada, quedan sin evaluar.
       </p>
       <div className="harvest-quality-weights">
         {HARVEST_QUALITY_WEIGHTS.map(({ field, suffix, label }) => {
@@ -73,6 +81,13 @@ const HarvestQualityFields = ({ value, onChange, speciesKey, netGrams, idPrefix 
       <div className="harvest-quality-block">
         <span className="inv-label">Defectos observados en campo</span>
         <div role="group" aria-label="Defectos observados en campo" className="harvest-quality-chips">
+          <button
+            type="button"
+            className="harvest-quality-chip harvest-quality-chip--none"
+            data-no-defects="true"
+            aria-pressed={noDefects}
+            onClick={toggleNoDefects}
+          >Sin defectos observados</button>
           {defects.map(d => (
             <button
               key={d.key}

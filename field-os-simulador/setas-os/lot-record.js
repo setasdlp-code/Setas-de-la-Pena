@@ -390,7 +390,7 @@
     cosechas.forEach((c) => {
       const flush = Math.trunc(num(c.flush) ?? 1) || 1;
       if (!byFlush.has(flush)) {
-        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, anyGrade: false, ungraded: false, firm: [], defects: [], undeclared: [], harvests: [] });
+        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, anyGrade: false, ungraded: false, firm: [], defects: [], undeclared: [], defectsEvaluated: 0, harvests: [] });
       }
       const f = byFlush.get(flush);
       const factor = (c.unit || c.unidad) === 'kg' ? 1000 : 1;
@@ -417,7 +417,12 @@
       if (firm != null) { f.firm.push(firm); anyQuality = true; }
       const defects = Array.isArray(c.defectosCampo)
         ? c.defectosCampo.map((d) => String(d || '').trim()).filter(Boolean) : [];
-      if (defects.length) anyQuality = true;
+      // Defectos evaluados: la marca explícita del operario (`defectosEvaluados`
+      // true: «sin defectos observados» o con hallazgos) o una lista no vacía de
+      // una cosecha anterior a la marca. Una lista vacía SIN marca es «no
+      // evaluado»: no se sabe, y no cuenta.
+      const defectsEvaluated = c.defectosEvaluados === true || defects.length > 0;
+      if (defectsEvaluated) { anyQuality = true; f.defectsEvaluated += 1; }
       const ownKnown = [];
       const ownUndeclared = [];
       defects.forEach((d) => {
@@ -436,7 +441,8 @@
       f.harvests.push({
         harvestId: c.id || null,
         gap: getBitacora().harvestGradeGap(sane),
-        hasQuality: declaredGrade || firm != null || defects.length > 0,
+        hasQuality: declaredGrade || firm != null || defectsEvaluated,
+        defectsEvaluated,
         gradesComplete: GRADE_KEYS.every(([, field]) => sane[field] != null),
         gradeKg: ownGradeKg,
         firmness: firm,
@@ -460,6 +466,7 @@
           ? { values: f.firm, method: HQ.FIRMNESS_METHOD, scale: HQ.FIRMNESS_SCALE } : null,
         fieldDefects: f.defects,
         undeclaredFieldDefects: f.undeclared,
+        defectsEvaluatedCount: f.defectsEvaluated,
         harvests: f.harvests,
       };
     });
@@ -474,6 +481,7 @@
     return {
       criteria: HQ.CRITERIA,
       flushes,
+      defectsEvaluatedCount: flushes.reduce((n, f) => n + f.defectsEvaluatedCount, 0),
       gaps,
       provenance: {
         gradeKg: 'operator_declared_grade',

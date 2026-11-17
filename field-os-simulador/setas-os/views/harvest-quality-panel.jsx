@@ -110,17 +110,20 @@ const HarvestQualityScope = ({ title, scope, flushIncomplete, testId }) => {
           </li>
         )}
         {h.withQuality > 0 && (
-          <li data-testid="hq-defects">
-            {scope.defects.rows.length === 0 ? (
-              <>Defectos de campo: ninguno marcado en {scope.defects.n} {hqPlural(scope.defects.n, 'cosecha', 'cosechas')} con calidad registrada.</>
+          <li data-testid="hq-defects" data-defects-n={scope.defects.n} data-defects-total={scope.defects.total}>
+            {scope.defects.n === 0 ? (
+              <>Defectos de campo: <strong>no evaluados</strong> en ninguna de las {scope.defects.total} {hqPlural(scope.defects.total, 'cosecha', 'cosechas')}.</>
+            ) : scope.defects.rows.length === 0 ? (
+              <>Defectos de campo: ninguno observado en las {scope.defects.n} {hqPlural(scope.defects.n, 'cosecha evaluada', 'cosechas evaluadas')} (n = {scope.defects.n} de {scope.defects.total}).</>
             ) : (
               <>
-                Defectos de campo (n = {scope.defects.n} {hqPlural(scope.defects.n, 'cosecha', 'cosechas')} con calidad registrada):{' '}
+                Defectos de campo (n = {scope.defects.n} de {scope.defects.total} {hqPlural(scope.defects.total, 'cosecha evaluada', 'cosechas evaluadas')}):{' '}
                 {scope.defects.rows.map((d, i) => (
                   <span key={d.key} className="hq-defect" data-defect={d.key} data-declared={String(d.declared)}>
                     {i ? '; ' : ''}{d.label}{d.declared ? '' : ' (clave fuera de la lista)'} {d.count} de {d.n}{d.fraction == null ? '' : ` (${hqPct(d.fraction)})`}
                   </span>
                 ))}
+                {scope.defects.fractionStatus !== 'ok' && <> · <strong data-testid="hq-defects-insufficient">Datos insuficientes</strong> para un porcentaje</>}
               </>
             )}
           </li>
@@ -150,7 +153,7 @@ const HarvestQualityPanel = ({ summary, mobile = false }) => {
           <p className="hq-note hq-note--foot" data-testid="hq-provenance">
             Procedencia: peso por grado, <span data-provenance={prov.gradeKg}>{HQ_PROVENANCE_LABELS[prov.gradeKg] || prov.gradeKg} ({prov.gradeKg})</span> · firmeza, <span data-provenance={prov.firmness}>{HQ_PROVENANCE_LABELS[prov.firmness] || prov.firmness} ({prov.firmness})</span> · defectos, <span data-provenance={prov.defects}>{HQ_PROVENANCE_LABELS[prov.defects] || prov.defects}</span>.
             {' '}El porcentaje de primera exige al menos {summary.thresholds.minHarvestsWithGrades} cosechas con grado completo y una cobertura de {hqPct(summary.thresholds.minCoverage)}; esos umbrales son valores iniciales sin aprobar.
-            {' '}«n» de defectos cuenta cosechas con alguna captura de calidad: el registro no distingue «sin defectos» de «no evaluado».
+            {' '}«n» de defectos cuenta solo las cosechas con los defectos evaluados (marcaron «Sin defectos observados» o algún defecto); una cosecha sin esa evaluación es «no evaluada», no «sin defectos».
           </p>
         </>
       )}

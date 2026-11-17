@@ -126,6 +126,14 @@ medida no generan observación vacía.
 
 ### `quality`
 
+**Defectos evaluados (`defectosEvaluados`).** Campo opcional de la cosecha
+(Bitácora): `true` cuando el operario evaluó los defectos —pulsó «Sin defectos
+observados» o eligió algún defecto— y `null` cuando no. `normalizeHarvestCapture`
+solo persiste `true`; no lo deduce de la lista ni toca `defectosCampo` ni la unión
+con `defectCodes` v0.1. Las cosechas históricas no se migran: `defectosCampo: []`
+sin marca se lee como no evaluada (no se sabe si no había defectos) y una lista
+no vacía se lee como evaluada aunque no tenga la marca.
+
 Calidad de la cosecha declarada por el operario, agrupada por oleada. Vive en
 `record.quality`, **no** en `gaps`/`answers`: ninguna de las tres preguntas
 depende de ella, así que `quality.gaps` **no bloquea** ninguna de las tres
@@ -147,6 +155,8 @@ preguntas ni cambia `answers` de lotes existentes. El esquema sigue siendo `v1`.
 | `flushes[].harvests[].gradeKg` | `{primera, segunda, descarte}` en **kg** de esa cosecha; `null` por grado no declarado, nunca `0` |
 | `flushes[].harvests[].firmness` | firmeza ordinal 1–5 de esa cosecha, o `null` (valor fuera de rango o decimal) |
 | `flushes[].harvests[].fieldDefects[]` / `undeclaredFieldDefects[]` | defectos de campo de esa cosecha: claves de la lista y claves fuera de ella |
+| `flushes[].harvests[].defectsEvaluated` | `true` si el operario evaluó los defectos: la cosecha lleva `defectosEvaluados: true` (pulsó «Sin defectos observados» o eligió algún defecto) **o** trae una lista `defectosCampo` no vacía (cosecha anterior a la marca). `false` en el resto: una lista vacía sin marca es «no evaluado», no «sin defectos» |
+| `flushes[].defectsEvaluatedCount` / `defectsEvaluatedCount` | cosechas con `defectsEvaluated: true`, por oleada y en total del bloque `quality` |
 | `harvests[].gap` | `harvestGradeGap()`: `{status, sumG, netG, gapG, toleranceG}` en gramos. `status`: `no_grades` · `no_net_weight` · `incomplete` · `ok` · `over_tolerance`. Tolerancia `max(1 % del neto, 5 g)`, calculada y no guardada; fuera de tolerancia avisa y no bloquea |
 | `gaps[]` | `quality_unrecorded` (ninguna cosecha declara grados, firmeza ni defectos) · `grade_criteria_provisional` (alguna cosecha declara algún peso por grado: no existe criterio versionado, con o sin `criterioGrado`) |
 | `provenance` | `gradeKg: 'operator_declared_grade'` · `firmness: 'operator_ordinal_text_anchored'` · `capDiameter: 'observed_field_measured'` · `defects: 'observed_field_measured'` |
@@ -177,9 +187,12 @@ firmeza como conteo por nivel (sin media). Reglas:
 - `minHarvestsWithGrades` (3) y `minCoverage` (0,5) **no tienen fuente en la
   KB**: son parámetros con nombre, marcados
   `unsourced_default_pending_owner_decision`, y se sobrescriben por argumento.
-- Con defectos, `n` es el número de cosechas con alguna captura de calidad
-  (`nBasis: 'harvests_with_any_quality_field'`): el modelo no distingue «sin
-  defectos» de «no evaluado», porque ambos son una lista vacía.
+- Con defectos, `n` es el número de cosechas con los defectos evaluados
+  (`defectsEvaluated`; `nBasis: 'harvests_with_defects_evaluated'`) y se informa
+  «k de n cosechas evaluadas». Una cosecha con lista vacía y sin marca es «no
+  evaluada» y no cuenta en `n`. El porcentaje por defecto exige los mismos
+  umbrales que el de primera, aplicados a las cosechas evaluadas; con menos,
+  `fractionStatus: 'insufficient_data'` y `fraction: null`.
 - La calidad sigue siendo evidencia para el Perito: el panel y el resumen no
   alimentan `scoring.js`, ranking, Escenarios ni calibración (ADR-0004).
 
