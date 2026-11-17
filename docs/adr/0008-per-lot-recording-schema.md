@@ -213,3 +213,7 @@ alguien recuerde declarar un ciclo. Sigue siendo deseable, no bloqueante.
 - ADR-0004 (la evidencia no toca el ranking), ADR-0006 (separación de clases de
   dato), ADR-0007 (las tres escalas de confianza)
 - `field-os-simulador/setas-os/HISTORY_ELIGIBILITY.md`
+
+## Enmienda 2026-11 (aprobada por el usuario el 2026-11-15)
+
+**Enmienda 2026-11 a ADR-0008: bloque de calidad en la cosecha.** El bloque de fenotipo de la cosecha se amplía con `pesoPrimera`, `pesoSegunda`, `pesoDescarte` (fruta entera rechazada), `firmeza` y `defectosCampo`. `pesoFresco` sigue siendo el total cosechado con descarte incluido. Alternativa descartada: evento de campo nuevo con enum de defectos propio (segunda verdad, y exigía cambiar cola, reserva por lote, recibo y servidor).

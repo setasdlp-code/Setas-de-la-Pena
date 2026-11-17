@@ -150,3 +150,14 @@ test('appendSurfaceReading rechaza valores vacíos, no numéricos o fuera de ran
   assert.equal(appendSurfaceReading({}, { tempC: 22, airC: 'x' }).ok, false);
   assert.equal(appendSurfaceReading({}, { tempC: 22, at: 'no-fecha' }).ok, false);
 });
+
+test('harvestQualityError bloquea pesos por grado negativos o con decimales y firmeza inválida', () => {
+  const { harvestQualityError } = require('./bitacora-model.js');
+  assert.equal(harvestQualityError({ pesoPrimera: '', pesoSegunda: '', pesoDescarte: '', firmeza: '' }), '');
+  assert.equal(harvestQualityError({ pesoPrimera: '100', pesoSegunda: '0', pesoDescarte: '', firmeza: 3 }), '');
+  assert.match(harvestQualityError({ pesoPrimera: '-50' }), /Primera/);
+  assert.match(harvestQualityError({ pesoSegunda: '10.5' }), /Segunda/);
+  assert.match(harvestQualityError({ pesoDescarte: 'abc' }), /Descarte/);
+  assert.match(harvestQualityError({ firmeza: 7 }), /irmeza/);
+  assert.match(harvestQualityError({ firmeza: 2.5 }), /irmeza/);
+});
