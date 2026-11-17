@@ -70,3 +70,7 @@ El PDF fue generado con WeasyPrint y su fuente HTML no está en el repositorio. 
 3. Añadir las fichas de referencia por especie (§5.1).
 4. Corregir las figuras (§4), ampliar el glosario y añadir la sección de seguridad.
 5. Versionar la fuente HTML/CSS del libro en el repositorio. Con ella, la 7.ª edición se puede reconstruir y auditar con diff.
+
+## 7. Estado (2026-11-17)
+
+Aplicado en `docs/libro-micologia-aplicada/`: fuente reconstruida (`libro.md`, `refs.json`, `build.py`), PDF v7 y planilla v7. Pendientes que requieren consultar las fuentes: autoría del estudio de mSystems, revista de Ryu 2005, Lee 2007 y Zeng 2013, títulos de Kobayashi, Lu, Tang y Xie, y la fuente primaria de la nota sobre esporas.
