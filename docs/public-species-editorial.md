@@ -93,3 +93,36 @@ Se conservan todos los párrafos, datos y enlaces previos de las tres especies; 
 Verificación específica: **15 layouts** (tres especies a 320/390/768/1000/1440 px), sin desbordamiento ni imágenes rotas; navegación con teclado, destino visible bajo el índice, impresión y lectura sin JavaScript correctas. Axe no detectó infracciones automáticas WCAG A/AA en las tres fichas; dejó contraste como comprobación incompleta, por lo que no acredita una auditoría manual completa. Evidencia local: `/workspace/reports/species-layout-20261115/layout-verification.json` y `content-parity.json`.
 
 El paquete exportado pasó `check_public_export.cjs` (**84 comprobaciones**) y `check_public_delivery.cjs` (**60**), ambos sin errores. `check_public_pilot.cjs` pasó **15 casos**, sin errores de navegador. `node --check editorial.js` y `git diff --check` correctos. La suite general `check_public_website.cjs` no terminó: Chromium cerró una página al navegar por recetas; ese intento no se cuenta como aprobado. El control global de datos estructurados detecta JSON-LD desactualizado en `recetas.html`, también reproducido en el checkout anterior sin cambios. Ese archivo queda fuera del ajuste de layout.
+
+## Aplicación de la propuesta visual y editorial — 17 de noviembre de 2026
+
+```text
+Goal: aplicar a las tres fichas la propuesta visual y los textos revisados y aceptados.
+Scope: especies/{shiitake,melena-de-leon,eryngii}.html; species-editorial.css; editorial.js; prueba específica y este registro. Sin cambios de recetas, disponibilidad, Knowledge Base ni Setas OS.
+Baseline: origin/main c8b1eca5, rama aislada codex/apply-species-notebook, limpia al comenzar.
+Mode: implement + deliver.
+Owner: Codex; ui_review, revisión independiente de solo lectura de integración y límites de evidencia.
+Evidence: propuesta local mockups/fichas-especies/; páginas públicas; pilot-log-render.js; check_public_website.cjs; exportador público.
+Acceptance checks: 15 layouts, teclado, fuentes, fragmentos compartidos, impresión, sin JS, recorridos de recetas y registro; validación del paquete exportado y HTTPS tras la publicación.
+Authority: aplicar la propuesta; mismo flujo de commit/push/PR/deploy autorizado antes en esta conversación. Merge de main reservado a aprobación humana.
+GitHub: PR de entrega; sin issue nuevo.
+Stop when: fichas aplicadas y verificadas, entrega remota comprobada, sin merge automático.
+```
+
+La lámina completa permite consultar tres detalles; sin JavaScript se leen las tres notas. Los cortes y usos se muestran con esquemas y enlazan a preparaciones existentes. Cada ficha destaca una receta ilustrada: arepa con shiitake, melena prensada con salsa oscura o medallones de eryngii con limón y arracacha. La investigación conserva un resumen visible y un detalle con sus límites; las citas abren automáticamente las referencias. La impresión incluye todas las notas y desplegables y restaura el estado anterior.
+
+Se aplican las correcciones de redacción de la propuesta: menos repetición, retirada del relato no verificado sobre realeza y monjes en melena, separación entre perfiles de especie y recetas propias, y alcance explícito de los estudios frente al alimento fresco. Las referencias, la cocción completa del shiitake y la refrigeración a 4 °C o menos conservan su respaldo y límites. Las recetas siguen pendientes de prueba. No se incorporan mediciones, beneficios clínicos ni vida útil local.
+
+La integración mantiene el registro de shiitake conectado a `pilot-log-render.js`: el estado vacío dice únicamente que todavía no hay registros publicados; se oculta cuando aparecen entradas válidas. Se conservan los fragmentos `#cocina`, `#identidad`, `#vida`, `#curiosidades`, `#investigacion`, `#registro`, `#conservacion` y `#fuente-N`, además de los recorridos a recetas y consulta. La navegación común permanece compartida. El estilo y la familia local `Editorial Plex` (los archivos IBM Plex existentes) se limitan a estas páginas para evitar cambios tipográficos en el catálogo o el recetario. Las ilustraciones culinarias transparentes usan composición normal, ya que la mezcla multiplicada las ocultaba en Chromium.
+
+Validación de la integración:
+
+- `check_public_species.cjs`: 15 layouts y seis recorridos de fragmentos/recetas y lectura sin JS; incluye PDFs reales sin JavaScript, taxonomía, estudios y referencias abiertos. Las notas y desplegables recuperan su estado tras imprimir.
+- `check_public_pilot.cjs`: 15 casos y cero errores de navegador; conserva la ocultación del estado vacío con entradas reales, el orden de fechas y los estados de evidencia.
+- `check_public_export.cjs`: 84 comprobaciones del paquete completo. `check_public_delivery.cjs`: 60 comprobaciones, sin errores. La prueba específica de especies se ejecuta también sobre el paquete exportado.
+- Axe WCAG A/AA y buenas prácticas: cero infracciones automáticas en las tres fichas; contraste quedó como comprobación incompleta. No equivale a una auditoría manual integral.
+- Referencias externas e IDs de la base preservados en las tres páginas. `node --check` para ambos JS y `git diff --check` correctos.
+
+La revisión independiente confirmó la conservación de límites de evidencia, cocción y funcionamiento del registro. Detectó la pérdida de texto plegado al imprimir sin JS; se corrigió dejando los detalles abiertos en HTML y plegándolos con mejora progresiva. La revisión posterior de PDFs confirmó contenido completo en las tres fichas.
+
+La suite general `check_public_website.cjs` no terminó: Chromium cerró la página durante un recorrido por el recetario (`Target crashed`). No se declara aprobada esa suite; el navegador ya había presentado cierres en la base durante la iteración anterior. Los recorridos específicos y las suites del paquete se informan por separado. Evidencia de esta aplicación: `/workspace/reports/apply-species-20261117/`.
