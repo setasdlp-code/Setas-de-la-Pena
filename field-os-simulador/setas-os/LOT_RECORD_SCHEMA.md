@@ -142,9 +142,46 @@ preguntas ni cambia `answers` de lotes existentes. El esquema sigue siendo `v1`.
 | `flushes[].fieldDefects[]` | cada entrada es la `key` de un objeto de `HARVEST_QUALITY.FIELD_DEFECTS` (`{key, label, v01Code}`) |
 | `flushes[].undeclaredFieldDefects[]` | claves fuera de la lista: dato de campo, no basura |
 | `flushes[].harvests[]` | `{harvestId, gap}` por cosecha |
+| `flushes[].harvests[].hasQuality` | `true` si la cosecha declara algún peso por grado, una firmeza válida o algún defecto de campo (mismo criterio que `quality_unrecorded`) |
+| `flushes[].harvests[].gradesComplete` | `true` si la cosecha declara los tres pesos por grado. Un 0 declarado cuenta; un grado vacío (`null`) no |
+| `flushes[].harvests[].gradeKg` | `{primera, segunda, descarte}` en **kg** de esa cosecha; `null` por grado no declarado, nunca `0` |
+| `flushes[].harvests[].firmness` | firmeza ordinal 1–5 de esa cosecha, o `null` (valor fuera de rango o decimal) |
+| `flushes[].harvests[].fieldDefects[]` / `undeclaredFieldDefects[]` | defectos de campo de esa cosecha: claves de la lista y claves fuera de ella |
 | `harvests[].gap` | `harvestGradeGap()`: `{status, sumG, netG, gapG, toleranceG}` en gramos. `status`: `no_grades` · `no_net_weight` · `incomplete` · `ok` · `over_tolerance`. Tolerancia `max(1 % del neto, 5 g)`, calculada y no guardada; fuera de tolerancia avisa y no bloquea |
 | `gaps[]` | `quality_unrecorded` (ninguna cosecha declara grados, firmeza ni defectos) · `grade_criteria_provisional` (alguna cosecha declara algún peso por grado: no existe criterio versionado, con o sin `criterioGrado`) |
 | `provenance` | `gradeKg: 'operator_declared_grade'` · `firmness: 'operator_ordinal_text_anchored'` · `capDiameter: 'observed_field_measured'` · `defects: 'observed_field_measured'` |
+
+**Detalle por cosecha (añadido con el panel de la ficha).** Los campos
+`hasQuality`, `gradesComplete`, `gradeKg`, `firmness`, `fieldDefects` y
+`undeclaredFieldDefects` de `harvests[]` son aditivos: `harvestId` y `gap` no
+cambian, tampoco `answers`, `gaps` ni los agregados de la oleada. Existen porque
+los agregados de la oleada no permiten informar cuántas cosechas traen calidad
+(n y cobertura), excluir una cosecha con desfase de suma ni contar la frecuencia
+de un defecto sobre las cosechas evaluadas.
+
+**Consumidor: panel «Calidad de cosecha» de la ficha de lote.**
+`harvest-quality-summary.js` (módulo puro, `SetasHarvestQualitySummary`) deriva
+de `record.quality`, por oleada y acumulado: cosechas con y sin calidad, % de
+primera sobre el peso con grado completo, frecuencia de defectos como «k de n» y
+firmeza como conteo por nivel (sin media). Reglas:
+
+- El % de primera solo existe con `status: 'ok'`: al menos
+  `minHarvestsWithGrades` cosechas elegibles (tres grados declarados y suma
+  verificada) y una cobertura (elegibles / cosechas) de al menos `minCoverage`.
+  Con menos, `status: 'insufficient_data'` y `fraction: null`. Por oleada se
+  exige además `fractionsStatus: 'complete'`.
+- Una cosecha con `gap.status === 'over_tolerance'` se cuenta aparte, se excluye
+  del % y se informa su desfase; una con los tres grados pero `no_net_weight`
+  (suma no verificable) se cuenta aparte y se excluye. La tolerancia es la de
+  este registro, `max(1 %, 5 g)`: el módulo no define otra.
+- `minHarvestsWithGrades` (3) y `minCoverage` (0,5) **no tienen fuente en la
+  KB**: son parámetros con nombre, marcados
+  `unsourced_default_pending_owner_decision`, y se sobrescriben por argumento.
+- Con defectos, `n` es el número de cosechas con alguna captura de calidad
+  (`nBasis: 'harvests_with_any_quality_field'`): el modelo no distingue «sin
+  defectos» de «no evaluado», porque ambos son una lista vacía.
+- La calidad sigue siendo evidencia para el Perito: el panel y el resumen no
+  alimentan `scoring.js`, ranking, Escenarios ni calibración (ADR-0004).
 
 **Regla de fracciones.** Una oleada es `'incomplete'` (y `gradeFractions` es
 `null`) en cuanto la oleada tiene alguna cosecha que declara algún peso por
