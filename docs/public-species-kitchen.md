@@ -10,9 +10,9 @@ Los registros oficiales USDA FoodData Central, tipo **Foundation**, publicados e
 
 | Ficha | FDC ID y descripción | Energía, kcal | Proteína, g | Grasa, g | Carbohidratos por diferencia, g | Fibra, g | Agua, g |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Shiitake | [1999628, Mushrooms, shiitake](https://fdc.nal.usda.gov/fdc-app.html#/food-details/1999628/nutrients) | 36 | 2,4 | 0,2 | 8,2 | 4,2 | 88,6 |
-| Melena de león | [1999626, Mushroom, lion's mane](https://fdc.nal.usda.gov/fdc-app.html#/food-details/1999626/nutrients) | 35 | 2,5 | 0,3 | 7,6 | 4,4 | 88,6 |
-| Eryngii | [2003599, Mushroom, king oyster](https://fdc.nal.usda.gov/fdc-app.html#/food-details/2003599/nutrients) | 38 | 2,4 | 0,3 | 8,5 | 3,0 | 88,1 |
+| Shiitake | [1999628, Mushrooms, shiitake](https://fdc.nal.usda.gov/food-search/?type=Foundation&query=Mushrooms%2C+shiitake) | 36 | 2,4 | 0,2 | 8,2 | 4,2 | 88,6 |
+| Melena de león | [1999626, Mushroom, lion's mane](https://fdc.nal.usda.gov/food-search/?type=Foundation&query=Mushroom%2C+lion%27s+mane) | 35 | 2,5 | 0,3 | 7,6 | 4,4 | 88,6 |
+| Eryngii | [2003599, Mushroom, king oyster](https://fdc.nal.usda.gov/food-search/?type=Foundation&query=Mushroom%2C+king+oyster) | 38 | 2,4 | 0,3 | 8,5 | 3,0 | 88,1 |
 
 - Energía: nutriente **2048**, Atwater específico, redondeado a kcal enteras. Valores originales: 36.3915875 / 35.107387 / 38.460412. No se mezclan con los valores del nutriente 2047, Atwater general.
 - Proteína: **1003**, calculada; valores originales 2.414375 / 2.5 / 2.40625 g.
@@ -44,3 +44,5 @@ El revisor independiente comprobó las 18 cifras, unidades, base y método, y co
 Las comprobaciones específicas comparan el HTML con los JSON oficiales consultados, preservan el contenido previo de investigación/conservación/registro/recetas/láminas y prueban las cuatro secciones en cinco anchos. La verificación de impresión y los recorridos generales de fichas se ejecutan con las pruebas existentes. No se declara aprobada la suite general de sitio que tuvo un fallo de Chromium en la revisión anterior.
 
 Resultados: fichas, 15 disposiciones y seis recorridos sin errores de navegador; contenido final, otros 15 casos con las 18 cifras correctas, enlaces previos y contenido protegido conservados; los tres PDFs sin JavaScript incluyen tablas y preguntas. El paquete final de 352 archivos pasó 84 comprobaciones de exportación y 60 de entrega. `git diff --check` correcto. La primera ejecución de fichas encontró el servidor local detenido tras reiniciar el entorno; se inició y la ejecución completa terminó correctamente.
+
+Los antiguos enlaces directos de detalle de FDC devolvieron 404 al comprobarlos. Las referencias enlazan a la búsqueda oficial Foundation con el nombre del alimento y conservan el FDC ID en la tabla y el título. Los tres destinos de búsqueda respondieron HTTP 200. Los valores provienen de los registros de API identificados, no de un resultado genérico de búsqueda.
