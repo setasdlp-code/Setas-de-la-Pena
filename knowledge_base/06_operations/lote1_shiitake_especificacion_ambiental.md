@@ -3,7 +3,7 @@ title: Especificación Ambiental del Lote 1 de Shiitake — Plantilla Versionada
 document_id: DOC-0122
 category: operations
 load_priority: selective
-last_reviewed: 2026-10-13
+last_reviewed: 2026-11-16
 confidence: low
 primary_sources:
   - docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
@@ -13,6 +13,7 @@ related_documents:
   - quality_control.md
   - ../01_species/lentinula_edodes.md
   - ../CURRENT_OPERATIONS.md
+  - ../DECISIONS.md
 ---
 
 # Alcance y estado
@@ -56,8 +57,10 @@ Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPEC
 | Histéresis | `histeresis_c` | Igual que arriba |
 | Límite de aire | `aire_max_c` | 28,0 °C, provisional (mismo tope que el KB da al núcleo); se ajusta con la banda aprobada |
 
-Los límites de seguridad del núcleo (28 °C, de `01_species/lentinula_edodes.md`; y 5 °C sobre el aire, de la spec del piloto §5.3) no dependen de la cepa en este piloto; si la especificación exige otros, es un cambio de diseño y se registra como tal.
+**Variante vigente del firmware: por aire (DEC-023, 2026-11-12).** `esphome/incubadora_piloto.yaml` controla y alarma solo sobre la temperatura del aire (SHT45 breakout protegido, nodo `setas-incubacion-01`). No tiene sondas DS18B20: no hay mapa térmico ni núcleo, y publica «Núcleo del bloque: sin sensor» y «Mapa térmico: sin sensor» en lugar de un valor. Sigue rotulado BANCO DE PRUEBAS / NO COMISIONADO: valida con `esphome config` y compila con valores sintéticos de prueba (que no son consignas), pero no está verificado en hardware ni comisionado. Antes de usarlo pasa el protocolo de banco `esphome/PROTOCOLO_BANCO_INCUBADORA_AIRE.md`. Esta sección no cambia la tabla de arriba: `setpoint_c` e `histeresis_c` siguen saliendo de esta especificación, que sigue sin aprobar.
+
+**Núcleo: sin sensor.** Los límites de seguridad del núcleo (28 °C, de `01_species/lentinula_edodes.md`; y 5 °C sobre el aire, de la spec del piloto §5.3) no dependen de la cepa en este piloto; si la especificación exige otros, es un cambio de diseño y se registra como tal. Mientras rija DEC-023 el firmware no los aplica, porque no mide el núcleo: quedan **aplazados por DEC-023, no eliminados**, y vuelven al firmware cuando se instale al menos una sonda en un bloque indicador. Su sustituto provisional es el aire continuo (SHT45), un Inkbird como testigo de aire con registro manual y el termómetro infrarrojo en cada visita; las lecturas infrarrojas son comparativas (bolsa contra aire, bolsa contra bolsa, visita contra visita), no temperaturas de núcleo. DEC-023 se revisa antes de cargar más de cuatro bolsas o de calificar la incubadora con 30 bloques.
 
 # Tensión de la banda propuesta
 
-El KB documenta que el calor metabólico del micelio puede subir el núcleo del bloque 4–8 °C sobre el aire (paper_026). Con el aire a 22 °C el núcleo podría llegar a 26–30 °C, cerca de la alarma de 28 °C. Si ocurre en las fases 2 o 4, la alarma apaga el calefactor y exige ventilar más o bajar el objetivo; se registra como dato del piloto y no como falla. Las búsquedas web coinciden en que el micelio crece mejor cerca de 24–27 °C y no encontraron un umbral letal (`../09_research/shiitake_verificacion_web_2026-10-25.md`), de modo que el límite de 28 °C en el núcleo es una decisión de diseño conservadora.
+El KB documenta que el calor metabólico del micelio puede subir el núcleo del bloque 4–8 °C sobre el aire (paper_026). Con el aire a 22 °C el núcleo podría llegar a 26–30 °C, cerca de la alarma de 28 °C. Si ocurre en las fases 2 o 4, la alarma apaga el calefactor y exige ventilar más o bajar el objetivo; se registra como dato del piloto y no como falla. Con DEC-023 esa alarma de núcleo no existe en el firmware y este calentamiento no se detecta entre visitas (riesgo aceptado); una bolsa que marque de forma repetida una superficie infrarroja claramente más caliente que las demás o que el aire reabre DEC-023. Las búsquedas web coinciden en que el micelio crece mejor cerca de 24–27 °C y no encontraron un umbral letal (`../09_research/shiitake_verificacion_web_2026-10-25.md`), de modo que el límite de 28 °C en el núcleo es una decisión de diseño conservadora.

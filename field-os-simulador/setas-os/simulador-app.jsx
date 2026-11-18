@@ -1457,11 +1457,11 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
 // public-traceability-modal.jsx: vive en views/public-traceability-modal.jsx (ver jsx-sources.cjs).
 
 // ── IOT INTEGRATION HUB & FIRMWARE GENERATOR ──────────────────────────────────────────
-// Vive en iot-firmware.js: nodos por defecto y generadores de firmware/payload
+// Vive en iot-firmware.js: generadores de firmware/payload
 // (ESPHome, Arduino, curl). Son texto puro, sin React; se extrajeron para poder
 // probarlos por comportamiento en vez de por regex sobre este archivo.
 const SetasIotFirmwareApi=(typeof SetasIotFirmware!=='undefined'?SetasIotFirmware:(typeof require!=='undefined'?require('./iot-firmware.js'):null));
-const {DEFAULT_IOT_NODES,generateESPHomeYaml,generateArduinoIno,generateCurlPayload}=SetasIotFirmwareApi;
+const {generateESPHomeYaml,generateArduinoIno,generateCurlPayload}=SetasIotFirmwareApi;
 
 // iot-hub-modal.jsx: vive en views/iot-hub-modal.jsx (ver jsx-sources.cjs).
 
@@ -2803,6 +2803,7 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   useEffect(() => {
     const bridgeLib = typeof window !== 'undefined' ? window.SetasLiveBridge : null;
     const anomalyLib = typeof window !== 'undefined' ? window.SetasAnomaly : null;
+    const nodeAutomationApi = typeof window !== 'undefined' ? window.SetasNodeAutomation : null;
     if (!enabled || !bridgeLib || !anomalyLib) return undefined;
 
     const engine = anomalyLib.createAnomalyEngine({ bands: bandsRef.current });
@@ -2853,6 +2854,13 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
         next.status.activeSource || '-',
         Object.values(next.rooms).map(r => `${r.id}@${r.sample && r.sample.lastUpdateAt}:${Object.entries(r.metricAgeMs||{}).map(([m,age])=>`${m}:${Number.isFinite(age)?liveAgeLabel(age):'?'}:${r.freshMetrics?.[m]}`).join(',')}`).join(','),
         activeAlerts.map(a => `${a.key}:${a.severity}`).join(','),
+        // Estados de nodo: un estado nuevo, o que cruza el umbral de frescura o
+        // de enlace (sensor-health), vuelve a pintar la ficha de sala y Hoy.
+        Object.entries(next.nodeStatuses || {}).map(([roomId, rows]) => rows.map(row => {
+          const ns = row.node_status || {};
+          const link = nodeAutomationApi ? nodeAutomationApi.evaluateNodeLink(ns.observed_at, { now: Date.now() }) : null;
+          return `${roomId}/${row.device_id}@${ns.observed_at}:${link ? link.state : '-'}:${ns.control_state}:${(ns.alarms || []).join('+')}`;
+        }).join(',')).join(','),
       ].join('|');
       if (signature === signatureRef.current) return;
       signatureRef.current = signature;
@@ -2908,6 +2916,9 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     status: snapshot.status,
     hasLiveData: roomsWithData.length > 0,
     roomLive: (roomId) => (snapshot.rooms || {})[roomId] || null,
+    // Último node_status de cada nodo de la sala (crudo, solo lectura). Vacío si
+    // no llegó ninguno: la ficha dice "sin datos del nodo", nunca un valor por omisión.
+    nodeStatusRows: (roomId) => ((snapshot.nodeStatuses || {})[roomId]) || [],
     roomAlerts: (roomId) => alerts.filter(a => a.roomId === roomId),
     getSeries: (roomId, metric, opts) => (bridgeRef.current ? bridgeRef.current.getSeries(roomId, metric, opts) : null),
   };
@@ -3439,7 +3450,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [harvestTareInput, setHarvestTareInput] = useState('');
   const [harvestTareSource, setHarvestTareSource] = useState('unverified');
   const [harvestFlush, setHarvestFlush] = useState(1);
-  const EMPTY_HARVEST_QUALITY = { pesoPrimera: '', pesoSegunda: '', pesoDescarte: '', firmeza: '', defectosCampo: [] };
+  const EMPTY_HARVEST_QUALITY = { pesoPrimera: '', pesoSegunda: '', pesoDescarte: '', firmeza: '', defectosCampo: [], defectosEvaluados: null };
   const [harvestQuality, setHarvestQuality] = useState(EMPTY_HARVEST_QUALITY);
   const [harvestError, setHarvestError] = useState('');
   const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
@@ -4127,8 +4138,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [copilotVisionError,setCopilotVisionError]=useState(null);
   const [copilotVisionBusy,setCopilotVisionBusy]=useState(false);
   const [climateTimeRange,setClimateTimeRange]=useState('24h');
-  const [faePulseActive,setFaePulseActive]=useState(false);
-  const [humidifierOverride,setHumidifierOverride]=useState(null);
   const [showProdLaunchModal,setShowProdLaunchModal]=useState(false);
   const [selectedTrial,setSelectedTrial]=useState(null);
   const [releaseBatchId,setReleaseBatchId]=useState(null);
@@ -4847,12 +4856,32 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
   // más larga que la referencia. Se calculan aquí, fuera del render de Hoy,
   // porque también alimentan las notificaciones.
+  // Nodos de control (solo lectura): el último node_status de cada sala con
+  // perfil, comparado con su ciclo activo. Sin estado recibido no hay fila.
+  const nodeAutomationApi=typeof window!=='undefined'?window.SetasNodeAutomation:null;
+  const buildRoomNodeAutomation=(roomId,nowMs=Date.now())=>{
+    if(!nodeAutomationApi) return null;
+    try{
+      return nodeAutomationApi.buildRoomAutomation({
+        roomId,
+        roomName:(ROOMS_CONFIG[roomId]&&ROOMS_CONFIG[roomId].name)||null,
+        statusRows:liveTelemetry.nodeStatusRows(roomId),
+        cycles:roomCycles,
+        now:nowMs,
+      });
+    }catch(e){console.warn('[Nodos] no se pudo armar la automatización de la sala',roomId,e);return null;}
+  };
+  const nodeAutomationRooms=nodeAutomationApi
+    ?Object.keys(nodeAutomationApi.PROFILES).map(roomId=>buildRoomNodeAutomation(roomId)).filter(Boolean)
+    :[];
   const todayExceptions=(()=>{
     const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
     const queueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
     if(!api) return [];
     try{
       return api.buildTodayExceptions({
+        nodeRooms:nodeAutomationRooms,
+        alerts:liveTelemetry.alerts||[],
         now:Date.now(),
         lotes:bitLotes,
         bolsas:bitBolsas,
@@ -4874,6 +4903,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       try{writeLocal('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
     }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
     else if(a.type==='goIoT'){setShowIoTHub(true);}
+    else if(a.type==='openRoom'&&a.roomId){setSelectedClimateRoom(a.roomId);goTab('clima');}
     else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
   };
 
@@ -9168,6 +9198,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </section>
         );
       })()}
+      <HarvestQualityPanel summary={lotHarvestQuality(lote, cosechas)}/>
+      <LotOutOfBandPanel roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id,r])=>[id,r.name]))} result={lotOutOfBand({lote,cycles:roomCycles,now:cycleClock})}/>
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className="sdp-provenance" data-provenance={e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
@@ -9226,6 +9258,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Mismas bandas que Cámaras y el motor de alertas: las del ciclo activo
     // de la sala si lo hay, si no las fijas.
     const targetBands = roomId ? (effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null) : null;
+    // De dónde sale cada banda: ciclo (con su fuente) o fija de la sala, sin procedencia.
+    const targetOrigins = (roomId && cycleTargetsApi && cycleTargetsApi.bandOrigins
+      ? cycleTargetsApi.bandOrigins(ROOM_TARGET_BANDS, roomCycles, cycleClock)[roomId]
+      : null) || {};
 
     const buildReading = (metricKey, label, unit, decimals) => {
       const band = targetBands && targetBands[metricKey];
@@ -9249,7 +9285,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const targetLabel = band
         ? (metricKey === 'co2_ppm' ? `TARGET < ${band.max}` : `TARGET ${band.min}–${band.max}`)
         : null;
-      return { key: metricKey, label, unit, value: value.toFixed(decimals), modifier, targetLabel, provenanceKind, provenanceMeta };
+      const origin = band ? targetOrigins[metricKey] : null;
+      const originLabel = origin ? (origin.origin === 'cycle' ? origin.sourceLabel : `Banda ${origin.sourceLabel}`) : null;
+      return { key: metricKey, label, unit, value: value.toFixed(decimals), modifier, targetLabel, originLabel, provenanceKind, provenanceMeta };
     };
     const readings = roomId ? [
       buildReading('temperature_c', 'Temperatura', '°C', 1),
@@ -9391,6 +9429,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="sdp-reading__label">{r.label}</div>
                   <div className="sdp-reading__value">{r.value}<span className="sdp-reading__unit">{r.unit}</span></div>
                   {r.targetLabel && <div className="sdp-reading__target">{r.targetLabel}</div>}
+                  {r.originLabel && <div className="sdp-reading__target" data-testid="reading-band-origin">{r.originLabel}</div>}
                   <div className="sdp-reading__meta">
                     <span className="sdp-provenance" data-provenance={r.provenanceKind}>{r.provenanceKind === 'measured' ? 'MEASURED' : 'ESTIMATED'}</span>
                     <span>{r.provenanceMeta}</span>
@@ -9454,6 +9493,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+
+        <HarvestQualityPanel mobile summary={lotHarvestQuality(lote, (bitCosechas || []).filter(c => c.loteId === lote.id))} />
+
+        <LotOutOfBandPanel mobile roomNames={Object.fromEntries(Object.entries(ROOMS_CONFIG).map(([id, r]) => [id, r.name]))} result={lotOutOfBand({ lote, cycles: roomCycles, now: cycleClock })} />
 
         <section style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
@@ -9564,6 +9607,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // dashboard y el cockpit de Hoy nunca discrepen sobre qué es "en rango".
     // Con un ciclo de sala activo, sus bandas reemplazan las fijas de la sala.
     const defaultTargets = effectiveRoomBands[selectedClimateRoom] || ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
+    // Origen de cada banda efectiva. ROOM_TARGET_BANDS no tiene procedencia:
+    // donde se usa como banda efectiva se declara "predeterminado de la app, sin fuente".
+    const roomBandOrigins = (cycleTargetsApi && cycleTargetsApi.bandOrigins
+      ? cycleTargetsApi.bandOrigins(ROOM_TARGET_BANDS, roomCycles, cycleClock)[selectedClimateRoom]
+      : null) || {};
 
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
@@ -9594,10 +9642,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     // Prioridad: telemetría en vivo > webhook manual > monitor de cámara > demo.
     const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}), ...liveMetrics };
-    // Sin lectura medida o ingresada, el modo automático de los actuadores no tiene con qué decidir.
-    const hasMeasuredClimate = hasLiveMetrics || !!injected;
-    const humidifierAutoOn = hasMeasuredClimate && currentMetrics.rh < defaultTargets.rh_pct.min;
-    const faeAutoPulse = hasMeasuredClimate && currentMetrics.co2 > defaultTargets.co2_ppm.max;
     const liveRoomAlerts = liveTelemetry.roomAlerts(selectedClimateRoom);
     const co2Correction = liveSample.co2_correction || null;
 
@@ -10424,6 +10468,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
             ?'Bandas provisionales: vienen del ciclo activo de la sala y aún no están validadas con lotes propios. Las alertas contra ellas son orientativas.'
             :'Bandas provisionales: son las fijas de la sala, sin especificación de lote aprobada. Las alertas contra ellas son orientativas.'}
         </p>
+        {/* Origen de cada banda efectiva: la del ciclo con su fuente, o la fija de la sala,
+            que no tiene procedencia (ROOM_TARGET_BANDS). */}
+        <ul className="climate-band-origins" data-testid="climate-band-origins" aria-label="Origen de las bandas de la sala" style={{listStyle:'none',margin:'0 0 12px',padding:0,fontSize:'var(--text-md)',color:'var(--ink-1)',display:'flex',flexDirection:'column',gap:2}}>
+          {[['temperature_c','Temperatura'],['rh_pct','Humedad relativa'],['co2_ppm','CO₂']].map(([metric,label])=>{
+            const o=roomBandOrigins[metric];
+            if(!o) return null;
+            return <li key={metric} data-metric={metric} data-band-origin={o.origin}>
+              <b>{label}:</b> {o.origin==='cycle'?`${o.sourceLabel} · ciclo activo`:`Banda ${o.sourceLabel}`}
+            </li>;
+          })}
+        </ul>
         <RoomDeviceReadings roomLive={roomLive}/>
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
@@ -10813,100 +10868,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         </div>
 
-        {/* Panel de Actuadores y Relés de Potencia Hosyond (2ch) */}
-        <div className="climate-actuators-panel" data-testid="climate-actuators-panel">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-            <div>
-              <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Actuadores y Relés de Potencia (Hosyond 2ch)
-              </h3>
-              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
-                Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto
-              </div>
-            </div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:hasMeasuredClimate?'var(--moss-700)':'var(--text-metadata)',fontWeight:700}}>
-              {hasMeasuredClimate ? '● Lecturas recibidas' : '○ Sin lectura del ESP32'}
-            </div>
-          </div>
-
-          <div className="climate-actuators-grid">
-            {/* Canal 1: Humidificador CloudForge T7 */}
-            <div className="climate-actuator-card">
-              <div className="climate-actuator-head">
-                <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
-                  <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Humidificador (Relay Ch1 · T7/H05)
-                </span>
-                <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && humidifierAutoOn) ? 'on' : 'off'}`}>
-                  {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (!hasMeasuredClimate ? 'AUTO [SIN LECTURA]' : humidifierAutoOn ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
-                </span>
-              </div>
-              <div className="climate-actuator-meta">
-                <b>Potencia:</b> 100% · <b>Modo:</b> {humidifierOverride ? 'Manual' : 'Bang-Bang con Histéresis'} (Min idle: 120s)<br/>
-                <b>Diagnóstico:</b> {humidifierOverride === 'ON' ? 'Forzado manualmente por el operario.' : !hasMeasuredClimate ? 'Sin lectura de sonda: el modo automático no actúa.' : (currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`)}
-              </div>
-              <div style={{display:'flex',gap:6,marginTop:4}}>
-                <button
-                  type="button"
-                  className="climate-actuator-btn"
-                  onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
-                >
-                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : <><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)</>}
-                </button>
-                {humidifierOverride !== null && (
-                  <button
-                    type="button"
-                    className="climate-actuator-btn"
-                    onClick={() => setHumidifierOverride(null)}
-                  >
-                    Restablecer
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Canal 2: Extractor FAE Cloudline H4 */}
-            <div className="climate-actuator-card">
-              <div className="climate-actuator-head">
-                <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
-                  <AppIcon name="wind" size={13} style={{marginRight:4}} /> Extractor FAE (Relay Ch2 · Cloudline H4)
-                </span>
-                <span className={`climate-actuator-badge ${faePulseActive || faeAutoPulse ? 'pulse' : 'off'}`}>
-                  {faePulseActive || faeAutoPulse ? 'PULSO ACTIVO (35s)' : !hasMeasuredClimate ? 'AUTO [SIN LECTURA]' : 'AUTO [EN ESPERA]'}
-                </span>
-              </div>
-              <div className="climate-actuator-meta">
-                <b>Velocidad física:</b> 1–2 (~18 CFM efectivo) · <b>Duración pulso:</b> 35s<br/>
-                <b>Diagnóstico:</b> {faePulseActive ? 'Evacuando CO2 y renovando aire fresco...' : !hasMeasuredClimate ? 'Sin lectura de sonda: el modo automático no actúa.' : (faeAutoPulse ? `CO₂ alto (${currentMetrics.co2} ppm > ${defaultTargets.co2_ppm.max} ppm)` : `CO₂ en rango (${currentMetrics.co2} ppm). Próximo pulso programado en ~12 min`)}
-              </div>
-              <div style={{display:'flex',gap:6,marginTop:4}}>
-                <button
-                  type="button"
-                  className="climate-actuator-btn"
-                  onClick={() => {
-                    setFaePulseActive(true);
-                    setTimeout(() => setFaePulseActive(false), 5000);
-                  }}
-                  disabled={faePulseActive}
-                >
-                  {faePulseActive ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Pulso en Curso...</> : <><AppIcon name="wind" size={13} style={{marginRight:4}} /> Disparar Pulso FAE (35s)</>}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Historial de Eventos Recientes de Actuación */}
-          <div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-1)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>
-              <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Historial Reciente de Conmutación de Relés
-            </div>
-            {/* Sin registro de relés conectado todavía: no se muestran conmutaciones de ejemplo. */}
-            <div className="climate-actuator-logs">
-              <div className="climate-log-row" data-testid="relay-log-empty">
-                <span>Sin conmutaciones registradas. El historial aparece cuando el ESP32 reporte sus relés.</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Actuadores: el control vive en el firmware del nodo (DEC-001); Setas OS solo lee estado.
+            Relés comandados, alarmas y consigna salen del último node_status del nodo; sin
+            estado recibido dice "sin datos del nodo" y sin perfil "sala sin automatización".
+            No hay controles de escritura. */}
+        <RoomAutomationPanel view={buildRoomNodeAutomation(selectedClimateRoom)}/>
       </div>
     );
   };
@@ -11733,9 +11699,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{minWidth:0,flex:'1 1 240px'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                               <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:ink,border:`1px solid ${ink}`,padding:'1px 5px'}}>{alarma?'Alarma':'Vigilar'}</span>
-                              <strong style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{item.title}</strong>
+                              <strong style={{fontFamily:'var(--font-sans)',fontSize:item.why&&item.next?'var(--text-md)':'var(--text-sm)',color:'var(--ink-0)'}}>{item.title}</strong>
                             </div>
-                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{item.detail}</div>
+                            {item.why&&item.next
+                              ?<div data-testid="today-exception-detail" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-md)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>
+                                <div><b>Por qué ahora:</b> {item.why}</div>
+                                <div><b>Siguiente:</b> {item.next}</div>
+                              </div>
+                              :<div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{item.detail}</div>}
                           </div>
                           {item.action&&<button type="button" className="sdp-btn sdp-btn--field" onClick={()=>runTodayExceptionAction(item)}>{item.action.label}</button>}
                         </li>;
@@ -11801,7 +11772,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       ))}
                     </div>
                   ) : (
-                    liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && (
+                    liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && todayExceptions.length === 0 && (
                       <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',padding:'4px 0'}}>
                         <span style={{display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="check" size={13} color="var(--status-ok)" /> Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal.</span>
                       </div>
@@ -15004,7 +14975,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" backdropClassName="inv-modal-bg harvest-capture-backdrop" dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <header className="harvest-capture-header">
                 <h2 className="harvest-capture-title">Registrar cosecha</h2>
                 <p className="harvest-capture-context">Lote <span>{bitLotes.find(l=>l.id===(bitCosechaForm.loteId||bitActiveLoteId))?.codigo||bitCosechaForm.loteId||bitActiveLoteId}</span></p>
@@ -16542,7 +16513,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const yamlCode = `# ==============================================================================
 # Setas de la Peña — Tenjo, Cundinamarca (2.600 msnm)
 # Firmware ESPHome: ${room.name} (${room.device})
-# Generado automáticamente por Setas OS para control microclimático
+# PLANTILLA DE TELEMETRÍA generada por Setas OS: solo sensores, sin relés.
+# El control de actuadores vive en el firmware del nodo, no en esta plantilla.
 # ==============================================================================
 
 substitutions:
@@ -16621,22 +16593,6 @@ sensor:
     automatic_self_calibration: false
     update_interval: 30s
 
-# ── Relés de Potencia Hosyond (Actuadores de Sala) ────────────────────────────
-switch:
-  # Canal 1: Humidificador AC Infinity CloudForge T7 (Control HR)
-  - platform: gpio
-    pin: GPIO18
-    name: "Humidificador Sala"
-    id: relay_ch1_humidifier
-    restore_mode: ALWAYS_OFF
-
-  # Canal 2: Extractor FAE AC Infinity Cloudline H4 (Pulsos renovación)
-  - platform: gpio
-    pin: GPIO19
-    name: "Extractor FAE Sala"
-    id: relay_ch2_fae
-    restore_mode: ALWAYS_OFF
-
 http_request:
   id: http_client
   timeout: 5s
@@ -16709,7 +16665,7 @@ interval:
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-2)' }}>
-                  Listo para flashear con ESPHome Dashboard o CLI
+                  Plantilla de telemetría (solo sensores): revisar antes de flashear con ESPHome
                 </span>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button type="button" onClick={() => setShowEsp32ConfigModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 40, padding: '6px 14px' }}>
@@ -18179,6 +18135,7 @@ interval:
             onClose={() => {setShowIoTHub(false);requestAnimationFrame(()=>iotHubTriggerRef.current?.focus());}}
             liveTelemetry={liveTelemetry}
             selectedRoomId={selectedClimateRoom}
+            nodeRooms={Array.from(new Set([...Object.keys(ROOMS_CONFIG),...(nodeAutomationApi?Object.keys(nodeAutomationApi.PROFILES):[])])).map(id=>buildRoomNodeAutomation(id)).filter(Boolean)}
             onInjectReading={(r) => {
               setInjectedClimateReadings(prev => ({
                 ...prev,

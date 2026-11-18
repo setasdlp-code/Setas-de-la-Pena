@@ -97,6 +97,30 @@ it has no persistent offline queue. A network outage may therefore leave a gap,
 not fabricated historical observations. Validate with the installed ESPHome
 version and physical node before flashing. No firmware was flashed here.
 
+## Node status from control firmware (read-only)
+
+A control firmware that includes `esphome-publish.package.yaml` (today only
+`cloudlab_esp32.yaml`, via `esphome/modulo-fructificacion.package.yaml`) fills
+the global `setas_node_status`; the package attaches it to each POST as
+`node_status` (`setas.node-status.v1`: commanded relay states, active alarms,
+control state and current setpoint). Telemetry-only profiles leave it empty.
+
+- Validation: `validateNodeStatus` in `telemetry-contract.js`, against the room
+  profile in `node-control-profiles.json` (allowed relays and alarm codes). A
+  room without a profile cannot report status (HTTP 422). The allowed room list
+  also comes from that file, not from code.
+- A status-only packet (no valid reading, e.g. invalid sensor) is accepted so
+  the alarm reaches Setas OS.
+- Persistence uses the existing collections only: latest status in
+  `telemetria_salas/{roomId}.device_readings.{deviceId}.node_status` (an older
+  status never replaces a newer one) and history in `telemetria_lecturas` with
+  `record_type: "node_status"` (no `metric`). Same idempotency as readings:
+  identical retry → no change; different content for the same
+  device/time → HTTP 409.
+- Relay states are what the firmware commands, not measured contact states
+  (provenance `reported`). The gateway has no route back to the node and its
+  reply carries no commands. Contract: `esphome/CONTRATO_NODOS.md`.
+
 ## Persistence and observation semantics
 
 Each `telemetria_lecturas` document is identified by a SHA-256 hash of

@@ -2,21 +2,19 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  DEFAULT_IOT_NODES, generateESPHomeYaml, generateArduinoIno, generateCurlPayload,
+  generateESPHomeYaml, generateArduinoIno, generateCurlPayload,
 } = require('./iot-firmware.js');
+const iotFirmware = require('./iot-firmware.js');
 
 test('el módulo también se publica como global para el navegador', () => {
   assert.equal(globalThis.SetasIotFirmware.generateESPHomeYaml, generateESPHomeYaml);
 });
 
-test('los nodos por defecto tienen identidad, sala y sensores', () => {
-  assert.ok(DEFAULT_IOT_NODES.length > 0);
-  const ids = DEFAULT_IOT_NODES.map((n) => n.id);
-  assert.equal(new Set(ids).size, ids.length, 'ids de nodo repetidos');
-  DEFAULT_IOT_NODES.forEach((n) => {
-    assert.ok(n.roomId, `${n.id}: sin roomId`);
-    assert.ok(n.sensors, `${n.id}: sin sensores`);
-  });
+test('no hay nodos de ejemplo: el módulo solo exporta generadores de texto', () => {
+  // Los nodos del Hub salen del estado real (node-automation.js); una lista fija
+  // con IP, MAC, RSSI y métricas inventadas se mostraba como "online".
+  assert.deepEqual(Object.keys(iotFirmware).sort(), ['generateArduinoIno', 'generateCurlPayload', 'generateESPHomeYaml']);
+  assert.equal(iotFirmware.DEFAULT_IOT_NODES, undefined);
 });
 
 test('ESPHome: las contraseñas de recuperación y OTA salen como !secret, nunca en claro', () => {
@@ -48,4 +46,19 @@ test('curl: el payload es JSON válido con los campos del contrato de telemetrí
   assert.equal(body.co2_ppm, 800);
   assert.equal(body.substrate_temperature_c, 18);
   assert.ok(!Number.isNaN(Date.parse(body.observed_at)));
+});
+
+test('ESPHome: es una plantilla de telemetría sin relés ni switches, aunque se pidan', () => {
+  const yaml = generateESPHomeYaml({ relays: ['ch1_humidifier', 'ch2_fae'] });
+  assert.match(yaml, /PLANTILLA DE TELEMETRÍA/);
+  const config = yaml.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
+  assert.doesNotMatch(config, /^switch:/m);
+  assert.doesNotMatch(config, /platform: gpio|relay|Relé/i);
+});
+
+test('Arduino y curl se rotulan como plantilla de telemetría y no gobiernan relés', () => {
+  const ino = generateArduinoIno({});
+  assert.match(ino, /PLANTILLA DE TELEMETRÍA/);
+  assert.doesNotMatch(ino, /relay|pinMode|digitalWrite/i);
+  assert.match(generateCurlPayload({}), /^# Plantilla de telemetría/);
 });

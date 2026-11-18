@@ -27,7 +27,7 @@ const root=path.resolve(__dirname,'..');
    await hub.getByRole('button',{name:'Cerrar',exact:true}).press('Tab');await expect(close).toBeFocused();
    const tabs=hub.getByRole('tablist',{name:'Secciones del Hub IoT'});
    assert.ok(await tabs.evaluate(el=>[...el.querySelectorAll('[role=tab]')].every(t=>document.getElementById(t.getAttribute('aria-controls')))),'all tabs reference an existing panel');
-   const nodes=tabs.getByRole('tab',{name:/Nodos en Finca/});await nodes.focus();await nodes.press('ArrowRight');
+   const nodes=tabs.getByRole('tab',{name:/Nodos de control/});await nodes.focus();await nodes.press('ArrowRight');
    await expect(tabs.getByRole('tab',{name:'Generador de Firmware'})).toBeFocused();
    await expect(tabs.getByRole('tab',{name:'Generador de Firmware'})).toHaveAttribute('aria-selected','true');
    await hub.getByLabel('Microcontrolador',{exact:true}).selectOption('esp32c3');
@@ -35,9 +35,10 @@ const root=path.resolve(__dirname,'..');
    await hub.getByLabel('Puerto del servidor',{exact:true}).fill('8081');
    await expect(hub.locator('.iot-code-box')).toContainText('fixture.local');
    await expect(hub.locator('.iot-code-box')).toContainText('8081');
-   for(const name of ['Generador de Firmware','Consola Webhook / Test','Conexión en Vivo','Reglas de Automatización']){
-    await tabs.getByRole('tab',{name,exact:true}).click();
-    await expect(hub.getByRole('tabpanel',{name,exact:true})).toBeVisible();
+   await expect(tabs.getByRole('tab',{name:/Reglas/})).toHaveCount(0);
+   for(const name of ['Generador de Firmware','Consola Webhook / Test','Conexión en Vivo',/^Nodos de control/]){
+    await tabs.getByRole('tab',{name,exact:typeof name==='string'}).click();
+    await expect(hub.getByRole('tabpanel',{name,exact:typeof name==='string'})).toBeVisible();
     const violations=await hub.evaluate(el=>{
      const vis=e=>!!e.getBoundingClientRect().height;
      return [...el.querySelectorAll('input,select,textarea')].filter(vis).filter(e=>!e.labels?.length&&!e.getAttribute('aria-label')).map(e=>e.id||e.tagName);
@@ -49,11 +50,10 @@ const root=path.resolve(__dirname,'..');
     const bounds=await hub.evaluate(el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:innerHeight,display:getComputedStyle(el).display,max:getComputedStyle(el).maxHeight}});
     assert.ok(bounds.top>=0&&bounds.bottom<=bounds.height,`${name}: bounded modal ${JSON.stringify(bounds)}`);
    }
-   await hub.getByLabel('HR Mínima de Arranque (%)',{exact:true}).fill('84');
-   await expect(hub.getByLabel('HR Mínima de Arranque (%)',{exact:true})).toHaveValue('84');
-   // Only inspect UI. Do not save automation or connect external transports.
-   await tabs.getByRole('tab',{name:'Reglas de Automatización'}).focus();await tabs.getByRole('tab',{name:'Reglas de Automatización'}).press('Home');await expect(nodes).toBeFocused();
-   await nodes.press('End');await expect(tabs.getByRole('tab',{name:'Reglas de Automatización'})).toBeFocused();
+   // Only inspect UI. Do not connect external transports. La pestaña Nodos es la primera y la última es Conexión en Vivo.
+   const connection=tabs.getByRole('tab',{name:'Conexión en Vivo',exact:true});
+   await connection.focus();await connection.press('Home');await expect(nodes).toBeFocused();
+   await nodes.press('End');await expect(connection).toBeFocused();
    await tabs.getByRole('tab',{name:'Generador de Firmware'}).click();
    await hub.locator('.iot-hub-body').evaluate(el=>el.scrollTop=0);
    await page.screenshot({path:`/tmp/setas-hub-accessibility-${width}.png`});

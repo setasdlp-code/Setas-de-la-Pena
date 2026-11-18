@@ -247,6 +247,12 @@
     // Solo coincidencias exactas con el vocabulario v0.1 pasan a defectCodes.
     const v01 = new Set(HARVEST_QUALITY.FIELD_DEFECTS.map(d => d.v01Code).filter(Boolean));
     defectosCampo.forEach(d => { if (v01.has(d) && !defectCodes.includes(d)) defectCodes.push(d); });
+    // «Evaluado sin hallazgos» (lista vacía + marca) no es lo mismo que «no
+    // evaluado» (lista vacía sin marca). La marca solo vale true; cualquier otra
+    // cosa es null (no se sabe). No se deduce de la lista: una lista no vacía ya
+    // se lee como evaluada en lot-record.js sin escribir nada que el operario no
+    // haya hecho.
+    const defectosEvaluados = form.defectosEvaluados === true ? true : null;
     const { colorOrdinal: _noColor, ...rest } = form;
 
     return {
@@ -284,6 +290,7 @@
       firmezaMetodo: firmeza !== null ? HARVEST_QUALITY.FIRMNESS_METHOD : null,
       firmezaEscala: firmeza !== null ? HARVEST_QUALITY.FIRMNESS_SCALE : null,
       defectosCampo,
+      defectosEvaluados,
       phenotypeStage: form.phenotypeStage || null,
       observerNotes: form.observerNotes || null,
     };

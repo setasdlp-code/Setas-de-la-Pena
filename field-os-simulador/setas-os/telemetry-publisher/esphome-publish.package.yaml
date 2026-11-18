@@ -1,10 +1,20 @@
 # Telemetry-only package; include in the existing ESP32 configuration.
 # Requires room_temp and room_humidity IDs with timestamp capture callbacks.
 # CO2 is optional: include esphome-mhz19.package.yaml only on its assigned node.
-# No relays, setpoints, or actuator commands are added.
+# No relays, setpoints, or actuator commands are added. A control firmware that
+# includes this package may fill the global `setas_node_status` with a
+# serialized setas.node-status.v1 object (relay states it commands, active
+# alarms, current setpoint); it is attached read-only as `node_status`.
+# This package never reads commands back from the gateway.
 # Secret files and TLS CA certificates belong outside the repository.
 substitutions:
   sensor_device_id: "setas-node-01"
+  # Timestamps always use utcnow(); the zone only affects local-time automations
+  # (e.g. a light schedule) that read setas_publish_clock.now().
+  setas_timezone: "UTC"
+  # Set "true" only when the node's CO2 sensor already compensates pressure or
+  # altitude in firmware (e.g. SCD30 altitude_compensation); see README.
+  setas_co2_pressure_compensated: "false"
 
 http_request:
   id: setas_publisher_http
@@ -15,7 +25,7 @@ http_request:
 time:
   - platform: sntp
     id: setas_publish_clock
-    timezone: UTC
+    timezone: ${setas_timezone}
 
 # Capture observation time when each sensor publishes, not on HTTP receipt.
 globals:
@@ -32,6 +42,11 @@ globals:
     type: float
     restore_value: false
     initial_value: "NAN"
+  # Serialized setas.node-status.v1 written by an included control package.
+  # Empty on telemetry-only nodes: nothing is attached.
+  - id: setas_node_status
+    type: std::string
+    restore_value: false
 
 interval:
   - interval: 60s
@@ -64,7 +79,13 @@ interval:
                   add("rh_pct", id(room_humidity).state, id(setas_rh_at));
                   add("co2_ppm", id(setas_co2_value), id(setas_co2_at));
                   // Keep false unless compensation is configured in firmware.
-                  root["co2_pressure_compensated"] = false;
+                  root["co2_pressure_compensated"] = ${setas_co2_pressure_compensated};
+                  // Read-only node status; sent even when no sensor reading is
+                  // valid, so an invalid-sensor alarm still reaches Setas OS.
+                  if (!id(setas_node_status).empty()) {
+                    JsonDocument status;
+                    if (!deserializeJson(status, id(setas_node_status))) root["node_status"] = status;
+                  }
                 on_response:
                   then:
                     - lambda: |-

@@ -200,7 +200,7 @@ test('el Hub IoT deja configurar los tres transportes y la presión local', () =
   assert.match(jsx, /pressureHpa: Number\(connPressure\) \|\| 745/);
   // El modal recibe el hook: sin este prop el panel se renderiza muerto.
   assert.match(jsx, /liveTelemetry=\{liveTelemetry\}/);
-  assert.match(jsx, /liveTelemetry = null \}\) => \{/);
+  assert.match(jsx, /liveTelemetry = null, nodeRooms = null \}\) => \{/);
 });
 
 test('Firestore conserva la bandera de compensación de CO₂', () => {

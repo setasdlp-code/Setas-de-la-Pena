@@ -1,9 +1,15 @@
 # =============================================================================
-# ESPHome — Incubadora del piloto de shiitake
+# ESPHome — Incubadora del piloto de shiitake (variante por aire, DEC-023)
 # Setas de la Peña · Tenjo, Cundinamarca · 2600 m s.n.m.
 # STATUS: BANCO DE PRUEBAS / NO COMISIONADO / NO USAR EN PRODUCCIÓN
 # =============================================================================
 # Spec: docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
+# Adaptado a DEC-023 (knowledge_base/DECISIONS.md, «Incubadora piloto sin sondas
+# de núcleo por ahora (riesgo aceptado)»): control y alarmas sobre la temperatura
+# del aire medida por un SHT45 breakout protegido. Sin sondas DS18B20: no hay
+# mapa térmico ni núcleo, y el núcleo se declara «sin sensor» (nunca se publica
+# un valor de núcleo ni de sustrato). La adaptación sigue siendo de banco: debe
+# pasar el protocolo esphome/PROTOCOLO_BANCO_INCUBADORA_AIRE.md antes de usarse.
 #
 # PRINCIPIOS
 #   · El lazo de control y las protecciones de software viven en el ESP32.
@@ -14,26 +20,37 @@
 #     calefactor y la habilitación: el operador debe volver a habilitarla.
 #   · La incubadora no controla humedad ni CO₂ (solo se registran).
 #   · No hay setpoint aprobado: la banda sale de la especificación del lote.
-#   · Las protecciones físicas (termostato bimetálico 35 °C, fusible térmico,
-#     diferencial, RETIE) son independientes de este firmware.
+#   · Las protecciones físicas (termostato de corte, fusible térmico,
+#     diferencial, revisión RETIE) son independientes de este firmware y siguen
+#     siendo obligatorias (DEC-023, «Lo que esta decisión no cambia»).
 #
 # ACTUADORES
-#   Relé Hosyond (aislamiento óptico) → calefactor, GPIO26.
-#   La polaridad (activo-LOW o HIGH) NO está verificada: confirmar en banco y
-#   ajustar la sustitución `relay_active_low`.
+#   Módulo de relés optoacoplado de 5 V con jumper de disparo alto/bajo (4
+#   canales, o Hosyond de 2 canales) → calefactor, GPIO26. Se usa con disparo
+#   ALTO (jumper en "H"): `relay_active_low: "false"`. La polaridad real NO está
+#   verificada: confirmarla en banco sin carga antes de conectar el calefactor.
+#
+# GPIO (ESP32-WROOM-32 / esp32dev)
+#   Ninguno de los pines usados es de arranque (strapping) según la lista que
+#   aplica ESPHome 2026.10.2 (`_ESP32_STRAPPING_PINS = {0, 2, 5, 12, 15}`), ni
+#   del flash (6–11), ni solo-entrada (34–39), ni UART0 (1, 3). La ausencia de
+#   señal en el arranque en GPIO26/25/27 no se contrastó con la documentación de
+#   Espressif (sin acceso web en la adaptación): se verifica en banco.
 # =============================================================================
 
 substitutions:
-  device_name: incubadora-piloto
+  # Identidad lógica del nodo según DEC-023 (sala `incubacion_01`).
+  device_name: setas-incubacion-01
   friendly_name: "Incubadora piloto"
 
   # --- Hardware ---
   relay_heater_pin: GPIO26
-  # Módulo Hosyond sin verificar: "true" = activo-LOW. Confirmar en banco.
-  relay_active_low: "true"
+  # Módulo con jumper en disparo ALTO: "false" = activo-HIGH (sin inversión).
+  # Confirmar en banco que el relé queda desactivado con el pin en LOW y con el
+  # ESP32 sin alimentar o en reinicio (entrada flotante).
+  relay_active_low: "false"
   sda_pin: GPIO21
   scl_pin: GPIO22
-  onewire_pin: GPIO4
   fan_pin: GPIO25  # tacómetro del ventilador (pull-up interno, 2 pulsos/vuelta)
   alarm_led_pin: GPIO27  # LED o zumbador externo de alarma local
 
@@ -51,26 +68,18 @@ substitutions:
   fan_arranque_gracia_s: "20"   # tras el arranque, el tacómetro en cero no alarma
 
   # --- Reanudación tras arranque o corte (spec §7) ---
-  # Hasta que pasa esta estabilización (sensores y ventilador) el calefactor no se
+  # Hasta que pasa esta estabilización (sensor y ventilador) el calefactor no se
   # reanuda ni se apaga la habilitación del operador por alarmas de arranque.
   arranque_estabilizacion_s: "90"
-  # Límite absoluto del aire: provisional (mismo tope que el KB da al núcleo)
-  # hasta que la especificación del lote defina la banda.
+  # Límite absoluto del aire: PROVISIONAL y SIN banda de lote. 28 °C es el tope
+  # que el KB da al NÚCLEO (01_species/lentinula_edodes.md); no hay un límite de
+  # aire con fuente. Se reemplaza cuando la especificación del lote lo defina.
   aire_max_c: "28.0"
-
-  # --- Direcciones DS18B20 (marcadores distintos entre sí) ---
-  # REEMPLAZAR por las direcciones reales tras el escaneo en banco. Se fijan por
-  # dirección, nunca por índice de escaneo. El protocolo (Tarea 5) exige que ya
-  # no sean marcadores antes de comisionar.
-  addr_base: "0x0000000000000001"
-  addr_centro: "0x0000000000000002"
-  addr_tope: "0x0000000000000003"
-  addr_nucleo: "0x0000000000000004"
 
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
-  comment: "Banco de pruebas incubadora piloto · no comisionado"
+  comment: "Banco de pruebas incubadora piloto (aire, DEC-023) · no comisionado"
   on_boot:
     - priority: -100
       then:
@@ -155,23 +164,18 @@ switch:
       inverted: ${relay_active_low}
     restore_mode: ALWAYS_OFF
 
-# --- Buses ---
+# --- Bus ---
 i2c:
   sda: ${sda_pin}
   scl: ${scl_pin}
   scan: true
 
-# Hardware: pull-up físico de 4,7 kΩ entre DATA y 3V3 del bus 1-Wire (no es
-# configuración de software).
-one_wire:
-  - platform: gpio
-    pin: ${onewire_pin}
-
 # --- Sensores ---
-# Los sensores de control (t_aire, t_nucleo) llevan `timeout`: si dejan de
-# actualizar publican NaN, de modo que un sensor congelado se ve como inválido.
+# El sensor de control (t_aire) lleva `timeout`: si deja de actualizar publica
+# NaN, de modo que un sensor congelado o desconectado se ve como inválido.
 sensor:
-  # Aire: SHT45 (control). Proteger de goteo y radiación; lejos del calefactor.
+  # Aire a la altura de la carga: SHT45 breakout protegido (control).
+  # Proteger de goteo y radiación; lejos del calefactor.
   - platform: sht4x
     address: 0x44
     update_interval: 30s
@@ -185,37 +189,6 @@ sensor:
     humidity:
       id: hr_aire
       name: "HR aire (diagnóstico)"
-
-  # Mapa térmico (base, centro, parte superior): solo registro.
-  - platform: dallas_temp
-    address: ${addr_base}
-    id: t_base
-    name: "T base"
-    update_interval: 30s
-  - platform: dallas_temp
-    address: ${addr_centro}
-    id: t_centro
-    name: "T centro"
-    update_interval: 30s
-  - platform: dallas_temp
-    address: ${addr_tope}
-    id: t_tope
-    name: "T parte superior"
-    update_interval: 30s
-
-  # Núcleo: sonda inox en el centro de un bloque testigo, con EMA (α ≈ 0,1).
-  - platform: dallas_temp
-    address: ${addr_nucleo}
-    id: t_nucleo
-    name: "T núcleo"
-    update_interval: 30s
-    filters:
-      - exponential_moving_average:
-          alpha: 0.1
-          send_every: 1
-      - timeout:
-          timeout: 120s
-          value: .nan
 
   # CO₂: SCD30 temporal, solo diagnóstico. Una sola estrategia de compensación:
   # altitud fija 2600 m (no combinar con presión ambiente).
@@ -243,19 +216,31 @@ sensor:
     filters:
       - multiply: 0.5
 
-  # Diferencia núcleo–aire (alerta si > 5 °C). NaN si falta cualquiera.
+# --- Declaración de lo que no se mide (DEC-023) ---
+# Texto fijo, no un número: Home Assistant y Setas OS muestran «sin sensor» en
+# lugar de un valor estimado o un «en rango».
+text_sensor:
   - platform: template
-    id: dt_nucleo_aire
-    name: "dT núcleo-aire"
-    unit_of_measurement: "°C"
-    accuracy_decimals: 2
-    update_interval: 30s
+    id: estado_nucleo
+    name: "Núcleo del bloque"
+    update_interval: 60min
     lambda: |-
-      return id(t_nucleo).state - id(t_aire).state;
+      return {"sin sensor"};
+  - platform: template
+    id: estado_mapa_termico
+    name: "Mapa térmico"
+    update_interval: 60min
+    lambda: |-
+      return {"sin sensor"};
 
 # --- Termostato (solo calefacción, sobre el aire) ---
 # La banda y la histéresis vienen de la especificación del lote (ver sustituciones).
 # Los tiempos mínimos del relé son de protección del contacto, no de proceso.
+# SIN FUENTE PRIMARIA y en discrepancia con el KB (no se cambian aquí):
+#   este YAML: min_heating_off_time 60s, min_heating_run_time 60s, min_idle_time 30s;
+#   05_equipment/environmental_control.md (plantilla): min_heating_off_time 300s,
+#   min_idle_time 30s; 05_equipment/plan_ha_v1.md:31: min_idle_time 120s.
+# Se resuelven con la ficha del relé y del calefactor.
 climate:
   - platform: thermostat
     id: incubadora
@@ -279,8 +264,6 @@ climate:
           condition:
             not:
               or:
-                - binary_sensor.is_on: alarma_sobretemp_nucleo
-                - binary_sensor.is_on: alarma_dt_nucleo_aire
                 - binary_sensor.is_on: alarma_sensor_invalido
                 - binary_sensor.is_on: alarma_ventilador
                 - binary_sensor.is_on: alarma_sobretemp_aire
@@ -291,29 +274,13 @@ climate:
 
 # --- Alarmas (cada una apaga el calefactor vía el interval de seguridad) ---
 binary_sensor:
-  # Núcleo > 28 °C (NaN compara falso: el sensor inválido lo cubre alarma_sensor_invalido).
-  - platform: template
-    id: alarma_sobretemp_nucleo
-    name: "ALARMA núcleo > 28 °C"
-    device_class: problem
-    lambda: |-
-      return id(t_nucleo).state > 28.0;
-
-  # Núcleo más de 5 °C sobre el aire.
-  - platform: template
-    id: alarma_dt_nucleo_aire
-    name: "ALARMA núcleo-aire > 5 °C"
-    device_class: problem
-    lambda: |-
-      return id(dt_nucleo_aire).state > 5.0;
-
   # Sensor de control inválido (NaN: ausente, desconectado o congelado > 120 s).
   - platform: template
     id: alarma_sensor_invalido
     name: "ALARMA sensor inválido"
     device_class: problem
     lambda: |-
-      return std::isnan(id(t_aire).state) || std::isnan(id(t_nucleo).state);
+      return std::isnan(id(t_aire).state);
 
   # Aire sobre el límite absoluto (NaN compara falso: lo cubre alarma_sensor_invalido).
   - platform: template
@@ -343,8 +310,6 @@ interval:
       - if:
           condition:
             or:
-              - binary_sensor.is_on: alarma_sobretemp_nucleo
-              - binary_sensor.is_on: alarma_dt_nucleo_aire
               - binary_sensor.is_on: alarma_sensor_invalido
               - binary_sensor.is_on: alarma_ventilador
               - binary_sensor.is_on: alarma_sobretemp_aire
