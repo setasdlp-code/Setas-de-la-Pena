@@ -309,3 +309,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
  .editorial-page .species-sheet .figure-context { font-size:8pt; }
  .editorial-page .species-sheet .editorial-harvest-entry { display:none!important; }
 }
+
+.editorial-page .species-sheet .story-illustration { margin:20px 0 24px }
+.editorial-page .species-sheet .story-illustration img { width:100%;height:auto }
+.editorial-page .species-sheet .story-illustration figcaption { margin-top:12px;font:400 13px/1.6 var(--sans);color:var(--muted) }
