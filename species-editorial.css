@@ -90,6 +90,8 @@ html:has(.editorial-page) { scroll-behavior:smooth }
 .editorial-page .species-sheet .origin-copy>p { max-width:56ch }
 .editorial-page .species-sheet .reading-detail { margin-top:28px }
 .editorial-page .species-sheet .reading-detail p { font-size:16px }
+.editorial-page .species-sheet .species-story { padding-block:24px;border-block:1px solid var(--line) }
+.editorial-page .species-sheet .species-story h3 { margin-bottom:16px }
 .editorial-page .species-sheet .taxonomy { margin-top:20px }
 .editorial-page .species-sheet .taxonomy dl { font-size:16px;padding-block:0 20px }
 .editorial-page .species-sheet .taxonomy dl>div { display:grid;grid-template-columns:140px 1fr;gap:20px;margin-top:12px }
