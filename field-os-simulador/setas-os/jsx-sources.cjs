@@ -25,6 +25,10 @@ module.exports = [
   'views/public-traceability-modal.jsx',
   'views/iot-hub-modal.jsx',
   'views/field-action-modal.jsx',
+  'views/node-automation-panels.jsx',
   'views/harvest-quality-fields.jsx',
+  'lot-record.js',
+  'harvest-quality-summary.js',
+  'views/harvest-quality-panel.jsx',
   'simulador-app.jsx',
 ];

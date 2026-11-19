@@ -390,7 +390,7 @@
     cosechas.forEach((c) => {
       const flush = Math.trunc(num(c.flush) ?? 1) || 1;
       if (!byFlush.has(flush)) {
-        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, anyGrade: false, ungraded: false, firm: [], defects: [], undeclared: [], harvests: [] });
+        byFlush.set(flush, { flush, grams: { primera: null, segunda: null, descarte: null }, anyGrade: false, ungraded: false, firm: [], defects: [], undeclared: [], defectsEvaluated: 0, harvests: [] });
       }
       const f = byFlush.get(flush);
       const factor = (c.unit || c.unidad) === 'kg' ? 1000 : 1;
@@ -417,12 +417,38 @@
       if (firm != null) { f.firm.push(firm); anyQuality = true; }
       const defects = Array.isArray(c.defectosCampo)
         ? c.defectosCampo.map((d) => String(d || '').trim()).filter(Boolean) : [];
-      if (defects.length) anyQuality = true;
+      // Defectos evaluados: la marca explícita del operario (`defectosEvaluados`
+      // true: «sin defectos observados» o con hallazgos) o una lista no vacía de
+      // una cosecha anterior a la marca. Una lista vacía SIN marca es «no
+      // evaluado»: no se sabe, y no cuenta.
+      const defectsEvaluated = c.defectosEvaluados === true || defects.length > 0;
+      if (defectsEvaluated) { anyQuality = true; f.defectsEvaluated += 1; }
+      const ownKnown = [];
+      const ownUndeclared = [];
       defects.forEach((d) => {
         const list = knownDefects.has(d) ? f.defects : f.undeclared;
         if (!list.includes(d)) list.push(d);
+        const own = knownDefects.has(d) ? ownKnown : ownUndeclared;
+        if (!own.includes(d)) own.push(d);
       });
-      f.harvests.push({ harvestId: c.id || null, gap: getBitacora().harvestGradeGap(sane) });
+      // Detalle por cosecha, aditivo: un consumidor de lectura (el panel de la
+      // ficha de lote) necesita saber cuáles cosechas traen calidad y cuáles no
+      // para informar n y cobertura, y qué cosecha tiene un desfase de suma.
+      // Los agregados de la oleada no lo permiten. `gradeKg` es null por grado no
+      // declarado, nunca 0; `hasQuality` usa el mismo criterio que `anyQuality`.
+      const ownGradeKg = {};
+      GRADE_KEYS.forEach(([k, field]) => { ownGradeKg[k] = sane[field] == null ? null : (sane[field] * factor) / 1000; });
+      f.harvests.push({
+        harvestId: c.id || null,
+        gap: getBitacora().harvestGradeGap(sane),
+        hasQuality: declaredGrade || firm != null || defectsEvaluated,
+        defectsEvaluated,
+        gradesComplete: GRADE_KEYS.every(([, field]) => sane[field] != null),
+        gradeKg: ownGradeKg,
+        firmness: firm,
+        fieldDefects: ownKnown,
+        undeclaredFieldDefects: ownUndeclared,
+      });
     });
 
     const flushes = [...byFlush.values()].sort((a, b) => a.flush - b.flush).map((f) => {
@@ -440,6 +466,7 @@
           ? { values: f.firm, method: HQ.FIRMNESS_METHOD, scale: HQ.FIRMNESS_SCALE } : null,
         fieldDefects: f.defects,
         undeclaredFieldDefects: f.undeclared,
+        defectsEvaluatedCount: f.defectsEvaluated,
         harvests: f.harvests,
       };
     });
@@ -454,6 +481,7 @@
     return {
       criteria: HQ.CRITERIA,
       flushes,
+      defectsEvaluatedCount: flushes.reduce((n, f) => n + f.defectsEvaluatedCount, 0),
       gaps,
       provenance: {
         gradeKg: 'operator_declared_grade',

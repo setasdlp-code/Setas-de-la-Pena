@@ -5177,99 +5177,98 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   gap: 14px;
 }
 
-.sim-root .climate-actuators-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px;
+/* Automatización del nodo (solo lectura) y horas fuera de banda del lote.
+   Una columna; texto operativo a 16 px (--text-md); sin controles de escritura. */
+.sim-root .climate-node-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
 }
-
-.sim-root .climate-actuator-card {
-  padding: 14px var(--space-2);
-  background: var(--paper-0, var(--surface-cream));
-  border: 1px solid var(--border-hairline, var(--color-species-name));
-  border-radius: var(--sim-radius-sm, 2px);
+.sim-root .climate-node-title h3 { margin: 0; font-size: var(--text-lg); }
+/* La etiqueta de procedencia hereda nowrap del sistema de diseño; en 320 px y con una
+   fuente de reemplazo más ancha desbordaba el panel. Que parta línea dentro de su caja. */
+.sim-root .climate-node-title .sdp-provenance { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
+.sim-root .climate-node-card {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-}
-
-.sim-root .climate-actuator-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sim-root .climate-actuator-badge {
-  padding: 3px var(--space-1);
-  border-radius: var(--sim-radius-sm);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: .04em;
-}
-
-.sim-root .climate-actuator-badge.on {
-  background: var(--moss-700, var(--color-dark-secondary));
-  color: var(--text-on-dark);
-}
-
-.sim-root .climate-actuator-badge.pulse {
-  background: var(--status-info);
-  color: var(--text-on-dark);
-}
-
-.sim-root .climate-actuator-badge.off {
-  background: var(--paper-200);
-  color: var(--ink-1);
-}
-
-.sim-root .climate-actuator-meta {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  color: var(--ink-1);
-  line-height: 1.4;
-}
-
-.sim-root .climate-actuator-btn {
-  padding: var(--space-1) 12px;
+  padding: var(--space-2);
   background: var(--paper-0);
   border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--sim-radius-sm, 2px);
   font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--text-md);
   color: var(--ink-0);
-  cursor: pointer;
-  display: inline-flex;
+  line-height: 1.4;
+}
+.sim-root .climate-node-card[data-link-state="stale"],
+.sim-root .climate-node-card[data-link-state="offline"] { border-left: 4px solid var(--status-warn-text); }
+.sim-root .climate-node-head {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background var(--duration-standard), border-color var(--duration-standard);
+  justify-content: space-between;
+  gap: var(--space-1);
+  min-height: 48px;
 }
-
-.sim-root .climate-actuator-btn:hover {
-  background: var(--paper-1);
-  border-color: var(--moss-700);
+.sim-root .climate-node-sub {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink-1);
 }
-
-.sim-root .climate-actuator-logs {
+.sim-root .climate-node-line,
+.sim-root .climate-node-note,
+.sim-root .climate-node-foot,
+.sim-root .climate-node-mismatch { margin: 0; font-size: var(--text-md); }
+.sim-root .climate-node-foot { color: var(--ink-1); }
+.sim-root .climate-node-note { color: var(--status-warn-text); }
+.sim-root .climate-node-mismatch {
+  padding: var(--space-1) var(--space-2);
+  background: var(--status-warn-bg);
+  border-left: 4px solid var(--status-warn-text);
+  color: var(--ink-0);
+}
+.sim-root .climate-node-relays,
+.sim-root .climate-node-alarms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.sim-root .climate-node-relay {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-half) 0;
+  border-bottom: 1px solid var(--border-hairline, var(--color-species-name));
+}
+.sim-root .climate-node-alarm { padding: var(--space-half) 0; color: var(--status-error); }
+.sim-root .batch-oob-stage__title { margin: var(--space-2) 0 var(--space-1); font-size: var(--text-md); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; }
+.sim-root .batch-oob-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.sim-root .batch-oob-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: var(--space-half);
+  gap: 2px;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-hairline, var(--color-species-name));
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
 }
-
-.sim-root .climate-log-row {
-  padding: 6px 10px;
-  background: var(--paper-1);
-  border-left: 3px solid var(--moss-700, var(--color-dark-secondary));
-  border-radius: var(--sim-radius-sm);
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--ink-0);
+.sim-root .batch-oob-row__metric { font-weight: 700; }
+.sim-root .batch-oob-row__band, .sim-root .batch-oob-row__cov { color: var(--ink-1); font-weight: 400; }
+.sim-root .batch-oob-row__value--none { color: var(--status-warn-text); }
+/* Panel «Calidad de cosecha» de la ficha de lote: solo lectura, una columna, todo el texto a 16 px. */
+.sim-root .hq-note { margin: var(--space-1) 0; font-family: var(--font-sans); font-size: var(--size-body); line-height: var(--leading-normal); color: var(--ink-1); }
+.sim-root .hq-note--foot { margin-top: var(--space-2); padding-top: var(--space-1); border-top: 1px solid var(--border-hairline, var(--color-species-name)); }
+.sim-root .hq-scope { margin-top: var(--space-2); padding-top: var(--space-1); border-top: 1px solid var(--border-hairline, var(--color-species-name)); }
+.sim-root .hq-scope__title { margin: 0 0 var(--space-1); font-family: var(--font-mono); font-size: var(--size-body); text-transform: uppercase; letter-spacing: .06em; }
+.sim-root .hq-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.sim-root .hq-lines li { font-family: var(--font-sans); font-size: var(--size-body); line-height: var(--leading-normal); overflow-wrap: anywhere; }
+.sim-root .hq-gap, .sim-root .hq-defect { display: inline; }
+@media (min-width: 900px) {
+  .sim-root .batch-oob-row { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+  .sim-root .climate-node-card { max-width: 72ch; }
 }
 
 /* ── Lanzador de Producción Unificado ────────────────────────────────────────── */
@@ -5618,38 +5617,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   color: var(--paper-50);
   border-color: var(--accent-olive);
   font-weight: 700;
-}
-.sim-root .iot-node-card {
-  background: var(--paper-50);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--sim-radius-sm);
-  padding: 14px var(--space-2);
-  margin-bottom: 12px;
-}
-.sim-root .iot-node-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-bottom: 10px;
-}
-.sim-root .iot-node-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: .15em;
-  padding: 2px var(--space-1);
-  border-radius: var(--sim-radius-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.sim-root .iot-node-badge.online {
-  background: color-mix(in oklab, var(--moss-600) 15%, var(--paper-0));
-  color: var(--accent-olive-hover);
-  border: 1px solid var(--moss-500);
 }
 .sim-root .iot-code-box {
   background: var(--ink-900);
@@ -6701,14 +6668,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .climate-dashboard :is(button,select,input,[role="button"]):focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
 .sim-root .climate-dashboard canvas { max-width:100%; height:auto; }
 .sim-root .climate-dashboard .climate-range-pills { flex-wrap:wrap; }
-.sim-root .climate-dashboard .climate-actuator-head { flex-wrap:wrap; gap:var(--space-1); }
-.sim-root .climate-dashboard .climate-actuator-card > div:has(> button) { flex-wrap:wrap; }
 .sim-root .climate-dashboard .climate-cycle-banner > div { min-width:0; }
 @media(max-width:560px) {
- .sim-root .climate-dashboard .climate-actuators-grid { grid-template-columns:minmax(0,1fr); }
  .sim-root .climate-dashboard .climate-cycle-banner { flex-direction:column; align-items:stretch; }
  .sim-root .climate-dashboard .climate-cycle-banner button { flex:1 1 100%; }
- .sim-root .climate-dashboard .climate-log-row { flex-wrap:wrap; gap:var(--space-half); }
 }
 .sim-root .climate-dashboard input[type="range"] { background:transparent; }
 .sim-root .climate-dashboard input[type="range"]::-webkit-slider-runnable-track { height:6px; background:var(--line-1); }
@@ -6742,7 +6705,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .iot-hub-body { padding:var(--space-2); }
   .sim-root .iot-hub-body > div > div[style*="grid-template-columns"] { grid-template-columns:minmax(0,1fr)!important; }
   .sim-root .iot-hub-server-fields { grid-template-columns:minmax(0,1fr); }
-  .sim-root .iot-hub-dialog .iot-node-header { flex-direction:column; }
 }
 
 .sim-root .inv-modal-bg.iot-hub-backdrop { padding:var(--space-2)!important; align-items:center!important; }
@@ -6932,7 +6894,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .harvest-capture-dialog .inv-row > div { min-width: 0; }
 .sim-root .harvest-capture-dialog .inv-btn { min-height: var(--field-cell-min-height) !important; font: var(--t-body); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-normal); text-transform: none; padding: var(--space-1) var(--space-2); }
 .sim-root .harvest-quality :is(input, select, button, summary) { min-height: var(--field-cell-min-height) !important; }
-:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
+:is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(48px, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
 :is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice { font: var(--t-data); font-size: var(--size-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half); }
 :is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice[data-filled="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
 :is(.harvest-capture-dialog, .harvest-quality) .harvest-quality-choice:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
@@ -6950,6 +6912,27 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .harvest-quality-anchors { list-style: none; margin: var(--space-1) 0 0; padding: 0; font: var(--t-small); color: var(--text-secondary); }
 .harvest-quality-warning { font: var(--t-small); border-left: 3px solid var(--coral-700); padding: var(--space-half) var(--space-1); margin: var(--space-1) 0; }
 .harvest-quality-error { font: var(--t-small); color: var(--coral-700); margin: 0; }
+/* Texto operativo de la sección «Calidad»: 16 px (UX V2 §14), no los 14 px de --t-small.
+   El selector con .harvest-capture-dialog gana a `.harvest-capture-dialog .inv-label`. */
+.sim-root .harvest-quality :is(.inv-label, .harvest-quality-anchors, .harvest-quality-warning, .harvest-quality-error),
+.sim-root .harvest-capture-dialog .harvest-quality .inv-label { font: var(--t-body); letter-spacing: var(--tracking-normal); }
+.sim-root .harvest-quality-chip--none { font-weight: var(--weight-semibold); }
+/* A 320 px la fila de cinco botones de firmeza (mínimo 48 px de ancho) no cabe con el
+   relleno del marco: se le quita ese relleno en vez de achicar los botones. */
+@media (max-width: 360px) {
+  .sim-root .harvest-quality { padding: var(--space-half); }
+}
+/* Pantallas táctiles: iOS hace zoom al enfocar un input con fuente < 16 px. El criterio es
+   el puntero, no el ancho: un teléfono en horizontal (769-859 px) o una tableta quedaban
+   fuera del 16 px de `max-width: 768px`; un escritorio con ratón conserva su densidad. */
+@media (pointer: coarse) {
+  .sim-root .harvest-capture-dialog :is(input, select, textarea) { font-size: max(16px, var(--size-body)); }
+}
+/* El diálogo de cosecha cabe en el alto de la pantalla (maxHeight en dvh, inline): el
+   fondo común deja 40 px arriba y 24 abajo y por eso el diálogo se desplazaba 8 px
+   en 1280×720. Aquí se centra con un margen simétrico que suma lo mismo que el
+   maxHeight (32 px), de modo que el fondo no se desplaza. */
+.sim-root .inv-modal-bg.harvest-capture-backdrop { align-items: center; padding: 16px 12px; }
 .harvest-capture-dialog .harvest-capture-actions .inv-btn { min-width: 0; white-space: normal; }
 .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1 / -1; grid-row: 1; background: var(--action-primary); color: var(--text-inverse); border-color: var(--action-primary); }
 @media (max-width: 560px) {

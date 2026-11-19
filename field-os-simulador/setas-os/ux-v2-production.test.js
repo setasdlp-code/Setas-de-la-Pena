@@ -450,8 +450,9 @@ test('climate dashboard generates and exports customizable ESPHome firmware YAML
   assert.match(source, /showEsp32ConfigModal/);
   assert.match(source, /<AppIcon name="bolt"[^>]*\/>\s*Exportar ESPHome YAML/);
   assert.match(source, /altitude_compensation: 2600m/);
-  assert.match(source, /relay_ch1_humidifier/);
-  assert.match(source, /relay_ch2_fae/);
+  // Plantilla de telemetría: sin relés. El control vive en el firmware del nodo (DEC-001).
+  assert.doesNotMatch(source, /relay_ch1_humidifier|relay_ch2_fae/);
+  assert.match(source, /PLANTILLA DE TELEMETRÍA/);
   assert.match(styles, /\.sim-root \.esp32-code-preview/);
 });
 

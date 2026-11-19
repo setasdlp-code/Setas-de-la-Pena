@@ -3,7 +3,7 @@ title: Asignación provisional de sensores — Incubadora, CLOUDLAB 844 y Martha
 document_id: DOC-SENSORES-2026-11-11
 category: equipment
 load_priority: selective
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-16
 confidence: medium
 status: design_not_commissioned
 related_documents:
@@ -59,7 +59,7 @@ La exclusión histórica **EXC-SCD30-AMAZON-001** corresponde a un pedido no ent
 4. **Bus I²C:** varios SHT45/SHT3x pueden utilizar 0x44 y entrar en conflicto en el mismo bus. Separar buses, usar multiplexor o evitar compartir bus según confirmación del dispositivo. SCD30 suele estar en 0x61; verificar hardware y cable.
 5. **SCD30:** registrar T/HR/CO2 como telemetría diagnóstica y verificar condensación, renovación de aire y una sola estrategia de compensación de altitud o presión. No deducir calibración ni ventilación objetivo de una lectura inicial.
 6. **MH-Z19C:** UART, ABC desactivado en cultivo; mantener una única etapa de compensación de presión/altitud en el sistema de datos para no duplicarla. El diseño del puente del 8 de noviembre conserva datos brutos y aplica corrección después.
-7. **Incubadora:** `esphome/incubadora_piloto.yaml` permanece **BANCO DE PRUEBAS / NO COMISIONADO** y requiere DS18B20 por dirección, banda de lote, validación de ventilador, relé, termostatos y fusible. Nunca usar la lectura de HR para activar humidificación en bolsas selladas.
+7. **Incubadora:** `esphome/incubadora_piloto.yaml` permanece **BANCO DE PRUEBAS / NO COMISIONADO**. Desde DEC-023 es la variante por aire: controla y alarma sobre el SHT45 breakout protegido, sin sondas DS18B20, y declara el núcleo y el mapa térmico como «sin sensor»; el requisito de DS18B20 por dirección queda aplazado, no eliminado. Antes de usarse requiere banda de lote aprobada (DOC-0122), el protocolo de banco sin carga `esphome/PROTOCOLO_BANCO_INCUBADORA_AIRE.md` (incluida la polaridad del relé y su estado con entrada flotante) y validación de ventilador, termostatos de corte y fusible. Nunca usar la lectura de HR para activar humidificación en bolsas selladas.
 8. **Fructificación:** la calibración de HR para rangos altos y la protección frente a agua son requisitos antes de automatizar el CloudForge T7 o el H05. Evitar control por la lectura interna descartada del H05.
 
 ## Secuencia de implementación
