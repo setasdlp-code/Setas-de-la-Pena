@@ -5,14 +5,16 @@ category: project
 version: 1.4
 status: canonical
 authority: agent_behavior
-load_priority: always
+load_priority: on_request
 owner: Setas de la Peña
 created: 2026-06-30
 revised: 2026-08-13
-last_reviewed: 2026-08-13
+last_reviewed: 2026-11-17
 ---
 
 # AI Agent Protocol
+
+> **Estado (DEC-025, 2026-11-17):** documento de referencia. Las reglas de operación de agentes están en [`knowledge_base/AGENTS.md`](../AGENTS.md) y el contrato del repositorio en [`AGENTS.md`](../../AGENTS.md); si este documento discrepa de ellos, prevalecen. Consultarlo para una pregunta concreta, no como lectura obligatoria.
 
 ## 1. Purpose
 

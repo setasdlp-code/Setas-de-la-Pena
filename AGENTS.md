@@ -19,7 +19,7 @@ Shared contract for every coding agent working in this repository (Claude Code, 
 | Add a devDependency the task needs | Agent, declared in the PR description |
 | Open an issue or PR, change labels, request review | Agent only when the user asks |
 | Merge to `main`, deploy, purchase, use or change credentials, run transactions, delete irreversibly, intervene in the cultivation environment | Human (Sebastián) |
-| Change scientific invariants (§4) or canonical Knowledge Base content | Human authorization, per §4 and `knowledge_base/AGENTS.md` |
+| Change scientific invariants (§4) or canonical Knowledge Base content | Human authorization, per §4 and `knowledge_base/AGENTS.md`; verifiable corrections and pilot parameters follow the lighter path defined there |
 
 Never invent biology, measurements, citations, test results, product state, or GitHub state. Label estimates and hypotheses. Never expose or persist credentials.
 

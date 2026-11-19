@@ -2,8 +2,8 @@
 title: Pleurotus eryngii — King Oyster / Seta de Cardo
 category: species
 load_priority: selective
-last_reviewed: 2026-09-13
-confidence: high
+last_reviewed: 2026-11-17
+confidence: medium
 primary_sources:
   - Stamets 2000
   - Estrada & Royse 2007 (World J Microbiol Biotechnol; paper_008)
@@ -18,7 +18,7 @@ related_documents:
 ---
 
 # Executive Summary
-*Pleurotus eryngii* (King Oyster / Seta de Cardo) es la especie de mayor valor gastronómico y vida útil poscosecha dentro del género *Pleurotus*. Posee una carne firme y estípite grueso altamente apreciado en alta cocina (HORECA). A diferencia de otras orellanas, es una especie de clima templado-frío (13–17 °C) que encaja perfectamente con el clima de Tenjo (Cundinamarca), pero exige sustratos con alto contenido de nitrógeno (C:N de mezcla ≈ 25:1 a 40:1, base seca, bolsa suplementada) y **esterilización obligatoria en autoclave**.
+*Pleurotus eryngii* (King Oyster / Seta de Cardo) es la especie de mayor valor gastronómico y vida útil poscosecha dentro del género *Pleurotus*. Posee una carne firme y estípite grueso altamente apreciado en alta cocina (HORECA). A diferencia de otras orellanas, es una especie de clima templado-frío (13–17 °C, rango de literatura) compatible con la temperatura media de Tenjo (Cundinamarca), pendiente de medición en el recinto, pero exige sustratos con alto contenido de nitrógeno (C:N de mezcla ≈ 25:1 a 40:1, base seca, bolsa suplementada) y **esterilización obligatoria en autoclave**.
 
 # Research Consensus
 
@@ -37,14 +37,16 @@ Supported by:
 - Chang & Miles 2004 (book_007)
 - Stamets 2000
 
-La morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño convexo) se logra manteniendo niveles de CO₂ moderadamente elevados (**1,500–2,500 ppm**) durante el desarrollo del tallo, reduciéndolo a **1,000–1,500 ppm** solo al final para maduración del sombrero. Temperatura de fructificación óptima: **14–16 °C**.
-**Strength of evidence:** ★★★★★
+Los libros técnicos describen la morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño convexo) con CO₂ moderadamente elevado (1.500–2.500 ppm) durante el desarrollo del tallo y 1.000–1.500 ppm al final para la maduración del sombrero. Rango de partida para fructificación: 14–16 °C.
+
+Evidencia primaria: Ryu et al. (2005, *Journal of Mushrooms* 3(3):95–99; Tier 1, cultivo en botella en Corea) compararon 1.600, 2.400 y 3.200 ppm; 2.400 ppm dio la mayor masa por botella y la mejor calidad, con y sin aclareo. Las lecturas de CO₂ de esos estudios corresponden a presión cercana al nivel del mar; en Tenjo (~74 kPa) un sensor sin compensación barométrica lee alrededor de un 27 % menos (ver `05_equipment/environmental_control.md` y el método CAM-03 de *Micología aplicada* v7).
+**Strength of evidence:** ★★★☆☆ (Tier 2 para el esquema por etapas; Tier 1 para el óptimo cercano a 2.400 ppm en botella; sin validación local)
 
 # Core Principles
-- **Autoclave estricto:** Debido al alto nivel de suplementación proteica (afrecho, salvado, soya), cualquier falla en esterilización resulta en contaminación.
+- **Autoclave estricto:** con el alto nivel de suplementación proteica (afrecho, salvado, soya), una falla de esterilización tiene alta probabilidad de terminar en contaminación. En Tenjo, verificar la temperatura en el núcleo de la carga: a ~74 kPa la presión manométrica nominal de 15 psi no alcanza 121 °C.
 - **Top-Fruiting / Scratching:** La técnica de corte superior de bolsa combinada con raspado superficial (*scratching* de 2 mm) homogeniza la formación de primordios.
-- **Clima Frío Natural de Tenjo:** La temperatura media de Tenjo (12–18 °C) reduce drásticamente los costos de refrigeración para esta especie.
-- **Vida Útil Superior:** Se conserva fresca de 14 a 21 días a 2–4 °C, superando ampliamente a *P. djamor* (3–4 días).
+- **Clima frío de Tenjo:** la temperatura media de Tenjo (12–18 °C) puede reducir el costo de refrigeración para esta especie; no hay medición local de ese ahorro.
+- **Vida útil:** se cita una conservación de 14 a 21 días a 2–4 °C, frente a 3–4 días de *P. djamor*. Sin fuente verificada en esta ficha; medir con CAL-02 antes de comprometer plazos comerciales.
 
 # Technical Details
 
@@ -57,8 +59,10 @@ La morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño 
 
 ## Parámetros del Ciclo de Cultivo
 
+**Estado de evidencia:** valores de partida tomados de libros técnicos (Stamets 2000; Chang & Miles 2004; Tier 2). No pasaron la ronda de corroboración 2026-10 y no tienen validación local. No usar como consignas sin un piloto registrado.
+
 ### Incubación (Spawn Run)
-| Parámetro | Valor Óptimo | Rango Tolerado |
+| Parámetro | Rango de partida | Rango citado como tolerable |
 |---|---|---|
 | Temperatura | **23–25 °C** | 20–27 °C |
 | Humedad relativa | 65–75% | 60–80% |
@@ -74,7 +78,7 @@ La morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño 
 - **Luz:** 500–1,000 lux (12 h/día).
 
 ### Fructificación y Elongación
-| Parámetro | Valor Óptimo | Notas |
+| Parámetro | Rango de partida | Notas |
 |---|---|---|
 | Temperatura | **14–16 °C** | Fructificación lenta pero tallo denso |
 | Humedad relativa | **85–90%** | Evitar condensación libre en el ápice |
@@ -83,7 +87,7 @@ La morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño 
 | Duración | 10–14 días desde primordio a cosecha | Cosechar antes del aplanamiento total del sombrero |
 | Flushes | 1–2 flushes principales (1er flush aporta 70–80% del total) | Descanso de 10–14 días entre flushes |
 
-## Formulaciones de Sustrato Validadas
+## Formulaciones de sustrato de partida (sin validación local)
 
 | Componente | Fórmula A (Clásica Aserrín) | Fórmula B (Agroindustrial Sabana) |
 |---|---|---|
@@ -92,9 +96,9 @@ La morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño 
 | **Aireador** | Cascarilla de arroz (10%) | Cascarilla de arroz (5%) |
 | **Correctores pH** | CaCO₃ (3%) + Yeso (2%) | CaCO₃ (3%) + Yeso (2%) |
 | **Humedad final** | 63–65% | 64–66% |
-| **Eficiencia Biológica (EB)**| 85–110% (no validado localmente; Li 2024 midió 74–87%) | 75–100% |
+| **Eficiencia Biológica (EB)**| 85–110% citado sin validar; Li 2024 midió 74–87% | 75–100%, sin fuente |
 
 # Best Practices
-1. **Selección de primordios:** Si emergen demasiados pines pequeños, raletear manualmente dejando los 2–4 más vigorosos por bolsa para maximizar calibre comercial (Grado A > 80 g por unidad).
+1. **Selección de primordios:** Si emergen demasiados pines pequeños, aclarar manualmente dejando los 2–4 más vigorosos por bolsa para aumentar el calibre comercial (Grado A > 80 g por unidad).
 2. **Corte limpio:** Cosechar cortando la base con cuchillo desinfectado, sin arrancar el micelio del sustrato.
 3. **Manejo de ventilación:** No usar ventiladores de alta velocidad apuntando a los bloques; usar flujo difuso para no secar el sombrero.

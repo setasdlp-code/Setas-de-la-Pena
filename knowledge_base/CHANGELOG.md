@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-19
 ---
 
 # CHANGELOG
@@ -23,6 +23,13 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-19
+
+| Tipo | Descripción |
+|---|---|
+| [ARCH] | DEC-025: reglas de agentes consolidadas en los dos `AGENTS.md`; `AI_AGENT_PROTOCOL.md` y `EDITORIAL_GUIDELINES.md` pasan a referencia; nuevas clases «corrección verificable» y «parámetro piloto»; `CLAUDE.md` reducido a lo específico de Claude Code. |
+| [KB] | `01_species/pleurotus_eryngii.md`: corrección verificable. Lenguaje de evidencia, confianza `medium`, ★★★☆☆ para CO₂ con Ryu et al. (2005), nota de presión en Tenjo; valores sin cambios. |
 
 ### 2026-11-13
 

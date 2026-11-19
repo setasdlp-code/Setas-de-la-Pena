@@ -13,6 +13,8 @@ last_reviewed: 2026-08-13
 
 # Editorial Guidelines
 
+> **Estado (DEC-025, 2026-11-17):** documento de referencia. Las reglas de operación de agentes están en [`knowledge_base/AGENTS.md`](../AGENTS.md) y el contrato del repositorio en [`AGENTS.md`](../../AGENTS.md); si este documento discrepa de ellos, prevalecen. Consultarlo para una pregunta concreta, no como lectura obligatoria.
+
 ## 1. Purpose
 
 This document establishes editorial standards for maintaining the Setas de la Peña knowledge base. Editorial governance exists to preserve coherence across the repository, ensure consistency with the CANON, prevent information duplication, and guarantee that the knowledge base remains operationally reliable as the project evolves. Every modification to the repository must serve these objectives.

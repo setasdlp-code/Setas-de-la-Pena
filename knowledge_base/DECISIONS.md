@@ -804,6 +804,39 @@ Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bol
 
 ---
 
+## DEC-025 — Gobierno de agentes simplificado: un contrato, vía rápida para correcciones verificables y parámetros piloto
+
+**Fecha:** 2026-11-19
+**Estado:** Activa
+**Área:** Arquitectura / Gobernanza
+
+**Problema:** Editar un parámetro exigía cargar seis documentos de gobierno (`AGENTS.md`, `CLAUDE.md`, `knowledge_base/AGENTS.md`, CANON, `AI_AGENT_PROTOCOL.md`, `EDITORIAL_GUIDELINES.md`) que se remitían entre sí. Corregir un DOI o un valor mal transcrito pedía la misma autorización previa que cambiar una consigna de cultivo. En preproducción, sin cepas caracterizadas ni datos de campo, no había un lugar reglado para probar valores antes de hacerlos canónicos. Al mismo tiempo, fichas como la de *P. eryngii* incumplían las reglas de lenguaje y evidencia vigentes («óptimo», ★★★★★ sobre dos libros, «formulaciones validadas» sin validación).
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Mantener las reglas y aplicarlas con más rigor | Sin cambios de gobierno | El costo de cumplimiento sigue alto y desigual; las fichas que incumplen siguen igual |
+| Consolidar las reglas operativas en los dos `AGENTS.md`, crear una vía rápida para correcciones verificables y un estado «piloto» con vencimiento | Menos lectura obligatoria; correcciones con fuente pasan por revisión de PR; los ensayos tienen un lugar con fecha de revisión | Los documentos de referencia pueden quedar desactualizados respecto a las reglas operativas |
+
+**Decisión:**
+
+- `AGENTS.md` (raíz) y `knowledge_base/AGENTS.md` son las reglas operativas de agentes. `AI_AGENT_PROTOCOL.md` y `EDITORIAL_GUIDELINES.md` pasan a material de referencia: no son lectura obligatoria y no prevalecen sobre esos dos archivos. `CLAUDE.md` conserva solo lo específico de Claude Code.
+- Nueva clase de cambio «corrección verificable»: restaura lo que dice una fuente ya citada o corrige un error comprobable (metadatos, DOI, unidades, aritmética, transcripción), o retira lenguaje que las reglas de evidencia prohíben sin cambiar el valor. Solo requiere revisión del PR con fuente, valor anterior y nuevo. No cubre cambiar la fuente de un valor, un rango operativo ni una consigna de la app.
+- Nuevo estado «parámetro piloto»: valor en prueba en Tenjo, registrado fuera de las tablas canónicas, con fuente o razonamiento, nivel de evidencia, fecha de inicio, revisión a 90 días como máximo y criterio de promoción o retiro. Vencido sin revisión, queda inactivo. Promoverlo a canónico sigue requiriendo autorización explícita.
+- Las auditorías aplican directamente las correcciones editoriales y verificables, y reportan el resto.
+- Primera aplicación: limpieza de `01_species/pleurotus_eryngii.md` como corrección verificable (lenguaje, nivel de evidencia y la cita de Ryu et al. 2005; ningún valor cambia).
+
+**Lo que esta decisión no cambia:** el CANON, los invariantes científicos de `AGENTS.md` §4, la autoridad humana sobre merge, compras, credenciales y la cámara, ni ningún parámetro biológico.
+
+**Justificación:** P-02 (simplicidad) y CANON §18, que ya admite adopción provisional etiquetada. Un régimen que cuesta lo mismo para una errata que para una consigna incentiva no corregir; un piloto sin vencimiento se vuelve canon por inercia.
+
+**Criterio de revisión:** si una «corrección verificable» introduce un error que llega a una consigna o a la app, o si un parámetro piloto se usa vencido, se reevalúa la vía rápida. Revisión junto con el CANON el 2026-12-29.
+
+**Documentos afectados:** `../AGENTS.md`, `../CLAUDE.md`, `AGENTS.md`, `00_project/AI_AGENT_PROTOCOL.md`, `00_project/EDITORIAL_GUIDELINES.md`, `01_species/pleurotus_eryngii.md`, `CHANGELOG.md`.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown
