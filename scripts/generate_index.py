@@ -53,7 +53,7 @@ PENDING_MARKER = "# PENDING REVIEW — added by scripts/generate_index.py from f
 PENDING_NOTE = "# authority / canonical / status stay null until curated against CANON §14."
 
 ENTRY_START = re.compile(r"^  - id:\s*(.+?)\s*$")
-FIELD_LINE = {name: re.compile(rf"^    {name}:\s*(.*?)\s*$") for name in ("title", "path")}
+FIELD_LINE = {name: re.compile(rf"^    {name}:\s*(.*?)\s*$") for name in ("title", "path", "category", "confidence")}
 PLAIN_SCALAR = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._/()-]*$")
 
 
@@ -64,6 +64,7 @@ class IndexLayoutError(RuntimeError):
 @dataclass
 class Report:
     title_updates: list[tuple[str, str, str]] = field(default_factory=list)  # id, old, new
+    field_updates: list[tuple[str, str, str, str]] = field(default_factory=list)  # id, field, old, new (DEC-026)
     path_updates: list[tuple[str, str, str]] = field(default_factory=list)  # id, old, new
     added: list[tuple[str, str]] = field(default_factory=list)  # id, path
     orphans: list[tuple[str, str]] = field(default_factory=list)  # id, path
@@ -75,7 +76,7 @@ class Report:
 
     @property
     def has_drift(self) -> bool:
-        return bool(self.title_updates or self.path_updates or self.added or self.orphans)
+        return bool(self.title_updates or self.field_updates or self.path_updates or self.added or self.orphans)
 
     def render(self) -> str:
         out: list[str] = []
@@ -86,6 +87,7 @@ class Report:
                 out.extend(f"  - {r}" for r in rows)
 
         section("title actualizado desde frontmatter", [f"{i}: {o!r} -> {n!r}" for i, o, n in self.title_updates])
+        section("category/confidence sincronizados desde frontmatter (DEC-026)", [f"{i}: {f} {o!r} -> {n!r}" for i, f, o, n in self.field_updates])
         section("path actualizado (movimiento detectado)", [f"{i}: {o} -> {n}" for i, o, n in self.path_updates])
         section("entradas nuevas (PENDING REVIEW)", [f"{i}: {p}" for i, p in self.added])
         section("entradas cuyo archivo no existe (NO se borran)", [f"{i}: {p}" for i, p in self.orphans])
@@ -214,6 +216,22 @@ def resolve_related(ref: str, rel_path: str, path_to_id: dict[str, str]) -> str 
     return matches[0] if len(matches) == 1 else None
 
 
+# Normalización de valores de frontmatter fuera del vocabulario (DEC-026).
+ALIASES = {"very_high": "high", "very high": "high", "alta": "high", "media": "medium", "baja": "low"}
+EMPTY = {"", "n/a", "na", "none", "null", "-"}
+
+
+def normalize(value, allowed: set[str]) -> str | None:
+    """Valor del frontmatter llevado al vocabulario del esquema, o None si no es válido."""
+    if value is None:
+        return None
+    v = str(value).strip().lower()
+    if v in EMPTY:
+        return None
+    v = ALIASES.get(v, v)
+    return v if v in allowed else None
+
+
 def vocab(schema: dict, name: str) -> set[str]:
     values = (schema.get(name) or {}).get("controlled_vocabulary") or []
     return {str(v) for v in values}
@@ -287,11 +305,22 @@ def sync_index(text: str, kb_root: Path) -> tuple[str, Report]:
                 report.title_updates.append((entry.get("id"), entry.get("title"), fm_title))
         elif fm_title is not None and not isinstance(fm_title, str):
             report.info_drift.append(f"{entry.get('id')}: title del frontmatter no es texto ({fm_title!r})")
-        for name in ("category", "confidence"):
-            if name in fm and fm[name] != entry.get(name):
+        # category y confidence: el frontmatter manda (DEC-026), normalizado al esquema.
+        for name, allowed in (("category", categories), ("confidence", confidences)):
+            if name not in fm:
+                continue
+            value = normalize(fm[name], allowed)
+            if value is None:
                 report.info_drift.append(
-                    f"{entry.get('id')}: {name} INDEX={entry.get(name)!r} frontmatter={fm[name]!r}"
+                    f"{entry.get('id')}: {name} del frontmatter fuera del esquema ({fm[name]!r}); INDEX conserva {entry.get(name)!r}"
                 )
+            elif value != entry.get(name):
+                if set_field(idx, name, fmt_scalar(value)):
+                    report.field_updates.append((entry.get("id"), name, entry.get(name), value))
+                else:
+                    report.info_drift.append(
+                        f"{entry.get('id')}: {name} INDEX sin línea editable; frontmatter={value!r}"
+                    )
 
     # 3) Documentos sin indexar -> entradas nuevas marcadas para revisión.
     path_to_id = {e.get("path"): e.get("id") for e in documents}
@@ -318,8 +347,8 @@ def sync_index(text: str, kb_root: Path) -> tuple[str, Report]:
 
     blocks: list[str] = []
     for new_id, rel, fm in planned:
-        category = fm.get("category") if str(fm.get("category")) in categories else None
-        confidence = fm.get("confidence") if str(fm.get("confidence")) in confidences else None
+        category = normalize(fm.get("category"), categories)
+        confidence = normalize(fm.get("confidence"), confidences)
         status = fm.get("status") if str(fm.get("status")) in statuses else None
         related: list[str] = []
         refs = fm.get("related_documents") or []

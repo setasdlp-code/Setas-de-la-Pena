@@ -123,15 +123,16 @@ def check_fixture(g) -> None:
         if new_lines[: len(old_lines)] != [
             '    title: "New Title"' if ln == '    title: "Old Title"'
             else "    path: 09_research/sub/new_place.md" if ln == "    path: 09_research/old_place.md"
+            else "    confidence: medium" if ln == "    confidence: high"
             else ln
             for ln in old_lines
         ]:
-            raise AssertionError("solo title/path de entradas existentes pueden cambiar; el resto se preserva")
+            raise AssertionError("solo title/path/category/confidence de entradas existentes pueden cambiar; el resto se preserva")
 
         data = yaml.safe_load(new_text)
         by_id = {e["id"]: e for e in data["documents"]}
         kept = by_id["kept"]
-        if kept["topics"] != ["curated", "topics"] or kept["depends_on"] != ["moved"] or kept["confidence"] != "high":
+        if kept["topics"] != ["curated", "topics"] or kept["depends_on"] != ["moved"] or kept["confidence"] != "medium":
             raise AssertionError(f"campos curados alterados: {kept}")
         if "gone" not in by_id or report.orphans != [("gone", "09_research/gone.md")]:
             raise AssertionError("la entrada huérfana debe informarse y conservarse")
@@ -160,12 +161,12 @@ def check_fixture(g) -> None:
             raise AssertionError("la escritura falló")
         written = (kb / "INDEX.yaml").read_text(encoding="utf-8")
         again, report2 = g.sync_index(written, kb)
-        if again != written or report2.added or report2.title_updates or report2.path_updates:
+        if again != written or report2.added or report2.title_updates or report2.field_updates or report2.path_updates:
             raise AssertionError("una segunda pasada debe ser idempotente")
 
 
 def check_live_tree_is_not_destructive(g) -> None:
-    """Sobre el árbol real: ninguna entrada se pierde y solo cambian title/path."""
+    """Sobre el árbol real: ninguna entrada se pierde y solo cambian title/path/category/confidence."""
     index = ROOT / "knowledge_base" / "INDEX.yaml"
     text = index.read_text(encoding="utf-8")
     new_text, _report = g.sync_index(text, ROOT / "knowledge_base")
@@ -173,8 +174,8 @@ def check_live_tree_is_not_destructive(g) -> None:
     if len(new_lines) < len(old_lines):
         raise AssertionError("el generador acortaría INDEX.yaml")
     for n, (a, b) in enumerate(zip(old_lines, new_lines), 1):
-        if a != b and not (a.startswith(("    title:", "    path:")) and b[:10] == a[:10]):
-            raise AssertionError(f"línea {n} cambiaría fuera de title/path: {a!r} -> {b!r}")
+        if a != b and not (a.startswith(("    title:", "    path:", "    category:", "    confidence:")) and b[:10] == a[:10]):
+            raise AssertionError(f"línea {n} cambiaría fuera de title/path/category/confidence: {a!r} -> {b!r}")
     old_ids = [e["id"] for e in yaml.safe_load(text)["documents"]]
     new_ids = [e["id"] for e in yaml.safe_load(new_text)["documents"]]
     if new_ids[: len(old_ids)] != old_ids:

@@ -1,6 +1,6 @@
 ---
 title: Herramientas AI y Workflows del Proyecto
-category: ai_workflows
+category: meta
 load_priority: on_request
 last_reviewed: 2026-08-25
 confidence: high

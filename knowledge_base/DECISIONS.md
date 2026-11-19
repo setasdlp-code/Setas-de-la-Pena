@@ -856,6 +856,7 @@ Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bol
 
 - `scripts/generate_index.py` edita `INDEX.yaml` en sitio: actualiza `title` y `path` desde el frontmatter, añade entradas para documentos nuevos con `# PENDING REVIEW` y `null` en lo que no puede derivar, reporta archivos desaparecidos sin borrarlos y aborta si fuera a perder o duplicar entradas.
 - `authority`, `canonical`, `topics`, `keywords`, `depends_on` e `implemented_by` son campos curados: se editan en `INDEX.yaml` y se revisan en el PR. El generador no los sobrescribe.
+- `category` y `confidence` vienen del frontmatter del documento, que manda: el generador los sincroniza y normaliza al vocabulario del esquema (`very_high` → `high`, mayúsculas → minúsculas); los valores que no puede normalizar (`N/A`, `mixed`) se reportan sin tocar el índice.
 - CI ejecuta `generate_index.py --check` en `scripts/quality/run.sh`: un documento nuevo o movido sin indexar hace fallar el gate hasta regenerar y commitear.
 - `INDEX_GENERATION_SPEC.md` pasa a v1.2 con una nota de estado que prevalece sobre las secciones que describían la regeneración completa.
 
