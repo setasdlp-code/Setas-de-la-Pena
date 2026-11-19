@@ -1,3 +1,17 @@
+---
+title: "Corroboración de parámetros de P. djamor, G. lucidum, sustratos y KPI (2026-10-26)"
+document_id: DOC-0148
+category: research
+load_priority: on_request
+status: active
+confidence: low
+last_reviewed: 2026-11-19
+related_documents:
+  - README.md
+  - ../../01_species/pleurotus_djamor.md
+  - ../../01_species/ganoderma_lucidum.md
+---
+
 # Parametros de P. djamor, G. lucidum, sustratos y KPI - corroboracion de Setas OS v5
 
 Fecha: 2026-10-26. Autor: Investigador de Productividad y Especies Tropicales/Medicinales.

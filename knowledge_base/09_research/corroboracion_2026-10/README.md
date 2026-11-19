@@ -1,3 +1,17 @@
+---
+title: "Corroboración de parámetros KB_SPP y extracción (2026-10-26) — índice"
+document_id: DOC-0146
+category: research
+load_priority: on_request
+status: active
+confidence: low
+last_reviewed: 2026-11-19
+related_documents:
+  - shiitake_hericium.md
+  - djamor_ganoderma_kpi.md
+  - extraction.md
+---
+
 # Corroboración de parámetros KB_SPP / extracción (2026-10-26)
 
 **Fecha:** 2026-10-26. **Método:** tres investigadores contrastaron los parámetros de cultivo y extracción de Setas OS con literatura vía búsqueda web.

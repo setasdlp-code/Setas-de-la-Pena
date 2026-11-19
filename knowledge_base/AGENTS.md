@@ -1,3 +1,17 @@
+---
+title: "Knowledge Base Addendum — Agent Instructions"
+document_id: DOC-0145
+category: meta
+load_priority: always
+status: active
+confidence: high
+last_reviewed: 2026-11-19
+related_documents:
+  - ../AGENTS.md
+  - SETAS_DE_LA_PENA_CANON.md
+  - DECISIONS.md
+---
+
 # Knowledge Base Addendum — Agent Instructions
 
 This addendum applies only inside `knowledge_base/`. Read the root [`AGENTS.md`](../AGENTS.md) first. If this file conflicts with it on knowledge governance, this file and the CANON prevail.

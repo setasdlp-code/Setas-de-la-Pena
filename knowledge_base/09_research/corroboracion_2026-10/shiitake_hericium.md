@@ -1,3 +1,17 @@
+---
+title: "Corroboración de parámetros de shiitake y melena de león (2026-10-26)"
+document_id: DOC-0147
+category: research
+load_priority: on_request
+status: active
+confidence: low
+last_reviewed: 2026-11-19
+related_documents:
+  - README.md
+  - ../../01_species/lentinula_edodes.md
+  - ../../01_species/hericium_erinaceus.md
+---
+
 # Fisiología de cultivo: Shiitake (Lentinula edodes) y Melena de León (Hericium erinaceus) — parámetros KB_SPP de Setas OS
 
 Fecha: 2026-10-26. Contexto: Tenjo, ~2.570 m s.n.m., T media 13–14 °C, HR alta.

@@ -1,3 +1,15 @@
+---
+title: "Corroboración de extraction-factors.json (2026-10-26)"
+document_id: DOC-0149
+category: research
+load_priority: on_request
+status: active
+confidence: low
+last_reviewed: 2026-11-19
+related_documents:
+  - README.md
+---
+
 # Extracción de hongos: corroboración de `extraction-factors.json`
 
 Fecha: 2026-10-26. Autor: Investigador de Extracción y Productos Derivados (agente). Repo no modificado.

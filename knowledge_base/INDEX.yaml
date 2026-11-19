@@ -1334,7 +1334,7 @@ documents:
     authority: research_library
     category: research
     canonical: false
-    topics: [shiitake-substrate, composted-substrate, postharvest, dehydration, extraction]
+    topics: [shiitake-substrate, composted-substrate, postharvest, dehydration, corroboracion-2026-10-extraction]
     keywords: [paper_008, paper_009, paper_010, paper_011, paper_012, literatura semanal]
     related_documents: [literature-database, literature-index, research-summaries, unresolved-questions]
     depends_on: []
@@ -2612,4 +2612,69 @@ documents:
     related_documents: [lentinula-edodes, lote1-shiitake-especificacion-ambiental, piloto-shiitake-incubacion-protocolo, decisions]
     supersedes: null
     confidence: low
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: corroboracion-2026-10-readme
+    title: "Corroboración de parámetros KB_SPP y extracción (2026-10-26) — índice"
+    path: 09_research/corroboracion_2026-10/README.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [corroboracion-2026-10-shiitake-hericium, corroboracion-2026-10-djamor-ganoderma-kpi, corroboracion-2026-10-extraction]
+    supersedes: null
+    confidence: low
+    status: active
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: corroboracion-2026-10-djamor-ganoderma-kpi
+    title: "Corroboración de parámetros de P. djamor, G. lucidum, sustratos y KPI (2026-10-26)"
+    path: 09_research/corroboracion_2026-10/djamor_ganoderma_kpi.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [corroboracion-2026-10-readme, pleurotus-djamor, ganoderma-lucidum]
+    supersedes: null
+    confidence: low
+    status: active
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: corroboracion-2026-10-extraction
+    title: "Corroboración de extraction-factors.json (2026-10-26)"
+    path: 09_research/corroboracion_2026-10/extraction.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [corroboracion-2026-10-readme]
+    supersedes: null
+    confidence: low
+    status: active
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: corroboracion-2026-10-shiitake-hericium
+    title: "Corroboración de parámetros de shiitake y melena de león (2026-10-26)"
+    path: 09_research/corroboracion_2026-10/shiitake_hericium.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [corroboracion-2026-10-readme, lentinula-edodes, hericium-erinaceus]
+    supersedes: null
+    confidence: low
+    status: active
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: kb-agents-addendum
+    title: "Knowledge Base Addendum — Agent Instructions"
+    path: AGENTS.md
+    authority: null
+    category: meta
+    canonical: null
+    related_documents: [canon, decisions]
+    supersedes: null
+    confidence: high
     status: null

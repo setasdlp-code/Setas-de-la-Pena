@@ -2,12 +2,12 @@
 title: INDEX Generation Specification
 document_id: SPEC-001
 category: architecture
-version: 1.1
+version: 1.2
 status: canonical
 authority: architecture
 load_priority: on_request
 owner: Setas de la Peña
-last_reviewed: 2026-07-09
+last_reviewed: 2026-11-19
 related_documents:
   - SETAS_DE_LA_PENA_CANON.md
   - CROSS_REFERENCE_STANDARD.md
@@ -20,6 +20,8 @@ supersedes: null
 # INDEX Generation Specification
 
 ## 0. Status of This Document
+
+> **Revision 1.2 (DEC-026, 2026-11-19).** The generator is implemented (`scripts/generate_index.py`) and `INDEX.yaml` is a **hybrid** artifact. Generated fields — `title`, `path`, and the skeleton of entries for new documents — are maintained by the generator in place. Curated fields — `authority`, `canonical`, `topics`, `keywords`, `depends_on`, `implemented_by`, and any field the generator cannot source — are authored in `INDEX.yaml` and reviewed in the PR like any other change; the generator never overwrites them. New entries carry `# PENDING REVIEW` and `null` in fields it cannot source. CI runs `generate_index.py --check`. Where the sections below describe a full rewrite, a permanently forbidden manual edit, or CI as out of scope (§1.3, §2 «Minimal manual work», §5.6–§5.9, §9.1, §9.3, §12), this note prevails. The remaining principles — determinism, fail closed, no inferred authority, stable output — still bind the generator.
 
 This document is normative for the future implementation of the `INDEX.yaml` generator. It is authorized by `DECISIONS.md` DEC-011, which classified `INDEX.yaml` as generated infrastructure rather than manually maintained content, but DEC-011 explicitly does not authorize building the generator itself. This specification is the design that a future implementation decision (its own CANON §16 entry) would authorize into code. Writing this document does not authorize implementation. It exists so that when implementation is authorized, the design question has already been answered once, carefully, instead of being decided ad hoc inside a pull request.
 
