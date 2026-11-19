@@ -31,7 +31,7 @@ Stop: acceptance passes and local changes handed off.
 3. `perito-scenarios-bridge.js` and `recetario-model-bridge.js` → shared weighted calibration. Both retain incomplete inputs until the shared eligibility boundary. Recetario's actual-versus-estimated EB claim checks eligibility.
 4. Active generator: `runHybridRecipeSearch` → `SetasPeritoScenarios.searchScenarios` in `perito-scenarios.js`. Its theoretical score adapter and `history: []` remain unchanged. The scenario bridge's recipe novelty history remains contextual and makes no final-EB claim.
 5. `production-learning-bridge.js` wraps active search with contextual evidence only. `cycle-evidence.js` now distinguishes final batch outcomes from room-stage observations and deduplicates batch samples. A closed room stage does not prove a completed batch. Generator evidence shows exclusions. This path still does not adjust scenario scoring.
-6. `recipe-optimizer.js` remains the untouched legacy/parity oracle. `ground-truth-regression.js` is an offline evaluation consumer, not an operational calibration input.
+6. `recipe-optimizer.js` remains the untouched legacy/parity oracle for scoring (it is not modified by the history layer); note it still serves the user-facing Perito diagnosis in production (see `ARCHITECTURE.md`, section on `recipe-optimizer.js`). `ground-truth-regression.js` is an offline evaluation consumer, not an operational calibration input.
 
 ## Validation and limitations
 

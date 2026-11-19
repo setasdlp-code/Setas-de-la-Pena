@@ -1,6 +1,6 @@
 # Setas OS — catálogo de escenarios E2E
 
-Los escenarios E2E-01 a E2E-11 están implementados con Playwright en `e2e/*.spec.js` y pasan contra la app real (`npx playwright test`, proyectos `chromium` y `mobile`/WebKit). E2E-12 y E2E-13 viven en `e2e/node-automation.browser.cjs` y `e2e/harvest-quality-devices.browser.cjs`, con el arnés propio de `run-browser-tests.cjs`. Este documento sigue siendo la referencia de diseño de cada escenario; no hay job de CI wireado todavía (ver "Próximo paso").
+Los escenarios E2E-01 a E2E-11 tienen especificaciones Playwright en `e2e/` (9 archivos `*.spec.js`). E2E-12 y E2E-13 viven en `e2e/node-automation.browser.cjs` y `e2e/harvest-quality-devices.browser.cjs`, con el arnés propio de `run-browser-tests.cjs`. **Estado verificado en configuración (2026-11-17, sin ejecutar):** `playwright.config.cjs` usa `testMatch: '**/*.spec.cjs'`, así que `npm run test:e2e` solo recoge `e2e/setas-os.spec.cjs`; los `*.spec.js` no entran en esa corrida salvo que se ejecuten por ruta explícita. El CI (`field-os-simulador-quality.yml`) sí ejecuta `npm run test:e2e`. Este documento sigue siendo la referencia de diseño de cada escenario; qué escenarios pasan hoy está sin verificar.
 
 ## Convenciones de la suite
 
