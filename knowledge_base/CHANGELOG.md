@@ -29,6 +29,8 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 | Tipo | Descripción |
 |---|---|
 | [ARCH] | DEC-025: reglas de agentes consolidadas en los dos `AGENTS.md`; `AI_AGENT_PROTOCOL.md` y `EDITORIAL_GUIDELINES.md` pasan a referencia; nuevas clases «corrección verificable» y «parámetro piloto»; `CLAUDE.md` reducido a lo específico de Claude Code. |
+| [KB] | Corrección verificable (DEC-025): la cita «Shi et al. 2026, *Comput. Electron. Agric.* 218, 108722» (paper_026) corresponde a otro artículo; se reemplaza por *Agriculture* 16(13):1454 en `lentinula_edodes.md`, `pleurotus_ostreatus.md`, `04_facility/incubation.md` y `05_equipment/environmental_control.md`. La cifra núcleo–aire de 4–8 °C, no localizada en el artículo, pasa a hipótesis (★★☆☆☆) en esos documentos, `metadata/species.yaml` y la especificación del lote 1; la alarma de 28 °C no cambia. |
+| [KB] | Fichas de *G. lucidum*, *P. ostreatus* y *L. edodes*: lenguaje de evidencia («óptimo», «altísimo valor», «múltiples RCT» sin cita) y confianza `medium`; valores sin cambios. |
 | [KB] | `01_species/pleurotus_eryngii.md`: corrección verificable. Lenguaje de evidencia, confianza `medium`, ★★★☆☆ para CO₂ con Ryu et al. (2005), nota de presión en Tenjo; valores sin cambios. |
 
 ### 2026-11-13

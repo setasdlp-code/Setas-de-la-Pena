@@ -11,7 +11,8 @@
 #
 # Shi et al. 2026 (paper_026; ARK-012) midieron ese calor metabólico: durante el
 # pico de colonización el núcleo del bloque corre 4–8 °C por encima del aire, con
-# desfase térmico de 2–4 h. De ahí se sigue que el setpoint de aire tiene que ir
+# desfase térmico de 2–4 h (cifras sin localizar en el artículo real, Agriculture
+# 16(13):1454; tratar como hipótesis, DEC-025). De ahí se sigue que el setpoint de aire tiene que ir
 # POR DEBAJO del objetivo de núcleo, nunca por encima. Confundir las dos medidas
 # es el error que empuja el aire hacia arriba y cuece el núcleo.
 #

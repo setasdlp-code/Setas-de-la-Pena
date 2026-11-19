@@ -3,7 +3,7 @@ title: Especificación Ambiental del Lote 1 de Shiitake — Plantilla Versionada
 document_id: DOC-0122
 category: operations
 load_priority: selective
-last_reviewed: 2026-10-13
+last_reviewed: 2026-11-19
 confidence: low
 primary_sources:
   - docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
@@ -60,4 +60,4 @@ Los límites de seguridad del núcleo (28 °C, de `01_species/lentinula_edodes.m
 
 # Tensión de la banda propuesta
 
-El KB documenta que el calor metabólico del micelio puede subir el núcleo del bloque 4–8 °C sobre el aire (paper_026). Con el aire a 22 °C el núcleo podría llegar a 26–30 °C, cerca de la alarma de 28 °C. Si ocurre en las fases 2 o 4, la alarma apaga el calefactor y exige ventilar más o bajar el objetivo; se registra como dato del piloto y no como falla. Las búsquedas web coinciden en que el micelio crece mejor cerca de 24–27 °C y no encontraron un umbral letal (`../09_research/shiitake_verificacion_web_2026-10-25.md`), de modo que el límite de 28 °C en el núcleo es una decisión de diseño conservadora.
+El KB documenta que el calor metabólico del micelio puede subir el núcleo del bloque 4–8 °C sobre el aire (paper_026; cifra sin localizar en el artículo, tratar como hipótesis hasta medir en Tenjo). Con el aire a 22 °C el núcleo podría llegar a 26–30 °C, cerca de la alarma de 28 °C. Si ocurre en las fases 2 o 4, la alarma apaga el calefactor y exige ventilar más o bajar el objetivo; se registra como dato del piloto y no como falla. Las búsquedas web coinciden en que el micelio crece mejor cerca de 24–27 °C y no encontraron un umbral letal (`../09_research/shiitake_verificacion_web_2026-10-25.md`), de modo que el límite de 28 °C en el núcleo es una decisión de diseño conservadora.

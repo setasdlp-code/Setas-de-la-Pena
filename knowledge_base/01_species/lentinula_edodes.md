@@ -3,8 +3,8 @@ title: Lentinula edodes — Shiitake
 document_id: DOC-0007
 category: species
 load_priority: selective
-last_reviewed: 2026-11-08
-confidence: high
+last_reviewed: 2026-11-19
+confidence: medium
 primary_sources:
   - Chang & Miles 2004 (book_007, cap. 13)
   - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006)
@@ -87,6 +87,7 @@ Shi et al. (2026) caracterizaron la dinámica térmica dentro de bloques de cult
 
 - La temperatura interna del núcleo del bloque presenta un desfase temporal (*thermal lag*) y memoria térmica respecto al aire circundante.
 - Durante el pico de colonización, el calor metabólico generado por el micelio puede elevar la temperatura del núcleo 4–8 °C por encima del aire ambiental. Si el ambiente está a 24 °C, el núcleo puede superar 30–32 °C, induciendo estrés térmico y aborto.
+- La cifra de 4–8 °C se atribuyó a paper_026, pero no aparece en la síntesis del texto completo (`09_research/p0_full_pdf_reprocessing_2026-08-13.md`), y ARK-012 prohíbe trasladar constantes del estudio; tratarla como hipótesis hasta medir el núcleo en Tenjo (ver `09_research/microclima_operacion_remota_2026-11-04/informe.md`).
 - Se requiere monitorear la temperatura de núcleo de bloques representativos y emplear medias móviles ponderadas (EWMA) para el control predictivo en ESPHome.
 
 ## Evidencia colombiana
@@ -205,7 +206,7 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 - Holgado-Rojas, M. E., et al. (2019). Cultivo del hongo comestible *Lentinula edodes* (Shiitake) en zonas altoandinas de la región de Cusco. *Cantua*, 15, 45–54. [paper_025]
 - Rocha, F. (2025). Shiitake production on synthetic logs: Induction techniques, block geometry, and rehydration dynamics. *Journal of Applied Mycology and Biotechnology*, 14(1), 102–115. [paper_022]
 - Rodríguez Valencia, N., & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC. [paper_006]
-- Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
+- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-025, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Zied, D. C., & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms: Technology and Applications*. Wiley-Blackwell.
 

@@ -3,8 +3,8 @@ title: Pleurotus ostreatus — Oyster / Orellana
 document_id: DOC-0009
 category: species
 load_priority: selective
-last_reviewed: 2026-11-05
-confidence: high
+last_reviewed: 2026-11-19
+confidence: medium
 primary_sources:
   - Stamets 2000
   - Cotter 2014
@@ -33,8 +33,8 @@ Supported by:
 - NAMA
 
 *P. ostreatus* fructifica a 13–24°C, HR 85–95%, CO₂ 400–1,000 ppm.
-**Strength of evidence:** ★★★★★
-**Conflicting evidence:** Algunos cultivadores reportan fructificación hasta 10°C (forma pequeña y densa) o hasta 26°C (forma grande y rápida). El rango de producción comercial óptima es 15–22°C.
+**Strength of evidence:** ★★★☆☆ (concordancia entre libros técnicos, Tier 2, y fuentes divulgativas, Tier 3; sin estudio primario citado ni validación local)
+**Conflicting evidence:** Algunos cultivadores reportan fructificación hasta 10°C (forma pequeña y densa) o hasta 26°C (forma grande y rápida). El rango comercial citado es 15–22 °C (la tabla de fructificación da 15–20 °C; discrepancia sin resolver entre fuentes).
 **Corrección de altitud (Tenjo 2.600 m):** A 2.600 m s.n.m., la menor densidad atmosférica exige un mayor caudal volumétrico efectivo (~1,37× a nivel molar) para mantener la remoción de CO₂ frente a nivel del mar. No aplicar renovaciones genéricas por hora ("4–6 ACH") sin verificar el caudal real de extracción y la respuesta morfológica de la cepa.
 
 ### Relación C:N y nitrógeno por clase de sustrato
@@ -50,7 +50,7 @@ Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellett
 
 # Core Principles
 - Especie robusta y tolerante. Útil para validación y caracterización ambiental de cámaras antes de lotes críticos.
-- Más sensible al CO₂ que *P. djamor* — mantener <1.000 ppm en producción óptima para evitar tallos engrosados y sombreros reducidos.
+- Más sensible al CO₂ que *P. djamor* — mantener <1.000 ppm en producción para evitar tallos engrosados y sombreros reducidos.
 - Ciclo de 14–21 días para pinning en condiciones templadas.
 - La consigna de incubación es de **aire**, y el núcleo del bloque corre por encima de ella. El setpoint de aire va por debajo del objetivo de núcleo, nunca por encima (ver abajo).
 
@@ -59,12 +59,12 @@ Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellett
 Mismo fenómeno físico ya documentado para *L. edodes*; aquí se consigna para *P. ostreatus* porque su banda de incubación es más baja y el margen hasta el techo es, por tanto, distinto.
 
 - El núcleo del bloque presenta desfase térmico (*thermal lag*) de 2–4 h y memoria térmica respecto al aire circundante.
-- Durante el pico de colonización, el calor metabólico del micelio eleva el núcleo **4–8 °C por encima del aire**.
+- Durante el pico de colonización, el calor metabólico del micelio eleva el núcleo por encima del aire; la KB usa **4–8 °C**. La cifra de 4–8 °C se atribuyó a paper_026, pero no aparece en la síntesis del texto completo (`09_research/p0_full_pdf_reprocessing_2026-08-13.md`), y ARK-012 prohíbe trasladar constantes del estudio; tratarla como hipótesis hasta medir el núcleo en Tenjo (ver `09_research/microclima_operacion_remota_2026-11-04/informe.md`).
 - De ahí la consecuencia operativa: con la banda de aire 20–24 °C, el núcleo llega a **24–32 °C**. El techo de aire no puede subirse "para acercarse al óptimo de sustrato" — subirlo empuja el núcleo, que es lo que ya está arriba.
 - **Techo de núcleo: 28 °C.** Es un **límite de alarma derivado**, no un valor de literatura sobre la tolerancia térmica de la especie: sale del techo de aire declarado (24) más el delta mínimo documentado (4). Por encima de 28 °C el núcleo está fuera de lo que la banda de aire puede explicar, así que la alarma señala el lazo de control, no la biología.
 - Requiere sonda de núcleo (DS18B20) en al menos un bloque testigo por lote y amortiguamiento del control por medias móviles ponderadas (EWMA), igual que en *L. edodes*.
 
-**Strength of evidence:** ★★★★☆ para el delta núcleo–aire (paper_026, revisado por pares, medido en bloques de cultivo sólido). El techo de 28 °C es una derivación interna de la banda de aire, no una medición: ★☆☆☆☆ como afirmación biológica, y debe tratarse como umbral de control provisional hasta tener medición local de núcleo en Tenjo.
+**Strength of evidence:** ★★☆☆☆ para la magnitud del delta núcleo–aire (paper_026 documenta memoria térmica y desfase en bolsas, pero la cifra 4–8 °C no está localizada en el artículo). El techo de 28 °C es una derivación interna de la banda de aire, no una medición: ★☆☆☆☆ como afirmación biológica, y debe tratarse como umbral de control provisional hasta tener medición local de núcleo en Tenjo.
 
 # Technical Details
 
@@ -88,7 +88,7 @@ Mismo fenómeno físico ya documentado para *L. edodes*; aquí se consigna para 
 ### Fructificación
 | Parámetro | Valor |
 |---|---|
-| Temperatura | 13–24°C (óptimo comercial 15–20°C) |
+| Temperatura | 13–24°C (rango comercial citado 15–20°C) |
 | HR | 85–95% |
 | CO₂ | 400–1,000 ppm |
 | FAE / Ventilación | Caudal dependiente de carga y presión barométrica (verificar con SCD30) |
@@ -124,7 +124,7 @@ Mismo fenómeno físico ya documentado para *L. edodes*; aquí se consigna para 
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Cornell Mushroom Blog. https://blog.mycology.cornell.edu
-- Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
+- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-025, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
 
 ## Procesamiento: jerky (consultivo)
 

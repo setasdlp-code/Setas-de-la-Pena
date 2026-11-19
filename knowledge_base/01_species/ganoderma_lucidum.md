@@ -3,8 +3,8 @@ title: Ganoderma lucidum — Reishi / Lingzhi
 document_id: DOC-0005
 category: species
 load_priority: selective
-last_reviewed: 2026-07-04
-confidence: high
+last_reviewed: 2026-11-19
+confidence: medium
 primary_sources:
   - Stamets 2000
   - Wachtel-Galor et al. 2011 (Herbal Medicine, CRC Press)
@@ -18,7 +18,7 @@ related_documents:
 ---
 
 # Executive Summary
-*Ganoderma lucidum* (Reishi / Lingzhi) es una especie medicinal de largo plazo para Setas de la Peña. Ciclo de cultivo muy largo (3–6 meses), no apta para consumo fresco (textura leñosa), pero con altísimo valor en mercado de suplementos y extractos. Requiere temperatura cálida en fructificación (óptimo **27–32°C**; <20°C deforma el carpóforo), lo que en Tenjo (12–18°C) **exige calefacción activa**. Especie de Fase 2 del proyecto — no en el plan inmediato.
+*Ganoderma lucidum* (Reishi / Lingzhi) es una especie medicinal de largo plazo para Setas de la Peña. Ciclo de cultivo muy largo (3–6 meses), no apta para consumo fresco (textura leñosa), con valor potencial en el mercado de suplementos y extractos (sin estudio del mercado colombiano; ver Open Questions). Requiere temperatura cálida en fructificación (rango de trabajo **27–32 °C** según Cenicafé 2005, Tier B; <20 °C deforma el carpóforo), lo que en Tenjo (12–18°C) **exige calefacción activa**. Especie de Fase 2 del proyecto — no en el plan inmediato.
 
 # Research Consensus
 
@@ -27,17 +27,17 @@ related_documents:
 Supported by:
 - Wachtel-Galor et al. 2011
 - Stamets 2000
-- Multiple RCTs en pacientes oncológicos (coadyuvante)
+- Ensayos clínicos en pacientes oncológicos citados en las revisiones anteriores (no revisados en esta KB)
 
-*G. lucidum* contiene triterpenoides (ganodérico A-Z) y beta-glucanos. Evidencia de inmunomodulación, propiedades adaptogénicas y potencial coadyuvante en oncología.
-**Strength of evidence:** ★★★★☆
+*G. lucidum* contiene triterpenoides (ganodérico A-Z) y beta-glucanos. La literatura de revisión describe inmunomodulación, propiedades adaptogénicas y potencial coadyuvante en oncología. Ningún claim de salud aplica al producto de Setas de la Peña sin evidencia del producto y revisión regulatoria.
+**Strength of evidence:** ★★★☆☆ (fuentes de revisión, Tier 2; ensayos primarios no revisados en esta KB)
 **Conflicting evidence:** Los claims directos anticancerígenos son exagerados en marketing. La evidencia apoya uso coadyuvante, no curativo.
 
 # Core Principles
 - Especie de largo plazo — ciclo 3–6 meses no compatible con cash flow a corto plazo.
 - Producto final: extracto seco, polvo, tintura — NO consumo fresco.
-- Alta temperatura en fruiting (óptimo 27–32°C) — inviable en Tenjo sin calefacción activa (confirmado, Cenicafé 2005).
-- Muy bajo riesgo de contaminación por ciclo lento y crecimiento robusto.
+- Alta temperatura en fruiting (27–32 °C) — inviable en Tenjo sin calefacción activa según Cenicafé 2005 (Tier B).
+- Se suele citar bajo riesgo de contaminación por su crecimiento robusto; sin fuente en esta ficha, y el ciclo largo prolonga la exposición.
 
 # Technical Details
 
@@ -60,7 +60,7 @@ Supported by:
 ### Incubación
 | Parámetro | Valor |
 |---|---|
-| Temperatura micelio | 25–32°C óptimo (rango 10–38°C) |
+| Temperatura micelio | 25–32°C (rango de trabajo; tolerado 10–38°C) |
 | Humedad del sustrato | 65–70% |
 | pH del sustrato | 4,2–5,3 |
 | Luz | No requerida |
@@ -70,7 +70,7 @@ Supported by:
 | Parámetro | Valor |
 |---|---|
 | Temperatura primordios | 30°C |
-| Temperatura fructificación | 27–32°C óptimo (rango 20–34°C; <20°C → sombreros deformes) |
+| Temperatura fructificación | 27–32°C (rango de trabajo; tolerado 20–34°C; <20°C → sombreros deformes) |
 | HR — inducción de primordios | >90% |
 | HR — formación de sombrero | 70–80% |
 | HR — estadio final del carpóforo | 30–40% |
@@ -124,18 +124,18 @@ La app conserva `hr` [30,90] como **unión de las fases** (no es consigna) hasta
 # Best Practices
 - No considerar para primeras fases de producción — cash flow no lo soporta.
 - Investigar regulación INVIMA para extractos/suplementos de Ganoderma en Colombia antes de invertir.
-- Si se produce: enfocar en extracto doble (agua + alcohol) para maximizar biodisponibilidad.
+- Si se produce: evaluar extracto doble (agua + alcohol), que recupera la fracción de polisacáridos y la de triterpenos; sin evaluación propia del rendimiento ni de la biodisponibilidad.
 
 # Common Failure Modes
 | Problema | Causa | Solución |
 |---|---|---|
 | Crecimiento muy lento | Temperatura <22°C | Calefacción del recinto |
-| Contaminación | Temperatura inadecuada en incubación | Mantener 26°C estable |
+| Contaminación | Temperatura inadecuada en incubación | Mantener temperatura estable dentro de 25–30 °C (la tabla por fase usa consigna 28 °C) |
 
 # Open Questions
 - ¿Regulación INVIMA para claims medicinales de Ganoderma en Colombia?
 - ¿Mercado colombiano para extracto de Reishi (precio, canales)?
-- ~~¿Temperatura de Tenjo suficiente para fruiting sin calefacción activa?~~ **Resuelto (Cenicafé 2005):** no — óptimo 27–32°C, <20°C deforma. Requiere calefacción activa → confirma condición de Fase 2.
+- ~~¿Temperatura de Tenjo suficiente para fruiting sin calefacción activa?~~ **Resuelto (Cenicafé 2005, Tier B):** no — rango 27–32 °C, <20 °C deforma. Requiere calefacción activa → confirma condición de Fase 2.
 - ¿Costo energético de mantener 27–32°C en un módulo en Tenjo, y viabilidad económica frente al valor del extracto?
 
 # References
