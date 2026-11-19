@@ -260,7 +260,7 @@ documents:
   # worked FAE example).
 
   - id: quality-control
-    title: "Control de Calidad"
+    title: "Control de Calidad — Programa Inicial de Shiitake"
     path: 06_operations/quality_control.md
     authority: sops_and_workflows
     category: operations
@@ -1692,7 +1692,7 @@ documents:
     status: active
 
   - id: design-system-documentation
-    title: "Setas de la Peña — Design System Documentation (FOS)"
+    title: "Setas de la Peña — Design System Documentation (FOS Core + FOS Editorial)"
     path: 08_brand/design-system-documentation.md
     authority: business_and_brand
     category: brand
@@ -2485,3 +2485,131 @@ documents:
     supersedes: null
     confidence: medium
     status: draft
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: asignacion-sensores-tres-modulos-2026-11-11
+    title: "Asignación provisional de sensores — Incubadora, CLOUDLAB 844 y Martha Tent"
+    path: 05_equipment/asignacion_sensores_tres_modulos_2026-11-11.md
+    authority: null
+    category: equipment
+    canonical: null
+    related_documents: [decisions, current-operations, environmental-control, incubation]
+    supersedes: null
+    confidence: medium
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: lote1-shiitake-especificacion-ambiental
+    title: "Especificación Ambiental del Lote 1 de Shiitake — Plantilla Versionada"
+    path: 06_operations/lote1_shiitake_especificacion_ambiental.md
+    authority: null
+    category: operations
+    canonical: null
+    related_documents: [piloto-shiitake-incubacion-protocolo, quality-control, lentinula-edodes, current-operations]
+    supersedes: null
+    confidence: low
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: piloto-shiitake-incubacion-protocolo
+    title: "Protocolo del Piloto de Shiitake — Incubación con Control de Temperatura"
+    path: 06_operations/piloto_shiitake_incubacion_protocolo.md
+    authority: null
+    category: operations
+    canonical: null
+    related_documents: [lote1-shiitake-especificacion-ambiental, quality-control, incubation, lentinula-edodes, current-operations, shiitake-microlote-pellets-sop-v1]
+    supersedes: null
+    confidence: low
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: auditoria-eficiencia-biologica-shiitake-informe-2026-11-10
+    title: "Auditoría de afirmaciones sobre eficiencia biológica en shiitake — informe recibido"
+    path: 09_research/auditoria_eficiencia_biologica_shiitake_informe_2026-11-10.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [lentinula-edodes, supplementation, shiitake-pellets-microlote-receta-v1, research-summaries, tendencias-cultivo-shiitake-2026-11-08, genetica-sustratos-shiitake-2026-11-04, unresolved-questions]
+    supersedes: null
+    confidence: low
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: guia-prototipo-incubadora-placas-borrador
+    title: "Guía experimental de montaje en frío — incubadora de placas"
+    path: 09_research/guia_prototipo_incubadora_placas_borrador.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [incubation, environmental-control]
+    supersedes: null
+    confidence: low
+    status: draft
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: app-kb-parameter-discrepancies-2026-09-28
+    title: "Corroboración de discrepancias entre Setas OS y knowledge_base"
+    path: 09_research/intake/app_kb_parameter_discrepancies_2026-09-28.md
+    authority: null
+    category: research
+    canonical: null
+    supersedes: null
+    confidence: medium
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: extraction-factors-verificacion-2026-11-13
+    title: "Verificación bibliográfica de extraction-factors.json (Hericium y Ganoderma)"
+    path: 09_research/intake/extraction_factors_verificacion_2026-11-13.md
+    authority: null
+    category: research
+    canonical: null
+    supersedes: null
+    confidence: low
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: precios-competitivos-shiitake-melena-2026-11-09
+    title: "Precios competitivos de shiitake y melena de león (fresco, deshidratado, extractos): benchmarks y corredor de precio"
+    path: 09_research/intake/precios_competitivos_shiitake_melena_2026-11-09.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [pricing, economics, colombian-market, regulatory-framework, colombia-mushroom-market-synthesis-2026-11-03, shiitake-commercialization-processing-texture-flavor, lentinula-edodes, hericium-erinaceus]
+    supersedes: null
+    confidence: low
+    status: null
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: jerky-setas-procesamiento-2026-11-05
+    title: "Jerky vegano de setas (shiitake, melena de león, orellana) — investigación consultiva"
+    path: 09_research/jerky_setas_procesamiento_2026-11-05.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [lentinula-edodes, hericium-erinaceus, pleurotus-ostreatus, regulatory-framework, decisions, calidad-poscosecha-economia-shiitake-2026-11-04, unresolved-questions, literature-index]
+    supersedes: null
+    confidence: low
+    status: draft
+
+  # PENDING REVIEW — added by scripts/generate_index.py from frontmatter.
+  # authority / canonical / status stay null until curated against CANON §14.
+  - id: shiitake-verificacion-web-2026-10-25
+    title: "Verificación Web de Hechos de Shiitake para el Piloto con Cepa No Identificada — 2026-10-25"
+    path: 09_research/shiitake_verificacion_web_2026-10-25.md
+    authority: null
+    category: research
+    canonical: null
+    related_documents: [lentinula-edodes, lote1-shiitake-especificacion-ambiental, piloto-shiitake-incubacion-protocolo, decisions]
+    supersedes: null
+    confidence: low
+    status: null
