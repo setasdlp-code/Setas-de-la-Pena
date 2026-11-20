@@ -2,7 +2,7 @@
 title: Aislamiento Térmico y Control de Condensación en Cultivo de Setas
 category: facility
 load_priority: selective
-last_reviewed: 2026-08-25
+last_reviewed: 2026-11-20
 confidence: high
 primary_sources:
   - Principios de Psicrometría y Termodinámica de Edificaciones (ASHRAE)
@@ -30,8 +30,8 @@ En instalaciones micológicas, la combinación de alta humedad continua (>85–9
 
 | Material | Estructura | Permeancia al Vapor | Absorción de Agua (Inmersión) | Pérdida de Valor R en Húmedo | Resistencia Microbiológica | Veredicto Micológico |
 |---|---|---|---|---|---|---|
-| **PIR (Poliisocianurato)** | Célula cerrada (>95%) | <0.8 Perms (muy baja) | <1.5% vol. | Nula (conserva 100%) | Excelente (inorgánico) | **⭐⭐⭐⭐⭐ Óptimo (Estándar de Oro)** |
-| **PUR (Poliuretano)** | Célula cerrada (>90%) | <1.0 Perms (muy baja) | <2.0% vol. | Nula (conserva 100%) | Excelente | **⭐⭐⭐⭐⭐ Óptimo** |
+| **PIR (Poliisocianurato)** | Célula cerrada (>95%) | <0.8 Perms (muy baja) | <1.5% vol. | Nula (conserva 100%) | Excelente (inorgánico) | **⭐⭐⭐⭐⭐ Recomendado** |
+| **PUR (Poliuretano)** | Célula cerrada (>90%) | <1.0 Perms (muy baja) | <2.0% vol. | Nula (conserva 100%) | Excelente | **⭐⭐⭐⭐⭐ Recomendado** |
 | **XPS (Poliestireno Extruido)** | Célula cerrada de alta densidad | 0.4–1.5 Perms | <0.7% vol. | Mínima (<5%) | Excelente | **⭐⭐⭐⭐ Excelente para DIY / Suelo** |
 | **EPS (Icopor / Expandido)** | Perlas abiertas con intersticios | 2.0–5.0 Perms (alta) | 10–20% vol. a largo plazo | **Severa (pierde hasta 50%)** | ⚠️ Reservorio de bacterias/moho | **❌ No recomendado en salas húmedas** |
 | **Lana Mineral / Vidrio** | Fibrosa abierta | >50 Perms (abierta) | >100% peso (absorbe agua) | **Total (colapso térmico)** | ❌ Se pudre / aloja patógenos | **🚫 Prohibido en áreas húmedas** |
@@ -104,7 +104,7 @@ El goteo de agua de condensación desde el techo sobre los bloques de cultivo es
 | **Panel PUR / PIR 100mm** | 100 mm | 0.22 | 136 W | 60 kWh | ~$48,000 COP | **91.2%** |
 
 > [!TIP]
-> **Recomendación para Tenjo:** El **Panel PUR de 50mm a 75mm** representa el punto óptimo de retorno de inversión (ROI). Reduce el costo eléctrico de calefacción en más de un 80%, requiriendo una resistencia de solo 300–500W para mantener 24°C estables durante las noches frías de la Sabana.
+> **Recomendación para Tenjo:** El **Panel PUR de 50mm a 75mm** tiene la mejor relación entre ahorro y espesor en el cálculo de esta guía (supuestos de la tabla anterior; sin precios ni consumos medidos en sitio). Reduce el costo eléctrico de calefacción en más de un 80%, requiriendo una resistencia de solo 300–500W para mantener 24°C estables durante las noches frías de la Sabana.
 
 ---
 

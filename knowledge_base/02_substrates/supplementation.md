@@ -3,7 +3,7 @@ title: Suplementación de Sustratos
 document_id: DOC-0014
 category: substrates
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-11-20
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -30,8 +30,8 @@ Supported by:
 - Cotter 2014
 - Zied 2017
 
-Sustratos con >20% de suplementos nitrogenados (salvado, harina de soya) pasteurizados (no esterilizados) presentan tasas de contaminación >50% con bacterias y Trichoderma.
-**Strength of evidence:** ★★★★★
+Sustratos con >20% de suplementos nitrogenados (salvado, harina de soya) pasteurizados (no esterilizados) presentan tasas altas de contaminación con bacterias y *Trichoderma*. La cifra de >50 % que usaba esta ficha no está localizada en las fuentes citadas.
+**Strength of evidence:** ★★★☆☆ (concordancia entre libros técnicos, Tier 2; sin estudio primario citado ni validación local)
 **Conflicting evidence:** Ninguno. La correlación suplementación-contaminación está bien documentada.
 
 # Core Principles
@@ -101,7 +101,7 @@ Bajo la vigencia de **DEC-013**, la especie de arranque es *Lentinula edodes* (s
 - ¿Respuesta de la cepa local de shiitake a sustitución parcial de salvado con afrecho de cervecería seco?
 
 # References
-- Atila, F. (2019). Cultivation of *Hericium erinaceus* and *Lentinula edodes* on agro-industrial wastes and effect of environmental factors on yield and morphology. *Scientia Horticulturae*, 254, 185–194. [paper_024]
+- Atila, F. (2019). The use of phenolic-rich agricultural wastes for *Hericium erinaceus* and *Lentinula edodes* cultivation and its effect on yield performance. *Ege Üniversitesi Ziraat Fakültesi Dergisi*, 56(4), 417–425. https://doi.org/10.20289/zfdergi.528957 [paper_024]. Corregida el 2026-11-20 (DEC-026): la cita anterior a *Scientia Horticulturae* 254:185–194 no existe; título y revista verificados en Crossref y en el reprocesamiento del PDF (`09_research/p0_full_pdf_reprocessing_2026-08-13.md`).
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 61–70.

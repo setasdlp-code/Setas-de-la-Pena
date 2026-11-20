@@ -3,13 +3,13 @@ title: Hericium erinaceus — Lion's Mane / Melena de León
 document_id: DOC-0006
 category: species
 load_priority: selective
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-20
 confidence: medium
 primary_sources:
   - Friedman 2015 (paper_003)
   - Mori et al. 2009 (paper_002)
   - Atila 2019 (paper_024)
-  - Tabi et al. 2021
+  - Atila et al. 2021
   - Lu et al. 2024
   - Stamets 2000
 related_documents:
@@ -52,7 +52,7 @@ Atila (2019) evaluó el cultivo controlado de *H. erinaceus* bajo un régimen ex
 
 ## Temperatura de fructificación
 
-Tabi et al. (2021) evaluó aislamientos silvestres e híbridos de *Hericium* a 15, 20 y 25°C. La respuesta de rendimiento y composición dependió del aislamiento; incluso cepas de la misma especie no compartieron una temperatura única de mejor desempeño.
+Atila et al. (2021, *Sci. Hortic.* 280:109915) evaluaron aislamientos silvestres e híbridos de *Hericium* a 15, 20 y 25°C. La respuesta de rendimiento y composición dependió del aislamiento; incluso cepas de la misma especie no compartieron una temperatura única de mejor desempeño.
 
 **Conclusión:** la temperatura se define por cepa y piloto. Los rangos de libros y productores sirven para diseñar una primera prueba, no para declarar un óptimo universal.
 
@@ -181,6 +181,8 @@ Fuente: `09_research/corroboracion_2026-10/`. El investigador leyó solo snippet
 
 Sin cambio en la app por baja confianza: CO₂ (1.000), BE, ciclo.
 
+> **Resuelto el 2026-11-20 (DEC-026, verificado en Crossref y en el reprocesamiento del PDF).** «Tabi et al. 2021» es Atila, Tüzel, Pekşen, Cano y Fernández (2021). «Atila 2019» es *Ege Üniv. Ziraat Fak. Derg.* 56(4):417–425; ese artículo sí documenta 18 ± 2 °C, 85–90 % HR, CO₂ <1.200 ppm y 1.000 lux 8 h/d como condiciones experimentales de *H. erinaceus*, así que la sección «Región de Referencia Ambiental Experimental» queda respaldada como condición de estudio, no como óptimo. Texto anterior conservado como historial:
+>
 > **PENDIENTE DE VERIFICAR CONTRA PDF — dos citas sospechosas.**
 > 1. «Tabi et al. 2021» (*Sci. Hortic.* 280:109915, DOI 10.1016/j.scienta.2021.109915): en los resultados de búsqueda los autores del artículo parecen ser **Atila, Tüzel, Pekşen, Cano & Fernández**, no Tabi. Se conserva el texto original de esta ficha hasta confirmar contra el PDF.
 > 2. «Atila 2019 — paper_024, *Sci. Hortic.* 254:185–194»: el investigador **no encontró** un artículo con ese título en esa revista; lo más cercano es Atila (2019), «The use of phenolic-rich agricultural wastes for *H. erinaceus* and *L. edodes* cultivation» (revista turca, vol. 56), cuyo resumen no menciona CO₂ <1.200 ppm / 18 ± 2 °C / 85–90 % HR. Candidatos al origen real: Atila 2018, *Sci. Hortic.* 238:246–254; Atila 2019, *Sci. Hortic.* 258. Hasta comprobarlo, los valores de la sección «Región de Referencia Ambiental Experimental» no deben usarse como fuente.
@@ -254,10 +256,10 @@ Solo después de obtener un primer ciclo estable. Comparar bandas definidas por 
 - ¿Qué vida útil real se alcanza a 4–5°C con el empaque y transporte disponibles?
 - ¿Qué requisitos vigentes de INVIMA aplican a producto fresco, polvo, extracto y claims?
 
-- Atila, F. (2019). Cultivation of *Hericium erinaceus* and *Lentinula edodes* on agro-industrial wastes and effect of environmental factors on yield and morphology. *Scientia Horticulturae*, 254, 185–194. [paper_024]
+- Atila, F. (2019). The use of phenolic-rich agricultural wastes for *Hericium erinaceus* and *Lentinula edodes* cultivation and its effect on yield performance. *Ege Üniversitesi Ziraat Fakültesi Dergisi*, 56(4), 417–425. https://doi.org/10.20289/zfdergi.528957 [paper_024]. Corregida el 2026-11-20 (DEC-026): la cita anterior a *Scientia Horticulturae* 254:185–194 no existe; título y revista verificados en Crossref y en el reprocesamiento del PDF (`09_research/p0_full_pdf_reprocessing_2026-08-13.md`).
 - Friedman, M. (2015). Chemistry, Nutrition, and Health-Promoting Properties of *Hericium erinaceus*. *Journal of Agricultural and Food Chemistry*, 63(32), 7108–7123. https://doi.org/10.1021/acs.jafc.5b02914
 - Mori, K. et al. (2009). Improving effects of Yamabushitake on mild cognitive impairment: a double-blind placebo-controlled clinical trial. *Phytotherapy Research*, 23(3), 367–372. https://doi.org/10.1002/ptr.2634
-- Tabi, A. N. M. et al. (2021). The effect of different fruiting temperatures on the yield and nutritional parameters of some wild and hybrid *Hericium* isolates. *Scientia Horticulturae*, 280, 109915. https://doi.org/10.1016/j.scienta.2021.109915
+- Atila, F., Tüzel, Y., Pekşen, A., Cano, A. F. y Fernández, J. A. (2021). The effect of different fruiting temperatures on the yield and nutritional parameters of some wild and hybrid *Hericium* isolates. *Scientia Horticulturae*, 280, 109915. https://doi.org/10.1016/j.scienta.2021.109915
 - Lu, Z. et al. (2024). Optimization of substrate formulation for *Hericium erinaceus* by replacing wood by straw and their effect on enzyme activities. *Frontiers in Plant Science*, 15, 1436385. https://doi.org/10.3389/fpls.2024.1436385
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Ver `../09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md` para la auditoría de altitud, ventilación, sustratos y poscosecha.

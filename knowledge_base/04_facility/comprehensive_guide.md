@@ -3,8 +3,8 @@ title: Adecuación de Espacios para Cultivos de Setas — Guía Completa
 document_id: DOC-0121
 category: facility
 load_priority: selective
-last_reviewed: 2026-09-03
-confidence: high
+last_reviewed: 2026-11-20
+confidence: medium
 ---
 
 # Adecuación de Espacios para Cultivos de Setas
@@ -177,7 +177,7 @@ Ejemplo: 10 kg de paja seca → 15.1 L de agua
 
 #### Método 2: Pasteurización con Vapor
 
-- Usar vapor a 100°C en cámara cerrada o olla sin presurizar
+- Usar vapor libre en cámara cerrada u olla sin presurizar (~91 °C en Tenjo, no 100 °C)
 - Más eficiente que inmersión para grandes volúmenes
 - Temperatura en el centro alcanza 80°C en 45–60 minutos
 - Útil para escala: +20 kg por batch
@@ -196,7 +196,7 @@ Ejemplo: 10 kg de paja seca → 15.1 L de agua
 - Salvado o suplementación N >10%
 - Master's Mix (paja + salvado + cal + yeso)
 - Cultivo de Shiitake, Lion's Mane, Ganoderma
-- Objetivo BE >100%
+- Metas de eficiencia biológica altas con sustrato suplementado (sin meta local definida)
 
 **Parámetros de esterilización:**
 
@@ -549,7 +549,7 @@ Para presupuesto muy limitado, un SAB optimizado (caja cerrada con puertos later
 
 - Mantener T° constante — fluctuaciones >3°C ralentizan colonización
 - No apilar bolsas muy juntas — calor metabólico crea puntos calientes
-- Separar físicamente bloques de especies con T° óptima diferente
+- Separar físicamente bloques de especies con rangos de temperatura diferentes
 - No abrir bolsas durante incubación (rompe hermetismo)
 - Medir el centro de bloques testigo: el aire puede estar en rango mientras el sustrato se sobrecalienta
 

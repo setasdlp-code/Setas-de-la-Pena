@@ -3,7 +3,7 @@ title: Contaminación — Identificación y Control
 document_id: DOC-0010
 category: substrates
 load_priority: selective
-last_reviewed: 2026-07-04
+last_reviewed: 2026-11-20
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -30,7 +30,7 @@ Supported by:
 - Zied 2017
 
 *Trichoderma* spp. es el competidor más frecuente en cultivo de hongos comestibles en sustratos pasteurizados. Temperaturas de incubación >25°C y sustrato húmedo favorecen su establecimiento.
-**Strength of evidence:** ★★★★★
+**Strength of evidence:** ★★★☆☆ (concordancia entre libros técnicos, Tier 2; sin estudio primario citado ni validación local)
 **Conflicting evidence:** Ninguno.
 
 # Core Principles
@@ -92,7 +92,7 @@ Supported by:
 - Esporas en el ambiente de producción (contaminación cruzada)
 
 **Control:**
-- Temperatura incubación 20–24°C (ralentiza *Trichoderma*, óptimo para micelio de cultivo)
+- Temperatura incubación 20–24°C (ralentiza *Trichoderma*; dentro del rango de incubación citado para el micelio de cultivo)
 - FC correcta (<70%)
 - Pasteurización adecuada (75–82°C, 60+ min)
 - Yeso en sustrato (eleva pH a 6–7)

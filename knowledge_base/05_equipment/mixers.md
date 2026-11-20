@@ -3,7 +3,7 @@ title: Mezcladores y Equipos de Preparación de Sustrato
 document_id: DOC-0029
 category: equipment
 load_priority: selective
-last_reviewed: 2026-06-29
+last_reviewed: 2026-11-20
 confidence: medium
 primary_sources:
   - Internal records
@@ -110,7 +110,7 @@ Registrar en bitácora de producción:
 Equipment selection for mixing and substrate preparation depends on operational scale rather than technical sophistication.
 
 ```
-Mezcla manual validada para la formulación de shiitake
+Mezcla manual para la formulación de shiitake (validación pendiente con el lote 1)
   ↓
 DIY horizontal mixer (tambor motorizado básico)
   ↓

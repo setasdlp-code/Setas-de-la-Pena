@@ -28,6 +28,8 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
+| [KB] | Corrección verificable (DEC-026): la cita «Atila 2019, *Sci. Hortic.* 254:185–194» (paper_024) no existe; el artículo real es *Ege Üniv. Ziraat Fak. Derg.* 56(4):417–425 (Crossref), y sí documenta las condiciones de *H. erinaceus* de la ficha, que quedan respaldadas como condición de estudio. «Tabi et al. 2021» pasa a Atila et al. (2021). Afecta `01_species/hericium_erinaceus.md`, `02_substrates/supplementation.md`, `09_research/literature_index.md` y `references/high_altitude_microclimate_bibliography_2026-08-05.md`. |
+| [KB] | Revisión de evidencia en 02–05 y `metadata/species.yaml`: ★★★★★/★★★★☆ apoyadas solo en libros pasan a ★★★☆☆ (suplementación, pasteurización, contaminación, spawn de grano); «óptimo», «validada» y «BE >100 %» sin respaldo reformulados; vapor libre ~91 °C en Tenjo (pasteurización y guía integral); confianza `medium` en `substrate_library.md` y `comprehensive_guide.md`; cifra «>50 % de contaminación» marcada sin fuente. Valores sin cambios. |
 | [KB] | Valores de frontmatter fuera del esquema de `INDEX.yaml`: `caseta_compacta_site_visit_checklist.md` sin `confidence` (lista de verificación; también retirado del índice); `autoclave_all_american_1941x_2026-07-14.md` pasa a `category: equipment`; `Mycelium_Running_ch5-14_claim_register.md` pasa a `confidence: medium` (la confianza por afirmación sigue en cada fila). |
 
 ### 2026-11-19

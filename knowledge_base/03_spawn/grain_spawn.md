@@ -3,7 +3,7 @@ title: Spawn en Grano — Producción y Uso
 document_id: DOC-0017
 category: spawn
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-11-20
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -30,14 +30,14 @@ Grain spawn is the most efficient inoculum for Pleurotus, Shiitake, and Lion's M
 
 # Spawn Sourcing Strategy
 
-## Granos Óptimos para Spawn
+## Granos de uso común para spawn
 **Consensus**
 Supported by:
 - Stamets 2000
 - Cotter 2014
 
 El trigo y el centeno producen el spawn más homogéneo y de mayor superficie de colonización por grano. El arroz funciona bien en clima tropical húmedo donde el trigo puede absorber exceso de humedad.
-**Strength of evidence:** ★★★★☆
+**Strength of evidence:** ★★★☆☆ (concordancia entre libros técnicos, Tier 2; sin estudio primario citado ni validación local)
 **Conflicting evidence:** Preferencias regionales. En Colombia, trigo/maíz/arroz son más accesibles que centeno.
 
 ## Phase 1 — Current Implementation: Commercial Spawn

@@ -3,7 +3,7 @@ title: Pasteurización de Sustratos
 document_id: DOC-0011
 category: substrates
 load_priority: selective
-last_reviewed: 2026-06-29
+last_reviewed: 2026-11-20
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -29,7 +29,7 @@ Supported by:
 - Field & Forest Products
 
 Pasteurización a 75–82°C por 1–2 horas es suficiente para paja de trigo y sustratos lignocelulósicos sin suplementar para producción de Pleurotus spp.
-**Strength of evidence:** ★★★★★
+**Strength of evidence:** ★★★☆☆ (concordancia entre libros técnicos, Tier 2; sin estudio primario citado ni validación local)
 **Conflicting evidence:** Algunos cultivadores usan 65°C por 4–8h (pasteurización lenta) con buenos resultados pero más riesgo de bacterias termófilas.
 
 # Core Principles
@@ -51,7 +51,7 @@ Pasteurización a 75–82°C por 1–2 horas es suficiente para paja de trigo y 
 - **Escala:** Hasta ~15 kg de paja seca por batch.
 
 ### 2. Pasteurización con Vapor (Steam Pasteurization)
-- Vapor a 100°C sobre sustrato en cámara cerrada.
+- Vapor libre sobre sustrato en cámara cerrada: ~100 °C a nivel del mar, ~91 °C en Tenjo (presión ~74 kPa).
 - Más eficiente que inmersión para grandes volúmenes.
 - Temperatura en el centro del sustrato llega a 80°C en 45–60 min.
 - **Costo:** Requiere cámara de vapor o adaptación de olla a presión sin presurizar.
@@ -82,7 +82,7 @@ Pasteurización a 75–82°C por 1–2 horas es suficiente para paja de trigo y 
 |---|---|
 | <60°C | Insuficiente — organismos termófilos sobreviven |
 | 60–70°C | Elimina mayoría de patógenos mesófilos; riesgo bacterias termorresistentes |
-| 75–82°C ✅ | Zona óptima — elimina competidores, preserva microbiota beneficiosa |
+| 75–82°C ✅ | Rango de trabajo citado — elimina competidores, preserva microbiota beneficiosa |
 | >90°C | Sobrepasteurización — puede destruir microbiota beneficiosa; no necesario |
 | 121°C | Esterilización (autoclave) — terreno estéril |
 

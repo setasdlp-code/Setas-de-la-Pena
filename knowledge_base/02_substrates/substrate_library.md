@@ -3,8 +3,8 @@ title: Biblioteca de Sustratos
 document_id: DOC-0013
 category: substrates
 load_priority: selective
-last_reviewed: 2026-11-08
-confidence: high
+last_reviewed: 2026-11-20
+confidence: medium
 primary_sources:
   - Stamets 2000
   - Cotter 2014
@@ -90,7 +90,7 @@ Fuente: `09_research/corroboracion_2026-10/djamor_ganoderma_kpi.md` (snippets, s
 | Pulpa de café (en mezcla, ≤15%) | ? | ? | ★★ | ★★ | ★★ |
 | Aserrín de tallo de café | ? | ? | ★★ | ? | ★★ |
 
-★★★★★ = Óptimo / ★★★ = Adecuado / ★ = No recomendado / ? = sin dato para esa especie
+★★★★★ = Más recomendado en las fuentes citadas / ★★★ = Adecuado / ★ = No recomendado (calificación cualitativa de literatura, sin validación local) / ? = sin dato para esa especie
 
 **Nota (sustratos de café):** las calificaciones provienen de una sola fuente colombiana (paper_006, Cenicafé 2005) para *L. edodes* y *G. lucidum*, en clima más cálido que Tenjo. No hay datos para Pleurotus/Hericium sobre café en esa fuente. Borra sola BE shiitake ~16,9%; aserrín de tallo ~17,1% — usar siempre en mezcla formulada, no puros.
 
@@ -143,7 +143,7 @@ La guía externa Monte Jongas aporta 80% pellets de madera dura + 20% salvado en
 - **Composición:** Similar a trigo (mayor contenido silíceo)
 - **Disponibilidad Colombia:** Alta en zonas arroceras
 - **Tratamiento:** Pasteurización
-- **BE esperada:** 70–100%
+- **BE citada:** 70–100% (sin fuente en esta ficha)
 - **Riesgos:** Similar a trigo; humedad inicial más difícil de calibrar
 
 ### Subproductos de Café (borra, pulpa, aserrín de tallo) — Colombia
@@ -153,7 +153,7 @@ La guía externa Monte Jongas aporta 80% pellets de madera dura + 20% salvado en
 - **Relación C/N objetivo de la mezcla:** ≈40 (shiitake) · 40–60 (ganoderma).
 - **Humedad objetivo:** 62,5% · **Tamaño de partícula:** 0,5–2 cm · **Ca (CaCO₃/CaSO₄):** ≥0,6% (acondiciona pH y estimula crecimiento hifal).
 - **Tratamiento:** Esterilización (121°C) recomendada; ruta artesanal a presión atmosférica documentada pero de mayor riesgo (ver `sterilization.md`).
-- **Formulaciones validadas:**
+- **Formulaciones medidas en Cenicafé 2005 (sin validación local):**
   - **Shiitake T2** — 28% aserrín de café + 50% borra + 19% salvado de maíz (+Ca) → rendimiento medio **57,6%** (C/N 40). Cepas estudiadas: L54 y L4055; disponibilidad comercial actual no demostrada.
   - **Ganoderma T12** — con 11,5% borra → **13,1%**; **T13/T14** sin borra (más económicas para fincas lejanas de la fuente de borra), pulpa ≤15%.
 - **Disponibilidad Colombia:** Borra (café tostado) accesible vía cafeterías/restaurantes; pulpa requiere cercanía a beneficio de café y uso fresco (<2 días) o ensilada. Tenjo/Cundinamarca **por confirmar** (ver Open Questions).

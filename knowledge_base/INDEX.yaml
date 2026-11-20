@@ -758,7 +758,7 @@ documents:
     implemented_by: []
     supersedes: null
     source_documents: [book_001, book_002, book_003, paper_006]
-    confidence: high
+    confidence: medium
     status: active
 
   - id: supplementation
@@ -1522,7 +1522,7 @@ documents:
     depends_on: [master-blueprint]
     implemented_by: [incubation, fruiting]
     supersedes: null
-    confidence: high
+    confidence: medium
     status: active
 
   - id: marranera-medium-scale-design-basis
