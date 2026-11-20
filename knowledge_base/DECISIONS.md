@@ -3,7 +3,7 @@ title: Registro de Decisiones — Setas de la Peña
 document_id: DOC-0048
 category: meta
 load_priority: selective
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-20
 ---
 
 # DECISIONS
@@ -804,69 +804,86 @@ Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bol
 
 ---
 
-## DEC-025 — Controlador comercial UIS (AC Infinity Controller 69 Pro) para H4 y T7 de fructificación; el ESP32 sigue como única fuente de datos
+## DEC-025 — Controlador comercial UIS (AC Infinity Controller AI+) para H4, T7, calefacción y luz de CLOUDLAB 844 y Martha; el ESP32 sigue como única fuente de datos
 
-**Fecha:** 2026-11-19
+**Fecha:** 2026-11-19 (revisión 2 el 2026-11-20)
 **Estado:** Propuesta — pendiente de aprobación del propietario
 **Área:** Automatización / Equipos
 
-**Problema:** El firmware de banco de CLOUDLAB 844 (`cloudlab_esp32.yaml`) no controla el CloudForge T7 ni el Cloudline H4: la KB prohíbe inferir su interfaz eléctrica y ambos siguen bloqueados por comisionamiento (caudal del H4; calibración de HR en rango alto y protección frente al agua para el T7). El propietario va a comprar un controlador de AC Infinity y la familia ofrece modelos de clases distintas: el nombre o el número no indican cuál es «más avanzado». Hay que decidir cuál, para qué equipos y qué papel conserva el ESP32 frente a DEC-001 y DEC-006.
+**Revisión 2 (2026-11-20):** la revisión 1 proponía el Controller 69 Pro solo para el H4 y el T7. El propietario amplió el requisito: el controlador debe encargarse de **calefacción, humedad, temperatura, CO₂ y ciclos de luz**, en **las dos cámaras (CLOUDLAB 844 y Martha, una junto a la otra)**, con **shiitake como especie inicial**. Con ese requisito el 69 Pro (4 puertos, sin CO₂) ya no basta y el candidato pasa a ser el Controller AI+ (8 puertos).
 
-**Lo leído en los manuales y fichas oficiales (acinfinity.com, leído el 2026-11-19):**
+**Problema:** El firmware de banco de CLOUDLAB 844 (`cloudlab_esp32.yaml`) no controla el CloudForge T7 ni el Cloudline H4: la KB prohíbe inferir su interfaz eléctrica y ambos siguen bloqueados por comisionamiento (caudal del H4; calibración de HR en rango alto y protección frente al agua para el T7). El propietario va a comprar un controlador de AC Infinity para cubrir ventilación, humedad, calor y luz de dos cámaras. Hay que decidir cuál, para qué equipos y qué papel conserva el ESP32 frente a DEC-001 y DEC-006.
+
+**Lo leído en los manuales y fichas oficiales (acinfinity.com, leído el 2026-11-19 y 2026-11-20):**
 
 | Equipo | Qué dice la fuente | Fuente |
 |---|---|---|
-| Controller 79 (CTR79P) | 2 tomas de corriente, solo encendido y apagado; 1100 W en total y 10 A; sonda de 12 ft con T, HR y VPD; Bluetooth o WiFi; memoria de respaldo. **Sin puertos UIS ni PWM.** | Ficha y manual `SOT2405X1` |
-| Controller 69 Pro (CTR69P) | 4 puertos UIS, PWM de 10 niveles, sensores de T y HR, programa independiente por puerto; incluye dos adaptadores Molex–UIS | Controller 69 Overview |
-| Cloudline H4 | Motor EC con PWM y 10 niveles, IP65 (serie H). El manual nombra al Controller 69 Pro (cuatro puertos, solo ventiladores EC) para conectarlo; la ficha lista Controller 63 y 69 Pro. Su control propio conserva el nivel aunque se apague el ventilador | Manual `CLAB2312X1`, ficha del H4 |
-| CloudForge T7 | Equipo UIS con cable M–M incluido. Con un Controller 69 Pro conectado, el controlador anula todos los ajustes de a bordo y apaga la pantalla y el tacto del humidificador; la sonda propia no es necesaria. **El manual no dice qué hace al volver la energía.** Advierte no usar la programación de encendido y apagado como único medio de cortar la energía | Manual `CF2409X1` |
-| Controller AI+ con CO₂ (CTR89A) | 8 puertos UIS (32 con divisores), WiFi de 2,4 GHz y Bluetooth, programación conservada sin WiFi; modo de IA organizado por planta y etapa de cultivo; hay que instalarlo fuera de la carpa | Ficha y guía `CTR89Q2410X1` |
-| Sensor de CO₂ + luz (AC-COS3) del AI+ | Rango 0 a 40.000 ppm, precisión 50 ppm ± 5 %, respuesta 60 s. **Humedad de operación 35 a 60 % RH**, temperatura 0 a 50 °C. Se instala a la altura del follaje y solo cabe uno por controlador. **No documenta compensación de altitud, tecnología del sensor ni calibración** | Ficha y guía `COS2503X1` |
+| Controller 79 (CTR79P) | 2 tomas de corriente, solo encendido y apagado; 1100 W y 10 A en total; sonda con T, HR y VPD. **Sin puertos UIS ni PWM** | Ficha y manual `SOT2405X1` |
+| Controller 69 Pro (CTR69P) | 4 puertos UIS, PWM de 10 niveles, sensores de T y HR, Bluetooth o WiFi de 2,4 GHz; se alimenta desde un dispositivo UIS. **Sin CO₂.** Listado en US$89,99 con botón de compra (2026-11-20) | Controller 69 Overview; ficha oficial |
+| Controller AI+ (CTR89Q base / CTR89A con sensor de CO₂) | 8 puertos UIS (32 con divisores); WiFi de 2,4 GHz y Bluetooth; programación conservada sin WiFi; adaptador de 100 a 240 V; instalar fuera de la carpa. El modo de IA se organiza por planta y etapa; el modo avanzado permite consignas propias. Versión base listada en US$159 (no verificado en la página); el paquete con CO₂ figura agotado en el catálogo oficial | Ficha y guía `CTR89Q2410X1` |
+| Sensor de CO₂ + luz (AC-COS3) | 0 a 40.000 ppm, precisión 50 ppm ± 5 %, respuesta 60 s; **humedad de operación 35 a 60 % RH**, temperatura 0 a 50 °C; un solo sensor por controlador; **sin compensación de altitud, tecnología ni calibración documentadas**. No lo encontré a la venta por separado | Ficha y guía `COS2503X1` |
+| Cloudline H4 | Motor EC con PWM y 10 niveles, IP65. El manual nombra al 69 Pro para conectarlo; la ficha lista Controller 63 y 69 Pro. Su control propio conserva el nivel aunque se apague | Manual `CLAB2312X1`, ficha del H4 |
+| CloudForge T7 | Equipo UIS con cable M–M. Con un controlador UIS el controlador anula todos los ajustes de a bordo. **El manual no dice qué hace al volver la energía.** Advierte no usar la programación como único medio de cortar la energía | Manual `CF2409X1` |
+| ThermoForge T7 (AC-SFT7) | 1000 W, 120 V, 10 A; calefactor PTC con PWM de 10 niveles de calor, o solo ventilador; se conecta a controladores UIS; **humedad de operación 30 a 65 % RH**; existe una versión de 530 W (T3) | Ficha oficial |
+| Luces de terceros | Adaptadores UIS Tipo A (PWM o 0–10 V) y Tipo B (reguladores por resistencia, compatible con 69 Pro y AI+); el enchufe UIS de control da solo encendido y apagado. Resultado de búsqueda del fabricante, no verificado en la ficha completa | acinfinity.com |
+| Pedido internacional | Aranceles e IVA se incluyen en el precio de envío y AC Infinity los remite al país; no cubren otros cargos de importación. La garantía de dos años solo vale en pedidos directos a AC Infinity. La política dice envío a «la mayoría de países»; Colombia se confirma en el pago | Política de envíos internacionales |
 
-La humedad de operación de los controladores 79 y AI+ es de 35 a 85 % RH. Las cámaras de fructificación de Setas de la Peña operan entre 85 y 95 % RH.
+La humedad de operación declarada para los controladores 79 y AI+ es de 35 a 85 % RH, para el sensor de CO₂ de 35 a 60 % y para el calefactor de 30 a 65 %. Las cámaras de fructificación operan a 85 a 95 % RH: **el controlador, el calefactor y el sensor de CO₂ no pueden ir dentro del aire húmedo**; solo la sonda, el H4 (IP65) y las luces IP65.
 
-**No verificado en las fuentes:** comportamiento del T7 y del H4 al volver la energía cuando los gobierna un controlador UIS; si el 69 Pro conserva la programación sin WiFi (lo afirma la ficha del AI+, no la del 69); precisión de la sonda de T y HR; si el modo de IA ofrece cultivo de hongos; precio de cada modelo en Colombia. No hay API local en ninguno: la única vía remota es la nube de AC Infinity y la app, y las integraciones de Home Assistant de la comunidad se apoyan en esa nube (no son una fuente oficial).
+**Lo que dice la KB sobre shiitake (especie inicial):**
+
+- Fructificación: 12 a 18 °C para cepa media y 8 a 14 °C para cepa fría; **la cepa no está identificada (DEC-019)**, así que la estrategia térmica es experimental y no se fija aquí (`01_species/lentinula_edodes.md`).
+- Tenjo tiene temperaturas medias compatibles con cepas medias o frías, pero la variabilidad nocturna exige aislamiento y calefacción modulada. La incubación (21 a 27 °C) se hace en un módulo aparte.
+- La humedad, ventilación, **luz** y CO₂ de la cámara deben definirse con la ficha del proveedor y un piloto instrumentado: no hay valores operativos para promover. El CO₂ de ingeniería es ≤ 1.200 ppm con techo de 1.500.
+- Luz: hipótesis aún sin validar de LED azul de 450 a 460 nm, unos 4 µmol/m²/s, tras 60 días de oscuridad (Kim et al. 2024, estudio único; SH16, DOC-0144 H5).
+
+**No verificado en las fuentes:** comportamiento del T7 y del H4 al volver la energía bajo un controlador UIS; precisión de la sonda de T y HR; si el modo de IA ofrece cultivo de hongos; si el cable UIS (3 m) alcanza desde un punto fuera de ambas cámaras; potencia y lux de las luces candidatas; pérdida térmica de las cámaras; precio y stock del AI+ y del sensor de CO₂ para Colombia. No hay API local en ningún modelo: la única vía remota es la nube y la app de AC Infinity.
 
 **Alternativas evaluadas:**
 
 | Opción | Ventajas | Desventajas |
 |---|---|---|
-| A. Sin controlador comercial; H4 y T7 en manual hasta comisionar | Cumple DEC-001 y DEC-006 tal como están; cero equipo nuevo | Sin automatización de ventilación ni de humedad en fructificación |
-| B. Controller 79 | Tomas con programación independiente, 1100 W, sonda con VPD; útil para cargas de calefacción | **No controla el H4 ni el T7**: sin UIS ni PWM; el H4 y el T7 quedarían solo con corte de energía |
-| **C. Controller 69 Pro para H4 y T7** | Cuatro puertos UIS cubren los equipos que ya tienes (dos H4, un T7, uno libre); equipos que el fabricante lista como compatibles; PWM de 10 niveles | Sin CO₂; cerrado, solo app y nube; sin API local |
-| D. Controller AI+ con sensor de CO₂ (CTR89A) | Lazo de ventilación por CO₂ en una sola caja; ocho puertos | El sensor de CO₂ queda fuera de su humedad de operación (35 a 60 % RH) dentro de la cámara y no documenta compensación de altitud (Tenjo, 2.600 m): **no es base de un lazo de ventilación sin validación**. IA orientada a plantas |
-| E. Interfaz PWM propia desde el ESP32 hacia el H4 | Mantiene todo el lazo en el nodo | Sin interfaz eléctrica verificada: la KB prohíbe inferirla |
+| A. Sin controlador comercial; H4 y T7 en manual | Cumple DEC-001 y DEC-006 tal como están | Sin automatización de ventilación, humedad, calor ni luz |
+| B. Controller 79 | Tomas programables para cargas de calefacción | No controla el H4 ni el T7 (sin UIS ni PWM) |
+| C. Dos Controller 69 Pro | Equipos que el fabricante lista como compatibles; precio de US$89,99 cada uno | Sin CO₂; dos controladores y dos apps; 4 puertos por cámara sin reserva |
+| **D. Un Controller AI+ base (CTR89Q)** | **8 puertos: cubre las dos cámaras** (H4, T7, calefactor y luz por cámara); admite el sensor de CO₂ cuando se valide; un solo lugar de programación | Un único punto de falla para ambas cámaras; el cable UIS de 3 m limita la ubicación; precio y stock por confirmar |
+| E. AI+ con sensor de CO₂ (CTR89A) | Lazo de ventilación por CO₂ en una caja | **Agotado**; el sensor queda fuera de su humedad de operación (35 a 60 % RH) y no documenta altitud: no es base de un lazo sin validación |
+| F. Interfaz PWM propia desde el ESP32 | Mantiene el lazo en el nodo | Sin interfaz eléctrica verificada: la KB prohíbe inferirla |
 
-**Decisión propuesta:** Opción C, con estos límites:
+**Decisión propuesta:** Opción D, con estos límites:
 
-- **Controlador:** Controller 69 Pro (CTR69P) para el Cloudline H4 y, cuando cumpla sus requisitos, el CloudForge T7. Se instala **fuera** de la cámara húmeda y con la sonda dentro; la HR de operación declarada para los controladores 79 y AI+ (35 a 85 %; la del 69 Pro no se verificó) no cubre el interior de fructificación.
-- **ESP32:** sigue siendo la única fuente de datos hacia Setas OS y la referencia independiente de T, HR y CO₂. Setas OS solo lee: no hay camino de escritura hacia el controlador. La sala figura «sin datos del nodo» para lo que gobierne el controlador comercial.
-- **Sonda del controlador:** no es referencia de control hasta compararla con el SHT3x y el Inkbird en el mismo aire. Criterio de aceptación del sesgo: el de DEC-003 (menor que ±5 %).
-- **CO₂:** no se usa el sensor AC-COS3 dentro de la cámara. El CO₂ lo mide el ESP32; el nivel del H4 se ajusta por decisión del operario a la vista del CO₂ medido, hasta que exista un lazo validado. Esto es una **modificación provisional de DEC-006**: el ciclo inicial de ventilación del H4 sale de la especificación del lote y no se hereda de otra especie ni se fija desde esta decisión.
-- **Controller 79:** no se compra para esta función. Queda como opción separada para cargas de calefacción por toma, que se decide aparte.
-- **Controller AI+ con CO₂:** se reevalúa solo si AC Infinity documenta compensación de altitud y un rango de humedad del sensor que cubra la fructificación, o si se valida en banco con el ESP32 como referencia.
+- **Controlador:** un Controller AI+ base (CTR89Q) para el Cloudline H4, el CloudForge T7 (cuando cumpla sus requisitos), el calefactor y las luces de **CLOUDLAB 844 y de Martha**. Se instala **fuera** de ambas cámaras, en un punto entre las dos al alcance del cable UIS de 3 m, con las sondas dentro. Si la distancia o el envío a Colombia lo impiden, la alternativa es la opción C (un 69 Pro por cámara). Martha entra al controlador cuando entre al piloto; sus puertos quedan reservados.
+- **Calor:** no se compra calefactor hasta medir el perfil térmico real de las cámaras con la telemetría del ESP32. Para shiitake la fructificación pide 12 a 18 °C y Tenjo ofrece temperaturas compatibles; el calor sería de apoyo nocturno y un ThermoForge T7 de 1000 W es previsiblemente excesivo (no hay pérdida térmica medida). El calefactor y su controlador van fuera del aire húmedo (30 a 65 % RH).
+- **Humedad y ventilación:** el AI+ gobierna el T7 y el H4 por T, HR y VPD y por horarios. El T7 solo entra cuando cumpla los requisitos de la KB (calibración de HR en rango alto, protección frente al agua).
+- **CO₂:** no se usa el sensor AC-COS3 dentro de la cámara hasta validarlo. Mientras tanto el CO₂ lo mide el ESP32 y el operario ajusta el nivel del H4 a la vista de la medición (modificación provisional de DEC-006); el ciclo inicial sale de la especificación del lote. Validación del sensor, si se consigue: en banco, contra el SCD30 y el MH-Z19C del ESP32 en el mismo aire, a la altura del follaje, y solo si su desviación cae dentro de la precisión que declara el fabricante (50 ppm ± 5 %), durante el periodo que defina el propietario.
+- **Luz:** el AI+ programa el fotoperiodo y la intensidad si la luz es compatible (UIS, o adaptador Tipo A o B). No se compra luz hasta medir los lux que dan hoy la tira LED impermeable y la carpa con luz y temporizador que ya existen. Los requisitos de la luz son: regulable, IP65 o mejor, baja potencia y poco calor, y un canal azul de 450 a 460 nm solo como **experimento** de la hipótesis SH16/H5. **No se fija ninguna intensidad ni fotoperiodo para shiitake.** No se compran luces para plantas.
+- **ESP32:** sigue siendo la única fuente de datos hacia Setas OS y la referencia independiente de T, HR y CO₂. Setas OS solo lee: no hay camino de escritura hacia el controlador. Las salas figuran «sin datos del nodo» para lo que gobierne el controlador comercial.
+- **Sonda del controlador:** no es referencia de control hasta compararla con el SHT3x y el Inkbird (criterio de DEC-003, sesgo menor que ±5 %).
+- **Compra:** directa en acinfinity.com por la garantía de dos años; la política incluye aranceles e IVA en el envío. Antes de pagar, confirmar en el pago que Colombia está disponible, el costo del envío y el total.
 
 **Lo que esta decisión no cambia:**
 
 - El firmware de CLOUDLAB 844 sigue sin controlar el T7 ni el H4; sus relés y su rótulo de banco no cambian.
-- Siguen vigentes los bloqueos de comisionamiento: medir el caudal del H4; calibrar la HR en rango alto y proteger frente al agua antes de automatizar el T7. DEC-003 (H05 descartado) y DEC-002 (SHT3x primario) no cambian.
+- Siguen vigentes los bloqueos de comisionamiento: medir el caudal del H4; calibrar la HR en rango alto y proteger frente al agua antes de automatizar el T7. DEC-002 y DEC-003 no cambian.
 - Las protecciones físicas independientes (diferencial, termostato de corte, fusible) y la revisión eléctrica previa siguen siendo obligatorias; la programación del controlador no es el único medio de cortar la energía.
-- No aprueba consignas, bandas ni niveles de ventilación o de niebla.
+- No aprueba consignas, bandas, niveles de ventilación o niebla, intensidades de luz ni fotoperiodos. La cepa sigue sin identificar (DEC-019).
 
-**Riesgo aceptado (si se aprueba):** la actuación del H4 y del T7 queda en un sistema cerrado que Setas OS no audita ni registra por sí mismo; una falla del controlador, de la app o del WiFi (solo 2,4 GHz) no genera alarma en Setas OS. Se mitiga con el ESP32 como medición independiente y con la alarma de CO₂ y de HR fuera de banda que ya existe en Hoy.
+**Riesgo aceptado (si se aprueba):** la actuación de ambas cámaras queda en un solo controlador cerrado que Setas OS no audita; una falla del controlador, de la app o del WiFi (solo 2,4 GHz) afecta a las dos cámaras sin alarma en Setas OS. Se mitiga con el ESP32 como medición independiente y con las alarmas de T, HR y CO₂ fuera de banda de Hoy, y con las protecciones físicas.
 
 **Pruebas de banco previas a la instalación:**
 
-1. H4 y T7 gobernados por el controlador: estado de cada uno tras cortar y devolver la energía, con la sala vacía.
+1. H4 y T7 gobernados por el controlador: estado tras cortar y devolver la energía, con la cámara vacía.
 2. Sonda del controlador frente a SHT3x e Inkbird en el mismo aire: sesgo de T y de HR.
 3. Alcance del WiFi de 2,4 GHz en el sitio y comportamiento sin internet.
-4. Caudal del H4 por nivel (ya era un requisito).
+4. Que el cable UIS llegue desde el punto elegido a ambas cámaras.
+5. Caudal del H4 por nivel (ya era un requisito) y perfil térmico de las cámaras (para decidir el calefactor).
+6. Lux a la altura del follaje de las luces existentes (para decidir la luz).
 
-**Justificación:** P-02 (simplicidad) y §16 del CANON. El 69 Pro es el único controlador evaluado que gobierna el H4 y el T7 con equipos que el fabricante declara compatibles, sin inventar una interfaz que la KB prohíbe inferir. El CO₂ es el criterio biológico de DEC-006, y el único sensor de CO₂ de ese fabricante opera por debajo de la humedad de una cámara de fructificación; por eso el CO₂ queda en el ESP32 y la ventilación por CO₂ queda como decisión del operario y no como lazo automático.
+**Justificación:** P-02 (simplicidad) y §16 del CANON. El AI+ es el único controlador evaluado que reúne los puertos necesarios para dos cámaras, equipos que el fabricante declara compatibles y una ruta hacia el CO₂, sin inventar una interfaz que la KB prohíbe inferir. Lo que no está respaldado por las fuentes (CO₂ a la humedad de fructificación, calor sin pérdida térmica medida, luz sin consigna para shiitake) se deja como medición previa y no como compra.
 
-**Criterio de revisión:** si el sesgo de la sonda supera ±5 %, si el H4 o el T7 no retoman un estado seguro tras una falla de energía, si el controlador no conserva su programación sin WiFi, o si el controlador falla más de una vez por mes (criterio de DEC-006); revisión a los 60 días de comisionar.
+**Criterio de revisión:** si el sesgo de la sonda supera ±5 %, si el H4 o el T7 no retoman un estado seguro tras una falla de energía, si el controlador no conserva su programación sin WiFi, si el cable no llega o el envío a Colombia no es viable (se vuelve a la opción C), o si el controlador falla más de una vez por mes (criterio de DEC-006); revisión a los 60 días de comisionar.
 
-**Documentos afectados:** `DECISIONS.md` (DEC-006, enmienda provisional), `05_equipment/environmental_control.md`, `05_equipment/plan_ha_v1.md`, `FARM_BRAIN.md`, `metadata/equipment.yaml` (registrar el controlador al recibirlo, con la evidencia que corresponda).
+**Documentos afectados:** `DECISIONS.md` (DEC-006, enmienda provisional), `05_equipment/environmental_control.md`, `05_equipment/plan_ha_v1.md`, `FARM_BRAIN.md`, `04_facility/fruiting.md` (luz pendiente), `metadata/equipment.yaml` (registrar el controlador al recibirlo, con la evidencia que corresponda).
 
 ---
 
