@@ -81,6 +81,18 @@
       const d=equipment.record.details||{};
       if(d.bioindicatorResult==='con_crecimiento'){equipment.status='blocked';equipment.detail='El bioindicador de la corrida del autoclave mostró crecimiento: la esterilización no está validada.';}
       else if(d.bioindicatorResult!=='sin_crecimiento'||!text(d.cycleId)){equipment.status='unknown';equipment.detail='Falta la corrida del autoclave con un bioindicador sin crecimiento.';}
+      else{
+        // Un bioindicador negativo de una corrida no califica el ciclo. Antes de
+        // inocular, quality_control.md exige G1–G4 cerradas para la carga
+        // (autoclave-qualification.js · assessRelease, calculado por la app).
+        const configId=text(d.qualificationConfigId);
+        const release=configId?input.autoclaveReleases?.[configId]||null:null;
+        equipment.release=release;
+        if(!configId){equipment.status='unknown';equipment.detail='Indicar la configuración de carga calificada del autoclave (Calificación del autoclave · G1–G5).';}
+        else if(!release){equipment.status='unknown';equipment.detail=`La configuración ${configId} no tiene calificación registrada en este equipo.`;}
+        else if(release.status!=='released'){equipment.status=release.status==='blocked'?'blocked':'unknown';equipment.detail=release.detail;}
+        else equipment.detail=`${equipment.detail} ${release.detail}`;
+      }
     }
     const room=manual('room','Sala, capacidad y condiciones','record');
     if(room.status==='verified'){
@@ -114,6 +126,8 @@
     if(result.requirementId==='equipment'&&result.status==='verified'&&requiresBioindicator(input)
       &&(result.details.bioindicatorResult!=='sin_crecimiento'||!text(result.details.cycleId)))
       throw Error('Para esterilizar en autoclave, registrar la corrida (ID del ciclo) y un bioindicador sin crecimiento. Si hubo crecimiento, registrar la revisión como bloqueada.');
+    if(result.requirementId==='equipment'&&result.status==='verified'&&requiresBioindicator(input)&&!text(result.details.qualificationConfigId))
+      throw Error('Para esterilizar en autoclave, indicar la configuración de carga calificada (G1–G4). Sin calificación, registrar la revisión como pendiente.');
     if(result.requirementId==='review'&&result.status==='verified'){
       const assessment=assessProductionReadiness(input,records,Date.parse(at));
       if(assessment.checks.some(c=>c.id!=='review'&&c.status!=='verified'))throw Error('Completar los requisitos pendientes antes de documentar la revisión final.');

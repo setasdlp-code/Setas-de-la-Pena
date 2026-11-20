@@ -30,5 +30,7 @@ module.exports = [
   'lot-record.js',
   'harvest-quality-summary.js',
   'views/harvest-quality-panel.jsx',
+  'autoclave-qualification.js',
+  'views/autoclave-qualification-panel.jsx',
   'simulador-app.jsx',
 ];

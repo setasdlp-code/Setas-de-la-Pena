@@ -125,7 +125,7 @@ function RoomDeviceReadings({roomLive}) {
   </div>;
 }
 
-function ReadinessEvidenceForm({check,onSave}) {
+function ReadinessEvidenceForm({check,onSave,autoclaveConfigs=[]}) {
   const [form,setForm]=useState({requirementId:check.id,status:'unknown',reviewer:check.record?.reviewer||'',reference:check.record?.reference||'',notes:'',details:{}});
   const [error,setError]=useState('');
   const set=(key,value)=>setForm(p=>({...p,[key]:value}));
@@ -143,6 +143,10 @@ function ReadinessEvidenceForm({check,onSave}) {
         <option value="sin_crecimiento">Sin crecimiento</option>
         <option value="con_crecimiento">Con crecimiento</option>
         <option value="pendiente">Pendiente de lectura</option>
+      </select></label>
+      <label>Configuración de carga calificada (Calificación del autoclave) · obligatoria si se esteriliza<select value={form.details.qualificationConfigId||''} onChange={e=>detail('qualificationConfigId',e.target.value)}>
+        <option value="">{autoclaveConfigs.length?'Seleccionar':'Sin configuraciones registradas'}</option>
+        {autoclaveConfigs.map(c=><option key={c.configurationId} value={c.configurationId}>{c.configurationId} · {c.status==='released'?'calificada':'sin calificar'}</option>)}
       </select></label>
     </>}
     {check.id==='room'&&<>
@@ -181,7 +185,8 @@ function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAct
       <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
       {check.record&&<p className="readiness-record">Registro de {check.record.reviewer} · {new Date(check.record.at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p>}
       {check.id==='spawn'&&assessment.spawnLots.length>0&&<p>Lotes de semilla asignados: {assessment.spawnLots.map(l=>l.lotId).join(', ')}</p>}
-      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm check={check} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
+      {check.id==='equipment'&&SetasProductionReadiness.requiresBioindicator(input)&&<button type="button" className="inv-btn inv-btn-sec" onClick={()=>{const el=document.getElementById('autoclave-qualification');if(el){el.scrollIntoView({block:'start'});el.focus({preventScroll:true});}}}>Abrir calificación del autoclave</button>}
+      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm check={check} autoclaveConfigs={Object.values(input.autoclaveReleases||{})} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
         :<button type="button" className="inv-btn inv-btn-sec" onClick={()=>onAction(check.action)}>Revisar {check.action==='recipe'?'Formulador':check.action==='batch'?'cantidades':check.action==='inventory'?'Bodega':'Perito'}</button>}
     </article>)}</div>
     <p className="readiness-boundary">El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales.</p>
@@ -257,10 +262,23 @@ function PilotResetPanel({counts,onReset}) {
   </details>;
 }
 function PrototypeReleaseDialog({lote,onClose,onAuthorize}) {
-  const [form,setForm]=useState({equipment:'',protocol:lote.tratamiento||'',reviewer:'',acknowledged:false,legacyReviewed:false}),[error,setError]=useState('');
+  const [form,setForm]=useState({equipment:'',protocol:lote.tratamiento||'',reviewer:'',acknowledged:false,legacyReviewed:false,qualificationAck:false}),[error,setError]=useState('');
   const set=(key,value)=>setForm(p=>({...p,[key]:value}));
-  const confirm=()=>{try{const record=SetasPrototype.release(lote,{...form,at:new Date().toISOString()});onAuthorize(record);}catch(e){setError(e.message);}};
-  return <AccessibleModal label="Autorizar ensayo controlado" onClose={onClose} dialogStyle={{width:'min(580px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}><section className="prototype-panel"><h3>Preparar {lote.codigo}</h3><p>Autorización de esta preparación experimental y confirmación del consumo de sus insumos. No valida rendimiento ni habilita producción rutinaria. Sin historial, las estimaciones siguen siendo teóricas.</p><p>Especificación: {lote.preparation?.revision||'lote antiguo sin especificación versionada'}.</p><label>Equipo disponible<input value={form.equipment} onChange={e=>set('equipment',e.target.value)}/></label><label>Protocolo a ejecutar<input value={form.protocol} onChange={e=>set('protocol',e.target.value)}/></label><label>Responsable que autoriza<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)}/></label>{!lote.preparation&&<label className="prototype-check"><input type="checkbox" checked={form.legacyReviewed} onChange={e=>set('legacyReviewed',e.target.checked)}/> Revisé receta, cantidades y proceso de este lote antiguo.</label>}<label className="prototype-check"><input type="checkbox" checked={form.acknowledged} onChange={e=>set('acknowledged',e.target.checked)}/> Revisé equipo, insumos y advertencias; acepto las incertidumbres para este ensayo.</label>{error&&<p role="alert">{error}</p>}<div className="prototype-actions"><button type="button" className="inv-btn inv-btn-sec" onClick={onClose}>Cancelar</button><button type="button" className="inv-btn inv-btn-pri" onClick={confirm}>Autorizar, descontar y registrar</button></div></section></AccessibleModal>;
+  // Esterilizar en autoclave: se muestra si el ciclo está calificado (G1–G4) para
+  // esta carga. Autorizar sigue siendo decisión humana, pero sin calificación hay
+  // que reconocerlo y queda en el registro (quality_control.md: no es inoculación productiva).
+  const autoclave=useMemo(()=>{
+    if(!/autoclave/i.test(String(lote.tratamiento||'')))return null;
+    try{return SetasAutoclaveQualification.bestReleaseForLoad(SetasAutoclaveQualification.readEvents(localStorage),{plannedBags:lote.preparation?.target?.bags,plannedWetKgPerBag:lote.preparation?.target?.kgPerBag});}
+    catch(e){return {status:'unknown',detail:e.message,configurationId:null};}
+  },[lote]);
+  const confirm=()=>{try{
+    if(autoclave&&autoclave.status!=='released'&&!form.qualificationAck)throw Error('Confirmar que el ciclo del autoclave no está calificado para esta carga.');
+    const {qualificationAck,...releaseForm}=form;
+    const record=SetasPrototype.release(lote,{...releaseForm,at:new Date().toISOString()});
+    onAuthorize(autoclave?{...record,autoclaveQualification:autoclave}:record);
+  }catch(e){setError(e.message);}};
+  return <AccessibleModal label="Autorizar ensayo controlado" onClose={onClose} dialogStyle={{width:'min(580px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}><section className="prototype-panel"><h3>Preparar {lote.codigo}</h3><p>Autorización de esta preparación experimental y confirmación del consumo de sus insumos. No valida rendimiento ni habilita producción rutinaria. Sin historial, las estimaciones siguen siendo teóricas.</p><p>Especificación: {lote.preparation?.revision||'lote antiguo sin especificación versionada'}.</p><label>Equipo disponible<input value={form.equipment} onChange={e=>set('equipment',e.target.value)}/></label><label>Protocolo a ejecutar<input value={form.protocol} onChange={e=>set('protocol',e.target.value)}/></label><label>Responsable que autoriza<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)}/></label>{autoclave&&<p role="note" data-testid="release-autoclave-qualification"><strong>Autoclave · {autoclave.status==='released'?'ciclo calificado':'ciclo sin calificar'}.</strong> {autoclave.detail}{autoclave.status!=='released'?' Un lote con este ciclo es un ensayo, no inoculación productiva.':''}</p>}{autoclave&&autoclave.status!=='released'&&<label className="prototype-check"><input type="checkbox" checked={form.qualificationAck} onChange={e=>set('qualificationAck',e.target.checked)}/> Entiendo que el ciclo del autoclave no está calificado para esta carga.</label>}{!lote.preparation&&<label className="prototype-check"><input type="checkbox" checked={form.legacyReviewed} onChange={e=>set('legacyReviewed',e.target.checked)}/> Revisé receta, cantidades y proceso de este lote antiguo.</label>}<label className="prototype-check"><input type="checkbox" checked={form.acknowledged} onChange={e=>set('acknowledged',e.target.checked)}/> Revisé equipo, insumos y advertencias; acepto las incertidumbres para este ensayo.</label>{error&&<p role="alert">{error}</p>}<div className="prototype-actions"><button type="button" className="inv-btn inv-btn-sec" onClick={onClose}>Cancelar</button><button type="button" className="inv-btn inv-btn-pri" onClick={confirm}>Autorizar, descontar y registrar</button></div></section></AccessibleModal>;
 }
 
 // --- Bio-Check & Lab Extraction storage helpers ---
@@ -4130,6 +4148,22 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     };
     window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
   },[]);
+  // Calificación del autoclave (G1–G5, PQ-1): registro sólo-anexar local.
+  const readAutoclaveQualification=()=>{try{SetasPrototype.recover(localStorage);return {events:SetasAutoclaveQualification.readEvents(localStorage),error:''};}catch(e){return {events:[],error:e.message};}};
+  const [autoclaveQual,setAutoclaveQual]=useState(readAutoclaveQualification);
+  useEffect(()=>{
+    const refresh=event=>{if(event.key!==SetasAutoclaveQualification.KEY&&event.key!==SetasPrototype.PENDING&&event.key!==null)return;setAutoclaveQual(readAutoclaveQualification());};
+    window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
+  },[]);
+  const appendAutoclaveEvents=drafts=>{
+    if(autoclaveQual.error)throw Error(autoclaveQual.error);
+    let events=SetasAutoclaveQualification.readEvents(localStorage);
+    for(const d of drafts)events=[...events,SetasAutoclaveQualification.createEvent(events,d.type,d.payload,{by:d.by,id:crypto.randomUUID()})];
+    SetasPrototype.persist(localStorage,[[SetasAutoclaveQualification.KEY,events]]);
+    setAutoclaveQual({events,error:''});
+    // El reloj de ciclo avanza por minuto; un registro recién hecho debe contar ya.
+    setCycleClock(Date.now());
+  };
   // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
   // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
   // de React no pueden llamarse condicionalmente — ese bloque solo se ejecuta
@@ -5692,12 +5726,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(plan){stockCheck=window.SetasInventoryLedger.checkPlan(plan,{lots:invLotes,ledger:invReservas,nowMs:cycleClock});
         stockCheck={...stockCheck,lines:stockCheck.lines.map(l=>({...l,name:prodIngs.find(g=>g.id===l.ingredienteId)?.name||(l.ingredienteId==='spawn_grano'?'Semilla (grano)':bag?.name||l.ingredienteId)}))};}}catch{}
     const roomState=bitLotesLoaded&&!metricsLoadError&&window.SetasRoomState?window.SetasRoomState.buildRoomBoard({rooms:Object.values(ROOMS_CONFIG),lotes:bitLotes,bolsas:bitBolsas,events:roomEvents,telemetry:{},nowMs:cycleClock}).find(r=>r.roomId===selectedClimateRoom):null;
-    return {speciesKey:sKey,speciesName:hasPickedSpecies?sp?.name:'Especie pendiente',speciesConfirmed:hasPickedSpecies,preparation,preparationError:preparationResult.error,
+    let autoclaveReleases={};
+    try{const qualState=SetasAutoclaveQualification.foldEvents(autoclaveQual.events);
+      autoclaveReleases=Object.fromEntries(Object.keys(qualState.configurations).map(id=>{const r=SetasAutoclaveQualification.assessRelease(qualState,{configurationId:id,plannedBags:preparation?.target?.bags,plannedWetKgPerBag:preparation?.target?.kgPerBag},cycleClock);return [id,{status:r.status,detail:r.detail,configurationId:id}];}));}catch{}
+    return {speciesKey:sKey,speciesName:hasPickedSpecies?sp?.name:'Especie pendiente',speciesConfirmed:hasPickedSpecies,preparation,preparationError:preparationResult.error,autoclaveReleases,
       model:an?{criticals:(opt?.items||[]).filter(i=>i.priority==='critical').length}:null,
       treatment:tr?{col:tr.col,temp:tr.temp,time:tr.time}:null,
       plan,stockCheck,reservations:invReservas,inventoryLoaded:peritoInventoryLoaded,inventoryLots:invLotes,containerId:prodBagType,containerStockId:bag?.stockId,
       roomId:selectedClimateRoom,roomState,telemetry:liveTelemetry.roomLive(selectedClimateRoom),lotCode:prodLoteNum,plannedDate:prodDate,lotCodeAlreadyUsed:bitLotes.some(l=>String(l.codigo||'').trim()===String(prodLoteNum||'').trim()&&!!prodLoteNum)};
-  },[sKey,sp,hasPickedSpecies,preparation,preparationResult.error,prodIngs,invLotes,invReservas,prodBagType,an,opt,tr,peritoInventoryLoaded,bitLotesLoaded,metricsLoadError,bitLotes,bitBolsas,roomEvents,selectedClimateRoom,liveTelemetry.snapshot,cycleClock,prodLoteNum,prodDate]);
+  },[sKey,sp,hasPickedSpecies,preparation,preparationResult.error,prodIngs,invLotes,invReservas,prodBagType,an,opt,tr,peritoInventoryLoaded,bitLotesLoaded,metricsLoadError,bitLotes,bitBolsas,roomEvents,selectedClimateRoom,liveTelemetry.snapshot,cycleClock,prodLoteNum,prodDate,autoclaveQual.events]);
   const productionReadiness=useMemo(()=>SetasProductionReadiness.assessProductionReadiness(productionReadinessInput,productionEvidence.records),[productionReadinessInput,productionEvidence.records]);
   const saveProductionEvidence=form=>{
     if(productionEvidence.error)throw Error(productionEvidence.error);
@@ -14501,6 +14538,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='produccion'&&(
           <div>
             <ProductionReadinessDashboard assessment={productionReadiness} input={productionReadinessInput} rooms={Object.values(ROOMS_CONFIG)} onRoomChange={setSelectedClimateRoom} onAction={readinessAction} onSave={saveProductionEvidence} error={productionEvidence.error}/>
+            <AutoclaveQualificationPanel events={autoclaveQual.events} error={autoclaveQual.error} onAppend={appendAutoclaveEvents} nowMs={cycleClock} plannedLoad={preparation?{bags:preparation.target.bags,kgPerBag:preparation.target.kgPerBag,recipeRevision:preparation.revision}:null}/>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
               <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
@@ -16751,7 +16789,7 @@ interval:
                     onChange={(e) => setAutoclaveHoldMin(parseInt(e.target.value, 10) || 0)}
                     style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>90–120 min según bolsa</span>
+                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>90–120 min es referencia de manual, no un ciclo aprobado</span>
                 </div>
 
                 <div>
@@ -16815,6 +16853,12 @@ interval:
                 </button>
               </div>
 
+              {/* Procedencia: un modelo nunca sustituye la calificación PQ-1 medida */}
+              <aside className="os-provenance-notice os-provenance-notice--estimated" data-testid="autoclave-sim-notice" aria-label="Procedencia del simulador" style={{ marginBottom: 12 }}>
+                <p><strong>Simulación de modelo, no una corrida.</strong> El veredicto usa una penetración térmica modelada, la presión ambiente nominal de Tenjo y una meta F₀ de {cycle.targetF0} min que la matriz de commissioning dejó como antecedente. La ficha PQ-1 propone F₀ ≥ 15 min medidos en el punto frío en tres corridas consecutivas con indicadores válidos (propuesta del propietario, sin validar).</p>
+                <p>Esta simulación no cierra G2 ni verifica el autoclave en Preparación. Las corridas reales se registran en Producción → Calificación del autoclave.</p>
+              </aside>
+
               {/* Veredicto y Status */}
               <div style={{
                 padding: '12px 14px',
@@ -16826,10 +16870,10 @@ interval:
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
-                    {cycle.badge} {cycle.verdict}
+                    {cycle.badge} Modelo: {cycle.verdict}
                   </span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
-                    F₀ Acumulado: {cycle.f0Total} min (Target: {cycle.targetF0} min)
+                    F₀ simulado: {cycle.f0Total} min (meta del modelo: {cycle.targetF0} min)
                   </span>
                 </div>
               </div>
