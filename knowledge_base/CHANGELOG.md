@@ -24,6 +24,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-11-20
+
+| Tipo | Descripción |
+|---|---|
+| [KB] | Valores de frontmatter fuera del esquema de `INDEX.yaml`: `caseta_compacta_site_visit_checklist.md` sin `confidence` (lista de verificación; también retirado del índice); `autoclave_all_american_1941x_2026-07-14.md` pasa a `category: equipment`; `Mycelium_Running_ch5-14_claim_register.md` pasa a `confidence: medium` (la confianza por afirmación sigue en cada fila). |
+
 ### 2026-11-19
 
 | Tipo | Descripción |

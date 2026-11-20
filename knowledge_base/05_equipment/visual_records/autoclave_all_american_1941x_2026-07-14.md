@@ -1,7 +1,7 @@
 ---
 title: Registro visual — All American 1941X
 document_id: DOC-0100
-category: equipment_evidence
+category: equipment
 status: observed
 observed_date: 2026-07-14
 location: home_rnd_lab_garage

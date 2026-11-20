@@ -1493,7 +1493,6 @@ documents:
     depends_on: []
     implemented_by: [caseta-compacta-build-checklist]
     supersedes: null
-    confidence: high
     status: active
 
   - id: caseta-compacta-structural-handoff

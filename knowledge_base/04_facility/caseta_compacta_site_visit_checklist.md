@@ -3,8 +3,7 @@ title: Caseta Compacta — Checklist de Visita en Sitio
 document_id: DOC-0105
 category: facility
 load_priority: selective
-last_reviewed: 2026-08-29
-confidence: N/A
+last_reviewed: 2026-11-20
 status: draft — checklist de campo, ninguna medición ejecutada todavía
 primary_sources:
   - caseta_compacta_build_checklist.md (DOC-0103)
