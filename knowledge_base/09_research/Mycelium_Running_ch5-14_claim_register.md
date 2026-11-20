@@ -3,7 +3,7 @@ title: "Mycelium Running — OCR focalizado, capítulos 5–14"
 document_id: DOC-0111
 category: research
 load_priority: on_request
-last_reviewed: 2026-08-06
+last_reviewed: 2026-11-20
 id: source_extract_book_004_ch05_14_2026-08-03
 status: active
 source_id: book_004
@@ -11,7 +11,7 @@ source: "Stamets, Paul. 2005. Mycelium Running: How Mushrooms Can Help Save the 
 scope: "Capítulos 5–14; pp. impresas 58–303; PDF escaneado pp. 70–315."
 species: [multiple]
 authority: secondary_book_with_author_observations
-confidence: mixed
+confidence: medium
 ---
 
 # Registro de afirmaciones con localizador

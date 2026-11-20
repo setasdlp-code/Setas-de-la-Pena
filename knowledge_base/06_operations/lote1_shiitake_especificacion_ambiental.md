@@ -3,7 +3,7 @@ title: Especificación Ambiental del Lote 1 de Shiitake — Plantilla Versionada
 document_id: DOC-0122
 category: operations
 load_priority: selective
-last_reviewed: 2026-11-16
+last_reviewed: 2026-11-19
 confidence: low
 primary_sources:
   - docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
@@ -63,4 +63,4 @@ Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPEC
 
 # Tensión de la banda propuesta
 
-El KB documenta que el calor metabólico del micelio puede subir el núcleo del bloque 4–8 °C sobre el aire (paper_026). Con el aire a 22 °C el núcleo podría llegar a 26–30 °C, cerca de la alarma de 28 °C. Si ocurre en las fases 2 o 4, la alarma apaga el calefactor y exige ventilar más o bajar el objetivo; se registra como dato del piloto y no como falla. Con DEC-023 esa alarma de núcleo no existe en el firmware y este calentamiento no se detecta entre visitas (riesgo aceptado); una bolsa que marque de forma repetida una superficie infrarroja claramente más caliente que las demás o que el aire reabre DEC-023. Las búsquedas web coinciden en que el micelio crece mejor cerca de 24–27 °C y no encontraron un umbral letal (`../09_research/shiitake_verificacion_web_2026-10-25.md`), de modo que el límite de 28 °C en el núcleo es una decisión de diseño conservadora.
+El KB documenta que el calor metabólico del micelio puede subir el núcleo del bloque 4–8 °C sobre el aire (paper_026; cifra sin localizar en el artículo, tratar como hipótesis hasta medir en Tenjo). Con el aire a 22 °C el núcleo podría llegar a 26–30 °C, cerca de la alarma de 28 °C. Si ocurre en las fases 2 o 4, la alarma apaga el calefactor y exige ventilar más o bajar el objetivo; se registra como dato del piloto y no como falla. Con DEC-023 esa alarma de núcleo no existe en el firmware y este calentamiento no se detecta entre visitas (riesgo aceptado); una bolsa que marque de forma repetida una superficie infrarroja claramente más caliente que las demás o que el aire reabre DEC-023. Las búsquedas web coinciden en que el micelio crece mejor cerca de 24–27 °C y no encontraron un umbral letal (`../09_research/shiitake_verificacion_web_2026-10-25.md`), de modo que el límite de 28 °C en el núcleo es una decisión de diseño conservadora.

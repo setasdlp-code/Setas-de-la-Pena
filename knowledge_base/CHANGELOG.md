@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-19
 ---
 
 # CHANGELOG
@@ -23,6 +23,24 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-20
+
+| Tipo | Descripción |
+|---|---|
+| [KB] | Valores de frontmatter fuera del esquema de `INDEX.yaml`: `caseta_compacta_site_visit_checklist.md` sin `confidence` (lista de verificación; también retirado del índice); `autoclave_all_american_1941x_2026-07-14.md` pasa a `category: equipment`; `Mycelium_Running_ch5-14_claim_register.md` pasa a `confidence: medium` (la confianza por afirmación sigue en cada fila). |
+
+### 2026-11-19
+
+| Tipo | Descripción |
+|---|---|
+| [ARCH] | DEC-027: `INDEX.yaml` como artefacto híbrido; `generate_index.py` edita en sitio y conserva campos curados; `--check` en el gate de CI; `INDEX_GENERATION_SPEC.md` v1.2; DEC-011 pasa a «Revisada». |
+| [KB] | `INDEX.yaml`: curadas las 15 entradas pendientes (authority, canonical, status); `generate_index.py` sincroniza `category` y `confidence` desde el frontmatter con normalización al esquema (27 entradas actualizadas, casi todas `high` → `medium`); `10_ai_workflows/toolchain_and_patterns.md` pasa a `category: meta`. |
+| [KB] | Frontmatter añadido a `AGENTS.md` (DOC-0145) y a los cuatro documentos de `09_research/corroboracion_2026-10/` (DOC-0146–0149); `INDEX.yaml` pasa a 164 entradas, 15 pendientes de curación. |
+| [ARCH] | DEC-026: reglas de agentes consolidadas en los dos `AGENTS.md`; `AI_AGENT_PROTOCOL.md` y `EDITORIAL_GUIDELINES.md` pasan a referencia; nuevas clases «corrección verificable» y «parámetro piloto»; `CLAUDE.md` reducido a lo específico de Claude Code. |
+| [KB] | Corrección verificable (DEC-026): la cita «Shi et al. 2026, *Comput. Electron. Agric.* 218, 108722» (paper_026) corresponde a otro artículo; se reemplaza por *Agriculture* 16(13):1454 en `lentinula_edodes.md`, `pleurotus_ostreatus.md`, `04_facility/incubation.md` y `05_equipment/environmental_control.md`. La cifra núcleo–aire de 4–8 °C, no localizada en el artículo, pasa a hipótesis (★★☆☆☆) en esos documentos, `metadata/species.yaml` y la especificación del lote 1; la alarma de 28 °C no cambia. |
+| [KB] | Fichas de *G. lucidum*, *P. ostreatus* y *L. edodes*: lenguaje de evidencia («óptimo», «altísimo valor», «múltiples RCT» sin cita) y confianza `medium`; valores sin cambios. |
+| [KB] | `01_species/pleurotus_eryngii.md`: corrección verificable. Lenguaje de evidencia, confianza `medium`, ★★★☆☆ para CO₂ con Ryu et al. (2005), nota de presión en Tenjo; valores sin cambios. |
 
 ### 2026-11-13
 

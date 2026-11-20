@@ -65,6 +65,11 @@ bash -n push_to_github.sh
 "$PY" scripts/quality/check_repository.py
 # Parsing regressions: guards the extractor against fabricating KB values.
 "$PY" scripts/quality/check_kb_sync_parsing.py
+# INDEX.yaml generator must never drop curated fields or entries.
+"$PY" scripts/quality/check_generate_index.py
+# INDEX.yaml must be in sync with the knowledge base (DEC-027): a new or moved
+# document fails CI until `python3 scripts/generate_index.py` is run and committed.
+"$PY" scripts/generate_index.py --check
 # Gate only on "real" value mismatches (app vs knowledge_base). Representation-only
 # and absent-from-KB findings stay informational. The report is the same output as
 # running check_kb_sync.py by hand.

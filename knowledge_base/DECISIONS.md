@@ -290,7 +290,7 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 ## DEC-011 — Arquitectura de INDEX.yaml: Infraestructura Generada, no Catálogo Mantenido a Mano
 
 **Fecha:** 2026-07-09
-**Estado:** Activa
+**Estado:** Revisada por DEC-027
 **Área:** Arquitectura de conocimiento / Meta
 
 **Problema:** DEC-010 autorizó `INDEX.yaml` solo en etapa de esquema, difiriendo explícitamente la población completa a "una fase futura" con su propia decisión CANON §16. La pregunta que quedaba sin resolver no era *cuándo* poblar `INDEX.yaml` a mano, sino *qué es* arquitectónicamente `INDEX.yaml`: ¿un documento editorial que además contiene datos estructurados, o un artefacto generado derivado determinísticamente del repositorio? Son categorías distintas, con modos de fallo distintos, y la gobernanza del repositorio aún no había decidido cuál de las dos es.
@@ -867,6 +867,72 @@ La humedad de operación de los controladores 79 y AI+ es de 35 a 85 % RH. Las c
 **Criterio de revisión:** si el sesgo de la sonda supera ±5 %, si el H4 o el T7 no retoman un estado seguro tras una falla de energía, si el controlador no conserva su programación sin WiFi, o si el controlador falla más de una vez por mes (criterio de DEC-006); revisión a los 60 días de comisionar.
 
 **Documentos afectados:** `DECISIONS.md` (DEC-006, enmienda provisional), `05_equipment/environmental_control.md`, `05_equipment/plan_ha_v1.md`, `FARM_BRAIN.md`, `metadata/equipment.yaml` (registrar el controlador al recibirlo, con la evidencia que corresponda).
+
+---
+
+## DEC-026 — Gobierno de agentes simplificado: un contrato, vía rápida para correcciones verificables y parámetros piloto
+
+**Fecha:** 2026-11-19
+**Estado:** Activa
+**Área:** Arquitectura / Gobernanza
+
+**Problema:** Editar un parámetro exigía cargar seis documentos de gobierno (`AGENTS.md`, `CLAUDE.md`, `knowledge_base/AGENTS.md`, CANON, `AI_AGENT_PROTOCOL.md`, `EDITORIAL_GUIDELINES.md`) que se remitían entre sí. Corregir un DOI o un valor mal transcrito pedía la misma autorización previa que cambiar una consigna de cultivo. En preproducción, sin cepas caracterizadas ni datos de campo, no había un lugar reglado para probar valores antes de hacerlos canónicos. Al mismo tiempo, fichas como la de *P. eryngii* incumplían las reglas de lenguaje y evidencia vigentes («óptimo», ★★★★★ sobre dos libros, «formulaciones validadas» sin validación).
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Mantener las reglas y aplicarlas con más rigor | Sin cambios de gobierno | El costo de cumplimiento sigue alto y desigual; las fichas que incumplen siguen igual |
+| Consolidar las reglas operativas en los dos `AGENTS.md`, crear una vía rápida para correcciones verificables y un estado «piloto» con vencimiento | Menos lectura obligatoria; correcciones con fuente pasan por revisión de PR; los ensayos tienen un lugar con fecha de revisión | Los documentos de referencia pueden quedar desactualizados respecto a las reglas operativas |
+
+**Decisión:**
+
+- `AGENTS.md` (raíz) y `knowledge_base/AGENTS.md` son las reglas operativas de agentes. `AI_AGENT_PROTOCOL.md` y `EDITORIAL_GUIDELINES.md` pasan a material de referencia: no son lectura obligatoria y no prevalecen sobre esos dos archivos. `CLAUDE.md` conserva solo lo específico de Claude Code.
+- Nueva clase de cambio «corrección verificable»: restaura lo que dice una fuente ya citada o corrige un error comprobable (metadatos, DOI, unidades, aritmética, transcripción), o retira lenguaje que las reglas de evidencia prohíben sin cambiar el valor. Solo requiere revisión del PR con fuente, valor anterior y nuevo. No cubre cambiar la fuente de un valor, un rango operativo ni una consigna de la app.
+- Nuevo estado «parámetro piloto»: valor en prueba en Tenjo, registrado fuera de las tablas canónicas, con fuente o razonamiento, nivel de evidencia, fecha de inicio, revisión a 90 días como máximo y criterio de promoción o retiro. Vencido sin revisión, queda inactivo. Promoverlo a canónico sigue requiriendo autorización explícita.
+- Las auditorías aplican directamente las correcciones editoriales y verificables, y reportan el resto.
+- Primera aplicación: limpieza de `01_species/pleurotus_eryngii.md` como corrección verificable (lenguaje, nivel de evidencia y la cita de Ryu et al. 2005; ningún valor cambia).
+
+**Lo que esta decisión no cambia:** el CANON, los invariantes científicos de `AGENTS.md` §4, la autoridad humana sobre merge, compras, credenciales y la cámara, ni ningún parámetro biológico.
+
+**Justificación:** P-02 (simplicidad) y CANON §18, que ya admite adopción provisional etiquetada. Un régimen que cuesta lo mismo para una errata que para una consigna incentiva no corregir; un piloto sin vencimiento se vuelve canon por inercia.
+
+**Criterio de revisión:** si una «corrección verificable» introduce un error que llega a una consigna o a la app, o si un parámetro piloto se usa vencido, se reevalúa la vía rápida. Revisión junto con el CANON el 2026-12-29.
+
+**Documentos afectados:** `../AGENTS.md`, `../CLAUDE.md`, `AGENTS.md`, `00_project/AI_AGENT_PROTOCOL.md`, `00_project/EDITORIAL_GUIDELINES.md`, `01_species/pleurotus_eryngii.md`, `CHANGELOG.md`.
+
+---
+
+## DEC-027 — INDEX.yaml como artefacto híbrido, generador en sitio y verificación en CI
+
+**Fecha:** 2026-11-19
+**Estado:** Activa
+**Área:** Arquitectura de conocimiento / Meta
+
+**Problema:** DEC-011 declaró `INDEX.yaml` infraestructura generada y descartó para siempre su mantenimiento manual. En la práctica el catálogo se pobló y curó a mano (149 entradas con `authority`, `canonical`, `topics`, `keywords` y relaciones que no tienen origen en frontmatter), y el generador existente lo reescribía completo, borrando esos campos. Ni la especificación (`INDEX_GENERATION_SPEC.md` v1.1) ni la decisión describían el sistema real.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Cumplir DEC-011: regeneración completa desde frontmatter | Una sola fuente por dato | Pierde los campos curados, que no tienen origen alternativo; exige añadir campos nuevos de frontmatter a ~150 documentos |
+| Modelo híbrido: el generador mantiene en sitio los campos con origen en frontmatter y añade entradas nuevas; los campos de juicio se curan en `INDEX.yaml` con revisión de PR | Conserva el trabajo curado; detecta en CI documentos sin indexar o movidos | Dos tipos de campo con reglas distintas; los campos curados pueden desactualizarse |
+
+**Decisión:** modelo híbrido.
+
+- `scripts/generate_index.py` edita `INDEX.yaml` en sitio: actualiza `title` y `path` desde el frontmatter, añade entradas para documentos nuevos con `# PENDING REVIEW` y `null` en lo que no puede derivar, reporta archivos desaparecidos sin borrarlos y aborta si fuera a perder o duplicar entradas.
+- `authority`, `canonical`, `topics`, `keywords`, `depends_on` e `implemented_by` son campos curados: se editan en `INDEX.yaml` y se revisan en el PR. El generador no los sobrescribe.
+- `category` y `confidence` vienen del frontmatter del documento, que manda: el generador los sincroniza y normaliza al vocabulario del esquema (`very_high` → `high`, mayúsculas → minúsculas); los valores que no puede normalizar (`N/A`, `mixed`) se reportan sin tocar el índice.
+- CI ejecuta `generate_index.py --check` en `scripts/quality/run.sh`: un documento nuevo o movido sin indexar hace fallar el gate hasta regenerar y commitear.
+- `INDEX_GENERATION_SPEC.md` pasa a v1.2 con una nota de estado que prevalece sobre las secciones que describían la regeneración completa.
+
+**Lo que esta decisión no cambia:** el vocabulario y el esquema de `INDEX.yaml`, CANON §14 ni la prohibición de inferir autoridad: los campos que el generador no puede derivar quedan en `null` hasta que una persona los cure.
+
+**Justificación:** P-02 y P-04. Un generador que destruye el catálogo no es infraestructura; un catálogo sin verificación se desactualiza en silencio. El modelo híbrido automatiza lo derivable y deja visible, en CI, lo que falta curar.
+
+**Criterio de revisión:** si las entradas `PENDING REVIEW` se acumulan más de 30 días sin curar, o si un campo curado contradice al documento de origen en una auditoría, se reevalúa mover ese campo a frontmatter.
+
+**Documentos afectados:** `INDEX.yaml`, `00_project/INDEX_GENERATION_SPEC.md`, `../scripts/generate_index.py`, `../scripts/quality/run.sh`, `../scripts/quality/check_generate_index.py`, `CHANGELOG.md`.
 
 ---
 

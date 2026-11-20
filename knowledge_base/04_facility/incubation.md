@@ -3,7 +3,7 @@ title: Zona de Incubación — Setup y Operación
 document_id: DOC-0021
 category: facility
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-11-19
 confidence: medium
 primary_sources:
   - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006)
@@ -34,7 +34,7 @@ Las cajas plásticas apilables de 60 × 40 × 40–41 cm permanecen como **proto
 - Las bolsas permanecen cerradas y su parche filtrante no se cubre ni se presiona contra paredes u otras bolsas.
 - El módulo secundario opera ventilado durante incubación normal. El cierre completo se reserva para traslado o cuarentena breve de material sospechoso.
 - La HR dentro del módulo es una variable diagnóstica. No humidificar la caja ni instalar platos de agua mientras las bolsas permanezcan selladas.
-- **Inercia Térmica del Núcleo y Calor Metabólico (Shi et al. 2026 — paper_026; ARK-012):** Los bloques de sustrato presentan marcada resistencia térmica interna y disipación retardada. Durante la colonización activa, la actividad metabólica puede generar un sobrecalentamiento de 4–8 °C en el centro del bloque por encima del aire. Si el aire se mantiene a 24 °C, el núcleo puede superar 30–32 °C provocando muerte celular o inducción de estrés térmico. Es obligatorio insertar sonda de núcleo en al menos un bloque testigo por lote y amortiguar el control ambiental mediante medias móviles ponderadas (EWMA).
+- **Inercia Térmica del Núcleo y Calor Metabólico (Shi et al. 2026 — paper_026; ARK-012):** Los bloques de sustrato presentan marcada resistencia térmica interna y disipación retardada. Durante la colonización activa, la actividad metabólica puede generar un sobrecalentamiento de 4–8 °C en el centro del bloque por encima del aire. Si el aire se mantiene a 24 °C, el núcleo puede superar 30–32 °C provocando muerte celular o inducción de estrés térmico. Es obligatorio insertar sonda de núcleo en al menos un bloque testigo por lote y amortiguar el control ambiental mediante medias móviles ponderadas (EWMA). La cifra de 4–8 °C se atribuyó a paper_026, pero no aparece en la síntesis del texto completo (`09_research/p0_full_pdf_reprocessing_2026-08-13.md`), y ARK-012 prohíbe trasladar constantes del estudio; tratarla como hipótesis hasta medir el núcleo en Tenjo (ver `09_research/microclima_operacion_remota_2026-11-04/informe.md`).
 - El micelio genera calor y CO₂. La carga, separación entre bolsas y ventilación se validan con el módulo lleno.
 - Bolsa, módulo y recinto se califican como un sistema térmico y de intercambio gaseoso único.
 - Calefacción, ventilador y electrónica quedan fuera del volumen que contiene las bolsas siempre que sea posible.
@@ -196,7 +196,7 @@ La compra en volumen está bloqueada por ocho faltantes:
 
 # References
 
-- Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
+- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-026, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
 - Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC. [paper_006]
 - Donoghue, J.D. & Denison, W.C. (1995). “Shiitake cultivation: Gas phase during incubation influences productivity.” *Mycologia* 87(2), 239–244. DOI: 10.1080/00275514.1995.12026525.
 - Kashino, Y., Myokai, F., Namba, K., Monta, M. & Kanzaki, H. (2016). “Effects of the Cultivation Stage Temperature and CO₂ Concentration on the Sawdust-based Culture Shiitake Yield.” DOI: 10.11274/bimi.15.1_5.

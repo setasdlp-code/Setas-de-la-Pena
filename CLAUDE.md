@@ -15,20 +15,12 @@ Setas de la Peña — cultivo y venta de setas (Tenjo, Colombia). El repo mezcla
 
 `setasdlp-code/Field-OS` y `setasdlp-code/simulador` son repos históricos: no reciben cambios nuevos.
 
-## Flujo de trabajo
+## Flujo de trabajo y límites
 
-- `main` está protegido y el merge lo aprueba el humano (Sebastián).
-- Resuelve las dudas leyendo el repositorio. Pregunta (máximo tres preguntas) solo si una suposición equivocada causaría un error de alcance, científico o de acción externa (`AGENTS.md` §2).
-- Rama por tarea, commits pequeños, tests completos antes de PR — no commitear directo a `main`.
-- Antes de editar, revisar `git status`/`git diff` para ver si hay cambios pendientes en el working tree.
+Las reglas de autoridad, método, git y evidencia están en [`AGENTS.md`](./AGENTS.md) §1–5; las de edición de la base de conocimiento, en [`knowledge_base/AGENTS.md`](./knowledge_base/AGENTS.md). Aquí solo lo específico que no está allí:
+
 - **Para fusionar `main` en una rama: `sh scripts/git/merge-main.sh`.** El bundle (`simulador-app.js`) y `sw.js` están versionados a propósito, así que cualquier rama que toque una fuente JSX (`simulador-app.jsx` o `views/*.jsx`, ver `jsx-sources.cjs`) conflicta en ellos aunque el fuente se fusione limpio. El script fusiona y después los reconstruye con `node build.js` desde las fuentes ya fusionadas, que es la única resolución válida — editarlos o elegir un lado produce un bundle que no corresponde a ningún fuente. Se detiene sin commitear si conflictúa algo que no sea generado.
-
-## Límites y Alcance
- 
-- No autenticar, no ejecutar transacciones, no tocar credenciales (`gmail_credentials.json`, `gmail_token.json`, `firebase/` bajo `setas-os/`) más allá de lo estrictamente necesario para una tarea aprobada explícitamente.
-- Las modificaciones amplias, refactorizaciones y rediseños están habilitados para toda la suite de Setas OS (`field-os-simulador/setas-os/`), manteniendo la integridad de la base científica, cálculos C:N/EB y fuentes canónicas: ver la tabla de invariantes científicas en `AGENTS.md` §4.
-- Ediciones a `knowledge_base/`: la autorización depende del tipo de cambio; ver la matriz en `knowledge_base/AGENTS.md`.
-- No modificar `setasdlp-code/Field-OS` ni `setasdlp-code/simulador`.
+- Credenciales que no se tocan salvo tarea aprobada explícitamente: `gmail_credentials.json`, `gmail_token.json` y `firebase/` bajo `setas-os/`.
 
 ## Agent skills
 
