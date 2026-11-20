@@ -3,7 +3,7 @@ title: Registro de Decisiones — Setas de la Peña
 document_id: DOC-0048
 category: meta
 load_priority: selective
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-19
 ---
 
 # DECISIONS
@@ -290,7 +290,7 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 ## DEC-011 — Arquitectura de INDEX.yaml: Infraestructura Generada, no Catálogo Mantenido a Mano
 
 **Fecha:** 2026-07-09
-**Estado:** Revisada por DEC-026
+**Estado:** Revisada por DEC-027
 **Área:** Arquitectura de conocimiento / Meta
 
 **Problema:** DEC-010 autorizó `INDEX.yaml` solo en etapa de esquema, difiriendo explícitamente la población completa a "una fase futura" con su propia decisión CANON §16. La pregunta que quedaba sin resolver no era *cuándo* poblar `INDEX.yaml` a mano, sino *qué es* arquitectónicamente `INDEX.yaml`: ¿un documento editorial que además contiene datos estructurados, o un artefacto generado derivado determinísticamente del repositorio? Son categorías distintas, con modos de fallo distintos, y la gobernanza del repositorio aún no había decidido cuál de las dos es.
@@ -804,7 +804,73 @@ Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bol
 
 ---
 
-## DEC-025 — Gobierno de agentes simplificado: un contrato, vía rápida para correcciones verificables y parámetros piloto
+## DEC-025 — Controlador comercial UIS (AC Infinity Controller 69 Pro) para H4 y T7 de fructificación; el ESP32 sigue como única fuente de datos
+
+**Fecha:** 2026-11-19
+**Estado:** Propuesta — pendiente de aprobación del propietario
+**Área:** Automatización / Equipos
+
+**Problema:** El firmware de banco de CLOUDLAB 844 (`cloudlab_esp32.yaml`) no controla el CloudForge T7 ni el Cloudline H4: la KB prohíbe inferir su interfaz eléctrica y ambos siguen bloqueados por comisionamiento (caudal del H4; calibración de HR en rango alto y protección frente al agua para el T7). El propietario va a comprar un controlador de AC Infinity y la familia ofrece modelos de clases distintas: el nombre o el número no indican cuál es «más avanzado». Hay que decidir cuál, para qué equipos y qué papel conserva el ESP32 frente a DEC-001 y DEC-006.
+
+**Lo leído en los manuales y fichas oficiales (acinfinity.com, leído el 2026-11-19):**
+
+| Equipo | Qué dice la fuente | Fuente |
+|---|---|---|
+| Controller 79 (CTR79P) | 2 tomas de corriente, solo encendido y apagado; 1100 W en total y 10 A; sonda de 12 ft con T, HR y VPD; Bluetooth o WiFi; memoria de respaldo. **Sin puertos UIS ni PWM.** | Ficha y manual `SOT2405X1` |
+| Controller 69 Pro (CTR69P) | 4 puertos UIS, PWM de 10 niveles, sensores de T y HR, programa independiente por puerto; incluye dos adaptadores Molex–UIS | Controller 69 Overview |
+| Cloudline H4 | Motor EC con PWM y 10 niveles, IP65 (serie H). El manual nombra al Controller 69 Pro (cuatro puertos, solo ventiladores EC) para conectarlo; la ficha lista Controller 63 y 69 Pro. Su control propio conserva el nivel aunque se apague el ventilador | Manual `CLAB2312X1`, ficha del H4 |
+| CloudForge T7 | Equipo UIS con cable M–M incluido. Con un Controller 69 Pro conectado, el controlador anula todos los ajustes de a bordo y apaga la pantalla y el tacto del humidificador; la sonda propia no es necesaria. **El manual no dice qué hace al volver la energía.** Advierte no usar la programación de encendido y apagado como único medio de cortar la energía | Manual `CF2409X1` |
+| Controller AI+ con CO₂ (CTR89A) | 8 puertos UIS (32 con divisores), WiFi de 2,4 GHz y Bluetooth, programación conservada sin WiFi; modo de IA organizado por planta y etapa de cultivo; hay que instalarlo fuera de la carpa | Ficha y guía `CTR89Q2410X1` |
+| Sensor de CO₂ + luz (AC-COS3) del AI+ | Rango 0 a 40.000 ppm, precisión 50 ppm ± 5 %, respuesta 60 s. **Humedad de operación 35 a 60 % RH**, temperatura 0 a 50 °C. Se instala a la altura del follaje y solo cabe uno por controlador. **No documenta compensación de altitud, tecnología del sensor ni calibración** | Ficha y guía `COS2503X1` |
+
+La humedad de operación de los controladores 79 y AI+ es de 35 a 85 % RH. Las cámaras de fructificación de Setas de la Peña operan entre 85 y 95 % RH.
+
+**No verificado en las fuentes:** comportamiento del T7 y del H4 al volver la energía cuando los gobierna un controlador UIS; si el 69 Pro conserva la programación sin WiFi (lo afirma la ficha del AI+, no la del 69); precisión de la sonda de T y HR; si el modo de IA ofrece cultivo de hongos; precio de cada modelo en Colombia. No hay API local en ninguno: la única vía remota es la nube de AC Infinity y la app, y las integraciones de Home Assistant de la comunidad se apoyan en esa nube (no son una fuente oficial).
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| A. Sin controlador comercial; H4 y T7 en manual hasta comisionar | Cumple DEC-001 y DEC-006 tal como están; cero equipo nuevo | Sin automatización de ventilación ni de humedad en fructificación |
+| B. Controller 79 | Tomas con programación independiente, 1100 W, sonda con VPD; útil para cargas de calefacción | **No controla el H4 ni el T7**: sin UIS ni PWM; el H4 y el T7 quedarían solo con corte de energía |
+| **C. Controller 69 Pro para H4 y T7** | Cuatro puertos UIS cubren los equipos que ya tienes (dos H4, un T7, uno libre); equipos que el fabricante lista como compatibles; PWM de 10 niveles | Sin CO₂; cerrado, solo app y nube; sin API local |
+| D. Controller AI+ con sensor de CO₂ (CTR89A) | Lazo de ventilación por CO₂ en una sola caja; ocho puertos | El sensor de CO₂ queda fuera de su humedad de operación (35 a 60 % RH) dentro de la cámara y no documenta compensación de altitud (Tenjo, 2.600 m): **no es base de un lazo de ventilación sin validación**. IA orientada a plantas |
+| E. Interfaz PWM propia desde el ESP32 hacia el H4 | Mantiene todo el lazo en el nodo | Sin interfaz eléctrica verificada: la KB prohíbe inferirla |
+
+**Decisión propuesta:** Opción C, con estos límites:
+
+- **Controlador:** Controller 69 Pro (CTR69P) para el Cloudline H4 y, cuando cumpla sus requisitos, el CloudForge T7. Se instala **fuera** de la cámara húmeda y con la sonda dentro; la HR de operación declarada para los controladores 79 y AI+ (35 a 85 %; la del 69 Pro no se verificó) no cubre el interior de fructificación.
+- **ESP32:** sigue siendo la única fuente de datos hacia Setas OS y la referencia independiente de T, HR y CO₂. Setas OS solo lee: no hay camino de escritura hacia el controlador. La sala figura «sin datos del nodo» para lo que gobierne el controlador comercial.
+- **Sonda del controlador:** no es referencia de control hasta compararla con el SHT3x y el Inkbird en el mismo aire. Criterio de aceptación del sesgo: el de DEC-003 (menor que ±5 %).
+- **CO₂:** no se usa el sensor AC-COS3 dentro de la cámara. El CO₂ lo mide el ESP32; el nivel del H4 se ajusta por decisión del operario a la vista del CO₂ medido, hasta que exista un lazo validado. Esto es una **modificación provisional de DEC-006**: el ciclo inicial de ventilación del H4 sale de la especificación del lote y no se hereda de otra especie ni se fija desde esta decisión.
+- **Controller 79:** no se compra para esta función. Queda como opción separada para cargas de calefacción por toma, que se decide aparte.
+- **Controller AI+ con CO₂:** se reevalúa solo si AC Infinity documenta compensación de altitud y un rango de humedad del sensor que cubra la fructificación, o si se valida en banco con el ESP32 como referencia.
+
+**Lo que esta decisión no cambia:**
+
+- El firmware de CLOUDLAB 844 sigue sin controlar el T7 ni el H4; sus relés y su rótulo de banco no cambian.
+- Siguen vigentes los bloqueos de comisionamiento: medir el caudal del H4; calibrar la HR en rango alto y proteger frente al agua antes de automatizar el T7. DEC-003 (H05 descartado) y DEC-002 (SHT3x primario) no cambian.
+- Las protecciones físicas independientes (diferencial, termostato de corte, fusible) y la revisión eléctrica previa siguen siendo obligatorias; la programación del controlador no es el único medio de cortar la energía.
+- No aprueba consignas, bandas ni niveles de ventilación o de niebla.
+
+**Riesgo aceptado (si se aprueba):** la actuación del H4 y del T7 queda en un sistema cerrado que Setas OS no audita ni registra por sí mismo; una falla del controlador, de la app o del WiFi (solo 2,4 GHz) no genera alarma en Setas OS. Se mitiga con el ESP32 como medición independiente y con la alarma de CO₂ y de HR fuera de banda que ya existe en Hoy.
+
+**Pruebas de banco previas a la instalación:**
+
+1. H4 y T7 gobernados por el controlador: estado de cada uno tras cortar y devolver la energía, con la sala vacía.
+2. Sonda del controlador frente a SHT3x e Inkbird en el mismo aire: sesgo de T y de HR.
+3. Alcance del WiFi de 2,4 GHz en el sitio y comportamiento sin internet.
+4. Caudal del H4 por nivel (ya era un requisito).
+
+**Justificación:** P-02 (simplicidad) y §16 del CANON. El 69 Pro es el único controlador evaluado que gobierna el H4 y el T7 con equipos que el fabricante declara compatibles, sin inventar una interfaz que la KB prohíbe inferir. El CO₂ es el criterio biológico de DEC-006, y el único sensor de CO₂ de ese fabricante opera por debajo de la humedad de una cámara de fructificación; por eso el CO₂ queda en el ESP32 y la ventilación por CO₂ queda como decisión del operario y no como lazo automático.
+
+**Criterio de revisión:** si el sesgo de la sonda supera ±5 %, si el H4 o el T7 no retoman un estado seguro tras una falla de energía, si el controlador no conserva su programación sin WiFi, o si el controlador falla más de una vez por mes (criterio de DEC-006); revisión a los 60 días de comisionar.
+
+**Documentos afectados:** `DECISIONS.md` (DEC-006, enmienda provisional), `05_equipment/environmental_control.md`, `05_equipment/plan_ha_v1.md`, `FARM_BRAIN.md`, `metadata/equipment.yaml` (registrar el controlador al recibirlo, con la evidencia que corresponda).
+
+---
+
+## DEC-026 — Gobierno de agentes simplificado: un contrato, vía rápida para correcciones verificables y parámetros piloto
 
 **Fecha:** 2026-11-19
 **Estado:** Activa
@@ -837,7 +903,7 @@ Las lecturas de infrarrojo son comparativas (bolsa contra aire, bolsa contra bol
 
 ---
 
-## DEC-026 — INDEX.yaml como artefacto híbrido, generador en sitio y verificación en CI
+## DEC-027 — INDEX.yaml como artefacto híbrido, generador en sitio y verificación en CI
 
 **Fecha:** 2026-11-19
 **Estado:** Activa

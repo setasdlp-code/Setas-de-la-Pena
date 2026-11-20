@@ -26,6 +26,15 @@ def fila(t_aire=24.0, t_base=23.5, t_centro=24.0, t_tope=24.5, t_nucleo=26.0, he
     }
 
 
+def fila_aire(t_aire=22.0, heater_on="0", n=0):
+    """Fila del registro de la variante por aire (DEC-023): sin núcleo ni mapa."""
+    return {
+        "timestamp": f"2026-10-20T00:{n // 60:02d}:{n % 60:02d}",
+        "t_aire": str(t_aire),
+        "heater_on": heater_on,
+    }
+
+
 def filas_buenas(n=100):
     # ΔT mapa 1 °C; núcleo 26 °C; núcleo-aire 2 °C
     return [fila(n=i) for i in range(n)]
@@ -103,9 +112,56 @@ class EvaluateTest(unittest.TestCase):
         self.assertEqual(res["cobertura"], 0.0)
         self.assertEqual(set(veredictos(res).values()), {"insuficiente"})
 
-    def test_columna_ausente_es_insuficiente(self):
-        rows = [{k: v for k, v in fila(n=i).items() if k != "t_nucleo"} for i in range(100)]
+    def test_columna_de_control_ausente_es_insuficiente(self):
+        # Sin la columna del aire (sensor de control) nada se puede evaluar.
+        rows = [{k: v for k, v in fila(n=i).items() if k != "t_aire"} for i in range(100)]
+        self.assertEqual(aly.evaluate(rows)["intervalos_validos"], 0)
         self.assertEqual(set(veredictos(aly.evaluate(rows)).values()), {"insuficiente"})
+
+    def test_sin_columna_de_nucleo_es_sin_sensor(self):
+        # Antes: quitar t_nucleo dejaba todo "insuficiente". Con DEC-023 la falta
+        # de sonda se declara "sin_sensor" (nunca "pasa") y el mapa se sigue
+        # evaluando si está.
+        rows = [{k: v for k, v in fila(n=i).items() if k != "t_nucleo"} for i in range(100)]
+        res = aly.evaluate(rows)
+        self.assertEqual(veredictos(res),
+                         {"dt_mapa": "pasa", "nucleo_max": "sin_sensor", "dt_nucleo_aire": "sin_sensor"})
+        self.assertIsNone(res["criterios"]["nucleo_max"]["valor"])
+        self.assertIsNone(res["criterios"]["dt_nucleo_aire"]["valor"])
+
+    def test_mapa_incompleto_en_filas_es_insuficiente(self):
+        # Un grupo presente a medias no es "sin sensor": se exige completo.
+        rows = [{k: v for k, v in fila(n=i).items() if k != "t_tope"} for i in range(100)]
+        self.assertEqual(set(veredictos(aly.evaluate(rows)).values()), {"insuficiente"})
+
+    # ------------------------------------------------------------------
+    # DEC-023: registro solo de aire (sin DS18B20)
+    # ------------------------------------------------------------------
+    def test_registro_solo_aire_declara_sin_sensor(self):
+        rows = [fila_aire(t_aire=21.0 + (i % 3) * 0.5, n=i) for i in range(100)]
+        res = aly.evaluate(rows)
+        self.assertEqual(res["intervalos_validos"], 100)
+        self.assertEqual(res["cobertura"], 1.0)
+        self.assertEqual(set(veredictos(res).values()), {"sin_sensor"})
+        for criterio in res["criterios"].values():
+            self.assertIsNone(criterio["valor"])
+        self.assertEqual(res["t_aire_min"], 21.0)
+        self.assertEqual(res["t_aire_max"], 22.0)
+
+    def test_registro_solo_aire_valida_por_aire(self):
+        rows = [fila_aire(n=i) for i in range(100)]
+        for i in range(50):
+            rows[i]["t_aire"] = "nan"
+        res = aly.evaluate(rows)
+        self.assertEqual(res["intervalos_validos"], 50)
+        self.assertEqual(res["cobertura"], 0.5)
+        # Sin sonda sigue siendo "sin_sensor", nunca "pasa", aunque el aire falle.
+        self.assertEqual(set(veredictos(res).values()), {"sin_sensor"})
+
+    def test_sin_filas_no_es_sin_sensor(self):
+        # Sin datos no se sabe qué sensores había: "insuficiente", no "sin_sensor".
+        self.assertEqual(set(veredictos(aly.evaluate([])).values()), {"insuficiente"})
+        self.assertIsNone(aly.evaluate([])["t_aire_max"])
 
     def test_valores_no_finitos_son_invalidos(self):
         rows = filas_buenas(100)
@@ -177,11 +233,11 @@ class EvaluateTest(unittest.TestCase):
 
 
 class CliTest(unittest.TestCase):
-    def _correr(self, filas, delimitador=","):
+    def _correr(self, filas, delimitador=",", columnas=None):
         with tempfile.TemporaryDirectory() as tmp:
             ruta = os.path.join(tmp, "registro.csv")
             with open(ruta, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(fila()), delimiter=delimitador)
+                w = csv.DictWriter(f, fieldnames=columnas or list(fila()), delimiter=delimitador)
                 w.writeheader()
                 w.writerows(filas)
             return subprocess.run([sys.executable, CLI, ruta], capture_output=True, text=True)
@@ -205,10 +261,27 @@ class CliTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             ruta = os.path.join(tmp, "registro.csv")
             with open(ruta, "w", encoding="utf-8") as f:
-                f.write("timestamp,t_aire\n2026-10-20T00:00:00,22\n")
+                f.write("timestamp,t_nucleo\n2026-10-20T00:00:00,22\n")
             r = subprocess.run([sys.executable, CLI, ruta], capture_output=True, text=True)
         self.assertEqual(r.returncode, 2)
-        self.assertIn("t_nucleo", r.stderr)
+        self.assertIn("t_aire", r.stderr)
+        self.assertIn("heater_on", r.stderr)
+
+    def test_cli_registro_solo_aire(self):
+        r = self._correr([fila_aire(n=i) for i in range(100)], columnas=list(fila_aire()))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        salida = json.loads(r.stdout)
+        self.assertEqual(salida["intervalos_validos"], 100)
+        self.assertEqual({v["veredicto"] for v in salida["criterios"].values()}, {"sin_sensor"})
+
+    def test_cli_mapa_incompleto_en_cabecera_falla(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ruta = os.path.join(tmp, "registro.csv")
+            with open(ruta, "w", encoding="utf-8") as f:
+                f.write("timestamp,t_aire,t_base,heater_on\n2026-10-20T00:00:00,22,21,0\n")
+            r = subprocess.run([sys.executable, CLI, ruta], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("t_centro", r.stderr)
 
     def test_cli_fila_con_campos_de_mas_no_pasa(self):
         # Con separador ',' los decimales con coma sin comillas desplazan las

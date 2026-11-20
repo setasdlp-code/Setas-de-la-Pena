@@ -130,7 +130,7 @@ const root=path.resolve(__dirname,'..');
   await page.reload();
   crops=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_cosechas')));
   assert.equal(crops[1].pesoFresco,430);assert.equal(crops[1].calidad,null);
-  assert.equal(crops[1].pesoPrimera,300);assert.equal(crops[1].pesoSegunda,100);assert.equal(crops[1].pesoDescarte,30);assert.equal(crops[1].firmeza,3);assert.deepEqual(crops[1].defectosCampo,['sporulation']);assert.ok(!(crops[1].defectCodes||[]).includes('sporulation'));
+  assert.equal(crops[1].pesoPrimera,300);assert.equal(crops[1].pesoSegunda,100);assert.equal(crops[1].pesoDescarte,30);assert.equal(crops[1].firmeza,3);assert.deepEqual(crops[1].defectosCampo,['sporulation']);assert.equal(crops[1].defectosEvaluados,true);assert.equal(crops[0].defectosEvaluados,null);assert.ok(!(crops[1].defectCodes||[]).includes('sporulation'));
   // Preparation uses a synthetic recipe only in this isolated browser origin.
   await page.evaluate(()=>localStorage.setItem('setas_formulator_draft_v1',JSON.stringify({version:1,recipe:[{id:'aserrin_eucalipto',p:100}],sKey:'p_ostreatus_gris',hasPickedSpecies:true,lockedIds:[]})));
   await page.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=produccion`);

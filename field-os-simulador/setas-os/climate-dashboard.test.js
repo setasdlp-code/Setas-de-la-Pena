@@ -99,15 +99,25 @@ test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.today-climate-strip/);
   assert.match(css, /\.climate-svg-wrap/);
   assert.match(css, /\.climate-actuators-panel/);
-  assert.match(css, /\.climate-actuator-card/);
+  // Los controles de relé (.climate-actuator-*) eran CSS muerto de un panel que fingía
+  // control; el panel vigente es de solo lectura (.climate-node-*).
+  assert.doesNotMatch(css, /\.climate-actuator-(card|head|badge|meta|btn|logs)|\.climate-actuators-grid|\.climate-log-row/);
+  assert.match(css, /\.climate-node-card/);
 });
 
-test('simulador-app.jsx renders relay actuator controls and interactive overrides', () => {
-  assert.match(jsx, /data-testid="climate-actuators-panel"/);
-  assert.match(jsx, /Relay Ch1 · T7\/H05/);
-  assert.match(jsx, /Relay Ch2 · Cloudline H4/);
-  assert.match(jsx, /Disparar Pulso FAE/);
-  assert.match(jsx, /Forzar Humidificación/);
+test('el panel de actuadores es de solo lectura: lee el estado del nodo; sin él dice que no hay datos', () => {
+  const all = require('./test-support/jsx-source.js').readJsxSource();
+  assert.match(all, /data-testid="climate-actuators-panel"/);
+  assert.match(all, /<RoomAutomationPanel view=\{buildRoomNodeAutomation\(selectedClimateRoom\)\}\/>/);
+  assert.match(all, /Sin datos de actuadores para esta sala/);
+  // Los textos de cada caso viven en el módulo puro, que sí se prueba (node-automation.test.js).
+  const nodeAutomation = fs.readFileSync(path.join(ROOT, 'node-automation.js'), 'utf8');
+  assert.match(nodeAutomation, /Sala sin automatización/);
+  assert.match(nodeAutomation, /Sin datos del nodo/);
+  // Ninguna apariencia de control: el relé lo gobierna el firmware del nodo (DEC-001).
+  assert.doesNotMatch(all, /Forzar Humidificación|Disparar Pulso FAE|OVERRIDE \[|AUTO \[(ENCENDIDO|REPOSO|SIN LECTURA|EN ESPERA)\]/);
+  assert.doesNotMatch(all, /humidifierOverride|setHumidifierOverride|faePulseActive|humidifierAutoOn|faeAutoPulse/);
+  assert.doesNotMatch(all, /Relay Ch1|Relay Ch2|Hosyond \(2ch\)/);
 });
 
 test('Clima ejecuta su hook sin condición y consume la vista sin remontar el panel', () => {

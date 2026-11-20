@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 164 catalog entries as of 2026-11-19 (DEC-026; generator in place, --check in CI); the completeness of indexing of all
+# 164 catalog entries as of 2026-11-19 (DEC-027; generator in place, --check in CI); the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #

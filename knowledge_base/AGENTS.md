@@ -27,7 +27,7 @@ Load the least that supports the answer.
 | Edit operational state, changelog, lessons, or research | The target document. |
 | Edit a canonical parameter, SOP, decision, or governance document | The CANON section that governs the change, the target document, and its directly related documents. |
 
-This file and the root `AGENTS.md` are the operating rules for agents. [`00_project/AI_AGENT_PROTOCOL.md`](./00_project/AI_AGENT_PROTOCOL.md) and [`00_project/EDITORIAL_GUIDELINES.md`](./00_project/EDITORIAL_GUIDELINES.md) are reference material (DEC-025): consult them for a specific question; they are not required reading and do not override this file.
+This file and the root `AGENTS.md` are the operating rules for agents. [`00_project/AI_AGENT_PROTOCOL.md`](./00_project/AI_AGENT_PROTOCOL.md) and [`00_project/EDITORIAL_GUIDELINES.md`](./00_project/EDITORIAL_GUIDELINES.md) are reference material (DEC-026): consult them for a specific question; they are not required reading and do not override this file.
 
 Starting points by request:
 

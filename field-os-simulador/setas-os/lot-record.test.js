@@ -412,6 +412,36 @@ test('quality: fieldDefects y desconocidos', () => {
   assert.equal(withDefects.answers[LR.QUESTIONS.CO2_DOSE_RESPONSE], base.answers[LR.QUESTIONS.CO2_DOSE_RESPONSE]);
 });
 
+test('quality: defectos evaluados vs no evaluados, por cosecha, oleada y total', () => {
+  const rec = qRec([
+    harvest({ id: 'H-NE', flush: 1, defectosCampo: [] }),                              // lista vacía sin marca: no evaluada
+    harvest({ id: 'H-OK', flush: 1, defectosCampo: [], defectosEvaluados: true }),     // evaluada sin hallazgos
+    harvest({ id: 'H-LEG', flush: 1, defectosCampo: ['sporulation'] }),                // lista no vacía sin marca: evaluada
+    harvest({ id: 'H-F2', flush: 2, defectosCampo: ['xyz'], defectosEvaluados: true }),
+    harvest({ id: 'H-F2B', flush: 2 }),                                                // sin nada
+  ]);
+  const hv = (id) => rec.quality.flushes.flatMap((f) => f.harvests).find((h) => h.harvestId === id);
+  assert.equal(hv('H-NE').defectsEvaluated, false);
+  assert.equal(hv('H-NE').hasQuality, false);
+  assert.equal(hv('H-OK').defectsEvaluated, true);
+  assert.equal(hv('H-OK').hasQuality, true);
+  assert.deepEqual(hv('H-OK').fieldDefects, []);
+  assert.equal(hv('H-LEG').defectsEvaluated, true);
+  assert.equal(hv('H-F2').defectsEvaluated, true);
+  assert.equal(hv('H-F2B').defectsEvaluated, false);
+  assert.deepEqual(rec.quality.flushes.map((f) => f.defectsEvaluatedCount), [2, 1]);
+  assert.equal(rec.quality.defectsEvaluatedCount, 3);
+  // Marcar «sin defectos» es calidad registrada: no se emite quality_unrecorded.
+  const only = qRec([harvest({ defectosEvaluados: true })]);
+  assert.equal(only.quality.gaps.some((g) => g.code === 'quality_unrecorded'), false);
+  assert.equal(qRec([harvest({ defectosCampo: [] })]).quality.gaps.some((g) => g.code === 'quality_unrecorded'), true);
+  // Ni la marca ni la evaluación tocan las tres preguntas existentes ni el fenotipo.
+  const base = qRec([harvest({})]);
+  assert.deepEqual(only.answers, base.answers);
+  assert.deepEqual(only.gaps, base.gaps);
+  assert.deepEqual(only.phenotype, base.phenotype);
+});
+
 test('quality: procedencia por campo y esquema v1', () => {
   const rec = qRec([harvest(GRADED)]);
   assert.deepEqual(rec.quality.provenance, {
@@ -474,4 +504,54 @@ test('quality: un chip con código v0.1 exacto alimenta fenotipo; uno sin códig
   const spoRec = qRec([harvest({ defectCodes: spo.defectCodes, defectosCampo: spo.defectosCampo })]);
   assert.equal(spoRec.phenotype.length, 0);
   assert.ok(spoRec.gaps.some((g) => g.code === 'phenotype_unrecorded'));
+});
+
+// ── detalle por cosecha de `quality.flushes[].harvests[]` ──────────────────────
+// Lo consume el panel de la ficha de lote (harvest-quality-summary.js). Es
+// aditivo: `harvestId` y `gap` no cambian.
+
+test('quality: cada cosecha informa si trae calidad, sus grados en kg y su desfase', () => {
+  const f = qRec([
+    harvest({ id: 'H-1', ...GRADED, firmeza: 4, defectosCampo: ['sporulation', 'xyz'] }),
+    harvest({ id: 'H-2', pesoFresco: 700 }),
+  ]).quality.flushes[0];
+  const [a, b] = f.harvests;
+  assert.equal(a.harvestId, 'H-1');
+  assert.equal(a.gap.status, 'ok');
+  assert.equal(a.hasQuality, true);
+  assert.equal(a.gradesComplete, true);
+  assert.deepEqual(a.gradeKg, { primera: 0.3, segunda: 0.15, descarte: 0.05 });
+  assert.equal(a.firmness, 4);
+  assert.deepEqual(a.fieldDefects, ['sporulation']);
+  assert.deepEqual(a.undeclaredFieldDefects, ['xyz']);
+  // La cosecha sin captura de calidad no inventa nada: null, no 0.
+  assert.equal(b.hasQuality, false);
+  assert.equal(b.gradesComplete, false);
+  assert.deepEqual(b.gradeKg, { primera: null, segunda: null, descarte: null });
+  assert.equal(b.firmness, null);
+  assert.deepEqual(b.fieldDefects, []);
+});
+
+test('quality: un 0 declarado es declarado; un grado vacío es null y la cosecha queda sin los tres', () => {
+  const f = qRec([
+    harvest({ id: 'H-0', pesoFresco: 500, pesoPrimera: 0, pesoSegunda: 300, pesoDescarte: 200 }),
+    harvest({ id: 'H-N', pesoFresco: 500, pesoPrimera: null, pesoSegunda: 300, pesoDescarte: 200 }),
+  ]).quality.flushes[0];
+  const [zero, empty] = f.harvests;
+  assert.equal(zero.gradeKg.primera, 0);
+  assert.equal(zero.gradesComplete, true);
+  assert.equal(empty.gradeKg.primera, null);
+  assert.equal(empty.gradesComplete, false);
+  assert.equal(empty.hasQuality, true);
+});
+
+test('quality: con unit kg el gradeKg por cosecha convierte con la misma regla', () => {
+  const [h] = qRec([harvest({ unit: 'kg', pesoFresco: 0.5, pesoPrimera: 0.5, pesoSegunda: 0, pesoDescarte: 0 })]).quality.flushes[0].harvests;
+  assert.deepEqual(h.gradeKg, { primera: 0.5, segunda: 0, descarte: 0 });
+});
+
+test('quality: el detalle por cosecha no cambia answers, gaps ni el resto de la proyección', () => {
+  const rec = qRec([harvest({ id: 'H-1', ...GRADED, firmeza: 2, defectosCampo: ['edge_curl_lost'] })]);
+  assert.deepEqual(rec.answers, { eb_by_species_and_flush: true, strain_stratification: false, co2_dose_response: false });
+  assert.deepEqual(rec.gaps.map((g) => g.code), ['strain_unidentified', 'no_fruiting_cycle_linked', 'phenotype_unrecorded']);
 });

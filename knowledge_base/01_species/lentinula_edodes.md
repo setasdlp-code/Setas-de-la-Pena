@@ -206,7 +206,7 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 - Holgado-Rojas, M. E., et al. (2019). Cultivo del hongo comestible *Lentinula edodes* (Shiitake) en zonas altoandinas de la región de Cusco. *Cantua*, 15, 45–54. [paper_025]
 - Rocha, F. (2025). Shiitake production on synthetic logs: Induction techniques, block geometry, and rehydration dynamics. *Journal of Applied Mycology and Biotechnology*, 14(1), 102–115. [paper_022]
 - Rodríguez Valencia, N., & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC. [paper_006]
-- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-025, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
+- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-026, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Zied, D. C., & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms: Technology and Applications*. Wiley-Blackwell.
 

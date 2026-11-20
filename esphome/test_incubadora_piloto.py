@@ -1,5 +1,7 @@
 """Pruebas estructurales del firmware de la incubadora del piloto de shiitake.
 
+Variante por aire (DEC-023): sin sondas DS18B20 de núcleo ni mapa térmico.
+
 Ejecutar:
     ESPHOME_BIN=<ruta a esphome> python3 -m unittest discover -s esphome -p "test_*.py" -v
 """
@@ -142,8 +144,11 @@ class IncubadoraYamlTest(unittest.TestCase):
 
     def test_sensores_presentes(self):
         ids = set(self._sensores_por_id())
-        esperados = {"t_aire", "hr_aire", "t_base", "t_centro", "t_tope", "t_nucleo", "co2", "dt_nucleo_aire"}
+        esperados = {"t_aire", "hr_aire", "co2", "rpm_ventilador"}
         self.assertEqual(esperados - ids, set())
+        # DEC-023: sin núcleo, sin mapa térmico y sin diferencia núcleo-aire.
+        retirados = {"t_base", "t_centro", "t_tope", "t_nucleo", "dt_nucleo_aire"}
+        self.assertEqual(retirados & ids, set())
 
     def test_intervalo_maximo_60s(self):
         con_intervalo = 0
@@ -153,12 +158,19 @@ class IncubadoraYamlTest(unittest.TestCase):
                 self.assertLessEqual(self._segundos(self._sust(entrada["update_interval"])), 60, entrada)
         self.assertGreater(con_intervalo, 0)
 
-    def test_ema_en_nucleo(self):
-        filtros = self._sensores_por_id()["t_nucleo"]["filters"]
-        ema = [f["exponential_moving_average"] for f in filtros
-               if isinstance(f, dict) and "exponential_moving_average" in f]
-        self.assertEqual(len(ema), 1)
-        self.assertEqual(ema[0]["alpha"], 0.1)
+    def test_nucleo_y_mapa_declarados_sin_sensor(self):
+        # Sustituye a la prueba de la EMA del núcleo: sin sonda, el núcleo y el
+        # mapa térmico se declaran «sin sensor» con un texto fijo, nunca con un
+        # número (DEC-023).
+        textos = {t["id"]: t for t in self.cfg.get("text_sensor", [])}
+        for id_ in ("estado_nucleo", "estado_mapa_termico"):
+            self.assertIn(id_, textos)
+            self.assertEqual(textos[id_]["platform"], "template")
+            self.assertRegex(textos[id_]["lambda"], r'return\s*\{\s*"sin sensor"\s*\}\s*;')
+        # Ningún sensor numérico se refiere al núcleo, al sustrato ni al bloque.
+        for id_, nodo in self._sensores_por_id().items():
+            texto = (id_ + " " + str(nodo.get("name", ""))).lower()
+            self.assertIsNone(re.search(r"n[uú]cleo|sustrato|bloque|substrate|core", texto), id_)
 
     def test_scd30_una_sola_compensacion(self):
         scd = [e for e in self.cfg["sensor"] if e.get("platform") == "scd30"]
@@ -167,12 +179,27 @@ class IncubadoraYamlTest(unittest.TestCase):
         self.assertNotIn("ambient_pressure_compensation", scd[0])
         self.assertNotIn("ambient_pressure_compensation_source", scd[0])
 
-    def test_direcciones_ds18b20_distintas(self):
-        dallas = [e for e in self.cfg["sensor"] if e.get("platform") == "dallas_temp"]
-        direcciones = [str(self._sust(e["address"])).lower() for e in dallas]
-        self.assertEqual(len(direcciones), 4)
-        duplicadas = {d for d in direcciones if direcciones.count(d) > 1}
-        self.assertFalse(duplicadas, f"dirección DS18B20 duplicada: {sorted(duplicadas)}")
+    def test_sin_dallas_ni_one_wire(self):
+        # Sustituye a la prueba de direcciones DS18B20 distintas: sin sondas no
+        # queda bus 1-Wire, plataforma dallas ni marcadores de dirección.
+        self.assertNotIn("one_wire", self.cfg)
+        self.assertNotIn("dallas", self.cfg)
+        plataformas = {e.get("platform") for e in self.cfg["sensor"]}
+        self.assertFalse(plataformas & {"dallas", "dallas_temp"}, plataformas)
+        sust = self.cfg["substitutions"]
+        self.assertFalse([k for k in sust if k.startswith("addr_")], "quedan direcciones DS18B20")
+        self.assertNotIn("onewire_pin", sust)
+
+    def test_sin_referencias_a_nucleo_en_la_logica(self):
+        # Ninguna lambda, condición o acción usa t_nucleo, el mapa o sus alarmas.
+        logica = json.dumps({k: self.cfg.get(k) for k in
+                             ("sensor", "binary_sensor", "climate", "interval", "esphome", "switch")},
+                            ensure_ascii=False)
+        for patron in (r"t_nucleo", r"dt_nucleo", r"t_base", r"t_centro", r"t_tope",
+                       r"alarma_sobretemp_nucleo", r"alarma_dt_nucleo_aire", r"dallas"):
+            self.assertIsNone(re.search(patron, logica), patron)
+        binarios = {b["id"] for b in self.cfg["binary_sensor"]}
+        self.assertEqual(binarios, set(self.ALARMAS))
 
     def test_sin_humidificador_ni_control_co2(self):
         for seccion in ("switch", "climate", "humidifier", "fan"):
@@ -181,7 +208,7 @@ class IncubadoraYamlTest(unittest.TestCase):
 
     def test_sensores_de_control_con_timeout(self):
         sensores = self._sensores_por_id()
-        for id_ in ("t_aire", "t_nucleo"):
+        for id_ in ("t_aire",):
             filtros = sensores[id_]["filters"]
             tos = [f["timeout"] for f in filtros if isinstance(f, dict) and "timeout" in f]
             self.assertEqual(len(tos), 1, id_)
@@ -192,8 +219,7 @@ class IncubadoraYamlTest(unittest.TestCase):
     # ------------------------------------------------------------------
     # Tarea 3: termostato, interbloqueo y alarmas
     # ------------------------------------------------------------------
-    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire", "alarma_sensor_invalido",
-               "alarma_ventilador", "alarma_sobretemp_aire")
+    ALARMAS = ("alarma_sensor_invalido", "alarma_ventilador", "alarma_sobretemp_aire")
 
     def _climate(self, id_):
         for c in self.cfg.get("climate", []):
@@ -235,9 +261,11 @@ class IncubadoraYamlTest(unittest.TestCase):
             "default_target_temperature con número literal",
         )
 
-    def test_umbrales_nucleo(self):
-        self.assertRegex(self._binary("alarma_sobretemp_nucleo")["lambda"], r">\s*28(\.0*)?\b")
-        self.assertRegex(self._binary("alarma_dt_nucleo_aire")["lambda"], r">\s*5(\.0*)?\b")
+    def test_umbral_absoluto_del_aire(self):
+        # Sustituye a los umbrales de núcleo: el único límite de temperatura es el
+        # absoluto del aire, provisional (28 °C, sin banda de lote).
+        lam = self._sust(self._binary("alarma_sobretemp_aire")["lambda"])
+        self.assertRegex(lam, r"id\(t_aire\)\.state\s*>\s*28(\.0*)?\b")
 
     def test_interbloqueo_apaga_calefactor(self):
         seguridad = [i for i in self.cfg["interval"] if "switch.turn_off" in json.dumps(i)]
@@ -268,10 +296,12 @@ class IncubadoraYamlTest(unittest.TestCase):
         self.assertIn("isnan", lam)
 
     def test_alarma_sensor_invalido(self):
+        # Variante por aire: la ausencia de núcleo NO es alarma; solo el sensor de
+        # control inválido lo es.
         lam = self._binary("alarma_sensor_invalido")["lambda"]
-        self.assertIn("t_aire", lam)
-        self.assertIn("t_nucleo", lam)
-        self.assertIn("isnan", lam)
+        self.assertRegex(lam, r"std::isnan\(\s*id\(t_aire\)\.state\s*\)")
+        self.assertNotIn("nucleo", lam)
+        self.assertEqual(re.findall(r"id\((\w+)\)", lam), ["t_aire"])
 
     def test_ventilador_tacometro(self):
         rpm = self._sensores_por_id()["rpm_ventilador"]
@@ -317,6 +347,68 @@ class IncubadoraYamlTest(unittest.TestCase):
         led = self._switch("indicador_alarma")
         self.assertEqual(led["restore_mode"], "ALWAYS_OFF")
         self.assertIn("indicador_alarma", json.dumps(self.cfg["interval"]))
+
+    # ------------------------------------------------------------------
+    # DEC-023: variante por aire y módulo de relés de disparo alto
+    # ------------------------------------------------------------------
+    def test_rotulo_banco_y_referencia_a_dec_023(self):
+        with open(RUTA_YAML, encoding="utf-8") as f:
+            cabecera = f.read(3000)
+        self.assertIn("BANCO DE PRUEBAS / NO COMISIONADO", cabecera)
+        self.assertIn("DEC-023", cabecera)
+        self.assertIn("no comisionado", self.cfg["esphome"]["comment"])
+
+    def test_identidad_del_nodo(self):
+        self.assertEqual(self.cfg["substitutions"]["device_name"], "setas-incubacion-01")
+        self.assertEqual(self.cfg["esphome"]["name"], "${device_name}")
+
+    def test_rele_disparo_alto(self):
+        self.assertEqual(self.cfg["substitutions"]["relay_active_low"], "false")
+        pin = self._switch("rele_calefactor")["pin"]
+        self.assertEqual(self._sust(pin["inverted"]), "false")
+        self.assertEqual(self._sust(pin["number"]), "GPIO26")
+
+    # Pines del ESP32 clásico que no deben usarse: arranque (lista de ESPHome
+    # 2026.10.2, esp32/gpio_esp32.py), UART0, flash SPI y solo-entrada.
+    PINES_ARRANQUE = {0, 2, 5, 12, 15}
+    PINES_PROHIBIDOS = PINES_ARRANQUE | {1, 3} | set(range(6, 12)) | set(range(34, 40))
+
+    def test_gpio_no_son_de_arranque_ni_flash(self):
+        sust = self.cfg["substitutions"]
+        usados = {}
+        for clave in ("relay_heater_pin", "sda_pin", "scl_pin", "fan_pin", "alarm_led_pin"):
+            m = re.fullmatch(r"GPIO(\d+)", sust[clave])
+            self.assertIsNotNone(m, clave)
+            usados[clave] = int(m.group(1))
+        self.assertEqual(len(set(usados.values())), len(usados), f"GPIO repetido: {usados}")
+        for clave, n in usados.items():
+            self.assertNotIn(n, self.PINES_PROHIBIDOS, f"{clave}=GPIO{n}")
+        # Los actuadores deben ser pines capaces de salida.
+        for clave in ("relay_heater_pin", "alarm_led_pin"):
+            self.assertLess(usados[clave], 34, clave)
+
+    def test_protecciones_conservadas(self):
+        # Resumen de lo que DEC-023 dice que no cambia, en una sola prueba.
+        cfg = self.cfg
+        self.assertEqual(cfg["wifi"]["reboot_timeout"], "0s")
+        self.assertEqual(cfg["api"]["reboot_timeout"], "0s")
+        self.assertEqual(self._switch("rele_calefactor")["restore_mode"], "ALWAYS_OFF")
+        self.assertEqual(self._switch("indicador_alarma")["restore_mode"], "ALWAYS_OFF")
+        boot = json.dumps(self._on_boot())
+        self.assertIn('"switch.turn_off": "rele_calefactor"', boot)
+        self.assertIn('"mode": "OFF"', boot)
+        self.assertIn("${arranque_estabilizacion_s}", boot)
+        self.assertIn("${fan_arranque_gracia_s}", boot)
+        self.assertIn("timeout", json.dumps(self._sensores_por_id()["t_aire"]["filters"]))
+        self.assertIn("${aire_max_c}", self._binary("alarma_sobretemp_aire")["lambda"])
+        self.assertIn("rpm_ventilador", self._binary("alarma_ventilador")["lambda"])
+        # Rehabilitación manual: tras una alarma (pasada la estabilización) el
+        # interval apaga la habilitación; nada en el firmware la vuelve a encender.
+        seguridad = cfg["interval"][0]["then"][0]["if"]
+        self.assertIn('"switch.turn_off": "habilitar_calefaccion"', json.dumps(seguridad["then"]))
+        todo = json.dumps(cfg)
+        self.assertNotIn('"switch.turn_on": "habilitar_calefaccion"', todo)
+        self.assertIsNone(re.search(r"habilitar_calefaccion\)\.(turn_on|publish_state)", todo))
 
 
 if __name__ == "__main__":

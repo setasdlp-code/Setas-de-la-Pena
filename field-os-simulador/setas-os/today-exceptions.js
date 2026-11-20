@@ -12,7 +12,12 @@
  *   - Bodega: lotes con más consumo registrado que existencia (sobregiro);
  *   - sensores: lecturas físicamente imposibles que el contrato de telemetría
  *     pone en cuarentena y el puente descartaba sin avisar;
- *   - lotes: incubación más larga que la referencia.
+ *   - lotes: incubación más larga que la referencia;
+ *   - nodos de control (solo lectura, setas.node-status.v1): alarma activa del
+ *     nodo, nodo sin enlace, consigna del nodo distinta del ciclo de sala y sala
+ *     fuera de banda con la calefacción comandada. Cada fila dice qué pasa, en
+ *     qué objeto, por qué se muestra ahora y la siguiente acción. Nunca ofrece
+ *     una acción de escritura hacia el nodo.
  *
  * La referencia de incubación declara de dónde sale (agronomic-claims):
  *   - "farm": historial de la granja — los días de colonización medidos
@@ -34,6 +39,8 @@
   const flushRef = () => (isNode ? require('./flush-forecast-engine.js') : (glob && glob.SetasFlushForecast) || null);
   const bitacoraRef = () => (isNode ? require('./bitacora-model.js') : (glob && glob.SetasBitacora) || null);
   const batchSheetRef = () => (isNode ? require('./batch-sheet.js') : (glob && glob.SetasBatchSheet) || null);
+  const anomalyRef = () => (isNode ? require('./anomaly-thresholds.js') : (glob && glob.SetasAnomaly) || null);
+  const nodeAutomationRef = () => (isNode ? require('./node-automation.js') : (glob && glob.SetasNodeAutomation) || null);
 
   const HOUR_MS = 3600000;
   const DAY_MS = 86400000;
@@ -247,6 +254,122 @@
     return out;
   };
 
+  // ── Nodos de control (solo lectura) ─────────────────────────────────────────
+  // Tiempo que una sala debe estar fuera de banda de temperatura, con la
+  // calefacción comandada, para pedir atención. NO es un valor nuevo: es la
+  // permanencia con la que anomaly-thresholds ya declara real un desvío de
+  // temperatura (DEFAULT_DWELL_MS.temperature_c). Se mide desde que la sala salió
+  // de banda (`since` de la alerta del motor), así que solo endurece la regla si
+  // se configura un valor mayor. Si anomaly-thresholds no está disponible y no se
+  // pasa `nodeOutOfBandMs`, la regla no se evalúa: no se inventa otro.
+  const defaultNodeOutOfBandMs = () => {
+    const a = anomalyRef();
+    const v = a && a.DEFAULT_DWELL_MS && a.DEFAULT_DWELL_MS.temperature_c;
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const MIN_MS = 60000;
+  const durationLabel = ms => {
+    if (!Number.isFinite(ms)) return 'tiempo desconocido';
+    if (ms < MIN_MS) return `${Math.max(1, Math.round(ms / 1000))} s`;
+    if (ms < HOUR_MS) return `${Math.round(ms / MIN_MS)} min`;
+    return hoursLabel(ms);
+  };
+  const ageLabel = ms => (Number.isFinite(ms) ? `hace ${durationLabel(ms)}` : 'sin hora válida');
+
+  const nodeRow = ({ id, severity, title, room, why, next, provenance = { class: 'reported' } }) => ({
+    id,
+    kind: 'nodo',
+    severity,
+    title,
+    object: { type: 'room', id: room.roomId, name: room.roomName || room.roomId },
+    why,
+    next,
+    detail: `${why} ${next}`,
+    provenance,
+    action: { type: 'openRoom', roomId: room.roomId, label: 'Abrir sala' },
+  });
+
+  /**
+   * @param {object} args
+   * @param {object[]} args.nodeRooms  salidas de node-automation.buildRoomAutomation
+   * @param {object[]} [args.alerts]   alertas activas del motor de anomalías (liveTelemetry.alerts)
+   * @param {number} args.now
+   * @param {number} [args.nodeOutOfBandMs]
+   */
+  const nodeExceptions = ({ nodeRooms, alerts, now, nodeOutOfBandMs }) => {
+    const out = [];
+    const outOfBandMs = Number.isFinite(nodeOutOfBandMs) ? nodeOutOfBandMs : defaultNodeOutOfBandMs();
+    const auto = nodeAutomationRef();
+    for (const room of nodeRooms || []) {
+      if (!room || room.automation !== 'profile') continue;
+      const roomName = room.roomName || room.roomId;
+      for (const node of room.nodes || []) {
+        const link = node.link || {};
+        const who = node.deviceId || 'sin id';
+        if (link.state === 'offline') {
+          const commissioned = node.valid && node.commissioned === true && room.profile && room.profile.commissioned === true;
+          const lastAlarms = node.valid && node.alarms && node.alarms.length ? ` Última alarma reportada: ${node.alarms.map(a => a.code).join(', ')}.` : '';
+          const bench = commissioned ? '' : ' Es un nodo de banco de pruebas, no comisionado.';
+          out.push(nodeRow({
+            id: `node:offline:${room.roomId}:${who}`,
+            severity: commissioned ? 'alarma' : 'vigilar',
+            title: `${roomName}: nodo ${who} sin enlace`,
+            room,
+            why: `Su último estado es ${ageLabel(link.ageMs)} (el umbral es ${durationLabel(link.offlineMs)} sin reportar).${lastAlarms}${bench}`,
+            next: 'Revisar alimentación y WiFi del nodo. Sin enlace Setas OS no ve sus relés ni sus alarmas.',
+          }));
+          continue;
+        }
+        if (!node.valid) continue;
+        if (node.alarms.length && (link.state === 'fresh' || link.state === 'stale')) {
+          const n = node.alarms.length;
+          out.push(nodeRow({
+            id: `node:alarm:${room.roomId}:${who}`,
+            severity: 'alarma',
+            title: `${roomName}: ${n} ${plural(n, 'alarma activa', 'alarmas activas')} del nodo ${who}`,
+            room,
+            why: `${node.alarms.map(a => a.description).join('; ')}. Último estado ${ageLabel(link.ageMs)}${link.state === 'stale' ? ' (obsoleto)' : ''}.`,
+            next: 'Abrir la sala y revisar la causa. Cualquier rehabilitación se hace a mano en el nodo: Setas OS solo lee.',
+          }));
+        }
+        if (node.comparison && node.comparison.state === 'mismatch') {
+          out.push(nodeRow({
+            id: `node:setpoint:${room.roomId}:${who}`,
+            severity: 'vigilar',
+            title: `${roomName}: la consigna del nodo ${who} no coincide con el ciclo activo`,
+            room,
+            why: `${auto ? auto.describeDifferences(node.comparison) : 'La consigna difiere'}. Estado ${ageLabel(link.ageMs)}.`,
+            next: auto ? auto.RECOMPILE_ACTION : 'Recompilar y volver a cargar el firmware del nodo con las consignas del ciclo activo.',
+          }));
+        }
+      }
+
+      // Fuera de banda con calefacción comandada: necesita un estado al día (no
+      // se afirma "comandada" con un estado viejo) y la alerta de temperatura que
+      // el motor de anomalías ya dispara con sus bandas efectivas.
+      const heating = (room.nodes || []).find(n => n.valid && n.link && n.link.state === 'fresh' && n.heatCommanded);
+      if (heating && Number.isFinite(outOfBandMs)) {
+        const alert = (alerts || []).find(a => a && a.roomId === room.roomId && a.metric === 'temperature_c'
+          && a.kind === 'band' && (a.status == null || a.status === 'activa')
+          && Number.isFinite(a.since) && now - a.since >= outOfBandMs);
+        if (alert) {
+          const elapsed = now - alert.since;
+          out.push(nodeRow({
+            id: `node:oob-heat:${room.roomId}`,
+            severity: 'alarma',
+            title: `${roomName}: temperatura fuera de banda desde hace ${durationLabel(elapsed)} con la calefacción comandada`,
+            room,
+            why: `${alert.metricLabel || 'Temperatura'} ${alert.value} ${alert.unit || '°C'} ${alert.direction === 'low' ? 'por debajo de' : 'por encima de'} ${alert.limit} ${alert.unit || '°C'}, y el nodo ${heating.deviceId} reporta el relé de calefacción comandado (${ageLabel(heating.link.ageMs)}).`,
+            next: 'Comprobar que la calefacción entregue calor y que el sensor esté bien ubicado: Setas OS ve el comando, no el contacto ni la potencia.',
+            provenance: { class: 'reported+measured', outOfBandMs: elapsed, thresholdMs: outOfBandMs },
+          }));
+        }
+      }
+    }
+    return out;
+  };
+
   /**
    * Excepciones para la Banda 1 de Hoy, ordenadas por severidad.
    */
@@ -258,11 +381,15 @@
     remoteSync = null,
     overdrawnLots = [],
     rejected = [],
+    nodeRooms = [],
+    alerts = [],
+    nodeOutOfBandMs,
   } = {}) => [
     ...syncExceptions({ syncStats, remoteSync, now }),
     ...overdrawExceptions({ overdrawnLots }),
     ...quarantineExceptions({ rejected, now }),
     ...incubationExceptions({ lotes, bolsas, now }),
+    ...nodeExceptions({ nodeRooms, alerts, now, nodeOutOfBandMs }),
   ].sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9));
 
   /**
@@ -284,6 +411,8 @@
     OFFLINE_WARN_MS,
     QUARANTINE_WINDOW_MS,
     MIN_FARM_LOTS,
+    defaultNodeOutOfBandMs,
+    nodeExceptions,
     incubationReference,
     buildTodayExceptions,
     notificationsToSend,

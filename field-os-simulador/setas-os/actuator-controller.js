@@ -1,9 +1,15 @@
 'use strict';
 
 /**
- * @file actuator-controller.js — Motor de lógica de actuación y control ambiental para Setas OS.
+ * @file actuator-controller.js — Simulador de REFERENCIA de la lógica de actuación ambiental.
  *
- * Gobierna los relés de potencia (Hosyond 2ch) para:
+ * NO gobierna hardware: nada en Setas OS lo invoca ni conmuta relés. El control real de
+ * los actuadores vive en el firmware del nodo (ESPHome en el ESP32), no en esta aplicación
+ * (DEC-001); Setas OS solo lee el estado que el nodo publique. Este módulo se conserva como
+ * documentación ejecutable de la lógica que el firmware debe implementar; no debe cablearse
+ * a un servidor ni a una interfaz de operación.
+ *
+ * Lógica de referencia (relés de potencia Hosyond 2ch):
  * 1. Humidificador (AC Infinity CloudForge T7 / H05): Relay Ch1
  *    - Control Bang-Bang con histéresis amplia y protección anti-ciclo corto (120s).
  *    - Corte automático por riesgo de condensación libre (ΔT aire-rocío < 0.8°C).

@@ -59,6 +59,23 @@ const root = path.resolve(__dirname, '..');
     // Estilos del componente aplicados en este modal (no solo el alto mínimo).
     assert.equal(await sheet.locator('.harvest-quality-options').evaluate((n) => getComputedStyle(n).display), 'grid');
 
+    // «Sin defectos observados» (evaluado sin hallazgos) y los chips de defecto son excluyentes;
+    // deseleccionar todo deja «no evaluado» (ninguno presionado).
+    const noDefects = sheet.getByRole('button', { name: 'Sin defectos observados', exact: true });
+    const spo = sheet.locator('[data-defect="sporulation"]');
+    await expect(noDefects).toHaveAttribute('aria-pressed', 'false');
+    await noDefects.click();
+    await expect(noDefects).toHaveAttribute('aria-pressed', 'true');
+    await spo.click();
+    await expect(spo).toHaveAttribute('aria-pressed', 'true');
+    await expect(noDefects).toHaveAttribute('aria-pressed', 'false');
+    await noDefects.click();
+    await expect(noDefects).toHaveAttribute('aria-pressed', 'true');
+    await expect(spo).toHaveAttribute('aria-pressed', 'false');
+    await noDefects.click();
+    await expect(noDefects).toHaveAttribute('aria-pressed', 'false');
+    await expect(spo).toHaveAttribute('aria-pressed', 'false');
+
     // El selector heredado 1ra/2da/Merma se retiró.
     for (const lbl of ['1ra', '2da', 'Merma']) await expect(sheet.getByRole('button', { name: lbl, exact: true })).toHaveCount(0);
 

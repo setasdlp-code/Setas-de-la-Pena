@@ -1,0 +1,40 @@
+{
+  "schema": "setas.node-control-profiles.v1",
+  "_doc": "Contrato por sala de los nodos ESP32 de control. Añadir una sala = una entrada en `rooms` + un perfil en `profiles` + un archivo de nodo ESPHome que incluya el paquete común. Sin cambios de código. Ver esphome/CONTRATO_NODOS.md.",
+  "rooms": ["martha_01", "cloudlab_844", "incubacion_01"],
+  "profiles": {
+    "cloudlab_844": {
+      "roomId": "cloudlab_844",
+      "label": "CLOUDLAB 844",
+      "deviceId": "setas-cloudlab-01",
+      "firmware": "cloudlab_esp32.yaml",
+      "package": "esphome/modulo-fructificacion.package.yaml",
+      "commissioned": false,
+      "status": "BANCO DE PRUEBAS / NO COMISIONADO",
+      "heating": {
+        "metric": "temperature_c",
+        "sensor": "SHT31 (sht3xd, I2C 0x44)",
+        "setpointRule": "heat_setpoint_c = min + histeresis_c; temp_max_c = max; exige min + 2·histeresis_c <= max"
+      },
+      "operatorParams": {
+        "histeresis_c": { "required": true, "unit": "°C", "note": "Sin valor en knowledge_base/ para fructificación: lo fija y firma el operario." },
+        "photoperiod": { "required": false, "note": "Opcional. Sin fotoperiodo aprobado en knowledge_base/; sin él la luz queda apagada (-1)." }
+      },
+      "relays": [
+        { "id": "light", "channel": 1, "label": "Luz LED 12 V", "gpio": "GPIO26", "safeState": "off" },
+        { "id": "circulation", "channel": 2, "label": "Circulación GDSTIME", "gpio": "GPIO27", "safeState": "off" },
+        { "id": "heat", "channel": 3, "label": "Calefacción", "gpio": "GPIO25", "safeState": "off" },
+        { "id": "spare", "channel": 4, "label": "Reserva (sin carga)", "gpio": "GPIO33", "safeState": "off" }
+      ],
+      "alarms": {
+        "sensor_invalid": "Sensor de control inválido (NaN): calefacción OFF",
+        "over_temperature": "Temperatura en o sobre el techo de la banda: calefacción OFF",
+        "heating_locked": "Calefacción bloqueada tras alarma: rehabilitar a mano"
+      },
+      "blocked": [
+        { "actuator": "CloudForge T7 (humidificador)", "reason": "Pendiente calibración de HR en rango alto y protección del sensor frente al agua." },
+        { "actuator": "Cloudline H4 (extractor)", "reason": "Pendiente medir caudal efectivo y documentar control por CO₂. Interfaz eléctrica (PWM / 0-10 V) sin verificar." }
+      ]
+    }
+  }
+}

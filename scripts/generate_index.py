@@ -64,7 +64,7 @@ class IndexLayoutError(RuntimeError):
 @dataclass
 class Report:
     title_updates: list[tuple[str, str, str]] = field(default_factory=list)  # id, old, new
-    field_updates: list[tuple[str, str, str, str]] = field(default_factory=list)  # id, field, old, new (DEC-026)
+    field_updates: list[tuple[str, str, str, str]] = field(default_factory=list)  # id, field, old, new (DEC-027)
     path_updates: list[tuple[str, str, str]] = field(default_factory=list)  # id, old, new
     added: list[tuple[str, str]] = field(default_factory=list)  # id, path
     orphans: list[tuple[str, str]] = field(default_factory=list)  # id, path
@@ -87,7 +87,7 @@ class Report:
                 out.extend(f"  - {r}" for r in rows)
 
         section("title actualizado desde frontmatter", [f"{i}: {o!r} -> {n!r}" for i, o, n in self.title_updates])
-        section("category/confidence sincronizados desde frontmatter (DEC-026)", [f"{i}: {f} {o!r} -> {n!r}" for i, f, o, n in self.field_updates])
+        section("category/confidence sincronizados desde frontmatter (DEC-027)", [f"{i}: {f} {o!r} -> {n!r}" for i, f, o, n in self.field_updates])
         section("path actualizado (movimiento detectado)", [f"{i}: {o} -> {n}" for i, o, n in self.path_updates])
         section("entradas nuevas (PENDING REVIEW)", [f"{i}: {p}" for i, p in self.added])
         section("entradas cuyo archivo no existe (NO se borran)", [f"{i}: {p}" for i, p in self.orphans])
@@ -216,7 +216,7 @@ def resolve_related(ref: str, rel_path: str, path_to_id: dict[str, str]) -> str 
     return matches[0] if len(matches) == 1 else None
 
 
-# Normalización de valores de frontmatter fuera del vocabulario (DEC-026).
+# Normalización de valores de frontmatter fuera del vocabulario (DEC-027).
 ALIASES = {"very_high": "high", "very high": "high", "alta": "high", "media": "medium", "baja": "low"}
 EMPTY = {"", "n/a", "na", "none", "null", "-"}
 
@@ -305,7 +305,7 @@ def sync_index(text: str, kb_root: Path) -> tuple[str, Report]:
                 report.title_updates.append((entry.get("id"), entry.get("title"), fm_title))
         elif fm_title is not None and not isinstance(fm_title, str):
             report.info_drift.append(f"{entry.get('id')}: title del frontmatter no es texto ({fm_title!r})")
-        # category y confidence: el frontmatter manda (DEC-026), normalizado al esquema.
+        # category y confidence: el frontmatter manda (DEC-027), normalizado al esquema.
         for name, allowed in (("category", categories), ("confidence", confidences)):
             if name not in fm:
                 continue

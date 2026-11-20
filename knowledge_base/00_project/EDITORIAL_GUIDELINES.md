@@ -13,7 +13,7 @@ last_reviewed: 2026-08-13
 
 # Editorial Guidelines
 
-> **Estado (DEC-025, 2026-11-17):** documento de referencia. Las reglas de operación de agentes están en [`knowledge_base/AGENTS.md`](../AGENTS.md) y el contrato del repositorio en [`AGENTS.md`](../../AGENTS.md); si este documento discrepa de ellos, prevalecen. Consultarlo para una pregunta concreta, no como lectura obligatoria.
+> **Estado (DEC-026, 2026-11-17):** documento de referencia. Las reglas de operación de agentes están en [`knowledge_base/AGENTS.md`](../AGENTS.md) y el contrato del repositorio en [`AGENTS.md`](../../AGENTS.md); si este documento discrepa de ellos, prevalecen. Consultarlo para una pregunta concreta, no como lectura obligatoria.
 
 ## 1. Purpose
 

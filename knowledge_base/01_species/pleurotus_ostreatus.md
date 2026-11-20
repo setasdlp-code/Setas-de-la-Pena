@@ -124,7 +124,7 @@ Mismo fenómeno físico ya documentado para *L. edodes*; aquí se consigna para 
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Cornell Mushroom Blog. https://blog.mycology.cornell.edu
-- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-025, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
+- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-026, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
 
 ## Procesamiento: jerky (consultivo)
 

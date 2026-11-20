@@ -177,6 +177,36 @@
     return out;
   };
 
+  // Una banda de ROOM_TARGET_BANDS (simulador-app.jsx) no tiene fuente: es el
+  // valor con el que la app arrancó, no una consigna aprobada ni literatura.
+  const APP_DEFAULT_BAND_LABEL = 'predeterminado de la app, sin fuente';
+
+  /**
+   * De dónde sale cada banda efectiva de `effectiveBands`, métrica por métrica.
+   * Recorre los ciclos igual que effectiveBands (el último ciclo activo gana):
+   *   { [roomId]: { [metric]: { origin: 'cycle', source, sourceLabel, cycleId, stage }
+   *                          | { origin: 'app-default', source: null, sourceLabel } } }
+   * Solo informa de métricas que effectiveBands entregaría. No cambia ninguna banda.
+   */
+  const bandOrigins = (roomBands = {}, cycles = [], now = Date.now()) => {
+    const out = {};
+    for (const [roomId, bands] of Object.entries(roomBands || {})) {
+      out[roomId] = {};
+      for (const metric of Object.keys(bands || {})) {
+        out[roomId][metric] = { origin: 'app-default', source: null, sourceLabel: APP_DEFAULT_BAND_LABEL };
+      }
+    }
+    for (const c of activeCycles(cycles, now)) {
+      const room = out[c.roomId] || (out[c.roomId] = {});
+      for (const [metric, band] of Object.entries(c.targets || {})) {
+        if (!band || (band.min == null && band.max == null)) continue;
+        const source = SOURCE_LABELS[band.source] ? band.source : 'manual';
+        room[metric] = { origin: 'cycle', source, sourceLabel: SOURCE_LABELS[source], cycleId: c.id || null, stage: c.stage || null };
+      }
+    }
+    return out;
+  };
+
   /** Ciclos activos ahora (estado 'active' y dentro de su ventana). */
   const activeCycles = (cycles = [], now = Date.now()) => (cycles || []).filter(c => {
     if (!c || c.state !== 'active') return false;
@@ -199,6 +229,8 @@
     kbIdFor,
     suggestTargets,
     effectiveBands,
+    APP_DEFAULT_BAND_LABEL,
+    bandOrigins,
     activeCycles,
     activeCycleForRoom,
   };

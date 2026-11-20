@@ -196,7 +196,7 @@ La compra en volumen está bloqueada por ocho faltantes:
 
 # References
 
-- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-025, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
+- Shi, M., Sun, X., Ma, X., Li, X., Cao, J., Qi, W. y Wang, H. (2026). Physics-guided machine learning for predicting the internal temperature of mushroom bags. *Agriculture*, 16(13), 1454. https://doi.org/10.3390/agriculture16131454 [paper_026]. Corregida el 2026-11-19 (DEC-026, corrección verificable): la cita anterior a *Computers and Electronics in Agriculture* 218, 108722 corresponde a otro artículo (Crossref).
 - Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC. [paper_006]
 - Donoghue, J.D. & Denison, W.C. (1995). “Shiitake cultivation: Gas phase during incubation influences productivity.” *Mycologia* 87(2), 239–244. DOI: 10.1080/00275514.1995.12026525.
 - Kashino, Y., Myokai, F., Namba, K., Monta, M. & Kanzaki, H. (2016). “Effects of the Cultivation Stage Temperature and CO₂ Concentration on the Sawdust-based Culture Shiitake Yield.” DOI: 10.11274/bimi.15.1_5.

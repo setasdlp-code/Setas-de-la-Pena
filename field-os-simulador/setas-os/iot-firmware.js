@@ -1,58 +1,18 @@
 (function () {
 'use strict';
-// Nodos IoT por defecto y generadores de firmware y payloads de prueba para el
-// Hub IoT. Extraído de simulador-app.jsx sin cambios de contenido. Solo produce
-// texto: no abre conexiones ni escribe en Firestore.
+// Generadores de plantillas de telemetría y payloads de prueba para el Hub IoT. Solo produce texto: no abre conexiones ni escribe en
+// Firestore. Las plantillas son SOLO de sensores: no emiten relés ni control de
+// actuadores (el control vive en el firmware del nodo, DEC-001) y no incluyen la
+// autenticación del publicador real (telemetry-publisher/, que exige
+// X-Setas-Device + Bearer y `observed_at`); revisarlas antes de flashear.
+// No hay lista de nodos de ejemplo: los nodos que muestra el Hub salen del
+// estado real que llega por el puente en vivo (node-automation.js).
 
-const DEFAULT_IOT_NODES = [
-  {
-    id: 'node_martha_01',
-    name: 'Nodo Carpa 01 · Fructificación Orellanas',
-    roomId: 'martha_01',
-    mcu: 'esp32dev',
-    ip: '192.168.1.101',
-    mac: '24:6F:28:B4:72:01',
-    rssi: -58,
-    status: 'online',
-    sensors: ['sht3xd', 'scd30'],
-    relays: ['ch1_humidifier', 'ch2_fae'],
-    lastSeen: 'hace 12s',
-    metrics: { temp: 18.2, rh: 89.5, co2: 720, subTemp: 19.1 }
-  },
-  {
-    id: 'node_martha_02',
-    name: 'Nodo Carpa 02 · Fructificación Shiitake',
-    roomId: 'martha_02',
-    mcu: 'esp32c3',
-    ip: '192.168.1.102',
-    mac: '24:6F:28:C9:14:02',
-    rssi: -64,
-    status: 'online',
-    sensors: ['sht45', 'scd30'],
-    relays: ['ch1_humidifier', 'ch2_fae'],
-    lastSeen: 'hace 18s',
-    metrics: { temp: 17.5, rh: 85.0, co2: 840, subTemp: 18.0 }
-  },
-  {
-    id: 'node_incubacion',
-    name: 'Nodo Incubación · Sala Oscura Térmica',
-    roomId: 'incubacion_01',
-    mcu: 'sonoff_th16',
-    ip: '192.168.1.105',
-    mac: 'E8:DB:84:9A:88:05',
-    rssi: -52,
-    status: 'online',
-    sensors: ['dht22', 'ds18b20'],
-    relays: ['ch1_humidifier'],
-    lastSeen: 'hace 35s',
-    metrics: { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8 }
-  }
-];
-
-const generateESPHomeYaml = ({ deviceName = 'setas-carpa-01', roomId = 'martha_01', mcu = 'esp32dev', sensors = ['sht3xd', 'scd30'], relays = ['ch1_humidifier', 'ch2_fae'], wifiSsid = 'SetasPeña_2.4G', wifiPass = '**********', serverHost = '192.168.1.100', serverPort = '8080' }) => {
+const generateESPHomeYaml = ({ deviceName = 'setas-carpa-01', roomId = 'martha_01', mcu = 'esp32dev', sensors = ['sht3xd', 'scd30'], wifiSsid = 'SetasPeña_2.4G', wifiPass = '**********', serverHost = '192.168.1.100', serverPort = '8080' }) => {
   return `# ==============================================================================
 # Setas de la Peña — Tenjo, Cundinamarca (2.587 msnm)
-# ESPHome Telemetry & Actuation Firmware
+# PLANTILLA DE TELEMETRÍA ESPHome (solo sensores, sin relés)
+# No incluye autenticación del publicador (telemetry-publisher/): revisar antes de flashear.
 # ==============================================================================
 
 substitutions:
@@ -133,18 +93,6 @@ ${sensors.includes('sht3xd') ? `  - platform: sht3xd
       id: room_humidity
     update_interval: 15s
 ` : ''}
-switch:
-${relays.includes('ch1_humidifier') ? `  - platform: gpio
-    pin: ${mcu.includes('esp8266') ? 'GPIO12' : 'GPIO25'}
-    id: relay_humidifier
-    name: "Relé Humidificador T7 (Ch1)"
-    inverted: false
-` : ''}${relays.includes('ch2_fae') ? `  - platform: gpio
-    pin: ${mcu.includes('esp8266') ? 'GPIO13' : 'GPIO26'}
-    id: relay_fae
-    name: "Relé Extractor FAE (Ch2)"
-    inverted: false
-` : ''}
 http_request:
   verify_ssl: false
 
@@ -169,7 +117,8 @@ interval:
 const generateArduinoIno = ({ deviceName = 'setas-carpa-01', roomId = 'martha_01', wifiSsid = 'SetasPeña_2.4G', wifiPass = '**********', serverHost = '192.168.1.100', serverPort = '8080' }) => {
   return `/* ==============================================================================
  * Setas de la Peña — Tenjo, Cundinamarca (2.587 msnm)
- * Sketch Nativo Arduino C++ para Telemetría ESP32 / Setas OS
+ * PLANTILLA DE TELEMETRÍA Arduino C++ para ESP32 / Setas OS (solo sensores, sin relés)
+ * No incluye autenticación del publicador (telemetry-publisher/): revisar antes de usar.
  * ============================================================================== */
 
 #include <WiFi.h>
@@ -233,7 +182,8 @@ void loop() {
 };
 
 const generateCurlPayload = ({ roomId = 'martha_01', temp = 18.2, rh = 89.5, co2 = 720, subTemp = 19.0, serverHost = '192.168.1.100', serverPort = '8080' }) => {
-  return `curl -X POST "http://${serverHost}:${serverPort}/api/telemetry" \\
+  return `# Plantilla de telemetría de prueba (no incluye la autenticación del publicador real)
+curl -X POST "http://${serverHost}:${serverPort}/api/telemetry" \\
   -H "Content-Type: application/json" \\
   -d '{
     "room_id": "${roomId}",
@@ -245,7 +195,7 @@ const generateCurlPayload = ({ roomId = 'martha_01', temp = 18.2, rh = 89.5, co2
   }'`;
 };
 
-const api = { DEFAULT_IOT_NODES, generateESPHomeYaml, generateArduinoIno, generateCurlPayload };
+const api = { generateESPHomeYaml, generateArduinoIno, generateCurlPayload };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.SetasIotFirmware = api;
 

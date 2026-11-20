@@ -116,6 +116,10 @@ const PROTECTED_APP_SCRIPTS = [
   // Ciclos de sala: modelo y bandas sugeridas desde species.yaml.
   "../room-cycle.js",
   "../room-cycle-targets.js",
+  // Estado de nodos ESP32 (solo lectura): consignas, vista de estado y horas fuera de banda.
+  "../room-node-setpoints.js",
+  "../node-automation.js",
+  "../cycle-out-of-band.js",
   "../room-state.js",
   // Fotos de bolsas en IndexedDB (fuera de la cuota de localStorage).
   "../bag-photo-store.js",
