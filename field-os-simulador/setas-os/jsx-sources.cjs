@@ -32,5 +32,7 @@ module.exports = [
   'views/harvest-quality-panel.jsx',
   'autoclave-qualification.js',
   'views/autoclave-qualification-panel.jsx',
+  'thermal-mapping.js',
+  'views/incubation-thermal-panel.jsx',
   'simulador-app.jsx',
 ];

@@ -4164,6 +4164,20 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     // El reloj de ciclo avanza por minuto; un registro recién hecho debe contar ya.
     setCycleClock(Date.now());
   };
+  // Mapa térmico de incubación (OAP-0001): registros locales inmutables.
+  const readThermalMapping=()=>{try{SetasPrototype.recover(localStorage);return {records:SetasThermalMapping.readRecords(localStorage),error:''};}catch(e){return {records:[],error:e.message};}};
+  const [thermalMapping,setThermalMapping]=useState(readThermalMapping);
+  useEffect(()=>{
+    const refresh=event=>{if(event.key!==SetasThermalMapping.KEY&&event.key!==SetasPrototype.PENDING&&event.key!==null)return;setThermalMapping(readThermalMapping());};
+    window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
+  },[]);
+  const saveThermalRecord=build=>{
+    if(thermalMapping.error)throw Error(thermalMapping.error);
+    const current=SetasThermalMapping.readRecords(localStorage);
+    const records=[...current,build(current)];
+    SetasPrototype.persist(localStorage,[[SetasThermalMapping.KEY,records]]);
+    setThermalMapping({records,error:''});
+  };
   // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
   // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
   // de React no pueden llamarse condicionalmente — ese bloque solo se ejecuta
@@ -14539,6 +14553,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div>
             <ProductionReadinessDashboard assessment={productionReadiness} input={productionReadinessInput} rooms={Object.values(ROOMS_CONFIG)} onRoomChange={setSelectedClimateRoom} onAction={readinessAction} onSave={saveProductionEvidence} error={productionEvidence.error}/>
             <AutoclaveQualificationPanel events={autoclaveQual.events} error={autoclaveQual.error} onAppend={appendAutoclaveEvents} nowMs={cycleClock} plannedLoad={preparation?{bags:preparation.target.bags,kgPerBag:preparation.target.kgPerBag,recipeRevision:preparation.revision}:null}/>
+            <IncubationThermalPanel records={thermalMapping.records} error={thermalMapping.error} onSave={saveThermalRecord}/>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
               <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>

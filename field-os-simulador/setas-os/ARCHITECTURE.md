@@ -279,6 +279,18 @@ Antes de inocular, `knowledge_base/06_operations/quality_control.md` exige ciclo
 
 Pruebas: `autoclave-qualification.test.js` (incluye los valores de verificación de IAPWS-IF97), `production-readiness.test.js`, `e2e/autoclave-qualification.browser.cjs` y `e2e/production-readiness.browser.cjs` (fixture sintética `e2e/autoclave-fixture.cjs`).
 
+## 5d. Mapa térmico de incubación (OAP-0001)
+
+El gate térmico del prototipo de incubación (`knowledge_base/10_ai_workflows/OAP-0001-modular-incubation-validation.md`, `04_facility/incubation.md`) se evalúa con datos de datalogger en Producción → «Mapa térmico de incubación» (`views/incubation-thermal-panel.jsx`).
+
+- **Modelo:** `thermal-mapping.js` (`SetasThermalMapping`). Registros inmutables `setas.thermal-mapping.v1` en `sdp_thermal_mapping_v1` (respaldo de ensayos incluido; sin sincronización entre equipos).
+- **Offsets (`computeOffsets`):** sondas juntas en un punto; offset = mediana de (sonda − referencia), con referencia = mediana del grupo en cada instante o una sonda elegida. Menos de 48 h de comparación no se guarda. Corregido = lectura − offset. La mediana y la referencia son decisiones de cálculo declaradas, no de la KB.
+- **Uniformidad (`evaluateMap`):** después del fin de estabilización declarado, ΔT = máx − mín de base, centro y tope corregidos; cumple si ΔT ≤ 2 °C en ≥ 95 % de los intervalos. Un instante sin las tres posiciones cuenta en el denominador como no demostrado. Sin offsets para las tres sondas, o ensayo de menos de 72 h → datos insuficientes. Los offsets deben haberse medido antes del ensayo.
+- **Unidad (`unitSummary`):** toma el último ensayo de cada tipo; «Vacío y carga simulada cumplen» no autoriza compra en volumen (faltan ciclo biológico y los demás gates de `incubation.md`).
+- **Criterio:** provisional y de uniformidad del prototipo, no setpoint de cultivo (`CRITERIA.origin`).
+
+Pruebas: `thermal-mapping.test.js`, `e2e/incubation-thermal.browser.cjs`.
+
 ## Preguntas para revisar un PR que toque navegación o el Formulador
 
 1. ¿Alguna acción de React cambia de pestaña sin notificar al shell (`setTab`/`setBitTab` directo en vez de `goTab`/`goBitTab`)?
