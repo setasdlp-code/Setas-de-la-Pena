@@ -3964,6 +3964,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .production-readiness .inv-btn{min-height:44px;white-space:normal;font:var(--t-small);font-weight:var(--weight-semibold)}
 .production-readiness :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
 @media(max-width:700px){.production-readiness{padding:var(--space-2)}.readiness-grid{grid-template-columns:1fr}}
+/* Calificación del autoclave (views/autoclave-qualification-panel.jsx) */
+.aq-section-title{font:var(--t-body);font-weight:var(--weight-semibold);margin:var(--space-3) 0 var(--space-1)}
+.aq-actor{max-width:360px;margin-bottom:var(--space-2)}
+.aq-table-wrap{overflow-x:auto;max-width:100%;margin:var(--space-1) 0}
+.aq-param-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:var(--space-2)}
+.aq-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:var(--space-2)}
+.aq-fieldset{min-width:0;border:var(--rule-hairline);padding:var(--space-2);display:grid;gap:var(--space-2);margin:0}
+.aq-fieldset legend{font:var(--t-small);font-weight:var(--weight-semibold)}
+.production-readiness details>summary{min-height:44px;cursor:pointer;display:list-item;padding:var(--space-1) 0;font:var(--t-small)}
+.production-readiness code{overflow-wrap:anywhere}
+.aq-run-details{margin-top:var(--space-2);min-width:0}
 .sim-root .generator-status{font:400 var(--text-sm)/1.5 var(--font-body);color:var(--text-secondary);padding:var(--space-1);border-left:2px solid var(--status-info);overflow-wrap:anywhere}
 .sim-root .generator-origin-control{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2)}
 .sim-root .generator-origin-control p{flex:1 1 200px;margin:0;font:400 var(--text-xs)/1.5 var(--font-body);color:var(--text-metadata)}

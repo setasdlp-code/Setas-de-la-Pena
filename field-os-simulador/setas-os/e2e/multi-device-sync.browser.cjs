@@ -12,8 +12,10 @@ const http=require('node:http');
 const assert=require('node:assert/strict');
 const {chromium,expect}=require('@playwright/test');
 const root=path.resolve(__dirname,'..');
+const {qualifiedJournal}=require('./autoclave-fixture.cjs');
+const AQ_JOURNAL=qualifiedJournal();
 
-const COLECCIONES=['bitacora_lotes','bitacora_bolsas','bitacora_cosechas','inventario_asientos','inventario_movimientos','inventario_compras','inventario_proveedores','inventario_reservas','room_cycles','production_readiness'];
+const COLECCIONES=['bitacora_lotes','bitacora_bolsas','bitacora_cosechas','inventario_asientos','inventario_movimientos','inventario_compras','inventario_proveedores','inventario_reservas','room_cycles','production_readiness','autoclave_qualification','thermal_mapping'];
 const clone=x=>JSON.parse(JSON.stringify(x));
 
 class FakeFirestore{
@@ -105,10 +107,13 @@ const stockDe=(page,ing)=>page.evaluate(id=>JSON.parse(localStorage.getItem('sdp
    sdp_movimientos:[],sdp_compras:[],sdp_inv_reservas:[],
    sdp_proveedores:[{id:'prov_test',nombre:'Proveedor de Prueba',tipo:'directo',municipio:'Tenjo'}],
    sdp_bit_lotes:[{id:'BIT_E2E',codigo:'SDP-E2E-01',especie:'ostreatus',estado:'incubacion',numBolsas:0,createdAt:'2026-10-01T10:00:00.000Z'}],
+   // Calificación del autoclave y offsets de incubación registrados en A.
+   sdp_autoclave_qualification_v1:AQ_JOURNAL,
+   sdp_thermal_mapping_v1:[{schema:'setas.thermal-mapping.v1',kind:'offsets',id:'OFF_E2E',at:'2026-11-10T12:00:00.000Z',by:'Operador A',reference:'median',timeKind:'elapsed',durationH:50,samples:1500,probes:{DS_A:{offsetC:0.3,n:1500},DS_B:{offsetC:0,n:1500}}}],
    // Revisión de requisitos hecha en A antes de que B exista.
    sdp_production_readiness:[{schema:'setas.production-readiness.v1',id:'PR_E2E',requirementId:'equipment',status:'blocked',reviewer:'Operador A',reference:'AC-0413',notes:'Bioindicador con crecimiento',details:{equipmentId:'AUTOCLAVE-1941X',protocol:'Carga de prueba',cycleId:'AC-0413',bioindicatorResult:'con_crecimiento'},scope:'["fixture"]',at:'2026-10-01T11:00:00.000Z'}],
   });
-  await drenarHasta(A,async()=>db.cols.inventario_asientos.has('open_fx-1')&&db.cols.bitacora_lotes.has('BIT_E2E')&&db.cols.inventario_proveedores.has('prov_test')&&db.cols.production_readiness.has('PR_E2E'),
+  await drenarHasta(A,async()=>db.cols.inventario_asientos.has('open_fx-1')&&db.cols.bitacora_lotes.has('BIT_E2E')&&db.cols.inventario_proveedores.has('prov_test')&&db.cols.production_readiness.has('PR_E2E')&&db.cols.autoclave_qualification.size===AQ_JOURNAL.length&&db.cols.thermal_mapping.has('OFF_E2E'),
    'A no subió su inventario, su proveedor, su lote de Bitácora o su revisión de requisitos');
 
   const B=await abrir('B',{sdp_lotes:[],sdp_movimientos:[],sdp_compras:[],sdp_inv_reservas:[],sdp_proveedores:[]});
@@ -117,6 +122,10 @@ const stockDe=(page,ing)=>page.evaluate(id=>JSON.parse(localStorage.getItem('sdp
   await expect.poll(()=>B.evaluate(()=>JSON.parse(localStorage.getItem('sdp_proveedores')||'[]').map(p=>p.nombre))).toEqual(['Proveedor de Prueba']);
   await expect.poll(()=>B.evaluate(()=>JSON.parse(localStorage.getItem('sdp_production_readiness')||'[]').map(r=>r.id+':'+r.details.bioindicatorResult))).toEqual(['PR_E2E:con_crecimiento']);
   await expect(B.locator('.inventory-stock-table')).toContainText('10.0');
+  // La calificación llega completa: B la pliega y la evalúa igual que A.
+  await expect.poll(()=>B.evaluate(()=>JSON.parse(localStorage.getItem('sdp_autoclave_qualification_v1')||'[]').length)).toBe(AQ_JOURNAL.length);
+  await expect.poll(()=>B.evaluate(()=>{const Q=window.SetasAutoclaveQualification;const ev=Q.readEvents(localStorage);return Q.assessRelease(Q.foldEvents(ev),{configurationId:'CFG-6x1.5',plannedBags:6,plannedWetKgPerBag:1.5}).status;})).toBe('released');
+  await expect.poll(()=>B.evaluate(()=>JSON.parse(localStorage.getItem('sdp_thermal_mapping_v1')||'[]').map(r=>r.id))).toEqual(['OFF_E2E']);
 
   // ── 2. Ajustes simultáneos sin verse: los dos descuentos cuentan ──────────
   const editar=async(page,kg)=>{

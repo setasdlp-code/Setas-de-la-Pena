@@ -2,6 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const {chromium,expect}=require('@playwright/test');
 const root=path.resolve(__dirname,'..');
+const {qualifiedJournal}=require('./autoclave-fixture.cjs');
 (async()=>{
  const server=http.createServer((req,res)=>{
   const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
@@ -14,12 +15,14 @@ const root=path.resolve(__dirname,'..');
   const context=await browser.newContext({viewport:{width:1366,height:900}}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await context.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
-  await context.addInitScript(()=>{
+  // Calificación sintética del autoclave (G1–G4 cerradas para 6 × 1,5 kg).
+  await context.addInitScript(journal=>{
    if(localStorage.getItem('readiness-fixture'))return;
+   localStorage.setItem('sdp_autoclave_qualification_v1',JSON.stringify(journal));
    localStorage.setItem('readiness-fixture','1');localStorage.setItem('sdp_seeded','1');
    localStorage.setItem('setas_formulator_draft_v1',JSON.stringify({version:1,recipe:[{id:'aserrin_roble',p:85},{id:'salvado_trigo',p:15}],sKey:'shiitake',hasPickedSpecies:true,lockedIds:[]}));
    localStorage.setItem('sdp_lotes',JSON.stringify(['aserrin_roble','salvado_trigo','spawn_grano','bolsa_unicorn_microfiltro'].map((id,i)=>({id:'LOT-'+i,ingredienteId:id,cantidadKgDisponible:100,activo:true,fechaIngreso:'2026-10-01',unidad:id==='bolsa_unicorn_microfiltro'?'ud':'kg',precioPorKgCOP:1000}))));
-  });
+  },qualifiedJournal());
   const url=`http://127.0.0.1:${server.address().port}/__harness.html`;
   await page.goto(url+'?view=home');
   await page.getByRole('navigation',{name:'Vista de inicio'}).getByRole('button',{name:'Seguimiento',exact:true}).click();
@@ -43,8 +46,14 @@ const root=path.resolve(__dirname,'..');
   await expect(equipment.locator('.readiness-status')).toHaveText('Sin verificar');
   await form.getByLabel(/Corrida del autoclave/).fill('AC-FIXTURE-01');
   await form.getByLabel('Bioindicador de la corrida').selectOption('sin_crecimiento');
+  // Un bioindicador negativo no califica el ciclo: falta la configuración calificada (G1–G4).
+  await form.getByRole('button',{name:/Guardar revisión/}).click();
+  await expect(form.getByRole('alert')).toContainText('configuración de carga calificada');
+  await expect(equipment.locator('.readiness-status')).toHaveText('Sin verificar');
+  await form.getByLabel(/Configuración de carga calificada/).selectOption('CFG-6x1.5');
   await form.getByRole('button',{name:/Guardar revisión/}).click();
   await expect(equipment.locator('.readiness-status')).toHaveText('Verificado');
+  await expect(equipment).toContainText('Ciclo calificado para CFG-6x1.5');
   const record=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_production_readiness'))[0]);
   assert.equal(record.requirementId,'equipment');assert.ok(record.scope.includes('shiitake'));
   // La revisión queda en cola para subir a production_readiness (ADR-0009).

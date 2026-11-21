@@ -280,3 +280,31 @@ test('ciclos de sala: se sincronizan y uno cerrado no vuelve a activo', () => {
     assert.equal(c.notes, 'revisado');
   }
 });
+
+test('calificación del autoclave y mapa térmico: lo registrado en un equipo llega al otro intacto', () => {
+  const AQ = require('./autoclave-qualification.js');
+  const { qualifiedJournal } = require('./e2e/autoclave-fixture.cjs');
+  const server = new Server();
+  const A = new Device('devA', server);
+  const B = new Device('devB', server);
+  const events = qualifiedJournal({ nowMs: Date.parse('2026-11-20T12:00:00.000Z') });
+  const thermal = [{ schema: 'setas.thermal-mapping.v1', kind: 'offsets', id: 'OFF-1', at: '2026-11-10T12:00:00.000Z', by: 'A', reference: 'median', timeKind: 'elapsed', probes: { DS_A: { offsetC: 0.3, n: 10 } } }];
+  A.store[AQ.KEY] = clone(events);
+  A.store['sdp_thermal_mapping_v1'] = clone(thermal);
+  A.sync();
+  assert.equal(server.col('autoclave_qualification').size, events.length);
+  assert.equal(server.col('thermal_mapping').size, 1);
+  B.sync();
+  // B puede plegar y evaluar el registro recibido como si fuera propio.
+  const received = AQ.readEvents({ getItem: (k) => JSON.stringify(B.read(k)) });
+  assert.equal(received.length, events.length);
+  const rel = AQ.assessRelease(AQ.foldEvents(received), { configurationId: 'CFG-6x1.5', plannedBags: 6, plannedWetKgPerBag: 1.5 }, Date.parse('2026-11-20T12:00:00.000Z'));
+  assert.equal(rel.status, 'released');
+  assert.deepEqual(B.read('sdp_thermal_mapping_v1').map((r) => r.id), ['OFF-1']);
+  // Un evento nuevo en B vuelve a A sin duplicar ni reescribir los anteriores.
+  const next = AQ.createEvent(received, 'gate.reviewed', { gateId: 'G5', status: 'abierto', notes: 'Pendiente C1/C3' }, { at: '2026-11-20T12:00:00.000Z', by: 'B', id: 'EV-B-1', nowMs: Date.parse('2026-11-20T12:01:00.000Z') });
+  B.store[AQ.KEY] = [...B.read(AQ.KEY), next];
+  B.sync(); A.sync();
+  assert.equal(A.read(AQ.KEY).length, events.length + 1);
+  assert.ok(A.read(AQ.KEY).some((e) => e.id === 'EV-B-1'));
+});
