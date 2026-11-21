@@ -229,6 +229,38 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Calificación del autoclave (autoclave-qualification.js): registro
+    // sólo-anexar de eventos firmados. Corregir algo es un evento nuevo; editar
+    // o borrar uno borraría la evidencia de G1–G5, así que solo se crean.
+    match /autoclave_qualification/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.schema == 'setas.autoclave-qualification.v1'
+        && request.resource.data.id == id
+        && request.resource.data.type in ['protocol.drafted', 'protocol.approved', 'configuration.defined',
+          'run.registered', 'run.plateau_changed', 'run.data_imported', 'run.indicators_recorded',
+          'run.deviation_recorded', 'gate.reviewed', 'pq2.defined', 'pq2.reading']
+        && request.resource.data.by is string
+        && request.resource.data.by.size() > 0
+        && request.resource.data.at is string
+        && request.resource.data.payload is map;
+      allow update, delete: if false;
+    }
+
+    // Mapa térmico de incubación (thermal-mapping.js): offsets y ensayos
+    // inmutables con su responsable.
+    match /thermal_mapping/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.schema == 'setas.thermal-mapping.v1'
+        && request.resource.data.id == id
+        && request.resource.data.kind in ['offsets', 'map']
+        && request.resource.data.by is string
+        && request.resource.data.by.size() > 0
+        && request.resource.data.at is string;
+      allow update, delete: if false;
+    }
+
     // El flujo del lote (lifecycleState, revision) lo escribe solo la función de
     // aceptación (functions/accept-field-event.js), igual que en
     // lotes_produccion. Una vez que el lote tiene etapa aceptada, `estado` es su

@@ -73,6 +73,8 @@ function mapping(gradient){
   await expect(again.getByTestId('tm-unit-Estra-1').locator('.readiness-status')).toHaveText('Vacío y carga simulada cumplen');
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_thermal_mapping_v1')));
   assert.equal(stored.length,4);assert.ok(stored.every(r=>r.by==='Operador de prueba'));
+  const queued=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_sync_queue')||'[]'));
+  assert.ok(stored.every(r=>queued.some(op=>op.type==='crearDocumento'&&op.args[0]==='thermal_mapping/'+r.id)),'un registro no quedó en cola de sincronización');
   for(const width of [390,320]){
    await page.setViewportSize({width,height:844});await again.scrollIntoViewIfNeeded();
    assert.ok(await again.evaluate(el=>el.scrollWidth<=el.clientWidth),'reflow '+width);

@@ -50,6 +50,10 @@
     // cada una es un registro inmutable; una revisión nueva reemplaza a la
     // anterior por fecha, nunca la edita. Por eso no necesitan resolvedores.
     production_readiness: { localKey: 'sdp_production_readiness' },
+    // Calificación del autoclave y mapa térmico de incubación: registros
+    // inmutables (sólo-anexar); igual que las revisiones, sin resolvedores.
+    autoclave_qualification: { localKey: 'sdp_autoclave_qualification_v1' },
+    thermal_mapping: { localKey: 'sdp_thermal_mapping_v1' },
   });
 
   const BODEGA_COLLECTIONS = Object.freeze(['inventario_movimientos', 'inventario_compras', 'inventario_proveedores', 'inventario_reservas']);

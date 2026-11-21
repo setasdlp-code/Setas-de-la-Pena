@@ -200,6 +200,9 @@ function csvFor(startMs){
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_autoclave_qualification_v1')));
   assert.ok(stored.every(e=>e.schema==='setas.autoclave-qualification.v1'&&e.by==='Operador de prueba'));
   assert.equal(stored.filter(e=>e.type==='run.data_imported').length,3);
+  // Cada evento queda en cola para subir a autoclave_qualification (ADR-0009).
+  const queued=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_sync_queue')||'[]'));
+  assert.ok(stored.every(e=>queued.some(op=>op.type==='crearDocumento'&&op.args[0]==='autoclave_qualification/'+e.id)),'un evento no quedó en cola de sincronización');
   await page.reload();
   await expect(page.getByTestId('autoclave-qualification').getByTestId('aq-summary')).toContainText('Ciclo calificado para CFG-6x1.5');
   const download=page.waitForEvent('download');await page.getByTestId('autoclave-qualification').getByRole('button',{name:'Exportar registro'}).click();

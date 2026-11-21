@@ -380,6 +380,6 @@ function AutoclaveQualificationPanel({ events, error, onAppend, nowMs, plannedLo
       <details><summary>Registrar lectura de {st.id}</summary><AQReadingForm key={st.readings.length} study={st} submit={submit} /></details>
     </article>; })}
     <details><summary>Nuevo estudio PQ-2</summary><AQStudyForm configurations={configurations} submit={submit} /></details>
-    <p className="readiness-boundary">Registro local sólo-anexar, incluido en el respaldo de ensayos. Aún no se sincroniza entre equipos: exportar el registro para compartirlo con el servicio técnico.</p>
+    <p className="readiness-boundary">Registro sólo-anexar: se guarda en este equipo, se sincroniza con los demás cuando hay sesión y señal, y se incluye en el respaldo de ensayos. «Exportar registro» genera el JSON para el servicio técnico.</p>
   </section>;
 }

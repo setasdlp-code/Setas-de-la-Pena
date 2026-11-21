@@ -4158,9 +4158,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const appendAutoclaveEvents=drafts=>{
     if(autoclaveQual.error)throw Error(autoclaveQual.error);
     let events=SetasAutoclaveQualification.readEvents(localStorage);
-    for(const d of drafts)events=[...events,SetasAutoclaveQualification.createEvent(events,d.type,d.payload,{by:d.by,id:crypto.randomUUID()})];
+    const before=events.length;
+    // Otro equipo con el reloj adelantado pudo dejar el último evento en el
+    // futuro de este: el registro sigue siendo sólo-anexar desde ese instante.
+    const lastMs=Math.max(0,...events.map(e=>Date.parse(e.at)).filter(Number.isFinite));
+    for(const d of drafts){const nowMs=Math.max(Date.now(),lastMs);events=[...events,SetasAutoclaveQualification.createEvent(events,d.type,d.payload,{by:d.by,id:crypto.randomUUID(),at:new Date(nowMs).toISOString(),nowMs})];}
     SetasPrototype.persist(localStorage,[[SetasAutoclaveQualification.KEY,events]]);
     setAutoclaveQual({events,error:''});
+    // Cada evento es un documento inmutable: sube una vez y llega a los demás equipos (ADR-0009).
+    events.slice(before).forEach(ev=>encolarSync({type:'crearDocumento',key:'autoclave_qualification:'+ev.id,args:['autoclave_qualification/'+ev.id,ev]}));
     // El reloj de ciclo avanza por minuto; un registro recién hecho debe contar ya.
     setCycleClock(Date.now());
   };
@@ -4174,9 +4180,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const saveThermalRecord=build=>{
     if(thermalMapping.error)throw Error(thermalMapping.error);
     const current=SetasThermalMapping.readRecords(localStorage);
-    const records=[...current,build(current)];
+    const record=build(current);
+    const records=[...current,record];
     SetasPrototype.persist(localStorage,[[SetasThermalMapping.KEY,records]]);
     setThermalMapping({records,error:''});
+    encolarSync({type:'crearDocumento',key:'thermal_mapping:'+record.id,args:['thermal_mapping/'+record.id,record]});
   };
   // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
   // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
@@ -4826,7 +4834,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles,
         // Las revisiones se releen con readRecords: un registro inválido llegado
         // de otro equipo se muestra como error, igual que uno dañado en local.
-        [SetasProductionReadiness.KEY]:()=>{try{setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}catch(e){setProductionEvidence({records:[],error:e.message});}}};
+        [SetasProductionReadiness.KEY]:()=>{try{setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}catch(e){setProductionEvidence({records:[],error:e.message});}},
+        [SetasAutoclaveQualification.KEY]:()=>setAutoclaveQual(readAutoclaveQualification()),
+        [SetasThermalMapping.KEY]:()=>setThermalMapping(readThermalMapping())};
       for(const [key,value] of plan.entries){
         if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
         else if(setters[key]) setters[key](value);

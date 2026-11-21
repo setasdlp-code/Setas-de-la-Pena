@@ -48,6 +48,7 @@
   const KPA_PER_PSI = 6.894757293168;
   const BOGOTA_OFFSET_MIN = -300; // Colombia: UTC−5 todo el año, sin horario de verano.
   const MAX_ROWS = 20000;
+  const MAX_EVENT_CHARS = 900000;
   const LOAD_MASS_TOLERANCE_KG = 0.05; // redondeo de pesaje, no una tolerancia de proceso.
 
   const CANDIDATE_ORIGIN = 'Propuesta del propietario del 2026-11-03 (operational_commissioning.md, ficha PQ-1). '
@@ -901,6 +902,8 @@
     const state = foldEvents(events);
     validateEvent(state, type, payload || {}, at, nowMs);
     const event = { schema: SCHEMA, id: text(id), type, at, by: text(by), payload: JSON.parse(JSON.stringify(payload || {})) };
+    // Un documento de Firestore no supera 1 MiB: un archivo enorme no se sincronizaría.
+    if (JSON.stringify(event).length > MAX_EVENT_CHARS) fail('El archivo es demasiado grande para sincronizarlo. Exportar con un intervalo mayor o recortar fuera de la corrida.');
     if (!validEnvelope(event)) fail('Evento inválido.');
     return event;
   }

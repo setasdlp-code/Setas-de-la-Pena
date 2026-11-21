@@ -28,6 +28,8 @@ export const COLECCIONES = Object.freeze([
   "inventario_reservas",
   "room_cycles",
   "production_readiness",
+  "autoclave_qualification",
+  "thermal_mapping",
 ]);
 
 function ref(path) {

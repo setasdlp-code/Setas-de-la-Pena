@@ -156,8 +156,11 @@
     // Las columnas del ensayo deben ser las mismas sondas comparadas (mismo nombre/dirección).
     const offsets = Object.fromEntries(cols.map((c) => [c, offsetSet.probes[c]?.offsetC]));
     const evaluation = evaluateMap(data, { positions, offsets, stabilizationMin });
-    return { schema: SCHEMA, kind: 'map', id, unitId: text(unitId), testType, offsetSetId, at, by: text(by), sourceFile: text(sourceFile), notes: text(notes),
+    const record = { schema: SCHEMA, kind: 'map', id, unitId: text(unitId), testType, offsetSetId, at, by: text(by), sourceFile: text(sourceFile), notes: text(notes),
       positions: { ...positions }, stabilizationMin, data: compactData(data, cols), status: evaluation.status, metrics: evaluation.metrics, reasons: evaluation.reasons };
+    // Un documento de Firestore no supera 1 MiB.
+    if (JSON.stringify(record).length > 900000) fail('El ensayo es demasiado grande para sincronizarlo. Exportar con un intervalo de 60 s o recortar antes del ensayo.');
+    return record;
   }
 
   /** Re-evalúa un ensayo guardado con sus datos y los offsets referenciados. */

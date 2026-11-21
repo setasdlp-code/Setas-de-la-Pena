@@ -113,6 +113,6 @@ function IncubationThermalPanel({ records, error, onSave }) {
     </details>)}
     <details><summary>Registrar comparación de sondas (offsets)</summary><TMOffsetsForm key={'o' + records.length} records={records} submit={submit} /></details>
     <details><summary>Registrar ensayo de uniformidad</summary><TMMapForm key={'m' + records.length} records={records} submit={submit} /></details>
-    <p className="readiness-boundary">Registro local inmutable, incluido en el respaldo de ensayos. Aún no se sincroniza entre equipos.</p>
+    <p className="readiness-boundary">Registros inmutables: se guardan en este equipo, se sincronizan con los demás cuando hay sesión y señal, y se incluyen en el respaldo de ensayos.</p>
   </section>;
 }

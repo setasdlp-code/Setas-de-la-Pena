@@ -142,6 +142,33 @@ test('sin sesión no se leen revisiones de requisitos', async () => {
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'production_readiness/pr_6')));
 });
 
+// Calificación del autoclave y mapa térmico: registros sólo-anexar.
+const AQ_EVENT = { schema: 'setas.autoclave-qualification.v1', id: 'aq_1', type: 'gate.reviewed', at: '2026-11-20T12:00:00.000Z', by: 'Sebastián',
+  payload: { gateId: 'G1', status: 'cerrado', reference: 'INF-1', details: { calibrationCertificate: 'CAL-1', inspectionReport: 'INF-1' } } };
+const TM_RECORD = { schema: 'setas.thermal-mapping.v1', id: 'tm_1', kind: 'offsets', at: '2026-11-20T12:00:00.000Z', by: 'Sebastián', reference: 'median', probes: { DS_A: { offsetC: 0.3, n: 10 } } };
+
+test('un cliente registra eventos de calificación del autoclave y no los edita ni borra', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'autoclave_qualification/aq_1'), AQ_EVENT));
+  await seed('autoclave_qualification/aq_2', { ...AQ_EVENT, id: 'aq_2' });
+  await assertFails(updateDoc(doc(asOperator(), 'autoclave_qualification/aq_2'), { by: 'otro' }));
+  await assertFails(deleteDoc(doc(asOperator(), 'autoclave_qualification/aq_2')));
+});
+
+test('un evento de calificación sin responsable, de tipo desconocido o con otro id se rechaza', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'autoclave_qualification/aq_3'), { ...AQ_EVENT, id: 'aq_3', by: '' }));
+  await assertFails(setDoc(doc(asOperator(), 'autoclave_qualification/aq_4'), { ...AQ_EVENT, id: 'aq_4', type: 'gate.forced' }));
+  await assertFails(setDoc(doc(asOperator(), 'autoclave_qualification/aq_5'), { ...AQ_EVENT, id: 'otro' }));
+  await assertFails(setDoc(doc(env.unauthenticatedContext().firestore(), 'autoclave_qualification/aq_6'), { ...AQ_EVENT, id: 'aq_6' }));
+});
+
+test('el mapa térmico se crea con responsable y no se edita', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'thermal_mapping/tm_1'), TM_RECORD));
+  await assertFails(setDoc(doc(asOperator(), 'thermal_mapping/tm_2'), { ...TM_RECORD, id: 'tm_2', kind: 'otro' }));
+  await seed('thermal_mapping/tm_3', { ...TM_RECORD, id: 'tm_3' });
+  await assertFails(updateDoc(doc(asOperator(), 'thermal_mapping/tm_3'), { probes: {} }));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'thermal_mapping/tm_3')));
+});
+
 // Lotes de Bitácora: son los que la app crea y los que avanza acceptFieldEvent.
 test('un cliente puede crear un lote de Bitácora sin campos de flujo', async () => {
   await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_lotes/b_new'), { codigo: 'B-1', estado: 'planificado' }));
