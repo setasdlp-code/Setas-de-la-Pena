@@ -1448,8 +1448,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 /* ── SPECIES BRIDGE (field notebook header) ─────────────────────── */
 .sim-root .bridge-select{
   font-family:var(--font-body); font-weight:700; font-size:var(--text-xs); letter-spacing:.02em;
-  padding:6px 10px; border-radius:0; border:1px solid rgba(255,255,255,.35);
-  background:rgba(255,255,255,.08); color:var(--paper-0); cursor:pointer; outline:2px solid transparent; outline-offset:2px;
+  padding:6px 10px; border-radius:0; border:1px solid var(--rule);
+  background:var(--paper-50); color:var(--ink-900); cursor:pointer; outline:2px solid transparent; outline-offset:2px;
   max-width:180px;
 }
 /* item 5 (MOBILE_A11Y_REVIEW_2026-08-30): .bridge-cambiar no tenía min-height
@@ -1457,13 +1457,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    muy por debajo de los 44px que .cat y .workspace-tab ya imponen, y justo al
    lado de otro control pequeño. El padding va en estilo inline en el JSX, así
    que la altura se fija aquí. */
-.sim-root .bridge-cambiar{ min-height:44px; display:inline-flex; align-items:center; justify-content:center; touch-action:manipulation; }
+.sim-root .bridge-cambiar{ min-height:44px; display:inline-flex; align-items:center; justify-content:center; touch-action:manipulation; padding:6px 14px; border:1px solid var(--ink-900); background:transparent; color:var(--ink-900); font-family:var(--font-body); font-weight:800; letter-spacing:var(--tracking-button); text-transform:uppercase; cursor:pointer; transition:background-color var(--duration-standard) var(--ease); }
+.sim-root .bridge-cambiar:hover{ background:var(--paper-100); }
 /* El JSX fija fontSize:var(--text-xs) en estilo inline, que resuelve a 9.5px —
    por debajo del piso legible. Sólo !important gana a un estilo inline. */
 .sim-root .bridge-cambiar{ font-size:var(--text-xs)!important; }
 .sim-root .bridge-select{ touch-action:manipulation; }
-.sim-root .bridge-select:hover{ background:rgba(255,255,255,.16); }
-.sim-root .bridge-select:focus{ border-color:var(--paper-0); }
+.sim-root .bridge-select:hover{ background:var(--paper-100); }
+.sim-root .bridge-select:focus{ border-color:var(--ink-900); }
 .sim-root .bridge-select option{ color:var(--ink-900); }
 @media(max-width:600px){
   /* Era 10px/5px: por debajo del piso legible y sin altura táctil. */
@@ -1881,22 +1882,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
-.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:var(--z-bottom-bar)!important;transition:transform var(--duration-entrance) var(--ease);}
+.sim-root .species-bridge{background:var(--paper-50)!important;border-top:1px solid var(--rule)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:var(--z-bottom-bar)!important;transition:transform var(--duration-entrance) var(--ease);}
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:var(--text-base)!important;}
 .sim-root .species-bridge .bridge-activo{font-size:var(--text-xs)!important;padding:3px 7px!important;letter-spacing:.12em!important;}
 
-.sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:var(--accent-olive);border:1px solid var(--accent-olive);padding:var(--space-half) var(--space-1);border-radius:0;flex-shrink:0;}
-.sim-root .bridge-dot{font-size:var(--text-xs);color:var(--text-on-dark)!important;}
-.sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:var(--sim-text-lg)!important;color:var(--paper-0)!important;flex-shrink:0;line-height:1!important;}
-.sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:var(--text-base)!important;color:var(--paper-2)!important;opacity:var(--opacity-strong);flex-shrink:0;}
+.sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-700);background:transparent;border:1px solid var(--rule);padding:var(--space-half) var(--space-1);border-radius:0;flex-shrink:0;}
+.sim-root .bridge-dot{font-size:var(--text-xs);color:var(--moss-600,var(--moss-700))!important;}
+.sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:var(--sim-text-lg)!important;color:var(--ink-900)!important;flex-shrink:0;line-height:1!important;}
+.sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:var(--text-base)!important;color:var(--ink-500)!important;flex-shrink:0;}
 .sim-root .bridge-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
-.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
-.sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:var(--text-base);font-weight:700;color:var(--paper-0)!important;}
+.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-500)!important;}
+.sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:var(--text-base);font-weight:700;color:var(--ink-900)!important;}
 
 /* Species grid — fixed 2 columns, generous gap, larger cards */
-.sim-root .spp-grid{grid-template-columns:repeat(2,1fr)!important;gap:var(--space-3)!important;}
+.sim-root .spp-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))!important;gap:var(--space-3)!important;background:transparent;}
 /* Catalog section — no panel box */
 .sim-root .spp-sect-catalog{background:transparent!important;border:none!important;padding:var(--space-4)!important;margin-top:0!important;}
 /* Catalog header row */
@@ -1909,7 +1910,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .view-btn.on{border-color:var(--coral-500);color:var(--coral-500);}
 /* Card image — 15% smaller, normalized scale */
-.sim-root .spp-card .p-img{aspect-ratio:1/1!important;background-color:var(--paper-100)!important;background-image:none!important;padding:20px!important;}
+.sim-root .spp-card .p-img{aspect-ratio:1/1!important;background-color:var(--paper-100)!important;background-image:none!important;padding:20px!important;border:0;}
+/* Un solo marco por tarjeta: el de .sdp-fig__frame se suma al de .spp-card. */
+.sim-root .spp-card .sdp-fig__frame{border:0;}
 
 /* Card flat stat grid */
 
@@ -1922,10 +1925,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 
 .sim-root .p-radio.on{border-color:var(--coral-500);background:var(--coral-500);box-shadow:inset 0 0 0 3px var(--paper-50);}
-/* Alternating row tint on grid rows 4-6 and 7-9 */
-.sim-root .spp-grid > *:nth-child(n+4):nth-child(-n+6){background:var(--paper-100)!important;}
-.sim-root .spp-grid > *:nth-child(n+7){background:var(--paper-100)!important;}
-@media(max-width:768px){.sim-root .spp-grid > *{background:var(--paper-50)!important;}.sim-root .spp-grid > *:nth-child(even){background:var(--paper-100)!important;}}
 .sim-root .spp-card{transition:background var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);border-radius:0!important;border:1px solid var(--border-soft)!important;box-shadow:none!important;contain:paint;isolation:isolate;}
 .sim-root .spp-card:hover{box-shadow:none!important;border-color:var(--border-strong)!important;transform:translateY(-1px);}
 .sim-root .spp-card.on{background:var(--surface-selected)!important;border:2px solid var(--accent-olive)!important;box-shadow:none!important;transform:translateY(-1px);position:relative;}
@@ -3747,7 +3746,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font:700 var(--text-base)/1 var(--font-mono);
   cursor:pointer;
 }
-.sim-root .bridge-toggle{border-color:rgba(255,255,255,.35);background:transparent;color:var(--paper-0)}
+.sim-root .bridge-toggle{border-color:var(--rule);background:transparent;color:var(--ink-700)}
 
 /* Bodega: la tabla de stock se convierte en tarjetas legibles en teléfonos. */
 @media(max-width:640px){
@@ -7372,3 +7371,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .server-climate-alerts summary::-webkit-details-marker{display:none}
 .sim-root .server-climate-alerts summary::before{content:'+';font-family:var(--font-mono);color:var(--ink-500)}
 .sim-root .server-climate-alerts details[open]>summary::before{content:'−'}
+
+/* Catálogo en móvil: el contador baja bajo el título en vez de comprimirlo palabra por palabra. */
+@media(max-width:600px){
+ .sim-root .catalog-hdr{flex-direction:column;align-items:flex-start;gap:var(--sp-5)}
+}

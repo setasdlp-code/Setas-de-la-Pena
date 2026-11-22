@@ -18245,7 +18245,7 @@ interval:
                 <option value="" disabled>Elegir especie…</option>
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
-              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'var(--paper-50)',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
+              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} type="button">
                 Ver catálogo
               </button>
             </div>
@@ -18256,13 +18256,13 @@ interval:
           {bridgeOpen&&(<div style={{display:'flex',gap:24,alignItems:'center',flexShrink:0}} className="bridge-stats-group">
             <div className="bridge-stat"><span className="bridge-stat-lbl">C:N</span><span className="bridge-stat-val">{sp.cn_optimal.ideal} : 1</span></div>
             <div className="bridge-stat"><span className="bridge-stat-lbl">Temp</span><span className="bridge-stat-val">{sp.temp_fruit}</span></div>
-            <div className="bridge-stat"><span className="bridge-stat-lbl">CO Base</span><span className="bridge-stat-val">{sp.eb_baseline} %</span></div>
+            <div className="bridge-stat"><span className="bridge-stat-lbl">EB base</span><span className="bridge-stat-val">{sp.eb_baseline} %</span></div>
           </div>)}
           <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
             <select className="bridge-select" value={sKey} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();setSKey(e.target.value);}} aria-label="Cambiar especie" title="Cambiar especie sin salir del formulador">
               {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
             </select>
-            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'var(--paper-50)',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
+            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} type="button">
               Ver catálogo
             </button>}
             <button type="button" className="bridge-toggle" aria-expanded={bridgeOpen} aria-label={bridgeOpen?'Ocultar parámetros de especie':'Mostrar parámetros de especie'} onClick={()=>setBridgeOpen(o=>!o)}>

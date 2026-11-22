@@ -225,6 +225,9 @@
        .app-rail-mobile, más abajo en este mismo media query. */
     .app-rail { display:none; }
     .app-main { margin-left:0; padding-bottom:calc(62px + env(safe-area-inset-bottom)); }
+    /* La barra de especie es sticky a bottom:0 (sim.css); sin esto queda bajo el rail fijo
+       y tapa su selector y su botón. Especificidad mayor que la regla de sim.css. */
+    .app-shell .sim-root .species-bridge { bottom:calc(62px + env(safe-area-inset-bottom)) !important; }
     .app-rail-mobile {
       display:flex; position:fixed; left:0; right:0; bottom:0; z-index:var(--z-rail);
       background:var(--paper-0); border-top:1px solid var(--border-strong);
