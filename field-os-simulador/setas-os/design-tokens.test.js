@@ -164,7 +164,7 @@ test('!important en sim.css y style="" en el shell no crecen', () => {
   // Tope, no meta: quitarlos exige revisar cada regla con su estado visual
   // (hover, modales, vistas del shell tras el acceso), que este harness no
   // cubre. Al retirar alguno, baja el número aquí en el mismo cambio.
-  const MAX_IMPORTANT = 768;
+  const MAX_IMPORTANT = 763;
   const MAX_INLINE_STYLE = 832;
   const css = stripComments(fs.readFileSync(path.join(ROOT, 'sim.css'), 'utf8'));
   const important = (css.match(/!important/g) || []).length;
