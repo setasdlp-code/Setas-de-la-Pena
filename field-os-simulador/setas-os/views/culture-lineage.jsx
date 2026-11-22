@@ -13,7 +13,7 @@ function CultureLineageView({lotes,bolsas,cosechas,onOpenBatch,onLink}) {
   const chain=api.ancestry(records,selected);
   const fmt=v=>v===null?'Sin datos':v.toFixed(1)+'%';
   const change=(k,v)=>setForm(f=>({...f,[k]:v}));
-  return <details className="panel" open={!!new URLSearchParams(location.search).get('culture')}><summary>Linajes de cultivo · EB y contaminación por pases</summary>
+  return <details className="panel culture-lineage-panel" open={!!new URLSearchParams(location.search).get('culture')}><summary>Linajes de cultivo · EB y contaminación por pases</summary>
     <p>Registro de genealogía local de este navegador. Cada transferencia de spawn suma un pase; registre los pases previos documentados de la madre. La comparación describe asociaciones, no confirma degeneración.</p>
     {conflict&&<p role="alert">{conflict}</p>}
     {error&&<p role="alert">{error}</p>}

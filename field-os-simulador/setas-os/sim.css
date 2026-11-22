@@ -951,7 +951,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .schctl input:focus-visible, .sim-root .schctl select:focus-visible{ border-color:var(--coral-500);outline:2px solid var(--coral-500);outline-offset:2px; }
 .sim-root .schsum{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border-soft); border:1px solid var(--border-soft); border-radius:var(--sim-radius-sm); overflow:hidden; margin-bottom:30px; }
 .sim-root .ssc{ background:var(--paper-50); padding:20px; text-align:center; }
-.sim-root .ssv{ font-family:var(--font-display); font-size:var(--sim-text-xl); color:var(--coral-700); font-weight:400; line-height:1; }
+.sim-root .ssv{ font-family:var(--font-display); font-size:var(--sim-text-xl); color:var(--ink-900); font-weight:400; line-height:1; }
 .sim-root .ssl{ font-family:var(--font-body); font-weight:800; font-size:var(--text-sm); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-500); margin-top:7px; }
 
 /* ── TIMELINE ───────────────────────────────────────────────────── */
@@ -1448,8 +1448,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 /* ── SPECIES BRIDGE (field notebook header) ─────────────────────── */
 .sim-root .bridge-select{
   font-family:var(--font-body); font-weight:700; font-size:var(--text-xs); letter-spacing:.02em;
-  padding:6px 10px; border-radius:0; border:1px solid rgba(255,255,255,.35);
-  background:rgba(255,255,255,.08); color:var(--paper-0); cursor:pointer; outline:2px solid transparent; outline-offset:2px;
+  padding:6px 10px; border-radius:0; border:1px solid var(--rule);
+  background:var(--paper-50); color:var(--ink-900); cursor:pointer; outline:2px solid transparent; outline-offset:2px;
   max-width:180px;
 }
 /* item 5 (MOBILE_A11Y_REVIEW_2026-08-30): .bridge-cambiar no tenía min-height
@@ -1457,13 +1457,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    muy por debajo de los 44px que .cat y .workspace-tab ya imponen, y justo al
    lado de otro control pequeño. El padding va en estilo inline en el JSX, así
    que la altura se fija aquí. */
-.sim-root .bridge-cambiar{ min-height:44px; display:inline-flex; align-items:center; justify-content:center; touch-action:manipulation; }
+.sim-root .bridge-cambiar{ min-height:44px; display:inline-flex; align-items:center; justify-content:center; touch-action:manipulation; padding:6px 14px; border:1px solid var(--ink-900); background:transparent; color:var(--ink-900); font-family:var(--font-body); font-weight:800; letter-spacing:var(--tracking-button); text-transform:uppercase; cursor:pointer; transition:background-color var(--duration-standard) var(--ease); }
+.sim-root .bridge-cambiar:hover{ background:var(--paper-100); }
 /* El JSX fija fontSize:var(--text-xs) en estilo inline, que resuelve a 9.5px —
    por debajo del piso legible. Sólo !important gana a un estilo inline. */
 .sim-root .bridge-cambiar{ font-size:var(--text-xs)!important; }
 .sim-root .bridge-select{ touch-action:manipulation; }
-.sim-root .bridge-select:hover{ background:rgba(255,255,255,.16); }
-.sim-root .bridge-select:focus{ border-color:var(--paper-0); }
+.sim-root .bridge-select:hover{ background:var(--paper-100); }
+.sim-root .bridge-select:focus{ border-color:var(--ink-900); }
 .sim-root .bridge-select option{ color:var(--ink-900); }
 @media(max-width:600px){
   /* Era 10px/5px: por debajo del piso legible y sin altura táctil. */
@@ -1881,22 +1882,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
-.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:var(--z-bottom-bar)!important;transition:transform var(--duration-entrance) var(--ease);}
+.sim-root .species-bridge{background:var(--paper-50)!important;border-top:1px solid var(--rule)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:var(--z-bottom-bar)!important;transition:transform var(--duration-entrance) var(--ease);}
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:var(--text-base)!important;}
 .sim-root .species-bridge .bridge-activo{font-size:var(--text-xs)!important;padding:3px 7px!important;letter-spacing:.12em!important;}
 
-.sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:var(--accent-olive);border:1px solid var(--accent-olive);padding:var(--space-half) var(--space-1);border-radius:0;flex-shrink:0;}
-.sim-root .bridge-dot{font-size:var(--text-xs);color:var(--text-on-dark)!important;}
-.sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:var(--sim-text-lg)!important;color:var(--paper-0)!important;flex-shrink:0;line-height:1!important;}
-.sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:var(--text-base)!important;color:var(--paper-2)!important;opacity:var(--opacity-strong);flex-shrink:0;}
+.sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-700);background:transparent;border:1px solid var(--rule);padding:var(--space-half) var(--space-1);border-radius:0;flex-shrink:0;}
+.sim-root .bridge-dot{font-size:var(--text-xs);color:var(--moss-600,var(--moss-700))!important;}
+.sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:var(--sim-text-lg)!important;color:var(--ink-900)!important;flex-shrink:0;line-height:1!important;}
+.sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:var(--text-base)!important;color:var(--ink-500)!important;flex-shrink:0;}
 .sim-root .bridge-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
-.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
-.sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:var(--text-base);font-weight:700;color:var(--paper-0)!important;}
+.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-500)!important;}
+.sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:var(--text-base);font-weight:700;color:var(--ink-900)!important;}
 
 /* Species grid — fixed 2 columns, generous gap, larger cards */
-.sim-root .spp-grid{grid-template-columns:repeat(2,1fr)!important;gap:var(--space-3)!important;}
+.sim-root .spp-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))!important;gap:var(--space-3)!important;background:transparent;}
 /* Catalog section — no panel box */
 .sim-root .spp-sect-catalog{background:transparent!important;border:none!important;padding:var(--space-4)!important;margin-top:0!important;}
 /* Catalog header row */
@@ -1909,7 +1910,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .view-btn.on{border-color:var(--coral-500);color:var(--coral-500);}
 /* Card image — 15% smaller, normalized scale */
-.sim-root .spp-card .p-img{aspect-ratio:1/1!important;background-color:var(--paper-100)!important;background-image:none!important;padding:20px!important;}
+.sim-root .spp-card .p-img{aspect-ratio:1/1!important;background-color:var(--paper-100)!important;background-image:none!important;padding:20px!important;border:0;}
+/* Un solo marco por tarjeta: el de .sdp-fig__frame se suma al de .spp-card. */
+.sim-root .spp-card .sdp-fig__frame{border:0;}
 
 /* Card flat stat grid */
 
@@ -1922,10 +1925,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 
 .sim-root .p-radio.on{border-color:var(--coral-500);background:var(--coral-500);box-shadow:inset 0 0 0 3px var(--paper-50);}
-/* Alternating row tint on grid rows 4-6 and 7-9 */
-.sim-root .spp-grid > *:nth-child(n+4):nth-child(-n+6){background:var(--paper-100)!important;}
-.sim-root .spp-grid > *:nth-child(n+7){background:var(--paper-100)!important;}
-@media(max-width:768px){.sim-root .spp-grid > *{background:var(--paper-50)!important;}.sim-root .spp-grid > *:nth-child(even){background:var(--paper-100)!important;}}
 .sim-root .spp-card{transition:background var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);border-radius:0!important;border:1px solid var(--border-soft)!important;box-shadow:none!important;contain:paint;isolation:isolate;}
 .sim-root .spp-card:hover{box-shadow:none!important;border-color:var(--border-strong)!important;transform:translateY(-1px);}
 .sim-root .spp-card.on{background:var(--surface-selected)!important;border:2px solid var(--accent-olive)!important;box-shadow:none!important;transform:translateY(-1px);position:relative;}
@@ -2649,7 +2648,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 /* ── "Receta activa" header span → editorial heading ── */
-.sim-root .panel-accent > div:first-child > div:first-child > span:first-child{
+.sim-root .panel-accent:not(.panel-schedule) > div:first-child > div:first-child > span:first-child{
   font-family:var(--font-display)!important;
   font-style:italic!important;
   font-size:var(--sim-text-metric)!important;
@@ -2660,7 +2659,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 /* eyebrow above the heading */
-.sim-root .panel-accent > div:first-child::before{
+.sim-root .panel-accent:not(.panel-schedule) > div:first-child::before{
   content:'Formulación';
   display:block;
   font-family:var(--font-body);
@@ -2668,7 +2667,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size:var(--text-xs);
   letter-spacing:.22em;
   text-transform:uppercase;
-  color:var(--coral-500);
+  color:var(--ink-500);
   margin-bottom:var(--space-half);
 }
 
@@ -2719,6 +2718,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   cursor:pointer;
 }
 .sim-root .rec-empty-action:focus-visible{outline:2px solid var(--ink-900);outline-offset:3px}
+/* Una sola acción primaria por bloque: la segunda va en contorno. */
+.sim-root .rec-empty-action.is-secondary{background:var(--paper-50);color:var(--moss-700)}
+.sim-root .rec-empty-action.is-secondary:hover{background:var(--paper-100)}
 .sim-root .climate-module-reference{
   display:block;
   margin-top:6px;
@@ -3715,12 +3717,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .form-step{border-right:1px solid var(--ink-900)}
 .sim-root .ingredient-section-head{border-bottom:1px solid var(--ink-900)}
 
-/* Marcadores de sección al estilo telemetría — puramente aditivo,
-   no reemplaza el texto existente, solo lo enmarca. */
+/* Marcador de sección: el mismo cuadrado de 8px que usan los eyebrows de Hoy
+   (antes '>> ', que solo aparecía en Formular). */
 .sim-root .form-flow-eyebrow::before,
 .sim-root .ingredient-section-eyebrow::before,
 .sim-root .form-species-kicker::before{
-  content:'>> ';
+  content:'';
+  display:inline-block;
+  width:8px;height:8px;
+  margin-right:8px;
+  background:currentColor;
+  vertical-align:.05em;
 }
 
 .sim-root .ing-expand-btn,
@@ -3739,7 +3746,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font:700 var(--text-base)/1 var(--font-mono);
   cursor:pointer;
 }
-.sim-root .bridge-toggle{border-color:rgba(255,255,255,.35);background:transparent;color:var(--paper-0)}
+.sim-root .bridge-toggle{border-color:var(--rule);background:transparent;color:var(--ink-700)}
 
 /* Bodega: la tabla de stock se convierte en tarjetas legibles en teléfonos. */
 @media(max-width:640px){
@@ -3934,7 +3941,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .form-production-command-btn.is-review,
 .sim-root .form-production-command-btn.is-balance{border-color:var(--accent-terracotta-hover);background:var(--coral-600)}
 .sim-root .generator-cost-help{display:block;font:400 var(--text-xs)/1.5 var(--font-body);color:var(--text-metadata);margin-top:var(--space-half)}
-.production-readiness{background:var(--surface-page);border:var(--rule-heavy);padding:var(--space-3);margin-bottom:var(--space-3);color:var(--text-primary)}
+/* Secciones separadas por un filete, no enmarcadas: tres marcos de 2px apilados
+   convertían la vista en una pared de cajas. */
+.production-readiness{background:transparent;border:0;border-top:1px solid var(--rule);padding:var(--space-3) 0;margin-bottom:var(--space-4);color:var(--text-primary)}
 .readiness-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-2);flex-wrap:wrap}
 .readiness-header h2{font:var(--t-heading-02);margin:var(--space-1) 0}
 .readiness-kicker{font:var(--t-label);letter-spacing:var(--sim-tracking-label, var(--tracking-label));text-transform:uppercase}
@@ -3946,13 +3955,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .readiness-context{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;margin-bottom:var(--space-2)}
 .readiness-context label{flex:0 1 260px}
 .readiness-context p{flex:1 1 260px}
-.readiness-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
-.readiness-card{min-width:0;border:var(--rule-hairline);border-top:3px solid var(--status-warn-marker);padding:var(--space-2)}
-.readiness-card.is-blocked{border-top-color:var(--status-error)}
-.readiness-card.is-verified{border-top-color:var(--status-ok)}
+.readiness-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--space-4);row-gap:0;border-top:1px solid var(--rule)}
+/* Requisitos como filas: el estado lo dice el rótulo con su marcador, no un borde de color por tarjeta. */
+.readiness-card{min-width:0;border:0;border-bottom:1px solid var(--rule);padding:var(--space-2) 0}
 .readiness-card-heading{display:flex;justify-content:space-between;gap:var(--space-1);flex-wrap:wrap;align-items:baseline}
 .readiness-card h3{font:var(--t-body);font-weight:var(--weight-semibold);margin:0}
-.readiness-status{font:var(--t-label);color:var(--text-metadata)}
+.readiness-status{font:var(--t-label);color:var(--text-metadata);display:inline-flex;align-items:center;gap:6px}
+.readiness-status::before{content:'';width:8px;height:8px;background:currentColor;flex:none}
 .readiness-card.is-blocked .readiness-status{color:var(--status-error)}
 .readiness-card.is-verified .readiness-status{color:var(--status-ok)}
 .readiness-card summary{min-height:44px;cursor:pointer;font:var(--t-small);display:list-item;padding:var(--space-1) 0}
@@ -3963,7 +3972,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .production-readiness .readiness-check input{width:24px;height:24px;min-height:24px;flex:none}
 .production-readiness .inv-btn{min-height:44px;white-space:normal;font:var(--t-small);font-weight:var(--weight-semibold)}
 .production-readiness :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
-@media(max-width:700px){.production-readiness{padding:var(--space-2)}.readiness-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.production-readiness{padding:var(--space-2) 0}.readiness-grid{grid-template-columns:1fr}}
 /* Calificación del autoclave (views/autoclave-qualification-panel.jsx) */
 .aq-section-title{font:var(--t-body);font-weight:var(--weight-semibold);margin:var(--space-3) 0 var(--space-1)}
 .aq-actor{max-width:360px;margin-bottom:var(--space-2)}
@@ -4808,7 +4817,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .climate-eyebrow {
-  color: var(--coral-600);
+  color: var(--ink-500);
   font: 700 var(--text-2xs)/1.3 var(--font-mono);
   letter-spacing: var(--tracking-button);
   text-transform: uppercase;
@@ -5790,7 +5799,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .co-form-species,
 .sim-root .builder-wrap,
 .sim-root button:not(.home-quick-action),
-.sim-root input,
+.sim-root input:not([type=radio]),
 .sim-root select,
 .sim-root textarea,
 .sim-root table,
@@ -7180,8 +7189,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: transparent;
   box-shadow: none;
 }
-.sim-root .home-quick-action.is-jornada,
-.sim-root .home-quick-action.is-primary { border-color: var(--text-primary); }
+.sim-root .home-quick-action:hover { border-color: var(--text-primary); }
 .sim-root .home-action-arrow { background: transparent; }
 .sim-root .home-quick-action:hover { background: var(--surface-recessed); }
 .sim-root .home-dashboard-switch {
@@ -7257,4 +7265,116 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media(max-width:700px){
  .sim-root .formular-mode-wrapper .form-species-context{grid-template-columns:minmax(0,1fr)}
  .sim-root .formular-mode-wrapper .form-species-identity{display:none}
+}
+
+/* ── Métricas de cultivo (OperationalMetrics) ─────────────────────────────
+   Antes todo era estilo en línea: botones nativos (Arial), tabla sin formato
+   y un contenedor centrado a 1100px que desalineaba el contenido del título. */
+.sim-root .ops-metrics{padding:var(--sp-5) 0 80px;color:var(--ink-900);min-width:0}
+.sim-root .ops-metrics p{line-height:1.6;max-width:72ch;margin:0 0 var(--sp-7)}
+.sim-root .ops-metrics p.ops-metrics-meta{font-family:var(--font-mono);font-size:var(--size-label,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);margin-bottom:var(--sp-4)}
+.sim-root .ops-metrics-note{color:var(--ink-500);font-size:var(--size-small,14px)}
+.sim-root .ops-metrics-tabs{display:flex;flex-wrap:wrap;gap:0;margin:var(--sp-9) 0 var(--sp-12);border:1px solid var(--rule);width:max-content;max-width:100%}
+.sim-root .ops-metrics-tab{min-height:48px;padding:0 var(--sp-9);border:0;border-right:1px solid var(--rule);border-radius:0;background:var(--paper-50);color:var(--ink-700);font-family:var(--font-mono);font-size:var(--size-label,11px);font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease)}
+.sim-root .ops-metrics-tab:last-child{border-right:0}
+.sim-root .ops-metrics-tab:hover{background:var(--paper-100);color:var(--ink-900)}
+.sim-root .ops-metrics-tab[aria-pressed="true"]{background:var(--ink-900);color:var(--paper-50)}
+.sim-root .ops-metrics-tab:focus-visible{outline:2px solid var(--ink-900);outline-offset:2px}
+.sim-root .ops-metrics-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--rule);margin:0 0 var(--sp-12)}
+.sim-root .ops-metrics-stats>span{padding:var(--sp-9);border-right:1px solid var(--rule);font-size:var(--size-small,14px);color:var(--ink-500);line-height:1.4}
+.sim-root .ops-metrics-stats>span:last-child{border-right:0}
+.sim-root .ops-metrics-stats strong{display:block;font-family:var(--font-mono);font-size:var(--size-data-lg,28px);font-weight:500;color:var(--ink-900);line-height:1.1;margin-bottom:var(--sp-3)}
+.sim-root .ops-metrics p.ops-metrics-empty{padding:var(--sp-9);border:1px dashed var(--rule);color:var(--ink-500);max-width:none}
+.sim-root .ops-metrics-alert{padding:var(--sp-9);border:1px solid var(--status-error);border-left-width:3px;color:var(--ink-900)}
+.sim-root .ops-metrics-body h2{margin:0 0 var(--sp-7)}
+.sim-root .ops-metrics-body h3{margin:var(--sp-12) 0 var(--sp-5);font-family:var(--font-editorial);font-size:var(--size-heading-03,19px)}
+.sim-root .ops-metrics-figure strong{font-family:var(--font-mono)}
+.sim-root .ops-metrics-table-wrap{overflow-x:auto;border:1px solid var(--rule);margin:var(--sp-9) 0 var(--sp-12)}
+.sim-root .ops-metrics-table caption{caption-side:top;text-align:left;padding:var(--sp-5) 12px;font-family:var(--font-mono);font-size:var(--size-label,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);border-bottom:1px solid var(--rule)}
+.sim-root .ops-metrics-table tbody th{font-family:var(--font-body);font-weight:600;text-align:left;padding:var(--sp-5) 12px;border-bottom:1px solid var(--paper-300)}
+.sim-root .ops-metrics-table tbody th small{font-weight:400;color:var(--ink-500)}
+.sim-root .inv-table.ops-metrics-table td.ops-metrics-table-empty{color:var(--ink-500);font-family:var(--font-body);padding:var(--sp-9) 12px}
+.sim-root .ops-metrics-list{list-style:none;padding:0;margin:0 0 var(--sp-12);border-top:1px solid var(--rule)}
+.sim-root .ops-metrics-list li{padding:var(--sp-7) 0;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:var(--size-data,13px);overflow-wrap:anywhere}
+.sim-root .ops-metrics-issue{padding:var(--sp-9);border:1px solid var(--rule);margin-bottom:var(--sp-7);overflow-wrap:anywhere}
+.sim-root .ops-metrics-body .ops-metrics-issue h3{margin:0 0 var(--sp-4)}
+.sim-root .ops-metrics-review label{display:block;margin-top:var(--sp-9);font-size:var(--size-small,14px)}
+.sim-root .ops-metrics-review textarea{display:block;width:100%;box-sizing:border-box;min-height:88px;margin-top:var(--sp-4);padding:var(--sp-6);border:1px solid var(--rule);border-radius:0;background:var(--paper-50);color:var(--ink-900);font:inherit}
+.sim-root .ops-metrics-actions{display:flex;flex-wrap:wrap;gap:var(--sp-5);margin-top:var(--sp-9)}
+.sim-root .ops-metrics-actions .btn{flex:0 0 auto}
+@media(max-width:700px){
+ .sim-root .ops-metrics{padding-inline:16px}
+ .sim-root .ops-metrics-tabs{width:100%;display:grid;grid-template-columns:repeat(3,1fr)}
+ .sim-root .ops-metrics-tab{border-bottom:1px solid var(--rule);padding:0 var(--sp-4)}
+ .sim-root .ops-metrics-tab:nth-child(3n){border-right:0}
+ .sim-root .ops-metrics-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sim-root .ops-metrics-stats>span:nth-child(2n){border-right:0}
+ .sim-root .ops-metrics-stats>span:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+}
+
+/* ── Laboratorio y BioCheck: controles nativos con los tokens del sistema ──
+   Antes: radios azules del navegador, campos #FFF con fuente del sistema. */
+.sim-root .lab-extraction-container :is(input:not([type=radio]):not([type=checkbox]),select,textarea),
+.sim-root .bio-check textarea{display:block;width:100%;box-sizing:border-box;min-height:44px;padding:var(--sp-5) var(--sp-6);border-radius:0;background:var(--paper-50);color:var(--ink-900);font-family:var(--font-body);font-size:var(--size-small,14px);border:1px solid var(--rule)}
+.sim-root .lab-extraction-container :is(input,select,textarea):focus-visible,
+.sim-root .bio-check :is(input,textarea):focus-visible{outline:2px solid var(--ink-900);outline-offset:1px}
+/* El modo campo fija 44px a todo control táctil. El área táctil se
+   conserva; un borde transparente de 12px deja visible solo el indicador de 20px. */
+.sim-root .lab-extraction-container input[type=radio],
+.sim-root .bio-check input[type=checkbox]{-webkit-appearance:none;appearance:none;box-sizing:border-box;width:44px;height:44px;margin:0 0 0 -12px;flex:0 0 auto;border:12px solid transparent;background:var(--paper-50) padding-box;cursor:pointer;box-shadow:inset 0 0 0 1px var(--ink-700)}
+.sim-root .lab-extraction-container input[type=radio]{border-radius:50%}
+.sim-root .lab-extraction-container input[type=radio]:checked{background:var(--ink-900) padding-box;box-shadow:inset 0 0 0 1px var(--ink-900),inset 0 0 0 5px var(--paper-50)}
+.sim-root .bio-check input[type=checkbox]:checked{background:var(--ink-900) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FEFDFB' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/14px no-repeat padding-box;box-shadow:none}
+.sim-root .lab-extraction-container input[type=radio]:focus-visible,
+.sim-root .bio-check input[type=checkbox]:focus-visible{outline:2px solid var(--ink-900);outline-offset:-10px}
+@media(max-width:700px){.sim-root .bio-check,.sim-root .lab-extraction-container{padding-inline:16px}}
+.sim-root .lab-extraction-container label:has(input[type=radio]){min-height:44px}
+.sim-root .lab-extraction-container .lab-submit{width:100%;flex:none}
+.sim-root .bio-check{padding:var(--sp-5) 0 40px;max-width:760px}
+.sim-root .bio-check-lede{color:var(--ink-500);margin:0 0 var(--sp-9);max-width:72ch}
+.sim-root .bio-check-ok{display:inline-flex;align-items:center;gap:var(--sp-4);padding:var(--sp-3) var(--sp-7);margin-bottom:var(--sp-9);background:var(--status-ok-bg,#EDF3EC);color:var(--moss-700);font-family:var(--font-mono);font-size:var(--size-label,11px);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.sim-root .bio-check-list{list-style:none;padding:0;margin:0;border-top:1px solid var(--rule)}
+.sim-root .bio-check-list li{padding:var(--sp-9) 0;border-bottom:1px solid var(--rule)}
+.sim-root .bio-check-list label{display:flex;align-items:center;gap:var(--sp-6);min-height:44px;font-weight:600;cursor:pointer}
+.sim-root .bio-check-list li.is-checked label{color:var(--ink-500)}
+.sim-root .bio-check-list textarea{display:block;width:100%;box-sizing:border-box;margin-top:var(--sp-5);padding:var(--sp-5) var(--sp-6)}
+
+/* ── Linajes de cultivo (Bitácora): formulario y tabla con tokens ── */
+.sim-root .culture-lineage-panel label{display:block;margin:0 0 var(--sp-9);font-size:var(--size-small,14px);font-weight:600;color:var(--ink-700)}
+.sim-root .culture-lineage-panel :is(input:not([type=checkbox]):not([type=radio]),select){display:block;width:100%;max-width:420px;box-sizing:border-box;min-height:44px;margin-top:var(--sp-4);padding:0 var(--sp-6);border:1px solid var(--rule);border-radius:0;background:var(--paper-50);color:var(--ink-900);font-family:var(--font-body);font-size:var(--size-small,14px);font-weight:400}
+.sim-root .culture-lineage-panel input:invalid:not(:placeholder-shown){border-color:var(--status-error)}
+.sim-root .culture-lineage-panel :is(input,select,button):focus-visible{outline:2px solid var(--ink-900);outline-offset:1px}
+.sim-root .culture-lineage-panel h3{margin:var(--sp-12) 0 var(--sp-7)}
+.sim-root .culture-lineage-panel p{max-width:72ch;line-height:1.6}
+.sim-root .culture-lineage-panel table{width:100%;border-collapse:collapse;border:1px solid var(--rule)}
+.sim-root .culture-lineage-panel th{font-family:var(--font-mono);font-size:var(--size-label,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);text-align:left;padding:var(--sp-5) 12px;border-bottom:1px solid var(--rule)}
+.sim-root .culture-lineage-panel td{font-family:var(--font-mono);font-size:var(--size-data,13px);padding:var(--sp-5) 12px;border-bottom:1px solid var(--paper-300)}
+.sim-root .culture-lineage-panel :is(td,li,div)>button:not([class]){min-height:44px;padding:0 var(--sp-5);border:0;background:transparent;color:var(--ink-900);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* Resúmenes plegables de paneles: signo +/− explícito (display:flex quitaba el marcador nativo). */
+.sim-root .prototype-panel summary{list-style:none;gap:var(--sp-5);font-weight:600}
+.sim-root .prototype-panel summary::-webkit-details-marker{display:none}
+.sim-root .prototype-panel summary::before{content:'+';font-family:var(--font-mono);width:1ch;color:var(--ink-500)}
+.sim-root .prototype-panel details[open]>summary::before{content:'−'}
+
+/* ── Alertas de clima del servidor (Hoy y Salas) ── */
+.sim-root .server-climate-alerts{margin:0 0 36px;padding:0;border:0;background:transparent}
+.sim-root .server-climate-alerts-eyebrow{display:flex;align-items:center;gap:var(--sp-5);font-family:var(--font-mono);font-size:var(--size-label,11px);font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-500);margin-bottom:var(--sp-4)}
+.sim-root .server-climate-alerts-eyebrow::before{content:'';width:8px;height:8px;background:currentColor}
+.sim-root .server-climate-alerts-title{font-family:var(--font-editorial);font-size:var(--size-heading-03,19px);font-weight:700;letter-spacing:-.01em;margin:0 0 var(--sp-7);color:var(--ink-900)}
+.sim-root .server-climate-alerts-sub{font-family:var(--font-mono);font-size:var(--size-label,11px);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-700);margin:var(--sp-9) 0 var(--sp-5)}
+.sim-root .server-climate-alerts-empty{padding:var(--sp-9);border:1px dashed var(--rule);color:var(--ink-500);font-size:var(--size-data,13px);text-align:center;margin:0}
+.sim-root .server-climate-alerts-list{list-style:none;padding:0;margin:0;border-top:1px solid var(--rule)}
+.sim-root .server-climate-alerts-list li{padding:var(--sp-7) 0;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}
+.sim-root .server-climate-alerts-list p{margin:var(--sp-3) 0}
+.sim-root .server-climate-alerts-meta{font-family:var(--font-mono);font-size:var(--size-data,13px);color:var(--ink-500)}
+.sim-root .server-climate-alerts details{margin-top:var(--sp-9)}
+.sim-root .server-climate-alerts summary{min-height:44px;display:flex;align-items:center;gap:var(--sp-5);cursor:pointer;list-style:none;font-weight:600}
+.sim-root .server-climate-alerts summary::-webkit-details-marker{display:none}
+.sim-root .server-climate-alerts summary::before{content:'+';font-family:var(--font-mono);color:var(--ink-500)}
+.sim-root .server-climate-alerts details[open]>summary::before{content:'−'}
+
+/* Catálogo en móvil: el contador baja bajo el título en vez de comprimirlo palabra por palabra. */
+@media(max-width:600px){
+ .sim-root .catalog-hdr{flex-direction:column;align-items:flex-start;gap:var(--sp-5)}
 }
