@@ -114,13 +114,32 @@ test('autoclave sterilization needs a run with a bioindicator showing no growth'
  const input=fixture();input.treatment={col:'autoclave',temp:'121°C',time:'90 min'};
  assert.throws(()=>evidence(input,'equipment'),/bioindicador sin crecimiento/);
  assert.throws(()=>evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'con_crecimiento'}}),/bioindicador sin crecimiento/);
- const ok=evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'sin_crecimiento'}});
+ // Un bioindicador negativo no basta: falta la configuración de carga calificada.
+ assert.throws(()=>evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'sin_crecimiento'}}),/configuración de carga calificada/);
+ const ok=evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'sin_crecimiento',qualificationConfigId:'CFG-2x1.5'}});
  const others=R.MANUAL_IDS.filter(id=>id!=='review'&&id!=='equipment').map(id=>evidence(input,id));
+ input.autoclaveReleases={'CFG-2x1.5':{status:'released',detail:'Ciclo calificado para CFG-2x1.5.'}};
  assert.equal(check(R.assessProductionReadiness(input,[...others,ok],MS),'equipment').status,'verified');
  // A run whose bioindicator grew is documented as blocked and blocks the plan.
  const grew=evidence(input,'equipment',[],{id:'REC-grew',status:'blocked',notes:'Bioindicador con crecimiento',details:{...details.equipment,cycleId:'AC-0413',bioindicatorResult:'con_crecimiento'}});
  const result=R.assessProductionReadiness(input,[...others,grew],MS);
  assert.equal(check(result,'equipment').status,'blocked');assert.equal(result.status,'blocked');
+});
+test('autoclave equipment follows the G1–G4 qualification of the selected load configuration',()=>{
+ const input=fixture();input.treatment={col:'autoclave',temp:'121°C',time:'90 min'};
+ const ok=evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'sin_crecimiento',qualificationConfigId:'CFG-2x1.5'}});
+ // Sin evaluación de calificación en este equipo: queda sin verificar.
+ let eq=check(R.assessProductionReadiness(input,[ok],MS),'equipment');
+ assert.equal(eq.status,'unknown');assert.match(eq.detail,/no tiene calificación registrada/);
+ input.autoclaveReleases={'CFG-2x1.5':{status:'unknown',detail:'Compuertas abiertas antes de inocular: G3 · G4.'}};
+ eq=check(R.assessProductionReadiness(input,[ok],MS),'equipment');
+ assert.equal(eq.status,'unknown');assert.match(eq.detail,/G3/);
+ input.autoclaveReleases={'CFG-2x1.5':{status:'blocked',detail:'PQ-1 CFG-2x1.5: la última corrida es no conforme.'}};
+ const result=R.assessProductionReadiness(input,[ok],MS);
+ assert.equal(check(result,'equipment').status,'blocked');assert.equal(result.status,'blocked');
+ // Registros anteriores sin configuración no se vuelven inválidos: quedan sin verificar.
+ const legacy={...ok,id:'REC-legacy',details:{...ok.details,qualificationConfigId:undefined}};
+ assert.match(check(R.assessProductionReadiness(input,[legacy],MS),'equipment').detail,/configuración de carga calificada/);
 });
 test('pasteurization does not ask for a bioindicator',()=>{
  const input=fixture();input.treatment={col:'thermal',temp:'65-75°C',time:'6 h'};

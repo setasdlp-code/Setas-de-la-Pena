@@ -261,6 +261,36 @@ El control de cada sala vive en el firmware del nodo (DEC-001, `esphome/CONTRATO
 
 Escenario: E2E-12 en `E2E_SCENARIOS.md` (`e2e/node-automation.browser.cjs`, transporte simulado).
 
+## 5c. Calificación del autoclave (G1–G5, PQ-1): datos medidos, decisión humana
+
+Antes de inocular, `knowledge_base/06_operations/quality_control.md` exige ciclo térmico validado y la [matriz Go / No-Go](../../knowledge_base/06_operations/operational_commissioning.md#matriz-de-demostración-go--no-go--1941x-y-shiitake) exige G1–G4 cerradas con autorización humana. Hasta noviembre de 2026 la app verificaba el equipo de Preparación con **un** bioindicador negativo; ahora lo hace contra esa matriz. Interfaz: Producción → «Calificación del autoclave» (`views/autoclave-qualification-panel.jsx`), debajo de Preparación para producción.
+
+- **Modelo:** `autoclave-qualification.js` (`SetasAutoclaveQualification`, en el bundle vía `jsx-sources.cjs`). Registro sólo-anexar `setas.autoclave-qualification.v1` en `sdp_autoclave_qualification_v1`: protocolo (borrador → aprobado, inmutable), configuración de carga (inmutable), corrida, datos del datalogger, indicadores, desviaciones y revisiones de compuertas. El estado se pliega desde los eventos; nada se sobrescribe.
+- **Cálculo de una corrida (`evaluateRun`):** T_sat por IAPWS-IF97 región 4 con la presión ambiente **medida** y la corrección del certificado del manómetro; ΔT = T_sat − T_cámara en magnitud; t_lag por sonda hacia el objetivo térmico declarado; F₀ trapezoidal por sonda de producto **solo dentro de la meseta declarada**; huecos de datos mayores al máximo del protocolo invalidan; IB negativos solo cuentan con su control positivo válido. Prioridad del estado: inválida > no conforme > pendiente > conforme.
+- **Qué invalida sin discusión:** protocolo aprobado después de la corrida, G1 abierta al ejecutar (fecha efectiva de la revisión), meseta redefinida después de cargar datos, registro que empieza sobre el objetivo térmico, control positivo fallido, indicadores vencidos. Reemplazar datos deja la corrida pendiente hasta cerrar una desviación que lo explique.
+- **Serie (`evaluateSeries`):** las últimas `runsRequired` corridas de la configuración, mismo protocolo, todas conformes y rango de t_lag máximo dentro del límite. Una fallida reinicia.
+- **PQ-2 (`evaluateStudy`):** estudios A/B (sustrato procesado sin spawn, sellado y abierto/resellado; n por grupo) y C (placas del lote de spawn y blancos). Se fijan antes de empezar —n, duración (A/B dentro de 15–21 días), temperatura y tolerancia, frecuencia máxima de lectura— y son inmutables. Cada lectura registra todas las unidades y la temperatura medida. Contaminación en A o B, placa contaminada o salto micelial tardío → no conforme; incubación fuera de tolerancia, hueco entre lecturas o blanco con crecimiento → inválido; antes de la duración fijada → en curso. G3 se cierra solo con un estudio A/B conforme y G4 con uno C conforme.
+- **Liberación (`assessRelease`):** G1–G4 cerradas; G2 solo vale si la serie vigente de **esa** configuración sigue conforme (una corrida posterior no conforme bloquea) y G3/G4 solo mientras su estudio siga conforme (una lectura posterior contaminada las reabre); la carga planificada debe ser la calificada (mismo número de bolsas y masa por bolsa ±0,05 kg de redondeo). G5 se informa y no bloquea un piloto.
+- **Umbrales:** `CANDIDATE_PROTOCOL` copia la ficha PQ-1 (propuesta del propietario 2026-11-03, sin validar). `thermalTargetC` y `maxGapMin` no tienen candidato: los declara quien redacta el protocolo, y aprobarlo exige el fundamento microbiológico. La app aplica el protocolo; no aprueba ciclos.
+- **Preparación:** `production-readiness.js` recibe `input.autoclaveReleases` (calculado en `simulador-app.jsx`) y exige `details.qualificationConfigId` para verificar el equipo de autoclave. Pasteurización y cal no cambian.
+- **Autorizar ensayo controlado (Bitácora):** para un lote con autoclave, `PrototypeReleaseDialog` muestra `bestReleaseForLoad` para la carga del lote. Autorizar sigue siendo decisión humana; si el ciclo no está calificado exige reconocerlo y guarda `autoclaveQualification` (estado, detalle, configuración) en `trialRelease`.
+- **Simulador del Perito:** `sterilization-kinetics.js` sigue siendo un modelo (meta F₀ 12, antecedente). El modal lo rotula y nunca alimenta este registro.
+- **Persistencia y sincronización:** local, atómica con `SetasPrototype.persist`, incluida en el respaldo de ensayos y sincronizada entre equipos (ADR-0009): colecciones `autoclave_qualification` y `thermal_mapping` en `device-sync.js` y `firebase/remote-sync.js`; cada evento o registro nuevo se encola con `crearDocumento`. Las reglas (`firebase/firestore.rules`, autorizadas por Sebastián el 2026-11-21) solo permiten crear, con esquema, id, tipo y responsable; nunca editar ni borrar. Un evento no supera 900 000 caracteres (límite de 1 MiB de Firestore). Dos equipos que registren a la vez el mismo ID de corrida o configuración no se detectan como conflicto: el plegado conserva el último por fecha. «Exportar registro» produce el JSON para el servicio técnico.
+
+Pruebas: `autoclave-qualification.test.js` (incluye los valores de verificación de IAPWS-IF97), `production-readiness.test.js`, `e2e/autoclave-qualification.browser.cjs` y `e2e/production-readiness.browser.cjs` (fixture sintética `e2e/autoclave-fixture.cjs`).
+
+## 5d. Mapa térmico de incubación (OAP-0001)
+
+El gate térmico del prototipo de incubación (`knowledge_base/10_ai_workflows/OAP-0001-modular-incubation-validation.md`, `04_facility/incubation.md`) se evalúa con datos de datalogger en Producción → «Mapa térmico de incubación» (`views/incubation-thermal-panel.jsx`).
+
+- **Modelo:** `thermal-mapping.js` (`SetasThermalMapping`). Registros inmutables `setas.thermal-mapping.v1` en `sdp_thermal_mapping_v1` (respaldo de ensayos incluido; sincronizados en la colección `thermal_mapping`, ver 5c).
+- **Offsets (`computeOffsets`):** sondas juntas en un punto; offset = mediana de (sonda − referencia), con referencia = mediana del grupo en cada instante o una sonda elegida. Menos de 48 h de comparación no se guarda. Corregido = lectura − offset. La mediana y la referencia son decisiones de cálculo declaradas, no de la KB.
+- **Uniformidad (`evaluateMap`):** después del fin de estabilización declarado, ΔT = máx − mín de base, centro y tope corregidos; cumple si ΔT ≤ 2 °C en ≥ 95 % de los intervalos. Un instante sin las tres posiciones cuenta en el denominador como no demostrado. Sin offsets para las tres sondas, o ensayo de menos de 72 h → datos insuficientes. Los offsets deben haberse medido antes del ensayo.
+- **Unidad (`unitSummary`):** toma el último ensayo de cada tipo; «Vacío y carga simulada cumplen» no autoriza compra en volumen (faltan ciclo biológico y los demás gates de `incubation.md`).
+- **Criterio:** provisional y de uniformidad del prototipo, no setpoint de cultivo (`CRITERIA.origin`).
+
+Pruebas: `thermal-mapping.test.js`, `e2e/incubation-thermal.browser.cjs`.
+
 ## Preguntas para revisar un PR que toque navegación o el Formulador
 
 1. ¿Alguna acción de React cambia de pestaña sin notificar al shell (`setTab`/`setBitTab` directo en vez de `goTab`/`goBitTab`)?
