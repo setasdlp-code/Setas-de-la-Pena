@@ -34,7 +34,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
           <div style={{display:'flex',gap:14,alignItems:'center'}}>
             <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
             <div>
-              <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300)'}}>
                 <AppIcon name="globe" size={13} color="var(--moss-500)" /> Trazabilidad de Origen · Tenjo, Colombia
               </div>
               <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50)',margin:'4px 0 2px',letterSpacing:'-.01em'}}>
@@ -53,11 +53,11 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
         {/* ESTADO DE SINCRONIZACIÓN EN FIRESTORE */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--paper-100)',borderRadius:4,border:'1px solid var(--border-soft)'}}>
           <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-            <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-500)'}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-500)'}}>
               Ficha en Nube:
             </span>
             <span style={{
-              fontSize: 10.5,
+              fontSize: 11,
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: 3,
@@ -67,12 +67,12 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               {syncResult?.status === 'synced' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Publicado</span> : syncResult?.status === 'failed' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} /> Error al publicar</span> : 'Pendiente de Sincronización'}
             </span>
             {syncResult?.lastPublishedAt && (
-              <span style={{fontSize: 10, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)'}}>
+              <span style={{fontSize: 11, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)'}}>
                 {new Date(syncResult.lastPublishedAt).toLocaleDateString('es-CO')}
               </span>
             )}
             {syncResult?.lastError && (
-              <span style={{fontSize: 10, color: 'var(--coral-700)', fontFamily: 'var(--font-mono)'}}>
+              <span style={{fontSize: 11, color: 'var(--coral-700)', fontFamily: 'var(--font-mono)'}}>
                 ({syncResult.lastError})
               </span>
             )}
@@ -81,7 +81,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
             type="button"
             className="inv-btn inv-btn-sec"
             disabled={syncing || !lote}
-            style={{fontSize:10.5,padding:'4px 10px',minHeight:32,display:'flex',alignItems:'center',gap:4}}
+            style={{fontSize:11,padding:'4px 10px',minHeight:32,display:'flex',alignItems:'center',gap:4}}
             onClick={async () => {
               if (!window.SetasPublicTraceDB?.publicarLote) {
                 setSyncResult({ status: 'failed', lastError: 'SetasPublicTraceDB no disponible' });
@@ -115,14 +115,14 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-900)'}}>Lote #{lote?.codigo||'SDP-LOTE'}</strong>
-              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-tint)',color:'var(--moss-700)',borderRadius:3,textTransform:'uppercase'}}>
+              <span style={{fontSize:11,fontWeight:700,padding:'2px 6px',background:'var(--moss-tint)',color:'var(--moss-700)',borderRadius:3,textTransform:'uppercase'}}>
                 {lote?.estado||'Activo'}
               </span>
             </div>
             <div style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--ink-600)',marginTop:3}}>
               Finca Santa Isabel · Tenjo, Cundinamarca · 2.587 msnm
             </div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--ink-500)',marginTop:2}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-500)',marginTop:2}}>
               {traceUrl}
             </div>
           </div>
@@ -131,19 +131,19 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
         {/* TIMELINE BIOLÓGICO Y RENDIMIENTO */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
           <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Inoculación</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Inoculación</div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:12.5,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
               {lote?.fechaInoculacion||'—'}
             </div>
           </div>
           <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Días en Proceso</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Días en Proceso</div>
             <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
               {diasIncubacion!=null?`${diasIncubacion} días`:'—'}
             </div>
           </div>
           <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Total</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Total</div>
             <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--moss-700)',marginTop:2}}>
               {totalKg>0?`${totalKg.toFixed(2)} kg`:'En sala'}
             </div>
@@ -153,7 +153,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
         {/* COMPOSICIÓN DE SUSTRATO & CERTIFICACIÓN LIMPIA */}
         {recetaItems.length>0&&(
           <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:6}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:6}}>
               Fórmula de Sustrato Lignocelulósico
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>

@@ -191,14 +191,14 @@ const FieldActionModal = ({
 
       <div style={{ padding: '10px 12px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)', display: 'block' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)', display: 'block' }}>
             Estado Actual
           </span>
           <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0)' }}>
             {actionSheetModule?.STATE_LABELS?.[model.state] || model.state}
           </strong>
         </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)', background: 'var(--paper-100)', padding: '3px 7px', borderRadius: 2 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', background: 'var(--paper-100)', padding: '3px 7px', borderRadius: 2 }}>
           Rol: {operatorRole}
         </span>
       </div>
@@ -342,7 +342,7 @@ const FieldActionModal = ({
                     </div>
                   </div>
                   <span style={{
-                    fontSize: 10,
+                    fontSize: 11,
                     fontFamily: 'var(--font-mono)',
                     textTransform: 'uppercase',
                     padding: '2px 6px',

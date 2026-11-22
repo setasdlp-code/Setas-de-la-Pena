@@ -47,21 +47,22 @@ function ServerClimateAlerts({feed,roomId,rooms,onOpenRoom,onRetry}) {
     .map(a=>[`${a.alertId||a.id}:${a.openedAt}`,a])).values())
     .sort((a,b)=>(b.resolvedAt||0)-(a.resolvedAt||0));
   const date=value=>value==null?'—':new Date(typeof value?.toMillis==='function'?value.toMillis():value).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'short'});
-  const row=a=><li key={a.id} style={{padding:'10px 0',overflowWrap:'anywhere'}}>
+  const row=a=><li key={a.id}>
     <strong>{rooms[a.roomId]?.name||a.roomId} · {a.kind==='sensor_stale'?'Sensor sin lecturas':'Clima fuera de banda'}</strong>
-    <p style={{margin:'4px 0'}}>{a.detail}</p>
-    <span>{a.status==='open'?'Abierta':'Resuelta'} · Inicio: {date(a.openedAt)}{a.status==='resolved'?` · Cierre: ${date(a.resolvedAt)}`:''} · Ciclo: {a.cycleId||'—'}</span>
+    <p>{a.detail}</p>
+    <span className="server-climate-alerts-meta">{a.status==='open'?'Abierta':'Resuelta'} · Inicio: {date(a.openedAt)}{a.status==='resolved'?` · Cierre: ${date(a.resolvedAt)}`:''} · Ciclo: {a.cycleId||'—'}</span>
     {!roomId&&<button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginLeft:8}} onClick={()=>onOpenRoom(a.roomId)}>Ver sala</button>}
   </li>;
-  return <section className="panel" data-testid={roomId?'room-server-alerts':'today-server-alerts'} aria-label="Alertas de clima del servidor">
-    <h3 style={{marginTop:0}}>Alertas de clima del servidor</h3>
-    {feed.error?<div role="alert"><p>No se pudieron leer las alertas de clima. {feed.error==='permission-denied'?'Tu sesión no tiene permiso para consultar estas alertas.':'Revisar la conexión y reintentar.'}</p><button type="button" className="inv-btn inv-btn-sec" onClick={onRetry} style={{minHeight:44}}>Reintentar lectura</button></div>:feed.loading?<p role="status">Cargando alertas…</p>:<>
+  return <section className="server-climate-alerts" data-testid={roomId?'room-server-alerts':'today-server-alerts'} aria-label="Alertas de clima del servidor">
+    <span className="server-climate-alerts-eyebrow">Registro del servidor</span>
+    <h2 className="server-climate-alerts-title">Alertas de clima del servidor</h2>
+    {feed.error?<div role="alert"><p>No se pudieron leer las alertas de clima. {feed.error==='permission-denied'?'Tu sesión no tiene permiso para consultar estas alertas.':'Revisar la conexión y reintentar.'}</p><button type="button" className="inv-btn inv-btn-sec" onClick={onRetry} style={{minHeight:44}}>Reintentar lectura</button></div>:feed.loading?<p role="status" className="server-climate-alerts-empty">Cargando alertas…</p>:<>
       <p className="sdp-provenance">{feed.fromCache?'Copia local · pendiente de confirmar con el servidor':'Registro del servidor'} · No sustituye una lectura actual de la sala.</p>
-      <h4>Abiertas ({open.length})</h4>
-      {open.length?<ul style={{paddingLeft:20}}>{open.map(row)}</ul>:<p>Sin alertas abiertas{feed.fromCache?' en la copia local':''}.</p>}
-      <details><summary style={{minHeight:44,cursor:'pointer'}}>Historial ({history.length})</summary>
+      <h3 className="server-climate-alerts-sub">Abiertas ({open.length})</h3>
+      {open.length?<ul className="server-climate-alerts-list">{open.map(row)}</ul>:<p className="server-climate-alerts-empty">Sin alertas abiertas{feed.fromCache?' en la copia local':''}.</p>}
+      <details><summary>Historial ({history.length})</summary>
         <p>Se conservan los episodios cerrados desde la actualización del registro. Los episodios anteriores que ya fueron sobrescritos no se pueden recuperar.</p>
-        {history.length?<ul style={{paddingLeft:20}}>{history.map(row)}</ul>:<p>Sin episodios cerrados registrados.</p>}
+        {history.length?<ul className="server-climate-alerts-list">{history.map(row)}</ul>:<p>Sin episodios cerrados registrados.</p>}
       </details>
     </>}
   </section>;
@@ -700,9 +701,9 @@ const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
     {key:'c5',type:'normal',day:adj(d.c50),title:'Colonización 50%',detail:'Micelio blanco visible en la bolsa.'},
     {key:'c1',type:coldWarn?'warning':'normal',day:adj(d.c100),title:'Colonización completa',detail:`Pasar a cámara de fructificación. ${sp.temp_fruit}.${coldWarn}`},
     {key:'pr',type:'normal',day:adj(d.pr),title:'Primordios',detail:'HR 90–95%. Abrir bolsa o cortar.'},
-    {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:`~${eb?(eb*(f1Pct/100)).toFixed(0):'?'}% EB (${f1Pct}% del total).`},
-    {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:`~${eb?(eb*(f2Pct/100)).toFixed(0):'?'}% EB (${f2Pct}% del total).`},
-    {key:'f3',type:'harvest',day:adj(d.f3),title:'Tercera cosecha',detail:`~${eb?(eb*(f3Pct/100)).toFixed(0):'?'}% EB (${f3Pct}% del total). Evaluar si compostar el bloque.`}
+    {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:(eb?`~${(eb*(f1Pct/100)).toFixed(0)}% EB (${f1Pct}% del total).`:`${f1Pct}% de la cosecha total; EB sin estimar.`)},
+    {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:(eb?`~${(eb*(f2Pct/100)).toFixed(0)}% EB (${f2Pct}% del total).`:`${f2Pct}% de la cosecha total; EB sin estimar.`)},
+    {key:'f3',type:'harvest',day:adj(d.f3),title:'Tercera cosecha',detail:(eb?`~${(eb*(f3Pct/100)).toFixed(0)}% EB (${f3Pct}% del total).`:`${f3Pct}% de la cosecha total; EB sin estimar.`)+` Evaluar si compostar el bloque.`}
   ];
   return{
     evts:evts.map(e=>({...e,ds:fmt(add(base,e.day))})),
@@ -1631,7 +1632,7 @@ const CAT_COLORS={
 // ── MICRO SVG ICONS (sin emojis) ──────────────────────────────
 const IcoBlock=()=>(<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent-terracotta)" strokeWidth="2" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:4,flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>);
 const IcoWarn=()=>(<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" strokeWidth="2" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:4,flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
-const IcoBox=({color='currentColor',size=13})=>(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',flexShrink:0}}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>);
+const IcoBox=({color='currentColor',size=13})=>(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',flexShrink:0}}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>);
 const parseIngName=(name)=>{const hasBlock=name.includes('⛔');const hasWarn=name.includes('⚠️')||name.includes('⚠');const clean=name.replace(/⛔\s*/g,'').replace(/⚠️\s*/g,'').replace(/⚠\s*/g,'').trim();return{hasBlock,hasWarn,clean};};
 
 // ── INGREDIENT ITEM with expandable profile ──
@@ -3110,33 +3111,36 @@ function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
   const choose=value=>{setSection(value);nav.navigate(window,'metricas',{metricsTab:value});setEditing(null);setMessage('');};
   const labels={eventos:'Eventos',rendimiento:'Rendimiento',trabajo:'Trabajo',supervision:'Supervisión',salidas:'Cosechas',conocimiento:'Conocimiento'};
   const fmt=n=>n==null?'—':n.toLocaleString('es-CO',{maximumFractionDigits:2});
-  const button={minHeight:48,padding:'10px 14px',border:'1px solid var(--border-soft)',borderRadius:8,background:'var(--paper-0)',color:'var(--ink-0)',cursor:'pointer'};
   const canReview=!!window.SetasFirebase?.auth?.currentUser?.uid&&['produccion','direccion'].includes(role);
   const submit=decision=>{try{onReview(editing,decision,reason);setMessage('Revisión guardada en este dispositivo y encolada para sincronizar.');setEditing(null);setReason('');}catch(e){setMessage(e.message);}};
-  return <section data-testid="operational-metrics" style={{maxWidth:1100,margin:'auto',padding:'20px 16px 80px',color:'var(--ink-0)'}}>
-    <p>Registros de Bitácora disponibles en este dispositivo · Todos los ciclos · {new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})}</p>
-    <p>Las cifras corresponden a los registros locales y pueden cambiar al sincronizar otros dispositivos.</p>
-    <nav aria-label="Secciones de Métricas" style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0'}}>{api.TABS.map(key=><button key={key} style={button} aria-pressed={section===key} onClick={()=>choose(key)}>{labels[key]}</button>)}</nav>
-    {error?<p role="alert">No se pudieron leer los registros de Bitácora. Revisar el almacenamiento antes de continuar; no se muestran métricas incompletas.</p>:!loaded?<p role="status">Cargando Bitácora.</p>:<>
-      <div style={{display:'flex',flexWrap:'wrap',gap:18,margin:'20px 0'}}><span>{data.lots.length} lotes</span><span>{data.harvests.length} cosechas válidas</span><span>{fmt(data.freshKg)} kg cosechados registrados</span><span>{data.eligibility.eligibleN} ciclos finales elegibles</span></div>
-      {data.lots.length===0&&<p>No hay lotes registrados. Los resultados se calculan con registros de Bitácora.</p>}
+  return <section data-testid="operational-metrics" className="ops-metrics">
+    <header className="ops-metrics-intro">
+      <p className="ops-metrics-meta">Registros de Bitácora disponibles en este dispositivo · Todos los ciclos · {new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})}</p>
+      <p className="ops-metrics-note">Las cifras corresponden a los registros locales y pueden cambiar al sincronizar otros dispositivos.</p>
+    </header>
+    <nav aria-label="Secciones de Métricas" className="ops-metrics-tabs">{api.TABS.map(key=><button key={key} type="button" className="ops-metrics-tab" aria-pressed={section===key} onClick={()=>choose(key)}>{labels[key]}</button>)}</nav>
+    {error?<p role="alert" className="ops-metrics-alert">No se pudieron leer los registros de Bitácora. Revisar el almacenamiento antes de continuar; no se muestran métricas incompletas.</p>:!loaded?<p role="status" className="ops-metrics-note">Cargando Bitácora.</p>:<>
+      <div className="ops-metrics-stats"><span><strong>{data.lots.length}</strong> lotes</span><span><strong>{data.harvests.length}</strong> cosechas válidas</span><span><strong>{fmt(data.freshKg)}</strong> kg cosechados registrados</span><span><strong>{data.eligibility.eligibleN}</strong> ciclos finales elegibles</span></div>
+      {data.lots.length===0&&<p className="ops-metrics-empty">No hay lotes registrados. Los resultados se calculan con registros de Bitácora.</p>}
+      <div className="ops-metrics-body">
       {section==='rendimiento'&&<>
-        <h2>Rendimiento observado</h2><p data-testid="metrics-mean">EB media por lote final: {fmt(data.meanEB)}{data.meanEB==null?'':' %'}</p>
+        <h2>Rendimiento observado</h2><p data-testid="metrics-mean" className="ops-metrics-figure">EB media por lote final: <strong>{fmt(data.meanEB)}{data.meanEB==null?'':' %'}</strong></p>
         <p>EB = masa fresca cosechada ÷ masa seca del sustrato × 100. La media asigna el mismo peso a cada lote final elegible; los ciclos parciales se muestran aparte.</p>
         <p>Meta y umbral de alerta: pendientes de conciliación. <a href="https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/metadata/kpis.yaml" target="_blank" rel="noreferrer">Metadatos de KPI</a> y <a href="https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/CANON.md" target="_blank" rel="noreferrer">CANON</a> contienen referencias que deben reconciliarse. No se evalúa aceptación con una meta provisional.</p>
-        <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><caption>Resultados por lote · Fuente: Bitácora</caption><thead><tr>{['Lote / especie','Masa seca kg','Masa fresca kg','EB %','Resultado'].map(t=><th key={t} scope="col" style={{padding:8,textAlign:'left'}}>{t}</th>)}</tr></thead><tbody>{data.rows.map(r=><tr key={r.loteId}><th scope="row" style={{padding:8,textAlign:'left'}}>{r.codigo||r.loteId}<br/><small>{r.sKey||'Especie sin referencia'}</small></th><td>{fmt(r.dryKg)}</td><td>{fmt(r.freshKg)}</td><td>{fmt(r.be)}</td><td>{r.eligible?'Final elegible':r.exclusionReason?r.reasonLabel:'Parcial; excluido de la media'}</td></tr>)}</tbody></table></div>
+        <div className="ops-metrics-table-wrap"><table className="inv-table ops-metrics-table"><caption>Resultados por lote · Fuente: Bitácora</caption><thead><tr>{['Lote / especie','Masa seca kg','Masa fresca kg','EB %','Resultado'].map(t=><th key={t} scope="col">{t}</th>)}</tr></thead><tbody>{data.rows.length===0?<tr><td colSpan={5} className="ops-metrics-table-empty">Sin lotes con cosecha registrada.</td></tr>:data.rows.map(r=><tr key={r.loteId}><th scope="row">{r.codigo||r.loteId}<br/><small>{r.sKey||'Especie sin referencia'}</small></th><td>{fmt(r.dryKg)}</td><td>{fmt(r.freshKg)}</td><td>{fmt(r.be)}</td><td>{r.eligible?'Final elegible':r.exclusionReason?r.reasonLabel:'Parcial; excluido de la media'}</td></tr>)}</tbody></table></div>
       </>}
-      {section==='eventos'&&<><h2>Eventos registrados</h2><p>Cosechas y eventos del historial de los lotes; no incluye sesiones de trabajo sin registro canónico.</p>{!data.events.length&&<p>No hay eventos registrados.</p>}<ul>{data.events.map((e,i)=><li key={`${e.eventKey}:${i}`}>{e.type} · {e.batchId} · {e.at||'Fecha no registrada'}{e.operatorId?` · ${e.operatorId}`:''}</li>)}</ul></>}
-      {section==='trabajo'&&<><h2>Trabajo</h2><p>No hay una fuente canónica de horas de trabajo conectada a Métricas. Horas y productividad por hora: sin datos.</p></>}
-      {section==='supervision'&&<><h2>Supervisión de registros</h2><p>La revisión documenta el hallazgo; la corrección del registro se realiza en Bitácora.</p>{!canReview&&<p>Para revisar se requiere una sesión de Producción o Dirección.</p>}{!data.issues.length&&<p>No hay hallazgos en los registros disponibles.</p>}
-        {data.issues.map(i=><article key={i.id} data-anomaly-id={i.id} style={{padding:16,border:'1px solid var(--border-soft)',borderRadius:8,marginBottom:12,overflowWrap:'anywhere'}}><h3>{i.label}</h3><p>{i.review?`${i.review.payload.decision} · ${i.review.operatorId} · ${i.review.at} · ${i.review.payload.reason}`:'Pendiente de revisión'}</p>{canReview&&i.reviewable&&<button style={button} onClick={()=>{setEditing(i);setReason('');setMessage('');}}>Revisar hallazgo</button>}{editing?.id===i.id&&<div><label>Motivo de la revisión<textarea aria-label="Motivo de la revisión" value={reason} onChange={e=>setReason(e.target.value)} style={{display:'block',width:'100%',boxSizing:'border-box',minHeight:80}}/></label><button style={button} disabled={!reason.trim()} onClick={()=>submit('validado')}>Validar observación</button> <button style={button} disabled={!reason.trim()} onClick={()=>submit('corregir')}>Marcar para corregir</button></div>}</article>)}
-        <h3>Historial de revisiones</h3><ul>{data.reviews.map(e=><li key={e.id} style={{overflowWrap:'anywhere'}}>{e.payload.anomalyId} · {e.payload.decision} · {e.operatorId} · {e.at} · {e.payload.reason}</li>)}</ul>
+      {section==='eventos'&&<><h2>Eventos registrados</h2><p>Cosechas y eventos del historial de los lotes; no incluye sesiones de trabajo sin registro canónico.</p>{!data.events.length&&<p className="ops-metrics-empty">No hay eventos registrados.</p>}<ul className="ops-metrics-list">{data.events.map((e,i)=><li key={`${e.eventKey}:${i}`}>{e.type} · {e.batchId} · {e.at||'Fecha no registrada'}{e.operatorId?` · ${e.operatorId}`:''}</li>)}</ul></>}
+      {section==='trabajo'&&<><h2>Trabajo</h2><p className="ops-metrics-empty">No hay una fuente canónica de horas de trabajo conectada a Métricas. Horas y productividad por hora: sin datos.</p></>}
+      {section==='supervision'&&<><h2>Supervisión de registros</h2><p>La revisión documenta el hallazgo; la corrección del registro se realiza en Bitácora.</p>{!canReview&&<p className="ops-metrics-note">Para revisar se requiere una sesión de Producción o Dirección.</p>}{!data.issues.length&&<p className="ops-metrics-empty">No hay hallazgos en los registros disponibles.</p>}
+        {data.issues.map(i=><article key={i.id} data-anomaly-id={i.id} className="ops-metrics-issue"><h3>{i.label}</h3><p>{i.review?`${i.review.payload.decision} · ${i.review.operatorId} · ${i.review.at} · ${i.review.payload.reason}`:'Pendiente de revisión'}</p>{canReview&&i.reviewable&&<button type="button" className="btn" onClick={()=>{setEditing(i);setReason('');setMessage('');}}>Revisar hallazgo</button>}{editing?.id===i.id&&<div className="ops-metrics-review"><label>Motivo de la revisión<textarea aria-label="Motivo de la revisión" value={reason} onChange={e=>setReason(e.target.value)}/></label><div className="ops-metrics-actions"><button type="button" className="btn pri" disabled={!reason.trim()} onClick={()=>submit('validado')}>Validar observación</button><button type="button" className="btn" disabled={!reason.trim()} onClick={()=>submit('corregir')}>Marcar para corregir</button></div></div>}</article>)}
+        <h3>Historial de revisiones</h3>{!data.reviews.length&&<p className="ops-metrics-empty">Sin revisiones registradas.</p>}<ul className="ops-metrics-list">{data.reviews.map(e=><li key={e.id}>{e.payload.anomalyId} · {e.payload.decision} · {e.operatorId} · {e.at} · {e.payload.reason}</li>)}</ul>
       </>}
-      {section==='salidas'&&<><h2>Cosechas registradas</h2><p>Estas masas corresponden a cosechas. No representan ventas ni despachos.</p>{!data.harvests.length&&<p>No hay cosechas válidas registradas.</p>}<ul>{data.harvests.map(c=><li key={c.id}>{c.loteId} · {c.id} · {c.pesoFresco} {c.unit||'g'} · {c.fecha||'Fecha no registrada'}</li>)}</ul></>}
+      {section==='salidas'&&<><h2>Cosechas registradas</h2><p>Estas masas corresponden a cosechas. No representan ventas ni despachos.</p>{!data.harvests.length&&<p className="ops-metrics-empty">No hay cosechas válidas registradas.</p>}<ul className="ops-metrics-list">{data.harvests.map(c=><li key={c.id}>{c.loteId} · {c.id} · {c.pesoFresco} {c.unit||'g'} · {c.fecha||'Fecha no registrada'}</li>)}</ul></>}
       {section==='conocimiento'&&<><h2>Evidencia para conocimiento</h2><p>{data.eligibility.eligibleN} resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo.</p><p>Los registros parciales y los datos inválidos no se utilizan como resultados finales. La evidencia y el cierre de cada lote están en Bitácora.</p></>}
-      <button style={button} onClick={onBitacora}>Abrir Bitácora</button>
+      </div>
+      <div className="ops-metrics-actions"><button type="button" className="btn" onClick={onBitacora}>Abrir Bitácora</button></div>
     </>}
-    {message&&<p role="status">{message}</p>}
+    {message&&<p role="status" className="ops-metrics-note">{message}</p>}
   </section>;
 }
 
@@ -3245,17 +3249,19 @@ function SimuladorShell(props){
   });
   const TAB_LABELS={home:'Hoy',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',metricas:'Métricas',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
-    {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
-    {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
-    {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora','metricas'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
-    {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
+    {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
+    {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
+    {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
+    {key:'registro',label:'Bitácora',tabs:['bitacora','metricas'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
+    {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
   const TAB_PAGE_TITLES={home:'Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',metricas:'Métricas de cultivo',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [homeDashboard,setHomeDashboard]=useState('today');
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular'];
+  // Etiqueta sobre el título de página: nombra el área de trabajo, no un genérico.
+  const PAGE_EYEBROWS={catalogo:'Especies',formular:'Receta',inventario:'Bodega',produccion:'Producción',schedule:'Planificación',clima:'Salas',bitacora:'Registro',metricas:'Registro',bioCheck:'Bioseguridad',labExtraction:'Laboratorio'};
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','metricas','labExtraction','bioCheck'];
   const TAB_ALIASES={optimizar:'formular',dashboard:'catalogo'};
   const applyTab=t=>{
@@ -8558,7 +8564,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!currentLote) return null;
     const qrAllowedActions=new Set((currentSheet?.actions||[]).filter(action=>!action.blockedBy).map(action=>action.action));
     return <section aria-label="Registrar en este lote" style={{marginBottom:16}}>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
                         Reportar evento
                       </div>
                       {qrEventoStatuses.filter(item=>item.loteId===currentLote.id).map(item=>(
@@ -9011,7 +9017,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   : 'sin telemetría conectada · sin lectura'}
               </div>
               {live && live.health && live.health.overallStatus !== 'offline' && (
-                <div className="today-climate-card__health" style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',fontSize:10.5,fontFamily:'var(--font-mono)',marginTop:4,padding:'3px 6px',background:'var(--paper-1)',borderRadius:'var(--r-xs,2px)',border:'1px solid var(--border-hairline)'}}>
+                <div className="today-climate-card__health" style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',fontSize:11,fontFamily:'var(--font-mono)',marginTop:4,padding:'3px 6px',background:'var(--paper-1)',borderRadius:'var(--r-xs,2px)',border:'1px solid var(--border-hairline)'}}>
                   <span style={{fontWeight:700,color:live.health.overallStatus==='healthy'?'var(--status-ok)':live.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
                     {live.health.overallStatus==='healthy'?'● Confiable':`▲ ${live.health.overallStatus.toUpperCase()}`}
                   </span>
@@ -9140,7 +9146,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
           {stats.flushes&&stats.flushes.length>0&&(
             <div style={{marginTop:12}}>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
                   <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',boxSizing:'border-box',borderRight:i<stats.flushes.length-1?'2px solid var(--paper-0)':'none',background:VIZ_ORDINAL[Math.min(i,VIZ_ORDINAL.length-1)]}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
@@ -10313,7 +10319,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* Ficha del Ciclo y Sala */}
         <div className="climate-cycle-banner">
           <div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta-dark)'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta-dark)'}}>
               {room.name} · {room.spec}
             </div>
             <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,color:'var(--ink-0)',marginTop:2}}>
@@ -10409,7 +10415,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive)' }}>
                     <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo Multiespecie · Sala Compartida
                   </div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
@@ -10446,24 +10452,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
 
               {/* Setpoints Minimax Pareto */}
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 6 }}>
                 <AppIcon name="target" size={13} style={{marginRight:4}} /> Setpoints Pareto Minimax Recomendados para Co-Existencia:
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 10 }}>
                 <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>T° Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>T° Pareto</div>
                   <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.tempC}°C</div>
                 </div>
                 <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>HR Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>HR Pareto</div>
                   <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.rhPct}%</div>
                 </div>
                 <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>CO₂ Límite</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>CO₂ Límite</div>
                   <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.co2Ppm} ppm</div>
                 </div>
                 <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>VPD Óptimo</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>VPD Óptimo</div>
                   <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.vpdKpa} kPa</div>
                 </div>
               </div>
@@ -10471,7 +10477,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {/* Cuellos de Botella Liebig */}
               {(coCultRoomOpt.bottlenecks.length > 0 || coCultRoomOpt.penalties.length > 0) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
                     <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):
                   </div>
                   {coCultRoomOpt.bottlenecks.map((b, idx) => (
@@ -10602,7 +10608,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span>Dióxido de Carbono (NDIR)</span>
                   <div style={{display:'flex',gap:6,alignItems:'center'}}>
                     <ClimateMetricProvenance metric="co2_ppm" roomLive={roomLive} injected={injected}/>
-                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
+                    <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
                   </div>
                 </div>
                 <div className="climate-kpi-value sdp-tele__v">
@@ -10684,7 +10690,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{display:'flex',flexDirection:'column',gap:16}}>
               {/* Selector Culinario */}
               <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                <label htmlFor="active-culinary-profile" style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
+                <label htmlFor="active-culinary-profile" style={{display:'block',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
                   Efecto Gastronómico Deseado:
                 </label>
                 <select 
@@ -10717,12 +10723,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {/* Targets details */}
               <div style={{background:'var(--paper-2)',border:'1px solid var(--line-0)',borderRadius:'var(--sim-radius-sm)',padding:10,fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-1)'}}>
                 <div><strong>Target Fructificación:</strong> T: {CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1)}°C | HR: {CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0)}% | CO₂: {CULINARY_PROFILES[activeCulinaryKey].co2Ideal} ppm</div>
-                <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:10,color:'var(--ink-1)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
+                <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
               </div>
 
               {/* Match Score */}
               <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
                   <span>Sintonía Culinaria (Match):</span>
                   <span style={{fontWeight:700,color:matchScore >= 80 ? 'var(--accent-olive)' : matchScore >= 50 ? 'var(--accent-terracotta)' : 'var(--accent-rust)'}}>
                     {matchScore}%
@@ -10742,7 +10748,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
                 {/* Temp Slider */}
                 <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)'}}>
                     <span>TEMP: {tempProj.toFixed(1)} °C</span>
                     <span>Meta: {CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1)}°C</span>
                   </div>
@@ -10760,7 +10766,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 
                 {/* Hum Slider */}
                 <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)'}}>
                     <span>HUMEDAD: {rhProj.toFixed(0)} %</span>
                     <span>Meta: {CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0)}%</span>
                   </div>
@@ -10778,7 +10784,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* CO2 Slider */}
                 <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)'}}>
                     <span>CO₂: {co2Proj} ppm</span>
                     <span>Meta: {CULINARY_PROFILES[activeCulinaryKey].co2Ideal} ppm</span>
                   </div>
@@ -10805,21 +10811,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button 
                   type="button" 
                   onClick={() => setRhProj(CULINARY_PROFILES[activeCulinaryKey].rhIdeal)}
-                  style={{cursor:'pointer',padding:'6px 4px',fontSize:10,fontFamily:'var(--font-mono)',border:'1px solid var(--line-0)',background:'var(--paper-0)',borderRadius:4}}
+                  style={{cursor:'pointer',minHeight:44,padding:'6px 4px',fontSize:11,fontFamily:'var(--font-mono)',letterSpacing:'.08em',textTransform:'uppercase',border:'1px solid var(--rule)',background:'var(--paper-50)',color:'var(--ink-900)',borderRadius:0}}
                 >
                   Nivelar Neb.
                 </button>
                 <button 
                   type="button" 
                   onClick={() => setCo2Proj(CULINARY_PROFILES[activeCulinaryKey].co2Ideal)}
-                  style={{cursor:'pointer',padding:'6px 4px',fontSize:10,fontFamily:'var(--font-mono)',border:'1px solid var(--line-0)',background:'var(--paper-0)',borderRadius:4}}
+                  style={{cursor:'pointer',minHeight:44,padding:'6px 4px',fontSize:11,fontFamily:'var(--font-mono)',letterSpacing:'.08em',textTransform:'uppercase',border:'1px solid var(--rule)',background:'var(--paper-50)',color:'var(--ink-900)',borderRadius:0}}
                 >
                   Nivelar FAE
                 </button>
                 <button 
                   type="button" 
                   onClick={() => setTempProj(CULINARY_PROFILES[activeCulinaryKey].tempIdeal)}
-                  style={{cursor:'pointer',padding:'6px 4px',fontSize:10,fontFamily:'var(--font-mono)',border:'1px solid var(--line-0)',background:'var(--paper-0)',borderRadius:4}}
+                  style={{cursor:'pointer',minHeight:44,padding:'6px 4px',fontSize:11,fontFamily:'var(--font-mono)',letterSpacing:'.08em',textTransform:'uppercase',border:'1px solid var(--rule)',background:'var(--paper-50)',color:'var(--ink-900)',borderRadius:0}}
                 >
                   Equilibrar T°
                 </button>
@@ -10828,7 +10834,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
             {/* Radar Canvas Plot */}
             <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',border:'1px solid var(--line-0)',background:'var(--paper-0)',padding:12,borderRadius:'var(--sim-radius-sm)'}}>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',textTransform:'uppercase',marginBottom:8}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)',textTransform:'uppercase',marginBottom:8}}>
                 Interactivo (arrastrar los puntos)
               </span>
               <canvas 
@@ -10842,7 +10848,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
               />
-              <div style={{marginTop:8,fontSize:9,fontFamily:'var(--font-sans)',color:'var(--ink-2)',textAlign:'center',maxWidth:240}}>
+              <div style={{marginTop:8,fontSize:11,fontFamily:'var(--font-sans)',color:'var(--ink-2)',textAlign:'center',maxWidth:240}}>
                 Triángulo sólido: Sensores en vivo (Compensados).<br/>
                 Línea discontinua: Proyección del simulador.
               </div>
@@ -10883,7 +10889,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',gap:14,marginTop:8}}>
             {/* Gráfico 1: Temperatura */}
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>
                 <span>TEMPERATURA (°C)</span>
                 <span>Banda: {defaultTargets.temperature_c.min}°C - {defaultTargets.temperature_c.max}°C</span>
               </div>
@@ -10899,7 +10905,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
             {/* Gráfico 2: Humedad Relativa */}
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>
                 <span>HUMEDAD RELATIVA (%RH)</span>
                 <span>Banda: {defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%</span>
               </div>
@@ -10915,7 +10921,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
             {/* Gráfico 3: CO2 NDIR */}
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>
                 <span>CO₂ (PPM)</span>
                 <span>Límite FAE: &lt; {defaultTargets.co2_ppm.max} ppm</span>
               </div>
@@ -11361,7 +11367,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <strong>No se pudo guardar en este dispositivo.</strong> Algunos cambios pueden estar solo en pantalla y perderse al recargar. Mantener la app abierta, descargar un respaldo desde Datos y liberar espacio o habilitar el almacenamiento antes de reintentar.
         </div>}
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
-          <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
+          <span className="page-title-eyebrow">{PAGE_EYEBROWS[tab]||(RECETA_TABS.includes(tab)?'Receta':'Cultivo')}</span>
           <h1 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h1>
           <div className="page-title-rule"></div>
         </div>
@@ -11616,7 +11622,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Registrar evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
-                      const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
+                      // Las tres acciones comparten tinta: el orden ya da la jerarquía; un color
+                      // propio por botón competía con los estados semánticos.
+                      const accent=null;
                       return (
                         <button
                           key={btn.label}
@@ -11643,7 +11651,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {btn.sub}
                             </div>
                           </div>
-                          <span className="home-action-arrow" aria-hidden="true">↗</span>
+                          <span className="home-action-arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
                         </button>
                       );
                     })}
@@ -12116,7 +12124,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="spp-sect spp-sect-catalog">
             <div className="catalog-hdr">
               <div>
-                <span className="catalog-eyebrow">Receta</span>
+                <span className="catalog-eyebrow">Especies</span>
                 <h1 className="catalog-title">Catálogo de especies &amp; Recetario</h1>
               </div>
               <div className="catalog-hdr-stats">
@@ -12677,7 +12685,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="rec-empty-sub">Añadir insumos manualmente o generar una primera mezcla.</div>
                     <div className="recipe-start-actions">
                       <button type="button" className="rec-empty-action" onClick={focusIngredientCatalog}>Elegir ingredientes</button>
-                      <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                      <button type="button" className="rec-empty-action is-secondary" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
                     </div>
                   </div>
                 </div>
@@ -14270,7 +14278,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab===schTab&&(
-          <div className="panel panel-accent">
+          <div className="panel panel-accent panel-schedule">
             {/* Subtab navigation */}
             <div style={{display:'flex',gap:6,borderBottom:'1.5px solid var(--border-soft)',paddingBottom:10,marginBottom:16}}>
               <button
@@ -14724,7 +14732,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
                     {psSections.map(s=>(
-                      <button key={s.id} onClick={()=>{const target=document.getElementById(s.id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+                      <button key={s.id} onClick={()=>{const target=document.getElementById(s.id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
                     ))}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
@@ -14774,7 +14782,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="economic-summary-card" style={{marginBottom: 20}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
                         <AppIcon name="scale" size={14} style={{marginRight:6}} /> Análisis Económico & Rentabilidad por Bolsa
                       </div>
                       <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1)',marginTop:2}}>
@@ -14782,7 +14790,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:6}}>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)'}}>Precio venta fresco:</span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)'}}>Precio venta fresco:</span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-0)'}}>${Math.round(pb.freshPriceKg).toLocaleString('es-CO')} COP/kg</span>
                     </div>
                   </div>
@@ -15120,7 +15128,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', letterSpacing: '0.05em' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', letterSpacing: '0.05em' }}>
                         <AppIcon name="snowflake" size={14} style={{marginRight:6}} /> Poscosecha & Cadena de Frío ({postHarvestShelfLife?.speciesName || harvestSpecies})
                       </span>
                       {postHarvestShelfLife && (
@@ -15322,13 +15330,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{ padding: '12px 14px', background: 'var(--paper-0)', border: '2px solid var(--accent-olive)', borderRadius: 'var(--radius-md, 3px)', marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       <div>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Canastilla</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Canastilla</span>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-olive)' }}>
                           {harvestActiveCrate.crateCode}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Lote Destino</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Lote Destino</span>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {currentLote ? currentLote.codigo : 'Sin lote'}
                         </div>
@@ -15341,13 +15349,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span style={{ fontWeight: 600, color: 'var(--ink-1)' }}>
                           Tara: {harvestTareInput ? `${harvestTareInput} g` : 'Sin verificar'}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                           Fuente: {harvestTareSource === 'field_measured' ? 'Balanza campo' : harvestTareSource === 'catalog_default' ? 'Catálogo' : harvestTareSource === 'manual' ? 'Manual' : 'Sin verificar'}
                         </span>
                       </div>
                       {(!harvestTareInput || harvestTareSource === 'unverified') && (
                         <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 10, color: 'var(--warning-text)', flex: 1 }}>
+                          <span style={{ fontSize: 11, color: 'var(--warning-text)', flex: 1 }}>
                             <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Ingresar la tara (g) para calcular peso neto honesto:
                           </span>
                           <input
@@ -15392,7 +15400,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             key={inc}
                             type="button"
                             className="inv-btn inv-btn-sec inv-btn-sm"
-                            style={{ flex: 1, padding: '4px 2px', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                            style={{ flex: 1, padding: '4px 2px', fontSize: 11, fontFamily: 'var(--font-mono)' }}
                             onClick={() => {
                               const cur = parseFloat(harvestGrossInput) || 0;
                               setHarvestGrossInput(String(cur + inc));
@@ -15435,14 +15443,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {/* FLUSH */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginBottom: 12 }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
                         <div style={{ display: 'flex', gap: 3 }}>
                           {[1, 2, 3].map(f => (
                             <button
                               key={f}
                               type="button"
                               className={`inv-btn inv-btn-sm ${harvestFlush === f ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 11 }}
                               onClick={() => setHarvestFlush(f)}
                             >
                               F{f}
@@ -15511,7 +15519,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button
                           type="button"
                           onClick={stopCameraScanner}
-                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'var(--paper-50)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'var(--paper-50)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 11, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
                         >
                           <AppIcon name="close" size={10} style={{marginRight:4}} /> Detener Cámara
                         </button>
@@ -15600,7 +15608,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <button
                               type="button"
                               onClick={() => setSweepQueue([])}
-                              style={{ background: 'none', border: 'none', color: 'var(--accent-terracotta)', fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent-terracotta)', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
                             >
                               Limpiar cola
                             </button>
@@ -15618,7 +15626,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   color: item.estado === 'contaminada' ? 'var(--status-error)' : 'var(--ink-0)',
                                   border: '1px solid var(--border-hairline)',
                                   borderRadius: 2,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontFamily: 'var(--font-mono)',
                                 }}
                               >
@@ -15773,18 +15781,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-0)'}}>{currentLote.codigo}</strong>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
                       </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',marginTop:4}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)',marginTop:4}}>
                         {currentSheet
                           ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
                           :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
                       {(scannedBag||qrScannedBagId)&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive)',marginTop:3}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--accent-olive)',marginTop:3}}>
                           Etiqueta leída: bolsa {scannedBag ? scannedBag.codigo : qrScannedBagId}
                         </div>
                       )}
                       {currentSheet&&currentSheet.blocks.length>0&&(
-                        <div style={{fontFamily:'var(--font-sans)',fontSize:10,color:'var(--accent-terracotta)',marginTop:4}}>
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--accent-terracotta)',marginTop:4}}>
                           {currentSheet.blocks.map(b=>b.detail).join(' · ')}
                         </div>
                       )}
@@ -15854,7 +15862,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     <div style={{display:'flex',flexDirection:'column',gap:8}} data-testid="qr-contextual-actions">
                       {currentSheet&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
                           Acciones válidas en {currentSheet.stateLabel.toLowerCase()}
                         </div>
                       )}
@@ -15885,7 +15893,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {/* REPORTAR EVENTO — se atribuye al operador con sesión activa;
                           no requiere ni habilita nada en la ficha pública (trace.html). */}
                       {renderQrCaptures(currentLote,scannedBag,currentSheet)}
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
                         Siempre disponible
                       </div>
                       <button
@@ -16060,7 +16068,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* CONTROLES DE CONFIGURACIÓN */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 14 }}>
                   <div>
-                    <span id="thermal-format-label" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
+                    <span id="thermal-format-label" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
                       Formato de Impresión / Empaque
                     </span>
                     <div role="group" aria-labelledby="thermal-format-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 6 }}>
@@ -16088,13 +16096,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
 
                     </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', marginTop: 4 }}>
                       Formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm). 50 × 70 mm: vertical, QR grande y receta.
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="thermal-scope" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
+                    <label htmlFor="thermal-scope" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
                       Alcance de Impresión
                     </label>
                     <select
@@ -16116,9 +16124,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {thermalScope === 'custom' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, background: 'var(--paper-0)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <label htmlFor="thermal-bag-start" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Desde bolsa:</label>
+                    <label htmlFor="thermal-bag-start" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Desde bolsa:</label>
                     <input id="thermal-bag-start" name="thermal-bag-start" type="number" min={1} max={totalBags} value={thermalBagStart} onChange={e => setThermalBagStart(parseInt(e.target.value) || 1)} style={{ width: 68, minHeight: 44, fontSize: 11, textAlign: 'center' }} />
-                    <label htmlFor="thermal-bag-end" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Hasta:</label>
+                    <label htmlFor="thermal-bag-end" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Hasta:</label>
                     <input id="thermal-bag-end" name="thermal-bag-end" type="number" min={thermalBagStart} max={totalBags} value={thermalBagEnd} onChange={e => setThermalBagEnd(parseInt(e.target.value) || totalBags)} style={{ width: 68, minHeight: 44, fontSize: 11, textAlign: 'center' }} />
                   </div>
                 )}
@@ -16126,10 +16134,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* PREVIEW EN PANTALLA */}
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase' }}>
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                       Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x70' ? '50×70 mm' : '50×30 mm'}
                     </span>
                   </div>
@@ -16247,7 +16255,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)'}}>
                       <AppIcon name="box" size={14} style={{marginRight:6}} /> Insumos a Descontar de Bodega
                     </span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:10,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:11,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
                       {allInsumosOk ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} color="var(--moss-700)" /> Stock suficiente para todo el batch</span> : <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-500)" /> Algunos insumos requieren compra</span>}
                     </span>
                   </div>
@@ -16338,7 +16346,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                             <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
                           </span>
                           <span
@@ -16360,19 +16368,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 6, marginBottom: 8 }}>
                           <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>T° Pareto</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', display: 'block' }}>T° Pareto</span>
                             <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.tempC}°C</strong>
                           </div>
                           <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>HR Pareto</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', display: 'block' }}>HR Pareto</span>
                             <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.rhPct}%</strong>
                           </div>
                           <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>CO₂ Límite</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', display: 'block' }}>CO₂ Límite</span>
                             <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.co2Ppm} ppm</strong>
                           </div>
                           <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>VPD Óptimo</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', display: 'block' }}>VPD Óptimo</span>
                             <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.vpdKpa} kPa</strong>
                           </div>
                         </div>
@@ -16449,7 +16457,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                   <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{ width: 60, height: 'auto', maxHeight: 34, objectFit: 'contain' }} />
                   <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                       Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
                     </div>
                     <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -16466,7 +16474,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginBottom: 18 }}>
                 {/* COLUMNA 1: PERFIL SENSORIAL & RADAR */}
                 <div style={{ background: 'var(--paper-1)', padding: '16px 14px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 10 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 10 }}>
                     Notas de Cata & Organolépticas
                   </div>
                   <div style={{ marginBottom: 10 }}>
@@ -16485,19 +16493,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* BARRAS DE INTENSIDAD */}
                   <div style={{ borderTop: '1px dashed var(--border-hairline)', paddingTop: 10 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Umami</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Umami</span>
                       <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.umami/5)*100}%` }} /></div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.umami}/5</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.umami}/5</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Carnosidad</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Carnosidad</span>
                       <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.meatiness/5)*100}%` }} /></div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.meatiness}/5</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.meatiness}/5</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Aromáticos</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Aromáticos</span>
                       <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.aromatics/5)*100}%` }} /></div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.aromatics}/5</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.aromatics}/5</span>
                     </div>
                   </div>
                 </div>
@@ -16505,7 +16513,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* COLUMNA 2: TÉCNICAS DE COCCIÓN Y MARIDAJE */}
                 <div>
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
                       Técnicas Sugeridas por el Chef
                     </div>
                     {gastro.cooking.map((c, i) => (
@@ -16517,19 +16525,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
                       Armonía & Maridajes Recomendados
                     </div>
                     {gastro.pairings.map((p, i) => (
                       <div key={i} style={{ marginBottom: 6, display: 'flex', gap: 6, alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, color: 'var(--accent-olive)', minWidth: 70 }}>{p.category}:</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--accent-olive)', minWidth: 70 }}>{p.category}:</span>
                         <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-0)' }}>{p.item}</span>
                       </div>
                     ))}
                   </div>
 
                   <div style={{ marginTop: 12, padding: '8px 10px', background: 'var(--paper-1)', borderRadius: 2, border: '1px dashed var(--border-hairline)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>Presentación Óptima: </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-2)' }}>Presentación Óptima: </span>
                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)' }}>{gastro.presentation}</span>
                   </div>
                 </div>
@@ -16537,7 +16545,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
               {/* BOTONES */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                   Setas de la Peña · Sabana Centro · info@setasdelapena.co
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -16709,7 +16717,7 @@ interval:
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                     Firmware de Microcontrolador · ESPHome / ESP32
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -16727,7 +16735,7 @@ interval:
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-2)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                   Plantilla de telemetría (solo sensores): revisar antes de flashear con ESPHome
                 </span>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -16770,7 +16778,7 @@ interval:
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-terracotta)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-terracotta)' }}>
                     Física Térmica en Altitud · All American 1941X (2.600 msnm / 74.5 kPa)
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -16786,7 +16794,7 @@ interval:
               {/* Controles de Parámetros del Ciclo */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Presión Manómetro (psig)
                   </label>
                   <input
@@ -16798,11 +16806,11 @@ interval:
                     onChange={(e) => setAutoclaveGaugePsi(parseFloat(e.target.value) || 0)}
                     style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Tenjo requiere 19.04 psi</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>Tenjo requiere 19.04 psi</span>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Tiempo Meseta (min)
                   </label>
                   <input
@@ -16814,11 +16822,11 @@ interval:
                     onChange={(e) => setAutoclaveHoldMin(parseInt(e.target.value, 10) || 0)}
                     style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>90–120 min es referencia de manual, no un ciclo aprobado</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>90–120 min es referencia de manual, no un ciclo aprobado</span>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Peso de Bolsa (kg)
                   </label>
                   <input
@@ -16830,11 +16838,11 @@ interval:
                     onChange={(e) => setAutoclaveBagKg(parseFloat(e.target.value) || 2.0)}
                     style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Inercia térmica de núcleo</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>Inercia térmica de núcleo</span>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Humedad Sustrato (%)
                   </label>
                   <input
@@ -16846,7 +16854,7 @@ interval:
                     onChange={(e) => setAutoclaveMoisturePct(parseInt(e.target.value, 10) || 65)}
                     style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Transferencia por vapor</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>Transferencia por vapor</span>
                 </div>
               </div>
 
@@ -16910,7 +16918,7 @@ interval:
                   <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
                     {cycle.steamTemp}°C
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>P. abs: {((autoclaveGaugePsi * 6.895) + 74.5).toFixed(1)} kPa</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>P. abs: {((autoclaveGaugePsi * 6.895) + 74.5).toFixed(1)} kPa</div>
                 </div>
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -16918,7 +16926,7 @@ interval:
                   <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
                     {cycle.peakCoreTemp}°C
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Cold spot tras inercia Ball</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Cold spot tras inercia Ball</div>
                 </div>
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -16926,7 +16934,7 @@ interval:
                   <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
                     {cycle.logReductionStearothermophilus} D
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Meta esterilidad: ≥ 6D (D₁₂₁=1.8 min)</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Meta esterilidad: ≥ 6D (D₁₂₁=1.8 min)</div>
                 </div>
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -16934,7 +16942,7 @@ interval:
                   <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
                     {cycle.logReductionSubtilis} D
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Previene sour rot bacteriano</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Previene sour rot bacteriano</div>
                 </div>
               </div>
 
@@ -16951,7 +16959,7 @@ interval:
               {/* Recomendaciones Operativas */}
               {cycle.recommendations.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
                     Recomendaciones Agronómicas:
                   </div>
                   <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
@@ -16998,7 +17006,7 @@ interval:
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                     Intersección Climática 4D · Lógica Difusa Trapezoidal & Liebig
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -17013,7 +17021,7 @@ interval:
 
               {/* Selector de Especies para la Carpa */}
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
                   Seleccionar las especies que compartirán el cuarto / carpa:
                 </label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -17074,7 +17082,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.tempC}°C
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.temperatura || 100}%</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.temperatura || 100}%</div>
                       </div>
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -17082,7 +17090,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.rhPct}%
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.humedad || 100}%</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.humedad || 100}%</div>
                       </div>
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -17090,7 +17098,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.co2Ppm}
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.co2 || 100}%</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.co2 || 100}%</div>
                       </div>
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -17098,7 +17106,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.lux} lx
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.luz || 100}%</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.luz || 100}%</div>
                       </div>
                     </div>
                   </div>
@@ -17152,7 +17160,7 @@ interval:
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--status-info)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--status-info)' }}>
                     Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -17168,7 +17176,7 @@ interval:
               {/* Controles de Entrada */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Especie Cosechada:
                   </label>
                   <select
@@ -17183,7 +17191,7 @@ interval:
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Temp. Almacenamiento (°C): {postHarvestTemp}°C
                   </label>
                   <input
@@ -17195,7 +17203,7 @@ interval:
                     onChange={(e) => setPostHarvestTemp(parseFloat(e.target.value))}
                     style={{ width: '100%' }}
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
                     <span>2°C Frío</span>
                     <span>10°C Nevera</span>
                     <span>18°C Sabana</span>
@@ -17203,7 +17211,7 @@ interval:
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Humedad Almacén (%): {postHarvestRh}%
                   </label>
                   <input
@@ -17215,7 +17223,7 @@ interval:
                     onChange={(e) => setPostHarvestRh(parseInt(e.target.value, 10))}
                     style={{ width: '100%' }}
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
                     <span>70% Seco</span>
                     <span>90% Objetivo</span>
                     <span>98% Saturado</span>
@@ -17223,7 +17231,7 @@ interval:
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Masa Lote (kg) / Empaque:
                   </label>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -17286,7 +17294,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--moss-800)' }}>
                           {slResult.scenariosComparison.cuartoFrio_4C} días
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--moss-800)' }}>Baseline de cadena ideal</div>
+                        <div style={{ fontSize: 11, color: 'var(--moss-800)' }}>Baseline de cadena ideal</div>
                       </div>
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -17294,7 +17302,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {slResult.scenariosComparison.neveraDomestica_10C} días
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Refrigeración doméstica</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>Refrigeración doméstica</div>
                       </div>
 
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--accent-terracotta-dim)', borderColor: 'var(--accent-terracotta)' }}>
@@ -17302,7 +17310,7 @@ interval:
                         <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--accent-rust)' }}>
                           {slResult.scenariosComparison.ambienteSabana_18C} días
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--accent-rust)' }}>Pérdida: -{slResult.scenariosComparison.lossRatioAmbienteVsFrio}% vida</div>
+                        <div style={{ fontSize: 11, color: 'var(--accent-rust)' }}>Pérdida: -{slResult.scenariosComparison.lossRatioAmbienteVsFrio}% vida</div>
                       </div>
                     </div>
                   </div>
@@ -17471,7 +17479,7 @@ interval:
               <div className="biosecurity-triage-modal" data-testid="biosecurity-triage-modal" onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-terracotta)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       Gestión Fitosanitaria · Tenjo 2.587 msnm
                     </div>
                     <h2 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-0)' }}>
@@ -17490,7 +17498,7 @@ interval:
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
-                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 3 }}>
                       Lote Afectado
                     </label>
                     <select
@@ -17507,7 +17515,7 @@ interval:
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 3 }}>
                       Ubicación / Sala
                     </label>
                     <input
@@ -17521,7 +17529,7 @@ interval:
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 6 }}>
                     Patógeno Sospechoso / Diagnóstico
                   </label>
                   <div className="triage-pathogen-grid">
@@ -17538,11 +17546,11 @@ interval:
                             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
                               {p.commonName}
                             </span>
-                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--status-warn-bg)', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : 'var(--status-warn-text)' }}>
+                            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--status-warn-bg)', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : 'var(--status-warn-text)' }}>
                               {p.dangerLevel === 'critical' ? 'Crítico' : p.dangerLevel === 'high' ? 'Alto' : 'Medio'}
                             </span>
                           </div>
-                          <div style={{ fontStyle: 'italic', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)' }}>
+                          <div style={{ fontStyle: 'italic', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                             {p.scientific}
                           </div>
                         </button>
@@ -17556,7 +17564,7 @@ interval:
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
                       Bolsas con Síntomas Visibles
                     </div>
-                    <div style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>
                       Total de bolsas en el lote: {totalBags}
                     </div>
                   </div>
@@ -17613,7 +17621,7 @@ interval:
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 6 }}>
                     Decisión Operativa & Destino del Lote
                   </label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -17668,7 +17676,7 @@ interval:
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 3 }}>
                     Observaciones de Campo
                   </label>
                   <input
@@ -17848,7 +17856,7 @@ interval:
               <div className="os-diag-modal" data-testid="ai-contamination-diagnosis-modal" onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
                   <div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-terracotta)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--accent-terracotta)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
                       Microbiología & Sanidad · Setas OS
                     </div>
                     <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
@@ -17867,7 +17875,7 @@ interval:
 
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
                   <div>
-                    <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Lote</label>
+                    <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:2}}>Lote</label>
                     <select
                       style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)'}}
                       value={currentLote?.id||''}
@@ -17882,7 +17890,7 @@ interval:
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Bolsa Específica</label>
+                    <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:2}}>Bolsa Específica</label>
                     <select
                       style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)'}}
                       value={currentBolsa?.id||''}
@@ -17894,7 +17902,7 @@ interval:
                 </div>
 
                 <div style={{marginBottom:12}}>
-                  <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>Fotografía de la Bolsa / Síntoma</label>
+                  <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>Fotografía de la Bolsa / Síntoma</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -17912,7 +17920,7 @@ interval:
                 </div>
 
                 <div style={{marginBottom:12}}>
-                  <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Observaciones del Operario (opcional)</label>
+                  <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:2}}>Observaciones del Operario (opcional)</label>
                   <input
                     type="text"
                     placeholder="Ej. Olor agrio, manchas circulares, 3 días de incubación..."
@@ -17958,7 +17966,7 @@ interval:
                       <span style={{fontFamily:'var(--font-display)',fontSize:15,fontWeight:700,color:'var(--ink-0)'}}>
                         {diagResult.patogeno}
                       </span>
-                      <span className={`os-diag-urgency-${diagResult.urgencia}`} style={{padding:'3px 8px',borderRadius:2,fontSize:10,fontWeight:700,textTransform:'uppercase',fontFamily:'var(--font-mono)'}}>
+                      <span className={`os-diag-urgency-${diagResult.urgencia}`} style={{padding:'3px 8px',borderRadius:2,fontSize:11,fontWeight:700,textTransform:'uppercase',fontFamily:'var(--font-mono)'}}>
                         Urgencia: {diagResult.urgencia}
                       </span>
                     </div>
@@ -18065,7 +18073,7 @@ interval:
               <div className="os-diag-modal" data-testid="ai-formulation-advisor-modal" style={{maxWidth:620}} onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
                   <div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
                       Perito Asistente Gemini · Setas OS
                     </div>
                     <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
@@ -18122,7 +18130,7 @@ interval:
                 {aiFormResult && (
                   <div style={{marginTop:12}}>
                     <div style={{padding:'12px',background:'rgba(56,89,51,.06)',border:'1px solid rgba(56,89,51,.2)',borderRadius:'var(--sim-radius-sm)',marginBottom:12}}>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',color:'var(--moss-700)',fontWeight:700,marginBottom:4}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:11,textTransform:'uppercase',color:'var(--moss-700)',fontWeight:700,marginBottom:4}}>
                         Dictamen Agronómico Gemini (Confianza: {(aiFormResult.confianza||'alta').toUpperCase()})
                       </div>
                       <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--ink-0)',lineHeight:1.4,marginBottom:8}}>

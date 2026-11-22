@@ -2541,11 +2541,11 @@ class Component extends DCLogic {
       '*Setas de la Peña · Relevo de turno*',
       '_'+this.todayStr()+' · '+s.operator+'_',
       '',
-      '✅ Eventos registrados: '+s.ledger.length,
-      harvests?'🍄 Cosechas: '+harvests+' · '+kg+' kg total':'',
-      contam?'⚠️ Contaminaciones: '+contam:'',
-      '📋 Tareas abiertas: '+tareas,
-      handoff?('\n📝 Nota:\n'+handoff):'',
+      '· Eventos registrados: '+s.ledger.length,
+      harvests?'· Cosechas: '+harvests+' · '+kg+' kg total':'',
+      contam?'· Contaminaciones: '+contam:'',
+      '· Tareas abiertas: '+tareas,
+      handoff?('\nNota:\n'+handoff):'',
     ].filter(l=>l!=='');
     const text=lines.join('\n');
     try{ navigator.clipboard.writeText(text).catch(()=>{}); }catch(e){}
@@ -3609,11 +3609,11 @@ class Component extends DCLogic {
     if(!t) return [];
     const out=[];
     // Comandos de acción directa
-    const mHarv=t.match(/^cosecha\s+(c-\d+)/i); if(mHarv){ const id=mHarv[1].toUpperCase(); const c=this.state.containers.find(x=>x.id===id); if(c) out.push({ k:'⚡ Acción', label:'Cosecha → '+id, sub:spName(c.key)+' · '+c.stage, go:()=>this.setState({module:'sesion',screen:'harvest',hContainer:id,cmdOpen:false}) }); }
-    const mObs=t.match(/^observar?\s+(c-\d+)/i); if(mObs){ const id=mObs[1].toUpperCase(); out.push({ k:'⚡ Acción', label:'Observar → '+id, sub:'Abrir formulario de observación', go:()=>this.setState({module:'sesion',screen:'observe',oContainers:[id],cmdOpen:false}) }); }
-    const mCont=t.match(/^contamina\w*\s+(c-\d+)/i); if(mCont){ const id=mCont[1].toUpperCase(); out.push({ k:'⚡ Acción', label:'Contaminación → '+id, sub:'Marcar y registrar causa raíz', go:()=>this.setState({module:'sesion',screen:'quick',quickType:'contaminacion',qContainers:[id],cmdOpen:false}) }); }
-    if(/^registrar?/.test(t)) out.push({ k:'⚡ Acción', label:'Registrar contenedor', sub:'Abrir WF-1 · nuevo contenedor', go:()=>this.setState({module:'sesion',screen:'register',cmdOpen:false}) });
-    if(/^(sesi[oó]n|iniciar)/.test(t)) out.push({ k:'⚡ Acción', label:'Iniciar sesión de cultivo', sub:'Ir a inicio de sesión', go:()=>{ this.startSession('cult'); this.setState({cmdOpen:false}); } });
+    const mHarv=t.match(/^cosecha\s+(c-\d+)/i); if(mHarv){ const id=mHarv[1].toUpperCase(); const c=this.state.containers.find(x=>x.id===id); if(c) out.push({ k:'Acción', label:'Cosecha → '+id, sub:spName(c.key)+' · '+c.stage, go:()=>this.setState({module:'sesion',screen:'harvest',hContainer:id,cmdOpen:false}) }); }
+    const mObs=t.match(/^observar?\s+(c-\d+)/i); if(mObs){ const id=mObs[1].toUpperCase(); out.push({ k:'Acción', label:'Observar → '+id, sub:'Abrir formulario de observación', go:()=>this.setState({module:'sesion',screen:'observe',oContainers:[id],cmdOpen:false}) }); }
+    const mCont=t.match(/^contamina\w*\s+(c-\d+)/i); if(mCont){ const id=mCont[1].toUpperCase(); out.push({ k:'Acción', label:'Contaminación → '+id, sub:'Marcar y registrar causa raíz', go:()=>this.setState({module:'sesion',screen:'quick',quickType:'contaminacion',qContainers:[id],cmdOpen:false}) }); }
+    if(/^registrar?/.test(t)) out.push({ k:'Acción', label:'Registrar contenedor', sub:'Abrir WF-1 · nuevo contenedor', go:()=>this.setState({module:'sesion',screen:'register',cmdOpen:false}) });
+    if(/^(sesi[oó]n|iniciar)/.test(t)) out.push({ k:'Acción', label:'Iniciar sesión de cultivo', sub:'Ir a inicio de sesión', go:()=>{ this.startSession('cult'); this.setState({cmdOpen:false}); } });
     this.state.containers.forEach(c=>{
       if((c.id+' '+spName(c.key)+' '+c.batch+' '+c.stage+' '+c.recipe).toLowerCase().includes(t))
         out.push({ k:'Contenedor', label:c.id, sub:spName(c.key)+' · '+c.stage, go:()=>this.setState({module:'sesion',screen:'history',detail:c.id,cmdOpen:false}) });
