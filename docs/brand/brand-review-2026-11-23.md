@@ -81,6 +81,6 @@ Severidad: **Alta** bloquea el lanzamiento o expone a un reclamo; **Media** cont
 - `node scripts/quality/check_public_website.cjs`: **85 comprobaciones, 45 renders, 0 errores** (segunda ejecución; la primera falló solo por una petición abortada de `navigation.js` al navegar, sin aserción funcional fallida).
 - `check_public_pilot.cjs` 15/15, `check_public_species.cjs` 15 layouts, `check_recipe_showcase.cjs` 9/9.
 - `python3 scripts/inject_public_structured_data.py --check`: sin cambios.
-- `check_species_ui.cjs` **falla igual en `main`** (`7d7ac3a`, comprobado en un árbol aparte): el primer foco de teclado en `/especies/shiitake` cae en `#fuente-1` y no en `#cocina`. No lo causa esta rama.
+- `check_species_ui.cjs` fallaba en `main` (`7d7ac3a`): el primer foco de teclado en `/especies/shiitake` caía en `#fuente-1` y no en `#cocina`. **Corregido en esta rama:** enlace «Ir a las secciones» tras «Imprimir ficha» y selectores de la prueba actualizados a la plantilla del 17 nov. Pasa con 12 recorridos.
 - DS-2026: `contrast-audit.py` 34/34, `visual-contract.mjs` 17/17, `validate.py` sin problemas (ver n.º 9 sobre su cobertura).
 - `git diff --check` limpio.

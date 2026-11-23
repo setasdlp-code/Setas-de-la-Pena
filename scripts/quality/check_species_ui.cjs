@@ -13,7 +13,19 @@ const base = process.env.SETAS_WEBSITE_BASE_URL || 'http://127.0.0.1:4187';
       for (const slug of ['shiitake', 'melena-de-leon', 'eryngii']) {
         await page.goto(`${base}/especies/${slug}`, { waitUntil: 'networkidle' });
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${slug}: horizontal overflow at ${width}`);
+        // The lámina and its notes precede the section index visually, so the
+        // index stays after them in the DOM (focus follows reading order) and
+        // a skip link is the first stop after «Imprimir ficha».
         await page.locator('#print-editorial').focus();
+        await page.keyboard.press('Tab');
+        const skip = await page.evaluate(() => {
+          const el = document.activeElement;
+          const box = el.getBoundingClientRect();
+          return { href: el.getAttribute('href'), visible: box.width > 1 && box.height > 1 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth };
+        });
+        assert.deepEqual(skip, { href: '#secciones', visible: true }, `${slug}: first stop after print leads to section navigation and is visible on focus at ${width}`);
+        await page.keyboard.press('Enter');
+        assert.equal(await page.evaluate(() => document.activeElement.matches('.editorial-toc')), true, `${slug}: skip link moves focus to section navigation`);
         await page.keyboard.press('Tab');
         assert.equal(await page.evaluate(() => document.activeElement.getAttribute('href')), '#cocina', `${slug}: section navigation comes first for keyboard users`);
         const links = page.locator('.editorial-toc a');
@@ -28,9 +40,11 @@ const base = process.env.SETAS_WEBSITE_BASE_URL || 'http://127.0.0.1:4187';
         await page.evaluate(() => scrollTo(0, 2500));
         const toc = await page.locator('.editorial-toc').boundingBox();
         assert.ok(toc.y >= 0 && toc.y <= 12, `${slug}: section navigation remains available while reading`);
-        const positions = await page.evaluate(() => ({ register: document.querySelector('.editorial-register').getBoundingClientRect().top + scrollY, reading: document.querySelector('.editorial-reading').getBoundingClientRect().top + scrollY }));
+        // Practical summary: .quick-facts (sabor, textura, cortes). Essay: #identidad («La especie»).
+        const positions = await page.evaluate(() => ({ register: document.querySelector('.quick-facts').getBoundingClientRect().top + scrollY, reading: document.querySelector('#identidad').getBoundingClientRect().top + scrollY }));
         if (width <= 650) assert.ok(positions.register < positions.reading, `${slug}: practical summary precedes essay`);
-        if (width <= 1000) {
+        // navigation.js: minimal-public pages collapse the primary nav at 650 px.
+        if (width <= 650) {
           await page.locator('.menu-toggle').click();
           assert.equal(await page.locator('#primary-nav').isVisible(), true);
           await page.keyboard.press('Escape');
@@ -40,7 +54,7 @@ const base = process.env.SETAS_WEBSITE_BASE_URL || 'http://127.0.0.1:4187';
         await page.emulateMedia({ media: 'print' });
         assert.equal(await page.locator('.editorial-toc').isVisible(), false);
         assert.equal(await page.locator('#print-editorial').isVisible(), false);
-        assert.equal(await page.locator('.editorial-reading').isVisible(), true);
+        assert.equal(await page.locator('#identidad').isVisible(), true);
         await page.emulateMedia({ media: 'screen' });
         checked++;
       }
