@@ -109,3 +109,11 @@ Severidad: **Alta** bloquea el lanzamiento o expone a un reclamo; **Media** cont
 - `check_species_ui.cjs` fallaba en `main` (`7d7ac3a`): el primer foco de teclado en `/especies/shiitake` caía en `#fuente-1` y no en `#cocina`. **Corregido en esta rama:** enlace «Ir a las secciones» tras «Imprimir ficha» y selectores de la prueba actualizados a la plantilla del 17 nov. Pasa con 12 recorridos.
 - DS-2026: `contrast-audit.py` 34/34, `visual-contract.mjs` 17/17, `validate.py` sin problemas (ver n.º 9 sobre su cobertura).
 - `git diff --check` limpio.
+
+### Validación de la segunda pasada
+
+- `check_public_website.cjs` 85/85 · `check_public_pilot.cjs` 16/16 (con `aviso-melena`) · `check_public_species.cjs` 15 layouts · `check_species_ui.cjs` 12 recorridos · `check_recipe_showcase.cjs` 9/9.
+- Exportación completa con `scripts/export_public_website.py`, servida en local con `scripts/serve_public_website.py`: `check_public_export.cjs` **84/84**, `check_public_delivery.cjs` **60/60**; esta última exige `noindex` en las tres fichas.
+- DS-2026: `validate.py` (11 comprobaciones, incluida la nueva), `contrast-audit.py` 34/34, `visual-contract.mjs` 17/17. JSON-LD sin deriva. `check_repository.py` aprobado.
+- Barrido de voz y afirmaciones sobre el texto renderizado de las 18 rutas: sin tuteo ni promesas de producto. Las menciones a cognición o marcadores inmunitarios quedan solo en `/mundo-micelar`, con su fuente y sus límites.
+- No se ha desplegado. `check_public_live.py` (sitio publicado) no se corrió.
