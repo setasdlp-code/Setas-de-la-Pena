@@ -21,7 +21,7 @@ document.querySelectorAll('.recipe-grid .recipe-details').forEach(details => { d
       yieldLabel.textContent = `${4 * factor} porciones · ${number.format(baseWeight * factor)} g de ${species} ${freshLabel}`;
       status.textContent = factor === 1
         ? ''
-        : `Cantidades para ${4 * factor} porciones. Cocina por tandas y ajusta el líquido; los tiempos no se multiplican.`;
+        : `Cantidades para ${4 * factor} porciones. Cocinar por tandas y ajustar el líquido; los tiempos no se multiplican.`;
       status.hidden = factor === 1;
     }
     scale.addEventListener('change', event => {
