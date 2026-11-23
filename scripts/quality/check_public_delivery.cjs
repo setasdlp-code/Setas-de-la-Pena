@@ -79,8 +79,8 @@ const report = { checks: [], errors: [] };
       for (const suffix of ['', '.html']) {
         const response = await context.request.get(base + 'especies/' + slug + suffix);
         assert.equal(response.status(), 200);
-        assert.equal(response.headers()['x-robots-tag'], undefined);
-        assert.ok(!/<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(await response.text()));
+        // Identidad comercial §5: the species sheets stay out of the index until the Gaya licence is recorded.
+        assert.equal(response.headers()['x-robots-tag'], 'noindex, nofollow');
       }
     }
     for (const retired of ['proyecto', 'proyecto.html']) {

@@ -4,8 +4,8 @@ body { background: var(--surface-recessed); margin: 0; }
 .intro { max-width: 210mm; margin: 24px auto 8px; padding-inline: 16px; }
 .sheet { box-sizing: border-box; width: 210mm; height: 297mm; margin: 16px auto; padding: 14mm 15mm 12mm; background: var(--surface-page); display: flex; flex-direction: column; gap: 6mm; overflow: hidden; break-after: page; }
 .sheet-top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: var(--rule-heavy); padding-bottom: 3mm; color: var(--brand-primary); }
-.sheet-top .wordmark { font: 700 20px/1 var(--font-editorial); text-transform: none; letter-spacing: 0; }
-.sheet-top .wordmark span { font-weight: 500; }
+/* Firma original, no nombre compuesto (guía §4). */
+.sheet-top img.wordmark { display: block; width: 96px; height: auto; }
 .sheet-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8mm; align-items: center; }
 .sheet h1 { font: 800 54px/.98 var(--font-editorial); letter-spacing: -.03em; color: var(--brand-primary); margin: 3mm 0 4mm; }
 .sheet h1 em { font-weight: 500; }

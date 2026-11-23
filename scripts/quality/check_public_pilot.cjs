@@ -52,12 +52,26 @@ const commerce = overrides => ({
       const { context, page } = await open({ data: commerce() }, 'shiitake#producto');
       assert.match((await page.locator('.purchase-submit').textContent()).trim(), /^Preparar mensaje de aviso/);
       assert.equal((await page.locator('[data-availability]').first().textContent()).trim(), 'Antes de la primera cosecha');
+      assert.equal(await page.locator('.purchase-delivery').isVisible(), false, 'sin condiciones de entrega y pago antes de la primera cosecha');
       assert.equal(await page.locator('#channel-notice').isVisible(), true);
       assert.match(await page.locator('#channel-notice').innerText(), /el canal aún no está abierto/);
       const msg = await fillAndSubmit(page);
       assert.match(msg, /aviso de la primera cosecha de shiitake/);
       assert.doesNotMatch(msg, /disponibilidad/i);
       pass('pilot-notice', 'pilot-sin-canal');
+      await context.close();
+    }
+    {
+      // Melena de león: mismo aviso de interés, siempre en modo aviso aunque el shiitake tenga cosecha (decisión 8 nov).
+      const { context, page } = await open({ data: commerce({ availability: 'available' }) }, 'shiitake?especie=melena-de-leon#producto');
+      assert.equal((await page.locator('h1').textContent()).trim(), 'Melena de león');
+      assert.match((await page.locator('.purchase-submit').textContent()).trim(), /^Preparar mensaje de aviso/);
+      assert.equal(await page.locator('.purchase-delivery').isVisible(), false);
+      assert.equal(await page.locator('#cooking-safety').isVisible(), false);
+      const msg = await fillAndSubmit(page);
+      assert.match(msg, /aviso de la primera cosecha de melena de león/);
+      assert.doesNotMatch(msg, /shiitake|disponibilidad|precio/i);
+      pass('pilot-notice', 'aviso-melena');
       await context.close();
     }
     {
@@ -77,7 +91,9 @@ const commerce = overrides => ({
       assert.equal((await page.locator('.purchase-purpose legend').textContent()).trim(), '¿Para casa o para un servicio?');
       const msg = await fillAndSubmit(page, 'restaurante');
       assert.match(msg, /para un servicio de cocina/);
-      assert.match((await page.locator('#primary-nav .nav-inquiry').textContent()).replace(/\s+/g, ' '), /^Recibir aviso de la primera cosecha/);
+      // La navegación compartida no lleva CTA; el aviso vive en la página (revisión de marca 23 nov, n.º 4).
+      assert.equal(await page.locator('#primary-nav .nav-inquiry').count(), 0);
+      assert.equal((await page.locator('.aviso-intro .t-label').textContent()).trim(), 'Aviso de primera cosecha');
       pass('pilot-notice', 'etiqueta-servicio');
       await context.close();
     }

@@ -1,7 +1,7 @@
 # Guía de Voz de Marca — Setas de la Peña
 
-**Versión:** 2.5 · **Fecha:** 2026-11-01
-**Reemplaza a:** v2.4 (2026-10-30), que añade aquí el cuaderno de cocina abierto ([estrategia](../docs/brand/brand-strategy-2026-11-01.md)); v1.0 (2026-05-11) sigue archivada en `brand-voice-guidelines-2026-10-17.md`.
+**Versión:** 2.6 · **Fecha:** 2026-11-23
+**Reemplaza a:** v2.5 (2026-11-01): §1 y los ejemplos de §4 y §6 pasan al modo cuaderno, sin cosecha ([revisión del 23 nov](../docs/brand/brand-review-2026-11-23.md), n.º 11). v2.5 reemplazó a v2.4 (2026-10-30) y añadió el cuaderno de cocina abierto ([estrategia](../docs/brand/brand-strategy-2026-11-01.md)); v1.0 (2026-05-11) sigue archivada en `brand-voice-guidelines-2026-10-17.md`.
 **Alcance:** voz y tono (cómo se escribe). La identidad visual comercial (paleta, tipografía, firma) vive en `docs/brand-guidelines.md` y `08_brand/ds-2026/`; la de Setas OS, en `docs/brand/DESIGN_SYSTEM_CANONICAL.md` y `08_brand/field-os-identity/`. Aquí solo se referencia.
 **Uso:** `/brand-voice:enforce-voice` carga este archivo automáticamente.
 
@@ -21,7 +21,7 @@
 
 ## 1. Esencia
 
-Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (unos 2.600 m, vertiente oriental de la Peña de Juaica). Combina rigor técnico con arraigo territorial: producción controlada, trazable y a escala humana.
+Setas de la Peña prepara el cultivo de setas comestibles en Tenjo, Cundinamarca (unos 2.600 m, vertiente oriental de la Peña de Juaica). El primer lote será de shiitake. Mientras no haya cosecha, la marca es un cuaderno de cocina abierto: cada entrada une un hito del cultivo con una idea para cocinar la seta, y cada dato lleva su estado (medido, observado, estimado o por confirmar). Combina rigor técnico con arraigo territorial: producción controlada, a escala humana, con registro por lote cuando haya lotes.
 
 **Concepto verbal: «Sombra y Silencio».** Literal, no metafórico. *Sombra* es el método (cultivo en sombra controlada) y el lugar. *Silencio* es el registro: sin ruido, sin adorno, sin lenguaje promocional vacío.
 
@@ -81,7 +81,7 @@ La voz comercial trata a toda persona como alguien capaz de tomar decisiones de 
 Una ficha de especie presenta nombre, sabor y textura documentados, una preparación o receta con su estado de prueba y una consulta concreta. Una lámina identifica la especie y un plato ilustrado ayuda a imaginar su uso; ninguna imagen demuestra disponibilidad o cosecha. No inventar notas de cata, origen de lote ni condiciones comerciales.
 
 1. **Nombre común primero.** «Orellana» como titular (decisión 2026-10-17); el latín, pequeño y en cursiva, una sola vez.
-2. **Frescura con hecho, no con adjetivo.** «Cortada esta mañana» ✓ · «Ultra fresca» ✗.
+2. **Frescura con hecho, no con adjetivo.** Cuando haya cosecha: «Cosechada el [fecha]» ✓ · «Ultra fresca» ✗.
 3. **Cocina, no ficha técnica.** Cada producto lleva un uso concreto («plancha con mantequilla», «guisos y wok»). Nunca temperatura, humedad ni sustrato.
 4. **Códigos solo en el QR.** El lote (p. ej. `LP·0417·26`) no se imprime como texto visible; el puente es «Origen y registro del producto».
 5. **Antes de la primera cosecha, aviso y no consulta.** CTA «Recibir aviso de la primera cosecha». Sin canal abierto, «Preparar mensaje de aviso»: ningún texto da a entender que alguien quedó inscrito. El formulario ofrece «Para casa» o «Para un servicio».
@@ -100,13 +100,13 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 
 | Contexto | Formalidad | Energía | Profundidad técnica | Ejemplo |
 |---|---|---|---|---|
-| Empaque / etiqueta | Media | Baja | Baja | «Orellana. Cortada esta mañana en Tenjo. Plancha con mantequilla.» |
-| Web de producto | Media | Media | Media | «Textura firme y sabor que aguanta guisos largos. Cultivada a unos 2.600 m.» |
-| Redes sociales | Baja | Media | Baja | «Cosecha del miércoles: 38 kg de orellanas rumbo a Bogotá.» |
-| Correo a clientes B2B | Media | Media | Media | «Disponibilidad esta semana: orellana fresca, 40 kg. Pedido mínimo 5 kg.» |
-| Pitch a socios | Alta | Media | Alta | «Capacidad instalada de 80 kg/semana con tres módulos.» |
+| Empaque / etiqueta | Media | Baja | Baja | Cuando haya cosecha: «Shiitake. Cosechado el [fecha] en Tenjo. Láminas para saltear, piezas para caldo.» |
+| Web de producto | Media | Media | Media | «Sombrero carnoso, pie más fibroso y umami intenso. Láminas para saltear, piezas para caldo.» |
+| Redes sociales | Baja | Media | Baja | «Shiitake · incubación, semana 3. Estado: observado. Idea para cocinarlo: arepa con maíz dorado.» |
+| Correo a clientes B2B | Media | Media | Media | «Antes de la primera cosecha tomamos nota del plato, la cantidad, la presentación, la ciudad y la fecha. Avisamos cuando haya shiitake.» |
+| Pitch a socios | Alta | Media | Alta | «Capacidad de diseño: [x] kg/semana con tres módulos (estimado; sin lote medido).» |
 | Interno / operación | Media | Baja | Alta | «Cámara 2, incubación: 22 °C ± 1, humedad 85 % ± 5. Registrar a las 12:00 y 18:00.» |
-| Editorial / manifiesto | Media | Media | Media | «La orellana madura lento. Por eso la textura aguanta la cocción.» |
+| Editorial / manifiesto | Media | Media | Media | «El pie del shiitake es más fibroso que el sombrero: va mejor en caldo.» |
 | Registro del cuaderno | Media | Baja | Media | «Shiitake · incubación, semana 3. El micelio cubre el bloque. Estado: observado.» |
 | Crisis (contaminación, plaga) | Alta | Baja | Alta | «Detectamos contaminación en la cámara 2 el martes. Causa, acción y prevención abajo.» |
 | UI de Setas OS | Media | Baja | Alta | Rótulos que dicen la acción: «Registrar cosecha», no «Enviar». |
@@ -132,8 +132,8 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 | Místico, sagrado, espiritual, alma, energía, vibra | Un dato del producto o del lugar |
 | «Guardián de la niebla», «escuchar la tierra», «cultivar el silencio» (sentido mágico) | Describir el método: cultivo lento, controlado, en sombra |
 | «Alimento vivo / consciente», «magia de los hongos», «el micelio conecta» | «Producto fresco», «cosecha del día», dato nutricional |
-| «Artesanal» sin precisión | «Cosechado a mano», «lote pequeño», «trazabilidad por cámara» |
-| «Ultra fresca», «100 % natural», «el mejor» | Hecho verificable: «cortada esta mañana» |
+| «Artesanal» sin precisión | «Cosechado a mano», «lote pequeño», «registro por cámara», solo con evidencia y cuando haya cosecha |
+| «Ultra fresca», «100 % natural», «el mejor» | Hecho verificable con fecha, cuando haya cosecha: «cosechada el [fecha]» |
 | Exclamaciones | Punto |
 
 **Material legacy:** el manifiesto de Canva (`DAG_0ZJIfOc`) contiene lenguaje místico y se preserva tal cual. Si se reedita, se reescribe con esta guía.
@@ -142,32 +142,32 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 
 ## 6. Ejemplos modelo (confianza baja: escritos como referencia, no extraídos de piezas publicadas)
 
-Los ejemplos son modelos de redacción, no confirmaciones de capacidad, stock, parámetros o condiciones comerciales. Esos datos deben verificarse antes de publicar.
+Los ejemplos son modelos de redacción, no confirmaciones de capacidad, stock, parámetros o condiciones comerciales. Esos datos deben verificarse antes de publicar. Los marcados **«Cuando haya cosecha»** no se usan antes del primer lote; no proponer mínimos, calendario recurrente ni tiempos de respuesta sin confirmarlos (identidad comercial §2).
 
 **Presentación de marca**
 > Setas de la Peña. Del micelio a la mesa. Hongos para cocinar con criterio, desde Tenjo, Cundinamarca.
 
 **Consulta de un chef**
-> Hola, [nombre]. Somos Setas de la Peña, en Tenjo. ¿Qué cantidad de orellana requiere el servicio y para qué fecha? Con esa información revisamos disponibilidad y condiciones de entrega.
+> Hola, [nombre]. Somos Setas de la Peña, en Tenjo. Antes de la primera cosecha de shiitake tomamos nota del plato, la cantidad, la presentación, la ciudad y la fecha, y avisamos cuando haya cosecha confirmada.
 
-**Disponibilidad pendiente**
+**Disponibilidad pendiente** (cuando haya cosecha)
 > La cantidad solicitada para [fecha] está pendiente de confirmación. Confirmaremos disponibilidad y entrega antes de cerrar el pedido.
 
 **Comunicación a socios**
 > Presentamos los resultados medidos y los supuestos por separado, con fecha de corte y su efecto sobre el margen.
 
-**Etiqueta**
-> **Orellana**
-> *Pleurotus ostreatus* · Cultivada en sombra, Tenjo
-> Cortada esta mañana · Plancha con mantequilla o guisos y wok
-> 250 g
+**Etiqueta** (cuando haya cosecha)
+> **Shiitake**
+> *Lentinula edodes* · Cultivado en sombra, Tenjo
+> Cosechado el [fecha] · Lote [código] · Láminas para saltear o piezas para caldo
+> [peso]
 
 **Descripción web (~45 palabras)**
-> Orellana cultivada a la sombra de la Peña de Juaica, en Tenjo, a unos 2.600 m. Madura lento y por eso la textura es firme y el sabor aguanta cocciones largas. La información de origen y cosecha acompaña al producto cuando está documentada.
+> Shiitake de sombrero carnoso, pie más fibroso y umami intenso. Se trabaja en láminas para saltear o en piezas para caldo. Lo cultivaremos en Tenjo, a unos 2.600 m, junto a la Peña de Juaica; el registro del cultivo muestra cada hito con su estado.
 
-**Correo B2B**
+**Correo B2B** (cuando haya cosecha)
 > Hola [nombre],
-> Disponibilidad esta semana: orellana fresca, 40 kg (cosecha martes y jueves); deshidratada 50 g, 12 unidades. Pedido mínimo 5 kg. Entrega en Bogotá miércoles y viernes.
+> Disponibilidad esta semana: shiitake fresco, [cantidad confirmada] (cosecha [días]). Condiciones de pedido y entrega: [confirmadas por escrito].
 > Para consultar disponibilidad, recibimos solicitudes con cantidad, fecha y lugar de entrega.
 
 **Protocolo interno**
@@ -242,6 +242,7 @@ Sin transcripciones de llamadas ni PII en las fuentes procesadas. No se consulta
 
 | Fecha | Cambio |
 |---|---|
+| 2026-11-23 | v2.6: §1 en modo cuaderno (prepara el cultivo; primer lote de shiitake). Ejemplos de §4 y §6 reescritos con shiitake; los que suponen cosecha quedan marcados «cuando haya cosecha»; sin mínimos de pedido. |
 | 2026-10-30 | v2.4: una voz culinaria para cocinas profesionales y domésticas; la información práctica se adapta a cada necesidad. |
 | 2026-10-27 | v2.3: §8 y «Alcance» remiten lo comercial a `docs/brand-guidelines.md` + DS-2026; conflictos de paleta y tipografía cerrados. |
 | 2026-10-27 | v2.3: frase principal «Del micelio a la mesa.» y descriptor «Hongos para cocinar con criterio.», alineados con `docs/brand-guidelines.md` §1. «Cultivo en sombra» pasa a descriptor del método. |

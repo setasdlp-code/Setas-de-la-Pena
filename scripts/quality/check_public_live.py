@@ -39,7 +39,7 @@ def main():
         status, headers, body, url = fetch(entry['file'])
         assert status == 200, (entry['file'], status)
         assert hashlib.sha256(body).hexdigest() == entry['sha256'], f"SHA mismatch: {entry['file']}"
-        expected_robots = None if entry['file'] in {'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html'} else 'noindex, nofollow'
+        expected_robots = 'noindex, nofollow'  # identidad comercial §5: Gaya licence before indexing
         assert headers.get('x-robots-tag') == expected_robots, (entry['file'], headers.get('x-robots-tag'))
         cache = headers.get('cache-control', '')
         if entry['file'].startswith('_assets/'):
@@ -58,7 +58,7 @@ def main():
     for route, file in product_routes:
         status, headers, body, url = fetch(route)
         assert status == 200, route
-        expected_robots = None if route.startswith('especies/') else 'noindex, nofollow'
+        expected_robots = 'noindex, nofollow'
         assert headers.get('x-robots-tag') == expected_robots, (route, headers.get('x-robots-tag'))
         assert body == (args.artifact / file).read_bytes(), route
         assert 'immutable' not in headers.get('cache-control', ''), route

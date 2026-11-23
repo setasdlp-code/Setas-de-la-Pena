@@ -105,7 +105,9 @@ const report = { base, layouts: [], checks: [], browserErrors: [] };
       await staticPage.emulateMedia({ media: 'print' });
       assert.ok(await staticPage.locator('#fuentes ol').isVisible());
       assert.ok(await staticPage.locator('.taxonomy dd').first().isVisible());
-      assert.ok(await staticPage.locator('.research-section details p').first().isVisible());
+      // «Lo que se investiga» vive en /mundo-micelar (decisión del 8 nov; revisión de marca 23 nov, n.º 7).
+      assert.equal(await staticPage.locator('.research-section, #investigacion').count(), 0);
+      assert.ok(await staticPage.locator('#fuentes a[href="/mundo-micelar#investigacion"]').isVisible());
       await staticPage.pdf({ path: path.join(out, `${slug}-without-js.pdf`), format: 'A4', printBackground: true });
       await staticPage.emulateMedia({ media: 'screen' });
       assert.ok(await staticPage.locator('.editorial-recipe-entry').isVisible());

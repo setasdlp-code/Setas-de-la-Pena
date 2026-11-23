@@ -1,5 +1,6 @@
-# Crawling is allowed. The three species sheets permit indexing.
-# Other review pages retain their HTTP or HTML noindex directive.
+# Review visibility is deliberate: responses retain X-Robots-Tag: noindex, nofollow.
+# Crawling is allowed so clients can read that HTTP directive. This does not enable indexing.
+# Identidad comercial §5: no indexing until the Gaya Patched licence is recorded.
 User-agent: *
 Allow: /
 

@@ -1,6 +1,6 @@
 'use strict';
 document.querySelector('#year').textContent = new Date().getFullYear();
-document.querySelector('#print-species').addEventListener('click', () => window.print());
+document.querySelector('#print-species')?.addEventListener('click', () => window.print());
 const closedDetails = new Set();
 window.addEventListener('beforeprint', () => {
   document.querySelectorAll('details').forEach(detail => {
@@ -35,8 +35,30 @@ window.addEventListener('afterprint', () => {
   if (params.get('purpose') === 'restaurante') {
     form.querySelector('input[name="purpose"][value="restaurante"]').checked = true;
   }
-  const scaleParam = params.get('scale');
-  const recipeId = params.get('recipe');
+  // La melena de león comparte el aviso de interés (decisión del 8 nov), sin
+  // disponibilidad, precio, fecha ni recetas propias: siempre en modo aviso.
+  const speciesCatalog = {
+    shiitake: { name: 'shiitake', title: 'Shiitake', latin: 'Lentinula edodes', sheet: '/especies/shiitake' },
+    'melena-de-leon': { name: 'melena de león', title: 'Melena de león', latin: 'Hericium erinaceus', sheet: '/especies/melena-de-leon' },
+  };
+  const speciesId = Object.hasOwn(speciesCatalog, params.get('especie') || '') ? params.get('especie') : 'shiitake';
+  const species = speciesCatalog[speciesId];
+  const secondary = speciesId !== 'shiitake';
+  if (secondary) {
+    document.title = `${species.title} · Aviso de primera cosecha · Setas de la Peña`;
+    setText('#species-title', species.title);
+    setText('.aviso-intro .species-binomial', species.latin);
+    document.querySelectorAll('[data-species-link]').forEach(link => { link.href = species.sheet; });
+    setText('#species-crumb', species.title);
+    setText('#species-sheet-link', `Leer la ficha de ${species.name} ↗`);
+    document.querySelector('#product-title em').textContent = `${species.name}.`;
+    setText('.purchase-card-heading h3', `Consulta de ${species.name}`);
+    setText('#review-species', `${species.title} · Consulta`);
+    document.querySelector('#cooking-safety').hidden = true;
+    document.querySelector('#species-recipes-link').href = '/recetas-melena';
+  }
+  const scaleParam = secondary ? null : params.get('scale');
+  const recipeId = secondary ? null : params.get('recipe');
   // Solo identificadores conocidos y factor 1, 2 o 3: cualquier otro valor deja la consulta normal.
   const validScale = scaleParam === null || /^[123]$/.test(scaleParam);
   let recipe = recipeId && validScale && Object.hasOwn(recipes, recipeId) ? { id: recipeId, ...recipes[recipeId], scale: Number(scaleParam || 1) } : null;
@@ -45,14 +67,14 @@ window.addEventListener('afterprint', () => {
   const recipeGrams = document.querySelector('#recipe-grams');
   const differenceRow = document.querySelector('#order-difference-row');
   const seen = new Set();
-  const presentations = (Array.isArray(data.presentations) ? data.presentations : []).filter(item => {
+  const presentations = (Array.isArray(data.presentations) && !secondary ? data.presentations : []).filter(item => {
     if (!item || !text(item.id) || seen.has(item.id) || !text(item.name) || !Number.isSafeInteger(item.weightGrams) || item.weightGrams <= 0) return false;
     seen.add(item.id);
     return true;
   }).map(item => ({ ...item, priceCOP: isPrice(item.priceCOP) ? item.priceCOP : null }));
   // 'pilot': antes de la primera cosecha. Un valor desconocido se trata como 'unconfirmed'.
   const normalizeAvailability = value => ['pilot', 'unconfirmed', 'available', 'unavailable'].includes(value) ? value : 'unconfirmed';
-  const state = normalizeAvailability(data.availability);
+  const state = secondary ? 'pilot' : normalizeAvailability(data.availability);
   const pilot = state === 'pilot';
   const available = state === 'available';
   const availability = pilot ? 'Antes de la primera cosecha' : available ? 'Disponible' : state === 'unavailable' ? 'No disponible por ahora' : 'Disponibilidad por confirmar';
@@ -62,7 +84,10 @@ window.addEventListener('afterprint', () => {
   const deliveryText = deliveryFee === null ? 'Por confirmar' : deliveryFee === 0 ? 'Sin costo · confirmar cobertura' : `${formatPrice(deliveryFee)} · confirmar cobertura`;
 
   document.querySelectorAll('[data-availability]').forEach(element => { element.textContent = availability; });
-  setText('#availability-detail', text(data.availabilityNote) || (pilot ? 'El primer lote de shiitake aún no se ha cosechado. El aviso llega cuando haya cosecha confirmada.' : available ? 'La cantidad y la entrega requieren confirmación al preparar la solicitud.' : state === 'unavailable' ? 'Es posible consultar la próxima disponibilidad.' : 'La disponibilidad y las presentaciones se confirman al consultar.'));
+  // Antes de la primera cosecha no se muestran condiciones de entrega ni pago (brief 8 nov §8).
+  const deliveryBlock = document.querySelector('.purchase-delivery');
+  if (deliveryBlock) deliveryBlock.hidden = pilot;
+  setText('#availability-detail', text(data.availabilityNote) || (secondary ? `Todavía no hay decisión de producción de ${species.name}. El aviso llega solo si hay cosecha confirmada.` : pilot ? 'El primer lote de shiitake aún no se ha cosechado. El aviso llega cuando haya cosecha confirmada.' : available ? 'La cantidad y la entrega requieren confirmación al preparar la solicitud.' : state === 'unavailable' ? 'Es posible consultar la próxima disponibilidad.' : 'La disponibilidad y las presentaciones se confirman al consultar.'));
   setText('#delivery-areas', text(data.deliveryAreas) || 'Por confirmar para el municipio indicado');
   setText('#delivery-days', text(data.deliveryDays) || 'Se acuerdan al consultar');
   setText('#delivery-fee', deliveryText);
@@ -188,7 +213,7 @@ window.addEventListener('afterprint', () => {
     const location = text(municipality.value).replace(/\s+/g, ' ');
     const lines = [
       'Hola, Setas de la Peña.',
-      pilot ? `Me gustaría recibir aviso de la primera cosecha de shiitake para ${purpose}.` : `Me interesa el shiitake para ${purpose}.`,
+      pilot ? `Me gustaría recibir aviso de la primera cosecha de ${species.name} para ${purpose}.` : `Me interesa el shiitake para ${purpose}.`,
       ...(recipe ? [`Quiero cocinar ${recipe.name} (${recipe.scale > 1 ? `versión ×${recipe.scale}; ` : ''}la receta base usa ${formatWeight(recipe.baseGrams)} de shiitake fresco limpio).`] : []),
       ...(recipe && selected.needed !== null ? [`Necesito unos ${formatWeight(selected.needed)} para la receta.`] : []),
       ...(recipe ? ['La receta indica peso limpio aprovechable; quisiera confirmar el peso de compra según la presentación y su merma.'] : []),

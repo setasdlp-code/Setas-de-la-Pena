@@ -79,3 +79,10 @@
 .sheets-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-3); margin: 0 0 var(--space-3); }
 .sheets-links a, .line-sheet a { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand-primary); }
 .line-sheet { margin: var(--space-1) 0 0; }
+/* La firma original sustituye al nombre compuesto en las maquetas (guía §4). */
+.pack .pack-label img.sdp-pack__firma { display: block; top: 70px; width: 64px; height: auto; margin: 0 auto; mix-blend-mode: normal; object-fit: initial; }
+.pack--jar .pack-label img.sdp-pack__firma { top: 84px; }
+.pack--tin .pack-label img.sdp-pack__firma { top: 80px; }
+/* La firma ocupa más alto que el nombre compuesto: la ilustración baja lo justo. */
+.pack--pouch > img { margin-top: 28px; }
+.pack--tray .tray-window { margin-top: 38px; }

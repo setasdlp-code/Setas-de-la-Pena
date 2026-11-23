@@ -6,7 +6,7 @@ Responsable: Claude · Rama: `claude/modest-mendel-vmykeo` · Base: `main` en `7
 
 **Autoridad.** Identidad comercial v1.2 (`docs/brand-guidelines.md`), tokens DS-2026 (`08_brand/ds-2026/tokens/`), voz v2.5 (`.claude/brand-voice-guidelines.md`) y decisiones del fundador del 8 nov recogidas en `brand-brief-2026-11-08.md` §10. Donde una implementación aceptada después contradice una regla escrita, se trata como conflicto que decide Sebastián, no como error.
 
-**Resultado: no cumple.** Aceptación: pendiente. Nada de esta revisión aprueba piezas ni cambia decisiones.
+**Resultado de la primera pasada: no cumple.** Tras la segunda pasada (guía de marca al pie, pedida por Sebastián) quedan resueltos los 16 hallazgos en el alcance revisado; el n.º 15 se resuelve sin cambio. Aceptación: pendiente de Sebastián.
 
 ## Veredicto
 
@@ -35,7 +35,32 @@ Solo conformidad con reglas confirmadas; ninguna elección creativa.
 
 No se tocaron `/despensa` ni `/fichas`: son instrumentos de una prueba con chefs y tienen un PDF asociado; reescribirlos sin regenerar el PDF los desincroniza.
 
-## Hallazgos pendientes
+## Segunda pasada: guía de marca al pie · 23 nov
+
+Sebastián pidió aplicar las 16 propuestas tal como las escribe la guía, incluidas las que esperaban su decisión. Donde la propuesta ofrecía opciones, se eligió la que cumple la letra de la guía. Cada cambio se puede revertir por separado.
+
+| # | Aplicado | Archivos |
+|---|---|---|
+| 1 | Las fichas vuelven a `noindex`: la guía §5 pide la licencia de Gaya anotada antes de abrir el índice. Para reabrir, anotar la licencia y revertir este cambio (`docs/public-launch-switch.md`) | `public-headers.txt`, `robots.txt`, `scripts/serve_public_website.py`, `check_public_delivery.cjs`, `check_public_live.py` |
+| 2 | `/despensa` y `/fichas` se escriben como propuesta: «Proponemos secar…», «vida útil por medir», «frecuencia por acordar», «lote y fecha previstos en la etiqueta». Sin «gourmet», «mejor precio» ni «del día». Encuesta sin tuteo. PDF regenerado (3 hojas A4). La portada y los pies ya no enlazan a la despensa | `despensa.html`, `fichas.html`, `outputs/fichas-lineas/fichas-lineas-setas.pdf`, pies de 12 páginas |
+| 3 | Lema de portada: «Hongos para cocinar con criterio.»; meta: «Setas de la Peña. Hongos para cocinar con criterio, desde Tenjo, Colombia.» (guía §3, texto de presentación) | `index.html` |
+| 4 | `/shiitake` pasa a ser la página de aviso, con la cabecera compartida. Se retiran la lámina, el perfil, la cocina, «De cerca», la conservación y las fuentes que duplicaban `/especies/shiitake`. `/despensa` y `/mundo-micelar` usan la misma cabecera de 4 enlaces, sin barra territorial ni botón en la navegación | `shiitake.html`, `despensa.html`, `mundo-micelar.html`, `public-minimal.css` |
+| 5 | Título «Shiitake · Aviso de primera cosecha»; el bloque de entrega y pago queda oculto mientras `availability === 'pilot'` | `shiitake.html`, `shiitake.js` |
+| 6 | La ficha de melena enlaza a `/shiitake?especie=melena-de-leon#producto`. El formulario cambia nombre, ficha, recetas y mensaje, y siempre queda en modo aviso, sin presentaciones ni entrega | `especies/melena-de-leon.html`, `shiitake.js`, `shiitake.html` |
+| 7 | «Lo que se investiga» sale de las tres fichas. Sus estudios pasan a `/mundo-micelar#investigacion` como fuentes 5–8. Las citas de cada ficha se renumeran y la ficha enlaza a El mundo micelar desde sus fuentes | `especies/*.html`, `mundo-micelar.html` |
+| 8 | Tokens: `species-editorial.css` toma papel, tinta, acento, filetes y tipos de DS-2026 (`--brand-accent` vuelve a coral; filetes `--border-hairline`); radio 0 en tarjetas. Se retira el alias `Editorial Plex` | `species-editorial.css`, `public-minimal.css` |
+| 9 | `validate.py` añade la comprobación 11: los CSS que importa `commercial.css` no admiten colores sueltos ni `border-radius` distinto de 0/50 %. Detecta los 4 problemas de `main` en `public-minimal.css` | `08_brand/ds-2026/scripts/validate.py` |
+| 10 | Rótulos: «Las imágenes son ilustraciones culinarias, no fotografías de producto» en `/cocina` y los cuatro recetarios; «Ilustraciones culinarias» en `/tecnicas`; «Ilustraciones de especie; no representan una cosecha» y «Ilustraciones del equipo, no fotografías de la finca» en `/cultivo` | 7 páginas |
+| 11 | Guía de voz v2.6: §1 en modo cuaderno; ejemplos de §4 y §6 con shiitake; los que suponen cosecha marcados «cuando haya cosecha»; sin pedido mínimo | `.claude/brand-voice-guidelines.md` |
+| 12 | `/restaurantes` → «Para un servicio»; en `/setas` y `/cultivo`, «La forma y el corte» | `restaurantes.html`, `setas.html`, `cultivo.html` |
+| 13 | Imagen social regenerada: «Las setas · Recetas · Para un servicio» | `assets/social/card.html`, `assets/social/setas-de-la-pena.png` |
+| 14 | Firma original en las tres hojas de `/fichas` y en las nueve maquetas de `/despensa`. Se recolocó para que no toque la ilustración (medido en cada formato) | `fichas.html`, `fichas.css`, `despensa.html`, `despensa.css` |
+| 15 | Sin cambio. La guía §4 prohíbe introducir isotipo o monograma, así que no se deriva un favicon de la «ñ». El icono de hongo sigue como recurso de interfaz | — |
+| 16 | Titulares de `/shiitake` en Gaya 500, como en las fichas. IBM Plex se carga una sola vez | Resuelto con n.º 4 y 8 |
+
+Pruebas actualizadas, sin quitar comprobaciones: la navegación compartida se exige también en `/restaurantes`, `/mundo-micelar` y `/shiitake`. El piloto añade el caso `aviso-melena` y verifica que la entrega no aparece en piloto. La prueba de fichas sin JavaScript comprueba que la investigación ya no está y que hay enlace a El mundo micelar. La de El mundo micelar cuenta 8 fuentes y sus citas.
+
+## Hallazgos de la primera pasada
 
 Severidad: **Alta** bloquea el lanzamiento o expone a un reclamo; **Media** contradice una regla o decisión confirmada; **Baja** coherencia.
 

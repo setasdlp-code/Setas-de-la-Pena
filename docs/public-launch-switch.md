@@ -2,6 +2,10 @@
 
 La web pública se sirve con `X-Robots-Tag: noindex, nofollow` a propósito (versión de revisión, ver `docs/website-audit-2026-10-15.md`, «Visibilidad y caché»). Este documento lista, en un solo lugar, qué cambia al abrirla a buscadores. **Nada de esto se aplica sin una decisión explícita de Sebastián.**
 
+## Cierre del índice · 23 de noviembre de 2026
+
+Las tres fichas vuelven a enviar `X-Robots-Tag: noindex, nofollow`. La identidad comercial (`docs/brand-guidelines.md` §5) exige anotar la licencia de Gaya Patched en `08_brand/ds-2026/SOURCES.md` antes de abrir el sitio al índice, y la licencia sigue en trámite. Se aplicó al pedir Sebastián la guía de marca al pie ([revisión del 23 nov](brand/brand-review-2026-11-23.md), n.º 1). Para reabrir: anotar la licencia y revertir los cambios de `public-headers.txt`, `robots.txt`, `scripts/serve_public_website.py`, `check_public_delivery.cjs` y `check_public_live.py` de ese cambio.
+
 ## Apertura limitada de las fichas · 13 de noviembre de 2026
 
 Por solicitud de Sebastián se prepara la indexación de `/especies/shiitake`, `/especies/melena-de-leon` y `/especies/eryngii`, incluidas sus variantes `.html`. Las reglas específicas de `public-headers.txt` eliminan la cabecera heredada solo para esas seis rutas; el resto conserva su estado de revisión. El servidor local y las comprobaciones de entrega reflejan esta excepción. Sebastián autorizó explícitamente publicar estos cambios el 13 de noviembre de 2026. El despliegue y su verificación deben registrarse por separado.
