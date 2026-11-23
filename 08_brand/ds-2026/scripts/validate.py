@@ -145,6 +145,27 @@ for name in ("index.css", "operations.css", "market.css"):
 print(f"10 · public entrypoints {len(entry_errors)} problem(s)")
 fails += entry_errors
 
+# 11 · the public site's own stylesheets use tokens only (identidad comercial §5–6:
+#      market.css is the only colour source; straight edges). Checks 1–10 cover the DS
+#      itself; this one covers the CSS that commercial.css layers on top of market.css.
+REPO = ROOT.parent.parent
+site_entry = REPO / "commercial.css"
+site_errors = []
+site_files = []
+if site_entry.exists():
+    for target in re.findall(r'@import\s+"([^"]+)"', site_entry.read_text()):
+        if target.startswith("08_brand/"):
+            continue
+        site_files.append(target)
+        css = re.sub(r"/\*.*?\*/", "", (REPO / target).read_text(), flags=re.S)
+        for hexcolor in sorted(set(re.findall(r"#[0-9A-Fa-f]{3,8}\b", css))):
+            site_errors.append(f"{target}: loose colour {hexcolor}; use a DS-2026 token")
+        for radius in sorted(set(re.findall(r"border-radius\s*:\s*([^;}]+)", css))):
+            if radius.strip() not in {"0", "0px", "50%"}:
+                site_errors.append(f"{target}: border-radius {radius.strip()}; commercial surfaces keep straight edges")
+print(f"11 · site stylesheets   {len(site_files):>3} files · {len(site_errors)} problem(s)")
+fails += site_errors
+
 print()
 if fails:
     print(f"FAILED — {len(fails)} problem(s):")

@@ -1,8 +1,5 @@
 /* Species notebook: the approved botanical and culinary proposal. Scoped to these three pages. */
-@font-face { font-family:'Editorial Plex'; src:url('08_brand/ds-2026/assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; }
-@font-face { font-family:'Editorial Plex'; src:url('08_brand/ds-2026/assets/fonts/IBMPlexSans-Medium.ttf') format('truetype'); font-weight:500; font-style:normal; font-display:swap; }
-@font-face { font-family:'Editorial Plex'; src:url('08_brand/ds-2026/assets/fonts/IBMPlexSans-Bold.ttf') format('truetype'); font-weight:700; font-style:normal; font-display:swap; }
-.editorial-page.minimal-public { --paper:#FAF8F3;--surface:#FEFDFB;--ink:#1A1410;--muted:#5A534C;--moss:#2E3B2F;--accent:#8A3E2D;--line:#EAEAEA;--serif:'Gaya Patched','Iowan Old Style',Georgia,serif;--sans:'Editorial Plex','Helvetica Neue',sans-serif;--mono:'IBM Plex Mono',monospace;color-scheme:light }
+.editorial-page.minimal-public { --paper:var(--paper-100);--surface:var(--paper-50);--ink:var(--ink-900);--muted:var(--text-metadata);--moss:var(--moss-700);--accent:var(--brand-accent-text);--line:var(--border-hairline);--serif:var(--font-editorial);--sans:var(--font-sans);--mono:var(--font-mono);color-scheme:light }
 .editorial-page .species-sheet * { box-sizing:border-box }
 .editorial-page .species-sheet [id] { scroll-margin-top:80px; }
 html:has(.editorial-page) { scroll-behavior:smooth }
@@ -68,7 +65,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
 .editorial-page .species-sheet .section-heading>p { max-width:50ch;margin-top:6px }
 .editorial-page .species-sheet .cuts { display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:36px }
 .editorial-page .species-sheet .cut { border-block:1px solid var(--line);padding-block:20px 24px }
-.editorial-page .species-sheet .cut-drawing { height:125px;width:180px;color:#594631;display:block;margin:0 0 8px }
+.editorial-page .species-sheet .cut-drawing { height:125px;width:180px;color:var(--bark-700);display:block;margin:0 0 8px }
 .editorial-page .species-sheet .cut h3 { margin-top:10px;margin-bottom:12px }
 .editorial-page .species-sheet .cut p { font-size:16px;max-width:30ch }
 .editorial-page .species-sheet .diagram-caption { font-size:12px;line-height:1.6;color:var(--muted);margin-top:12px }
@@ -82,7 +79,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
 .editorial-page .species-sheet .recipe-copy>.primary-link { margin-top:20px }
 .editorial-page .species-sheet .recipe-copy>.text-link { font-size:15px }
 .editorial-page .species-sheet .recipe-status { font-size:13px;line-height:1.6;color:var(--muted);margin-top:18px;max-width:43ch }
-.editorial-page .species-sheet .cooking-care { border-left:2px solid var(--moss);background:#F1F1EB;padding:24px 30px;margin-top:24px }
+.editorial-page .species-sheet .cooking-care { border-left:2px solid var(--moss);background:var(--surface-recessed);padding:24px 30px;margin-top:24px }
 .editorial-page .species-sheet .cooking-care h3 { font:500 18px/1.4 var(--sans);letter-spacing:0;margin-bottom:12px }
 .editorial-page .species-sheet .cooking-care p { font-size:16px;max-width:85ch }
 .editorial-page .species-sheet .origin-section { display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.8fr);gap:112px }
@@ -98,7 +95,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
 .editorial-page .species-sheet .taxonomy dt { color:var(--muted) }
 .editorial-page .species-sheet .taxonomy dd { margin:0 }
 .editorial-page .species-sheet .origin-note { align-self:start;padding-top:4px }
-.editorial-page .species-sheet .detail-window { height:210px;overflow:hidden;margin-bottom:28px;background:#F3F1EA }
+.editorial-page .species-sheet .detail-window { height:210px;overflow:hidden;margin-bottom:28px;background:var(--surface-recessed) }
 .editorial-page .species-sheet .detail-window img { width:100%;height:100%;object-fit:cover;object-position:48% 44%;mix-blend-mode:multiply;transform:scale(1.75) }
 .editorial-page .species-sheet .origin-note h3 { font-size:29px;margin-block:12px 18px }
 .editorial-page .species-sheet .origin-note p { font-size:16px;max-width:36ch }
@@ -127,7 +124,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
 .editorial-page .species-sheet .explore { padding-block:64px }
 .editorial-page .species-sheet .explore h2 { margin-top:14px;margin-bottom:28px;font-size:36px }
 .editorial-page .species-sheet .other-grid { display:grid;grid-template-columns:1fr 1fr;gap:32px }
-.editorial-page .species-sheet .other-species { display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:24px;padding:20px;border:1px solid var(--line);border-radius:8px;text-decoration:none }
+.editorial-page .species-sheet .other-species { display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:24px;padding:20px;border:1px solid var(--line);border-radius:0;text-decoration:none }
 .editorial-page .species-sheet .other-species img { width:72px;height:72px;object-fit:contain;mix-blend-mode:multiply }
 .editorial-page .species-sheet .other-species strong { display:block;font:500 28px/1.2 var(--serif);margin-block:4px 6px }
 .editorial-page .species-sheet .other-species i { font:italic 500 17px/1.4 var(--serif) }
@@ -278,9 +275,11 @@ html:has(.editorial-page) { scroll-behavior:smooth }
   .editorial-page .species-sheet details p { font-size:10pt }
 }
 
-.editorial-page.minimal-public { --font-sans:'Editorial Plex','IBM Plex Sans',sans-serif; --brand-primary:var(--ink); --text-primary:var(--ink); --text-secondary:var(--muted); --brand-accent:#EAEAEA; --border-hairline:#EAEAEA; --rule-hairline:1px solid #EAEAEA; }
+.editorial-page.minimal-public { --brand-primary:var(--ink); --text-primary:var(--ink); }
 .editorial-page .editorial-main { width:min(1232px,calc(100% - 96px)); margin-inline:auto; }
-.editorial-page .editorial-utility { display:flex; justify-content:space-between; align-items:center; gap:24px; padding-bottom:24px; }
+.editorial-page .editorial-utility { position:relative; display:flex; justify-content:space-between; align-items:center; gap:24px; padding-bottom:24px; }
+.editorial-page .section-skip:not(:focus) { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.editorial-page .section-skip:focus { position:absolute; top:calc(100% - 20px); right:0; z-index:11; display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border:1px solid var(--ink); background:var(--paper); color:var(--ink); font:400 14px/1.5 var(--sans); outline:2px solid var(--moss); outline-offset:2px; }
 .editorial-page .editorial-utility nav { display:flex; flex:1; min-width:0; align-items:center; gap:20px; font:400 14px/1.5 var(--sans); }
 .editorial-page #print-editorial { flex-shrink:0; font:400 14px/1.5 var(--sans); }
 .editorial-page #print-editorial[hidden] { display:none; }
@@ -288,7 +287,7 @@ html:has(.editorial-page) { scroll-behavior:smooth }
 .editorial-page .pilot-log>h2 { margin-block:12px 20px; font-size:34px; }
 .editorial-page .pilot-log>p { max-width:72ch; }
 .editorial-page .pilot-log-entries { margin-bottom:24px; }
-.editorial-page .pilot-log-entry { padding-block:24px; border-top:1px solid #EAEAEA; }
+.editorial-page .pilot-log-entry { padding-block:24px; border-top:var(--rule-hairline); }
 .editorial-page .pilot-log-entry h3 { margin-block:8px 12px; }
 .editorial-page .pilot-log-entry p { font-size:16px; }
 .editorial-page .pilot-log-status { display:block; font:500 13px/1.6 var(--mono); margin-bottom:12px; }

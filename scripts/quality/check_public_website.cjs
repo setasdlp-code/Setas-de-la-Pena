@@ -66,7 +66,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         assert.ok(metrics.content <= width, `${file} overflow at ${width}`);
         assert.deepEqual(metrics.brokenImages, []);
         if (file !== 'typography.html') assert.equal(metrics.pairing, 'mono');
-        if (['setas.html', 'cocina.html', 'tecnicas.html', 'cultivo.html', 'recetas.html', 'recetas-melena.html', 'recetas-eryngii.html', 'recetas-encurtidos.html'].includes(file)) {
+        if (['setas.html', 'cocina.html', 'tecnicas.html', 'cultivo.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-melena.html', 'recetas-eryngii.html', 'recetas-encurtidos.html'].includes(file)) {
           assert.equal(await page.locator('#primary-nav a').count(), 4, 'brief shared navigation');
           assert.equal(await page.locator('#primary-nav .nav-inquiry').count(), 0);
           if (file.startsWith('recetas')) {
@@ -196,7 +196,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');
     assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio'], 'home keeps one introduction; the species catalogue lives on /setas');
     assert.equal(await page.locator('.species-card, #species-dialog').count(), 0);
-    assert.deepEqual(await page.locator('footer nav a').evaluateAll(nodes => nodes.map(a => a.getAttribute('href'))), ['/despensa', '/mundo-micelar']);
+    assert.deepEqual(await page.locator('footer nav a').evaluateAll(nodes => nodes.map(a => a.getAttribute('href'))), ['/mundo-micelar'], 'la despensa no se enlaza mientras no haya lote');
     assert.ok(await page.locator('#hero-title, .origin-actions').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'headline and project links visible on a small laptop');
     await page.setViewportSize({ width: 390, height: 900 });
     await visit(page, 'home');
@@ -207,7 +207,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
     assert.equal(await page.locator('.hero-pena-land figcaption, .hero-pena-species').count(), 0);
     assert.ok(await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width <= el.parentElement.getBoundingClientRect().width), 'engraving fits its column');
-    assert.equal(await page.locator('.origin-story > p').last().innerText(), 'Hongos cultivados a la sombra de Juaica.');
+    assert.equal(await page.locator('.origin-story > p').last().innerText(), 'Hongos para cocinar con criterio.');
     await page.locator('.menu-toggle').click();
     await page.locator('#primary-nav a[href="/setas"]').click();
     await page.waitForURL('**/setas');
@@ -233,7 +233,9 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('h1').innerText().then(t => t.replace(/\s+/g, ' ')), 'El mundo micelar.');
     assert.equal(await page.locator('.micelar-stages > li').count(), 3);
     assert.equal(await page.locator('.micelar-species > article').count(), 3);
-    assert.equal(await page.locator('.micelar-sources li').count(), 4);
+    // 1–4 propias; 5–8 trasladadas desde «Lo que se investiga» de las fichas (revisión de marca 23 nov, n.º 7).
+    assert.equal(await page.locator('.micelar-sources li').count(), 8);
+    assert.deepEqual(await page.locator('#investigacion sup a').evaluateAll(links => links.map(a => a.getAttribute('href'))), ['#fuente-4', '#fuente-5', '#fuente-6', '#fuente-7', '#fuente-8']);
     assert.equal(await page.locator('#primary-nav a[href="/proyecto"]').count(), 0);
     await page.locator('.micelar-index a[href="#investigacion"]').focus();
     await page.keyboard.press('Enter');

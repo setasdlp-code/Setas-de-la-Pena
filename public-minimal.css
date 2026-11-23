@@ -1,5 +1,5 @@
 /* Public catalogue and recipe pages. Keep this treatment independent of the homepage. */
-.minimal-public { background: #fafaf7; }
+.minimal-public { background: var(--paper-100); }
 .minimal-public .page-width { width: min(1232px, calc(100% - 96px)); }
 .minimal-public .masthead { min-height: 0; padding-block: 40px; border: 0; gap: 32px; }
 .minimal-public .masthead .wordmark img { width: 152px; }
@@ -12,7 +12,7 @@
 .minimal-public .catalog-index { gap: 24px; }
 .minimal-public .catalog-index h1 { font-weight: 500; }
 .minimal-public .species-grid { gap: 24px; }
-.minimal-public .species-grid .species-card { padding: 24px; border: 1px solid #EAEAEA; border-radius: 8px; background: #F9F9F8; }
+.minimal-public .species-grid .species-card { padding: 24px; border: var(--rule-hairline); border-radius: 0; background: var(--paper-50); }
 .minimal-public .specimen-link { display: block; padding: 16px 0; }
 .minimal-public .specimen-link img { width: 100%; height: 220px; object-fit: contain; }
 .minimal-public .species-card .t-species { margin-block: 12px 8px; font: 500 32px/1.1 var(--font-editorial); letter-spacing: -.025em; }
@@ -30,7 +30,7 @@
 .minimal-public .page-intro h1 { margin-bottom: 16px; }
 .minimal-public .page-intro > p { margin-block: 12px 0; }
 .minimal-public .page-intro > .recipe-index-note { font-size: 14px; line-height: 1.6; }
-.minimal-public .recipe-index { border: 0; background: #fafaf7; }
+.minimal-public .recipe-index { border: 0; background: var(--paper-100); }
 .minimal-public .recipe-collections { flex-wrap: wrap; gap: 8px 32px; }
 .minimal-public .recipe-chapter { padding-block: 40px 64px; border: 0; }
 .minimal-public .recipe-chapter-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px 32px; margin-bottom: 32px; }
@@ -130,10 +130,10 @@
 .minimal-public :is(.recipe-preview, .recipe-search, .recipe-switcher select, .recipe-focusbar a, .recipe-focusbar button, .recipe-empty button):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 5px; }
 .minimal-public .recipe-empty { padding-block: 40px; font-size: 17px; }
 .minimal-public :is(.recipe-empty button, .recipe-focusbar button) { border: 0; background: transparent; color: var(--text-primary); font: 400 15px/1.5 var(--font-sans); text-decoration: underline; text-underline-offset: 6px; min-height: 44px; padding: 0; cursor: pointer; touch-action: manipulation; }
-.minimal-public .recipe-focusbar { position: sticky; top: 0; z-index: 6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px 32px; padding-block: 16px; margin-bottom: 32px; background: #fafaf7; }
+.minimal-public .recipe-focusbar { position: sticky; top: 0; z-index: 6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px 32px; padding-block: 16px; margin-bottom: 32px; background: var(--paper-100); }
 .minimal-public .recipe-focusbar a { min-height: 44px; display: inline-flex; align-items: center; font-size: 14px; }
 .minimal-public .recipe-switcher { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 420px; font-size: 12px; color: var(--text-secondary); }
-.minimal-public .recipe-switcher select { min-height: 44px; width: 100%; max-width: 100%; padding: 8px 32px 8px 0; border: 0; background-color: #fafaf7; color: var(--text-primary); font: 400 16px/1.4 var(--font-sans); }
+.minimal-public .recipe-switcher select { min-height: 44px; width: 100%; max-width: 100%; padding: 8px 32px 8px 0; border: 0; background-color: var(--paper-100); color: var(--text-primary); font: 400 16px/1.4 var(--font-sans); }
 .minimal-public.recipe-showcase-ready .recipe-grid { display: block; }
 .minimal-public.recipe-showcase-ready .recipe-grid > .recipe { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 64px; padding-block: 0 64px; scroll-margin-top: 128px; }
 .minimal-public.recipe-showcase-ready .recipe-heading { min-width: 0; display: flex; flex-direction: column; }
@@ -226,3 +226,7 @@
 .minimal-public .technique-entry { padding-block: 32px 56px; }
 .minimal-public .technique-entry h2 { font: 500 32px/1.2 var(--font-editorial); margin-bottom: 16px; }
 .minimal-public .technique-entry p { max-width: 62ch; margin-bottom: 20px; }
+/* Aviso de primera cosecha: misma cabecera y titulares que las fichas. */
+.aviso-page .aviso-intro { max-width: 760px; padding-block: 32px 24px; }
+.aviso-page .aviso-intro h1 { margin-block: 12px 4px; font: 500 clamp(56px, 7vw, 88px)/1 var(--font-editorial); letter-spacing: -.03em; color: var(--text-primary); }
+.aviso-page .aviso-intro > p { margin-block: 12px 0; }

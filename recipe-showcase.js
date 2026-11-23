@@ -26,7 +26,7 @@
   gallery.id = 'recetas';
   gallery.setAttribute('aria-labelledby', 'recipe-gallery-title');
   const heading = create('div', 'recipe-gallery-heading');
-  const title = create('h2', '', 'Elige qué cocinar.');
+  const title = create('h2', '', 'Elegir qué cocinar.');
   title.id = 'recipe-gallery-title';
   const searchLabel = create('label', 'recipe-search-label', 'Buscar una receta');
   const search = create('input', 'recipe-search');
@@ -43,7 +43,7 @@
   const previews = create('div', 'recipe-preview-grid');
   const noResults = create('div', 'recipe-empty');
   noResults.hidden = true;
-  noResults.append(create('p', '', 'No encontramos esa receta. Prueba con otro ingrediente.'));
+  noResults.append(create('p', '', 'No encontramos esa receta. Probar con otro ingrediente.'));
   const clear = create('button', '', 'Ver todas las recetas');
   clear.type = 'button';
   noResults.append(clear);
@@ -104,7 +104,7 @@
       entry.link.hidden = !words.every(word => entry.terms.includes(word));
       if (!entry.link.hidden) visible++;
     });
-    status.textContent = `${visible} ${visible === 1 ? 'receta' : 'recetas'}${words.length ? ' para tu búsqueda' : ' para explorar'}`;
+    status.textContent = `${visible} ${visible === 1 ? 'receta' : 'recetas'}${words.length ? ' para esta búsqueda' : ' para explorar'}`;
     noResults.hidden = visible !== 0;
     if (updateURL) {
       const url = new URL(location.href);

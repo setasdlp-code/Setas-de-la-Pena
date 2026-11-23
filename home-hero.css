@@ -1,5 +1,5 @@
 /* V1 editorial: Gaya Patched, Juaica and two clear paths into the public site. */
-.home-page { background: #fafaf7; }
+.home-page { background: var(--paper-100); }
 .home-page .page-width { width: min(1232px, calc(100% - 96px)); }
 .home-page .masthead { padding-block: 40px; border: 0; gap: 32px; }
 .home-page .masthead nav { gap: 32px; }
