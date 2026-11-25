@@ -61,6 +61,23 @@ El chequeo cubre 320, 390, 768 y 1440 píxeles, imágenes, enlaces y fragmentos,
 
 El workflow de GitHub Pages actual publica `field-os-simulador/setas-os`. Esta web de la raíz requiere una configuración de publicación propia; esta implementación no cambia el despliegue de Setas OS.
 
+### Despliegue desde GitHub Actions (desde el 25 nov 2026)
+
+`.github/workflows/deploy-public-website.yml` publica esta web en el proyecto de Cloudflare Pages `setas-de-la-pena` (producción, rama `main`). Solo se lanza a mano y solo desde `main`: Actions → «Deploy public website» → Run workflow.
+
+Pasos del flujo:
+
+1. Exporta con `scripts/export_public_website.py`.
+2. Sirve el paquete en local y corre `check_public_export.cjs` y `check_public_delivery.cjs`.
+3. Despliega con Wrangler (versión fijada en el flujo).
+4. Comprueba el sitio publicado contra el paquete exacto con `check_public_live.py`, con hasta cuatro intentos.
+
+Los informes JSON se guardan como artefacto del job durante 30 días.
+
+Requisito: el secreto de repositorio `CLOUDFLARE_API_TOKEN` (Settings → Secrets and variables → Actions). Es un API Token de Cloudflare con permiso «Account · Cloudflare Pages · Edit», no la Global API Key. Si falta, el flujo se detiene en el primer paso sin exportar nada.
+
+Por qué no se despliega desde una sesión en la nube de Claude: el proxy de red de la sesión reemplaza toda cabecera `Authorization` dirigida a `api.cloudflare.com` por el token guardado. Eso incluye el JWT temporal con el que Wrangler sube los archivos de Pages, así que la subida falla con «Authorization failed» aunque el token sea válido (comprobado el 25 nov 2026).
+
 
 ## Iteración comercial: recorrido para chefs
 
