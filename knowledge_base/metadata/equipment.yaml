@@ -1,6 +1,6 @@
 # Metadata — Inventario Maestro de Equipos
 # Setas de la Peña
-# Last registry update: 2026-11-16 (owner-report 4-channel 5 V relay module; not physically inspected)
+# Last registry update: 2026-11-26 (owner-report two AC Infinity CONTROLLER 69 PRO units; not physically inspected)
 schema_version: "2.3"
 registry_type: equipment
 currency_default: COP
@@ -59,6 +59,8 @@ inventory:
   - {id: EQ-HEAT-STOVE-001, name: Estufa doble industrial a gas propano, category: thermal_source, quantity: 1, unit: unit, status: operational, location: home_rnd_lab_garage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_thermal_processing, last_physical_verification: "2026-07-10"}
   - {id: EQ-BENCH-METAL-001, name: Mesón metálico 1.50 m, category: workbench, quantity: 1, unit: unit, status: operational, location: home_rnd_lab_garage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation, last_physical_verification: "2026-07-10"}
   - {id: EQ-RACK-METAL-001, name: Racks metálicos, category: shelving, quantity: 3, unit: unit, status: operational, location: home_rnd_lab_garage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: storage, last_physical_verification: "2026-07-10"}
+
+  - {id: EQ-CTRL-ACINF-69PRO-001, name: AC Infinity CONTROLLER 69 PRO, category: environmental_controller, quantity: 2, unit: unit, status: reported_on_hand_unverified, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unverified, assigned_module: null, last_physical_verification: null, evidence_status: owner_report_2026_11_26}
 
 excluded_or_not_owned:
   - {id: EXC-SCD30-AMAZON-001, name: Sensor de aire digital SCD30 CO2 - pedido anterior no entregado (no representa inventario actual), category: sensor_co2, ownership_status: not_owned, order_status: undeliverable, acquisition_plan: none_from_this_order, last_confirmed: "2026-08-13", source: amazon_owner_report}
