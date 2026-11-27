@@ -2647,3 +2647,16 @@ documents:
     supersedes: null
     confidence: high
     status: active
+
+  - id: clima-iluminacion-cloudlab-844-2026-11-26
+    title: "CLOUDLAB 844 — auditoría de control, calefacción e iluminación"
+    path: 09_research/clima_iluminacion_cloudlab_844_2026-11-26.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [fruiting, environmental-control, lighting, heating, equipment]
+    keywords: [CLOUDLAB 844, Controller 69 Pro, THERMOFORGE, IONBEAM, UIS, lux, RETIE]
+    related_documents: [fruiting, environmental-control, decisions, unresolved-questions]
+    supersedes: null
+    confidence: medium
+    status: draft

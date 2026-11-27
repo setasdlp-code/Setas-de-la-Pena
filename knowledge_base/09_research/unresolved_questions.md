@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-17
+last_reviewed: 2026-11-26
 confidence: high
 primary_sources:
   - Internal records
@@ -14,6 +14,7 @@ related_documents:
   - jerky_setas_procesamiento_2026-11-05.md
   - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - literature_database.md
+  - clima_iluminacion_cloudlab_844_2026-11-26.md
   - literature_audit_2026-07-23.md
   - facility_adaptation_literature_2026-08-03.md
   - high_altitude_microclimate_shiitake_hericium_2026-08-05.md
@@ -186,6 +187,9 @@ No usar `<1.000 ppm`, `18–22°C`, `14–21 días`, `2–3 flushes` o una BE es
 | I05 | ¿Se requiere sensor de fuga de agua cerca de electrónica? | Media | Evaluación de riesgo |
 | I06 | ¿CLOUDLAB y/o Martha Tent serán cámaras separadas para incubación y fructificación? | Media | Decisión de layout |
 | I07 | ¿Se añadirá presión barométrica local al registro ambiental y a la compensación del SCD30? | Alta | Diseño pendiente |
+| I08 | ¿La CLOUDLAB 844 exige calefacción con FAE y carga representativas, y qué HR alcanza la admisión? | Alta antes de cotizar | Serie nocturna T/HR, caudal y déficit térmico pendientes. Si procede, confirmar revisión, admisión y protecciones eléctricas del modelo con fabricante y electricista (DOC-0150). |
+| I09 | ¿Qué montaje de luz cubre los bloques en cada nivel con humedad y sombras reales? | Media antes del ensayo | Verificar tira existente y aptitud del conjunto para humedad, mapa de lux bajo carga y respuesta de la cepa (DOC-0150). |
+| I10 | ¿Cómo responden el 69 Pro, el H4 y el humidificador ante corte de red/energía, y cómo se comporta la sonda a HR alta? | Alta antes de automatizar | Identificar las dos unidades reportadas y comisionar en banco según DEC-025 y DOC-0150. |
 
 El autoclave está físicamente en el sitio, pero no ha sido comisionado ni validado. La tarea correcta es identificar y validar el equipo existente.
 

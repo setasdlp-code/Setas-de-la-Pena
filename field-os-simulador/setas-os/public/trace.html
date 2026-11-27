@@ -791,12 +791,12 @@
         ? rawEvents.map(ev => {
             const isBagEvent = Boolean(ev.bagId || ev.scope === 'bag');
             const metaTags = [];
-            if (ev.meta?.temperatura != null) metaTags.push(`${ev.meta.temperatura}°C`);
-            if (ev.meta?.humedad != null) metaTags.push(`${ev.meta.humedad}% HR`);
-            if (ev.meta?.co2 != null) metaTags.push(`${ev.meta.co2} ppm CO2`);
+            if (ev.meta?.temperatura != null) metaTags.push(`${esc(ev.meta.temperatura)}°C`);
+            if (ev.meta?.humedad != null) metaTags.push(`${esc(ev.meta.humedad)}% HR`);
+            if (ev.meta?.co2 != null) metaTags.push(`${esc(ev.meta.co2)} ppm CO2`);
             if (ev.meta?.tipoInspeccion) metaTags.push(esc(ev.meta.tipoInspeccion));
             if (ev.meta?.resultadoInspeccion) metaTags.push(esc(ev.meta.resultadoInspeccion));
-            if (ev.meta?.flush) metaTags.push(`Flush ${ev.meta.flush}`);
+            if (ev.meta?.flush) metaTags.push(`Flush ${esc(ev.meta.flush)}`);
             if (ev.meta?.fase) metaTags.push(esc(ev.meta.fase));
 
             const obs = ev.meta?.observacionPublica

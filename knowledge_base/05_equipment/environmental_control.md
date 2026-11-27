@@ -3,7 +3,7 @@ title: Control Ambiental — ESP32 / ESPHome / Home Assistant
 document_id: DOC-0026
 category: equipment
 load_priority: selective
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-27
 confidence: high
 primary_sources:
   - ESPHome documentation
@@ -19,6 +19,7 @@ related_documents:
   - ../04_facility/fruiting.md
   - ../04_facility/incubation.md
   - ../09_research/active_research_knowledge.md
+  - ../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md
   - ../09_research/incubation_module_engineering_review_2026-08-05.md
   - ../10_ai_workflows/OAP-0001-modular-incubation-validation.md
   - ../00_project/current_state.md
@@ -100,6 +101,8 @@ Home Assistant no debe cerrar el lazo de control térmico primario. Una pérdida
 
 ## Actuadores de Fructificación
 
+Para CLOUDLAB 844, DEC-025 propone conexión comercial UIS del H4 y el humidificador T7, con medición independiente en ESP32. La propuesta sigue pendiente de aprobación. Aplicar los bloqueos de la decisión al comisionar; las descripciones siguientes de señal y relé son alternativas de diseño pendientes de una interfaz eléctrica verificada. Véase la [auditoría de clima e iluminación](../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md) para compatibilidad y pruebas.
+
 ### AC Infinity CloudForge T7 — humidificación
 - Control por relé o señal digital ON/OFF cuando el lote tenga banda y ciclo aprobados.
 - Capacidad de 15 L con manguera de distribución flexible hacia la parte superior de la carpa.
@@ -108,6 +111,10 @@ Home Assistant no debe cerrar el lazo de control térmico primario. Una pérdida
 ### AC Infinity Cloudline H4 IP65 — extracción / FAE
 - Control ON/OFF o PWM. Caudal calibrado considerando contrapresión de ducto y menor densidad de aire en altitud.
 - Sincronizado con lectura compensada de CO₂ y control de humedad.
+
+### Iluminación LED de fructificación — propuesta 2026-11-27
+
+Ver [diseño y BOM de DOC-0150](../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md#actualización-de-diseño-lumínico--2026-11-27). Se propone PWM DC local con ESP32/ESPHome y etapa MOSFET compatible con 3,3 V, dimensionada y protegida; dimmer BTF C01W como alternativa. UIS Control Plug opcional exclusivamente para horario ON/OFF, sin regulación de intensidad. Fuente candidata de 24 V con capacidad ≥1,25 veces la carga instalada, sujeta a clasificación eléctrica del sitio y eventual límite de 12 V. Electrónica fuera de la zona húmeda; validar montaje, recuperación tras corte, control sin red y ausencia de horarios contradictorios. No implementado ni comisionado; no cambia DEC-025 ni las consignas pendientes del lote.
 
 ## Actuadores de Incubación
 

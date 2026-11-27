@@ -29,6 +29,10 @@ before(async () => {
     projectId: 'sdlp-os-rules-test',
     firestore: { rules: fs.readFileSync(RULES_PATH, 'utf8') },
   });
+  // Las reglas exigen usuarios/{uid} (isMember): op_1 es un operario registrado.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'usuarios/op_1'), { rol: 'operario' });
+  });
 });
 
 after(async () => {
@@ -284,9 +288,56 @@ test('las recetas usan el mismo balance de masa', async () => {
 
 // role() no debe fallar cuando la cuenta no tiene documento en usuarios/.
 test('una cuenta sin documento en usuarios/ no es admin, y las reglas no se rompen', async () => {
+  const sinRegistro = env.authenticatedContext('sin_registro').firestore();
   await seed('recetas/r_admin', { ingredientes: ingredientes(2) });
+  await assertFails(deleteDoc(doc(sinRegistro, 'recetas/r_admin')));
   await assertFails(deleteDoc(doc(asOperator(), 'recetas/r_admin')));
   await assertFails(setDoc(doc(asOperator(), 'usuarios/otro'), { rol: 'admin' }));
+});
+
+// Autorización: una cuenta de Firebase Auth sin usuarios/{uid} (p. ej. creada
+// con el registro público de email/contraseña) no lee ni escribe datos.
+test('una cuenta autenticada pero no registrada no lee ni escribe datos de la granja', async () => {
+  const sinRegistro = env.authenticatedContext('intruso').firestore();
+  await seed('bitacora_lotes/bl_priv', { codigo: 'L-P', estado: 'incubacion' });
+  await seed('inventario_lotes/inv_priv', { nombre: 'paja' });
+  await assertFails(getDoc(doc(sinRegistro, 'bitacora_lotes/bl_priv')));
+  await assertFails(getDoc(doc(sinRegistro, 'inventario_lotes/inv_priv')));
+  await assertFails(setDoc(doc(sinRegistro, 'bitacora_lotes/bl_new'), { codigo: 'L-X' }));
+  await assertFails(setDoc(doc(sinRegistro, 'inventario_lotes/inv_priv'), { deleted: true }, { merge: true }));
+  await assertFails(setDoc(doc(sinRegistro, 'recetas/r_x'), RECETA_OK));
+  await assertFails(setDoc(doc(sinRegistro, 'telemetria_salas/sala_1'), { temperature_c: 0 }));
+});
+
+test('un operario registrado sí lee y escribe datos de la granja', async () => {
+  await seed('bitacora_lotes/bl_op', { codigo: 'L-O', estado: 'incubacion' });
+  await assertSucceeds(getDoc(doc(asOperator(), 'bitacora_lotes/bl_op')));
+  await assertSucceeds(setDoc(doc(asOperator(), 'inventario_lotes/inv_op'), { nombre: 'paja' }));
+  await assertSucceeds(setDoc(doc(asOperator(), 'recetas/r_op'), RECETA_OK));
+});
+
+test('cada cuenta lee solo su propio documento de usuarios/; el admin lee todos', async () => {
+  await seed('usuarios/op_2', { rol: 'operario' });
+  await seed('usuarios/adm_u', { rol: 'admin' });
+  await assertSucceeds(getDoc(doc(asOperator(), 'usuarios/op_1')));
+  await assertFails(getDoc(doc(asOperator(), 'usuarios/op_2')));
+  // Una cuenta no registrada puede comprobar que no lo está (lee su propio id).
+  await assertSucceeds(getDoc(doc(env.authenticatedContext('intruso_2').firestore(), 'usuarios/intruso_2')));
+  await assertSucceeds(getDoc(doc(env.authenticatedContext('adm_u').firestore(), 'usuarios/op_2')));
+});
+
+test('public_lotes: se lee un lote por su código, pero no se puede listar la colección', async () => {
+  await seed('public_lotes/SDP-PUB', { codigo: 'SDP-PUB', estado: 'incubacion' });
+  const anon = env.unauthenticatedContext().firestore();
+  await assertSucceeds(getDoc(doc(anon, 'public_lotes/SDP-PUB')));
+  await assertFails(getDocs(collection(anon, 'public_lotes')));
+});
+
+test('public_lotes: lifecycleEvents y harvests deben ser listas', async () => {
+  const svc = env.authenticatedContext('svc_l', { sync_service: true }).firestore();
+  await assertSucceeds(setDoc(doc(svc, 'public_lotes/SDP-L1'), { codigo: 'SDP-L1', lifecycleEvents: [{ meta: { temperatura: 21 } }], harvests: [] }));
+  await assertFails(setDoc(doc(svc, 'public_lotes/SDP-L2'), { codigo: 'SDP-L2', lifecycleEvents: '<img src=x onerror=alert(1)>' }));
+  await assertFails(setDoc(doc(svc, 'public_lotes/SDP-L3'), { codigo: 'SDP-L3', harvests: { a: 1 } }));
 });
 
 test('un admin con documento en usuarios/ sigue pudiendo borrar recetas', async () => {
