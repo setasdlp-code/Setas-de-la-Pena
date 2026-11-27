@@ -51,3 +51,23 @@ test('agregación usa solo lecturas valid y respeta la ventana del RoomCycle', (
   assert.equal(agg.co2_ppm.mean, 900);
   assert.equal(agg.co2_ppm.qualityCounts.suspect, 1);
 });
+
+// Number(null) === 0: un sensor que no reporta (ESPHome serializa NaN como null)
+// no puede convertirse en una lectura válida de 0 % HR / 0 °C / 0 ppm.
+test('valor null, undefined, vacío o booleano queda como missing, no como 0 válido', () => {
+  for (const value of [null, undefined, '', '   ', true, false]) {
+    const r = normalizeTelemetry({ room_id: 'sala', device_id: 'esp', metric: 'rh_pct', value, observed_at: '2026-11-27T10:00:00Z' });
+    assert.equal(r.quality, 'missing', `value=${JSON.stringify(value)}`);
+    assert.equal(r.value, null, `value=${JSON.stringify(value)}`);
+    assert.ok(r.quality_reasons.includes('non_numeric_value'));
+  }
+});
+
+test('un 0 real y un número en string siguen siendo lecturas numéricas', () => {
+  const cero = normalizeTelemetry({ room_id: 'sala', device_id: 'esp', metric: 'co2_ppm', value: 0, observed_at: '2026-11-27T10:00:00Z' });
+  assert.equal(cero.value, 0);
+  assert.equal(cero.quality, 'valid');
+  const str = normalizeTelemetry({ room_id: 'sala', device_id: 'esp', metric: 'rh_pct', value: '88.5', observed_at: '2026-11-27T10:00:00Z' });
+  assert.equal(str.value, 88.5);
+  assert.equal(str.quality, 'valid');
+});

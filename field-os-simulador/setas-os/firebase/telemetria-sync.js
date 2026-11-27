@@ -15,30 +15,37 @@ import {
   serverTimestamp
 } from "../vendor/firebase/firebase-firestore.js";
 
+// Valor numérico o null. Un sensor que no reporta (null, '', NaN) se guarda
+// como null — nunca como 0 °C / 0 % HR, que el puente en vivo y el motor de
+// anomalías tomarían como una lectura real.
+const metricOrNull = (v) => {
+  if (v == null || typeof v === "boolean" || (typeof v === "string" && v.trim() === "")) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
 /**
- * Registra una lectura climática validada en la colección 'telemetria_lecturas'
- * y actualiza el estado más reciente de la sala en 'telemetria_salas/{roomId}'.
- *
- * @param {Object} db - Instancia de Firestore
- * @param {Object} reading - Datos de la lectura ({ roomId, temperature_c, rh_pct, co2_ppm, substrate_temperature_c, dpv_kpa, source })
- * @returns {Promise<{success: boolean, id?: string, error?: string}>}
+ * Construye el documento de una lectura climática, o null si la lectura no
+ * trae ninguna métrica numérica. Exportada para poder probarla sin Firestore.
  */
-export async function pushClimateReading(db, reading) {
-  if (!db || !reading || !reading.roomId) {
-    return { success: false, error: "Parámetros de telemetría inválidos o incompletos." };
-  }
+export function buildClimatePayload(reading) {
+  if (!reading || !reading.roomId) return null;
 
   const roomId = reading.roomId;
-  const temp = Number(reading.temperature_c ?? reading.temp ?? 0);
-  const rh = Number(reading.rh_pct ?? reading.rh ?? 0);
-  const co2 = reading.co2_ppm != null ? Number(reading.co2_ppm) : null;
-  const subTemp = reading.substrate_temperature_c != null ? Number(reading.substrate_temperature_c) : null;
-  
-  // Cálculo estequiométrico/físico de Presión de Vapor Saturada y DPV (kPa) a 2.600 msnm
-  const svp = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
-  const vpd = Number((svp * (1 - rh / 100)).toFixed(3));
+  const temp = metricOrNull(reading.temperature_c ?? reading.temp);
+  const rh = metricOrNull(reading.rh_pct ?? reading.rh);
+  const co2 = metricOrNull(reading.co2_ppm);
+  const subTemp = metricOrNull(reading.substrate_temperature_c);
+  if (temp == null && rh == null && co2 == null && subTemp == null) return null;
 
-  const payload = {
+  // Presión de Vapor Saturada y DPV (kPa): solo con temperatura y HR medidas.
+  let vpd = null;
+  if (temp != null && rh != null) {
+    const svp = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
+    vpd = Number((svp * (1 - Math.min(100, Math.max(0, rh)) / 100)).toFixed(3));
+  }
+
+  return {
     room_id: roomId,
     temperature_c: temp,
     rh_pct: rh,
@@ -57,6 +64,26 @@ export async function pushClimateReading(db, reading) {
     created_at: serverTimestamp(),
     timestamp_local: new Date().toISOString()
   };
+}
+
+/**
+ * Registra una lectura climática validada en la colección 'telemetria_lecturas'
+ * y actualiza el estado más reciente de la sala en 'telemetria_salas/{roomId}'.
+ *
+ * @param {Object} db - Instancia de Firestore
+ * @param {Object} reading - Datos de la lectura ({ roomId, temperature_c, rh_pct, co2_ppm, substrate_temperature_c, dpv_kpa, source })
+ * @returns {Promise<{success: boolean, id?: string, error?: string}>}
+ */
+export async function pushClimateReading(db, reading) {
+  if (!db || !reading || !reading.roomId) {
+    return { success: false, error: "Parámetros de telemetría inválidos o incompletos." };
+  }
+  const payload = buildClimatePayload(reading);
+  if (!payload) {
+    return { success: false, error: "La lectura no trae ninguna métrica numérica." };
+  }
+  const roomId = payload.room_id;
+  const vpd = payload.dpv_kpa;
 
   try {
     // 1. Guardar evento histórico en la serie de tiempo

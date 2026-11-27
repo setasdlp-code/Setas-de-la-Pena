@@ -17,10 +17,19 @@
     return d && Number.isFinite(d.getTime()) ? d.toISOString() : null;
   };
 
+  // Number(null), Number('') y Number(false) dan 0: un sensor que no reporta
+  // (ESPHome serializa NaN como null) se convertía en una lectura válida de
+  // 0 % HR o 0 °C. Ausente, vacío o booleano es NaN, y por tanto 'missing'.
+  const toReadingNumber = (v) => {
+    if (v == null || typeof v === 'boolean') return NaN;
+    if (typeof v === 'string' && v.trim() === '') return NaN;
+    return Number(v);
+  };
+
   const normalizeTelemetry = (raw = {}) => {
     const metric = raw.metric || null;
     const spec = METRICS[metric];
-    const value = Number(raw.value);
+    const value = toReadingNumber(raw.value);
     const reasons = Array.isArray(raw.quality_reasons) ? [...raw.quality_reasons] : [];
     let quality = VALID_QUALITY.has(raw.quality) ? raw.quality : 'valid';
 
