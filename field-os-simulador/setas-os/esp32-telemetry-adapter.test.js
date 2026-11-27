@@ -135,3 +135,26 @@ test('el adaptador solo adapta: no expone servidor HTTP ni rutas de actuadores (
   const source = fs.readFileSync(path.join(__dirname, 'esp32-telemetry-adapter.js'), 'utf8');
   assert.doesNotMatch(source, /node:http|createServer|Access-Control|actuators|override/);
 });
+
+// ESPHome serializa un sensor en NaN como null. Antes Number(null) === 0 daba
+// rh_pct = 0 con quality 'valid' y out_of_band: una alarma de HR inexistente.
+test('adaptESP32Payload: un sensor en null queda missing y no fuera de banda', () => {
+  const adapted = adaptESP32Payload({
+    room_id: 'martha_01',
+    device_id: 'esp32_martha_01',
+    observed_at: '2026-08-25T14:30:00.000Z',
+    temperature: 17.2,
+    humidity: null,
+    co2: null
+  }, { cycles: [sampleCycle] });
+  const rh = adapted.find(r => r.metric === 'rh_pct');
+  const co2 = adapted.find(r => r.metric === 'co2_ppm');
+  const temp = adapted.find(r => r.metric === 'temperature_c');
+  for (const r of [rh, co2]) {
+    assert.equal(r.value, null);
+    assert.equal(r.quality, 'missing');
+    assert.equal(r.out_of_band, false);
+  }
+  assert.equal(temp.value, 17.2);
+  assert.equal(temp.quality, 'valid');
+});
