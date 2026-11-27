@@ -4751,9 +4751,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         try{
           if(typeof fn!=='function') throw new Error('Operación desconocida para SetasBitacoraDB: '+op.type);
           await fn(...op.args);
-          updatedQueue=syncQueueApi.markSynced(syncQueueRef.current,op.id);
+          updatedQueue=syncQueueApi.markSynced(syncQueueRef.current,op);
         }catch(err){
-          updatedQueue=syncQueueApi.markFailed(syncQueueRef.current,op.id,err,Date.now());
+          updatedQueue=syncQueueApi.markFailed(syncQueueRef.current,op,err,Date.now());
         }
         if(cancelled) return;
         syncQueueRef.current=updatedQueue;

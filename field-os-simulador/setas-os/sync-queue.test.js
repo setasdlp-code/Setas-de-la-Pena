@@ -200,3 +200,70 @@ test('OP_TYPES y MAX_ATTEMPTS/MAX_QUEUE están congelados', () => {
   assert.equal(queueApi.MAX_ATTEMPTS, 5);
   assert.equal(queueApi.MAX_QUEUE, 500);
 });
+
+// ── Edición durante el envío ────────────────────────────────────────────────
+// El drenador espera (await) la escritura de una actualizarLote que sigue en la
+// cola. Si el operario edita el mismo lote en ese intervalo, enqueue fusiona
+// sobre la MISMA op (mismo id). markSynced(id) borraba entonces la op fusionada
+// con los campos nuevos, que nunca llegaban a Firestore.
+test('una edición fusionada durante el envío no se pierde al confirmar la versión anterior', () => {
+  const sent = queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'incubacion' }], at: NOW });
+  let queue = queueApi.enqueue([], sent);
+  const inFlight = queueApi.nextPending(queue, NOW);
+  // Llega una edición mientras la anterior está en vuelo.
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'fructificacion' }], at: NOW + 500 }));
+  queue = queueApi.markSynced(queue, inFlight);
+  assert.equal(queue.length, 1, 'la op con el campo nuevo debe seguir en la cola');
+  assert.equal(queue[0].args[1].etapa, 'fructificacion');
+  assert.equal(queueApi.nextPending(queue, NOW + 500).args[1].etapa, 'fructificacion');
+});
+
+test('markSynced con la op enviada la quita si no cambió; con el id sigue funcionando', () => {
+  const op = queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'x' }], at: NOW });
+  assert.deepEqual(queueApi.markSynced([op], op), []);
+  assert.deepEqual(queueApi.markSynced([op], op.id), []);
+});
+
+test('un fallo de la versión anterior no consume intentos ni retrasa la versión fusionada', () => {
+  const sent = queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'a' }], at: NOW });
+  let queue = queueApi.enqueue([], sent);
+  const inFlight = queueApi.nextPending(queue, NOW);
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'b' }], at: NOW + 500 }));
+  queue = queueApi.markFailed(queue, inFlight, new Error('offline'), NOW + 600);
+  assert.equal(queue[0].attempts, 0);
+  assert.equal(queue[0].nextAttemptAt, NOW + 500);
+  assert.equal(queue[0].lastError, null);
+});
+
+// ── Orden por objeto ────────────────────────────────────────────────────────
+// nextPending devolvía la primera op lista e ignoraba una anterior de la misma
+// key en retroceso. guardarLote (setDoc sin merge) fallaba una vez, la
+// actualizarLote posterior se aplicaba primero, y el reintento de guardarLote
+// sobrescribía el documento con la foto de creación.
+test('una op no se adelanta a otra anterior de la misma key que está en retroceso', () => {
+  let queue = queueApi.enqueue([], queueApi.createOperation({ type: 'guardarLote', key: 'lote:L1', args: [{ id: 'L1', etapa: 'inoculado' }], at: NOW }));
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'incubacion' }], at: NOW + 1 }));
+  queue = queueApi.markFailed(queue, queue[0].id, new Error('offline'), NOW + 2);
+  assert.equal(queueApi.nextPending(queue, NOW + 3), null, 'actualizarLote debe esperar a guardarLote');
+  assert.equal(queueApi.nextPending(queue, NOW + 10000).type, 'guardarLote');
+});
+
+test('una op stuck bloquea las posteriores de su key, pero no las de otras keys', () => {
+  let queue = queueApi.enqueue([], queueApi.createOperation({ type: 'guardarLote', key: 'lote:L1', args: [{ id: 'L1' }], at: NOW }));
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'actualizarLote', key: 'lote:L1', args: ['L1', { etapa: 'b' }], at: NOW + 1 }));
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'guardarCosecha', key: 'cosecha:C1', args: [{ id: 'C1' }], at: NOW + 2 }));
+  for (let i = 0; i < queueApi.MAX_ATTEMPTS; i++) queue = queueApi.markFailed(queue, queue[0].id, new Error('denied'), NOW + 3);
+  assert.equal(queue[0].status, 'stuck');
+  const next = queueApi.nextPending(queue, NOW + 9999999);
+  assert.equal(next.type, 'guardarCosecha', 'otra key sigue sincronizando');
+  queue = queueApi.markSynced(queue, next);
+  assert.equal(queueApi.nextPending(queue, NOW + 9999999), null, 'actualizarLote espera al guardarLote stuck');
+});
+
+test('el drenador confirma y penaliza con la op enviada, no con su id', () => {
+  const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  const drain = jsx.slice(jsx.indexOf('const drainOnce=async()=>{'), jsx.indexOf('const drainAll=()=>{'));
+  assert.match(drain, /markSynced\(syncQueueRef\.current,op\)/);
+  assert.match(drain, /markFailed\(syncQueueRef\.current,op,err,/);
+  assert.doesNotMatch(drain, /mark(Synced|Failed)\(syncQueueRef\.current,op\.id/);
+});

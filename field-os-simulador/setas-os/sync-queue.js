@@ -164,14 +164,40 @@
     return [...current, operation];
   };
 
-  /** Primera operación pendiente lista para intentarse ahora, o null. */
+  /**
+   * Primera operación pendiente lista para intentarse ahora, o null.
+   *
+   * El orden se respeta por key: una operación no se adelanta a otra ANTERIOR
+   * de la misma key que todavía no puede intentarse (en retroceso o stuck).
+   * Si no, un guardarLote (setDoc sin merge) que falló una vez se reintentaba
+   * después de la actualizarLote siguiente y pisaba el documento con la foto
+   * de creación. Operaciones de otras keys no esperan: un objeto atascado no
+   * congela la sincronización del resto.
+   */
   const nextPending = (queue, nowMs) => {
     const now = nowMs != null ? nowMs : Date.now();
-    return (queue || []).find(op => op.status === 'pending' && op.nextAttemptAt <= now) || null;
+    const blockedKeys = new Set();
+    for (const op of queue || []) {
+      if (blockedKeys.has(op.key)) continue;
+      if (op.status === 'pending' && op.nextAttemptAt <= now) return op;
+      blockedKeys.add(op.key);
+    }
+    return null;
   };
 
-  /** Sincronizada = fuera de la cola. */
-  const markSynced = (queue, id) => (queue || []).filter(op => op.id !== id);
+  // `ref` es la operación tal como se envió (o, por compatibilidad, su id).
+  // Con la operación se puede saber si cambió mientras estaba en vuelo:
+  // enqueue fusiona una edición nueva sobre la MISMA op (mismo id, `at`
+  // nuevo), y confirmar o penalizar por id afectaría a esa versión nueva.
+  const refId = ref => (ref && typeof ref === 'object' ? ref.id : ref);
+  const changedSince = (op, ref) => ref && typeof ref === 'object' && op.at !== ref.at;
+
+  /**
+   * Sincronizada = fuera de la cola, salvo que se haya fusionado una edición
+   * mientras estaba en vuelo: esa versión trae campos que el servidor aún no
+   * tiene y queda pendiente (reenviar los campos ya escritos es idempotente).
+   */
+  const markSynced = (queue, ref) => (queue || []).filter(op => op.id !== refId(ref) || changedSince(op, ref));
 
   /**
    * Descarta de la cola cualquier operación cuya key esté en `keys`, sin
@@ -195,11 +221,13 @@
    * MAX_ATTEMPTS la operación pasa a 'stuck' y deja de reintentarse sola:
    * fallar cinco veces no es falta de red, es algo que el operario debe ver.
    */
-  const markFailed = (queue, id, error, nowMs) => {
+  const markFailed = (queue, ref, error, nowMs) => {
     const now = nowMs != null ? nowMs : Date.now();
     const message = error && error.message ? error.message : String(error);
     return (queue || []).map(op => {
-      if (op.id !== id) return op;
+      // El fallo es de la versión enviada; una versión fusionada después se
+      // intenta de nuevo sin heredar intentos ni retroceso.
+      if (op.id !== refId(ref) || changedSince(op, ref)) return op;
       const attempts = op.attempts + 1;
       const stuck = attempts >= MAX_ATTEMPTS;
       // El retroceso se calcula siempre con la misma fórmula, aunque quede

@@ -198,8 +198,8 @@ test('la cola de sincronización se rehidrata desde localStorage junto con la bi
 test('el drenador de la cola de sincronización es un hook de nivel superior con limpieza', () => {
   assert.match(source, /const drainOnce=async\(\)=>\{/);
   assert.match(source, /syncQueueApi\.nextPending\(syncQueueRef\.current,Date\.now\(\)\)/);
-  assert.match(source, /syncQueueApi\.markSynced\(syncQueueRef\.current,op\.id\)/);
-  assert.match(source, /syncQueueApi\.markFailed\(syncQueueRef\.current,op\.id,err,Date\.now\(\)\)/);
+  assert.match(source, /syncQueueApi\.markSynced\(syncQueueRef\.current,op\)/);
+  assert.match(source, /syncQueueApi\.markFailed\(syncQueueRef\.current,op,err,Date\.now\(\)\)/);
   assert.match(source, /setInterval\(drainAll,15000\)/);
   assert.match(source, /window\.addEventListener\('online',onOnline\)/);
   assert.match(source, /cancelled=true;\s*\n\s*clearInterval\(intervalId\);\s*\n\s*window\.removeEventListener\('online',onOnline\);/);
