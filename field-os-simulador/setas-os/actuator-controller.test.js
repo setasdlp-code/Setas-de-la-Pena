@@ -101,3 +101,48 @@ test('FAE extractor is blocked if RH drops below critical safety threshold (<75%
 
   assert.equal(res.fae.state, 'OFF'); // No dispara extracción para evitar desecación severa
 });
+
+// Métricas ausentes (null/undefined) no son 0: Number(null) === 0 encendía el
+// humidificador con HR "0 %" y desactivaba la protección anti-condensación.
+const BASE_TARGETS = { rh_pct: { min: 85, max: 95, target: 90 }, co2_ppm: { min: 400, max: 900, target: 600 } };
+const idleState = (now) => ({
+  humidifier: { state: 'OFF', lastChangeMs: 0, lastOffMs: now - 600000 },
+  fae: { state: 'OFF', pulseStartMs: 0, lastPulseEndMs: now - 60000 }
+});
+
+test('HR null no enciende el humidificador', () => {
+  const now = 10000000;
+  const res = evaluateActuators({ metrics: { temp: 20, rh: null, co2: 600, vpd: null, dewPoint: null }, targets: BASE_TARGETS, currentState: idleState(now), now });
+  assert.equal(res.humidifier.state, 'OFF');
+});
+
+test('humidificador encendido se apaga si la lectura de HR desaparece', () => {
+  const now = 10000000;
+  const res = evaluateActuators({
+    metrics: { temp: 20, rh: null, co2: 600 },
+    targets: BASE_TARGETS,
+    currentState: { humidifier: { state: 'ON', lastChangeMs: now - 10000, lastOffMs: 0 }, fae: idleState(now).fae },
+    now
+  });
+  assert.equal(res.humidifier.state, 'OFF');
+  assert.match(res.humidifier.reason, /HR/);
+});
+
+test('temperatura null no dispara un falso corte por condensación', () => {
+  const now = 10000000;
+  const res = evaluateActuators({
+    metrics: { temp: null, rh: 80, co2: 600, dewPoint: null },
+    targets: BASE_TARGETS,
+    currentState: idleState(now),
+    now
+  });
+  assert.equal(res.humidifier.state, 'ON');
+});
+
+test('HR null no bloquea el pulso FAE por CO2 alto', () => {
+  const now = 10000000;
+  const state = idleState(now);
+  state.fae.lastPulseEndMs = now - 600000;
+  const res = evaluateActuators({ metrics: { temp: 20, rh: null, co2: 2000 }, targets: BASE_TARGETS, currentState: state, now });
+  assert.equal(res.fae.state, 'ON');
+});

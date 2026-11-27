@@ -66,11 +66,14 @@
     const targets = opts.targets || {};
     const currentState = opts.currentState || {};
     const now = opts.now != null && Number.isFinite(Number(opts.now)) ? Number(opts.now) : Date.now();
-    const temp = Number(metrics.temp);
-    const rh = Number(metrics.rh);
-    const co2 = Number(metrics.co2);
-    const vpd = Number(metrics.vpd);
-    let dewPoint = Number(metrics.dewPoint);
+    // Una métrica ausente es NaN, no 0: Number(null) === 0 hacía que un paquete
+    // sin HR encendiera el humidificador ("0 % HR") y bloqueara la ventilación.
+    const metricNumber = (v) => (v == null || v === '' || typeof v === 'boolean' ? NaN : Number(v));
+    const temp = metricNumber(metrics.temp);
+    const rh = metricNumber(metrics.rh);
+    const co2 = metricNumber(metrics.co2);
+    const vpd = metricNumber(metrics.vpd);
+    let dewPoint = metricNumber(metrics.dewPoint);
 
     // Si dewPoint no fue enviado pero temp y rh son válidos, derivarlo psicrométricamente
     if (!Number.isFinite(dewPoint) && Number.isFinite(temp) && Number.isFinite(rh) && rh > 0) {
@@ -110,7 +113,12 @@
 
     if (prevHum.state === 'ON') {
       // Condiciones de apagado
-      if (condensationRisk) {
+      if (!Number.isFinite(rh)) {
+        // Sin lectura de HR no hay condición de apagado: el humidificador
+        // quedaría encendido indefinidamente. Ante la duda, se apaga.
+        nextHumState = 'OFF';
+        humReason = 'Corte de seguridad: sin lectura de HR válida';
+      } else if (condensationRisk) {
         nextHumState = 'OFF';
         humReason = `Corte de seguridad anti-condensación (ΔT = ${(temp - dewPoint).toFixed(1)}°C < 0.8°C)`;
       } else if (Number.isFinite(rh) && rh >= (rhTargets.target || 90)) {
