@@ -4,6 +4,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const sheetApi = require('./batch-sheet.js');
 const workflow = require('./setas-os-workflow.js');
+const bitacoraModel = require('./bitacora-model.js');
 
 const NOW = Date.parse('2026-09-07T10:00:00-05:00');
 
@@ -343,9 +344,11 @@ test('descartar el lote completo mueve todas las bolsas activas y propone una tr
     { foto: 'data:x', extension: 'general', ubicacion: 'toda la bolsa', decision: 'descartar_lote', bagIds: [] },
     { operatorId: 'op-1', bolsas: loteBolsas });
 
-  // Las 5 bolsas no descartadas aún (B3 ya estaba contaminada, también se mueve).
-  assert.equal(consequences.bagUpdates.length, 6);
+  // Las 5 bolsas sanas pasan a descartada. B3 ya estaba contaminada y se
+  // queda así: reescribirla como descartada borraba la contaminación del lote.
+  assert.equal(consequences.bagUpdates.length, 5);
   assert.ok(consequences.bagUpdates.every(u => u.fields.estado === 'descartada'));
+  assert.ok(!consequences.bagUpdates.some(u => u.bagId === 'B3'));
   assert.equal(consequences.batchPatch.bagsActive, 0);
   // incubation sólo llega a un terminal vía 'failed' (no tiene 'discarded' directo).
   assert.equal(consequences.transition, 'failed');
@@ -356,6 +359,47 @@ test('descartar el lote completo mueve todas las bolsas activas y propone una tr
   assert.equal(result.log.length, 2);
   assert.equal(result.log[1].type, 'batch_state_transition');
   assert.equal(sheetApi.verifyEventChain(result.log).valid, true);
+});
+
+// Desde fructificación y descanso el primer terminal de la máquina de estados
+// es 'closed', que es el cierre exitoso. Un lote descartado por contaminación
+// entraba al corpus de calibración como lote completado, con su EB.
+for (const estado of ['fructificacion', 'descanso']) {
+  test(`descartar el lote desde ${estado} lo termina como fallido, nunca como cerrado`, () => {
+    const s = build({ lote: Object.assign({}, lote, { estado }) });
+    const consequences = sheetApi.actionConsequences(s, 'contamination',
+      { foto: 'data:x', extension: 'general', ubicacion: 'toda la bolsa', decision: 'descartar_lote', bagIds: [] },
+      { operatorId: 'op-1', bolsas: bolsas.filter(b => b.loteId === 'LOTE_1') });
+    assert.notEqual(consequences.transition, 'closed');
+    assert.equal(consequences.transition, 'failed');
+    assert.ok(workflow.isTerminalState(consequences.transition));
+  });
+}
+
+test('descartar el lote desde cuarentena usa discarded, que la máquina ofrece ahí', () => {
+  const sheet = { batchId: 'LOTE_1', state: 'quarantine', blocks: [] };
+  assert.equal(workflow.canTransition('quarantine', 'discarded'), true);
+  const consequences = sheetApi.actionConsequences(sheet, 'contamination',
+    { foto: 'data:x', extension: 'general', ubicacion: 'toda la bolsa', decision: 'descartar_lote', bagIds: [] },
+    { operatorId: 'op-1', bolsas: [] });
+  assert.equal(consequences.transition, 'discarded');
+});
+
+test('descartar el lote conserva el % de contaminación: las bolsas afectadas quedan contaminadas', () => {
+  const s = build();
+  const loteBolsas = bolsas.filter(b => b.loteId === 'LOTE_1');
+  const consequences = sheetApi.actionConsequences(s, 'contamination',
+    { foto: 'data:x', extension: 'general', ubicacion: 'toda la bolsa', decision: 'descartar_lote', bagIds: ['B1', 'B2'] },
+    { operatorId: 'op-1', bolsas: loteBolsas });
+  const byId = Object.fromEntries(consequences.bagUpdates.map(u => [u.bagId, u.fields.estado]));
+  assert.equal(byId.B1, 'contaminada');
+  assert.equal(byId.B2, 'contaminada');
+  assert.equal(byId.B4, 'descartada');
+  assert.equal(byId.B3, undefined); // ya contaminada, no se toca
+  const after = loteBolsas.map(b => (byId[b.id] ? Object.assign({}, b, { estado: byId[b.id] }) : b));
+  const stats = bitacoraModel.calcLoteStats(lote, after, []);
+  assert.equal(stats.contPct, 50); // B1, B2, B3 de 6
+  assert.equal(consequences.batchPatch.bagsActive, 0);
 });
 
 test('colonización al 100% no deja seguimiento y propone avanzar etapa; por debajo deja D+7', () => {

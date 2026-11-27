@@ -185,3 +185,15 @@ test('TodayV2 prioriza lotes en cuarentena como críticos y bloqueados', () => {
   assert.match(jsx, /isQuarantine=lote\.estado==='cuarentena'\|\|lote\.lifecycleState==='quarantine'/);
   assert.match(jsx, /Lote en Cuarentena · Revisión Fitosanitaria/);
 });
+
+// Las bolsas afectadas por el triaje son bolsas contaminadas aunque la decisión
+// sea descartar el lote: marcarlas 'descartada' las sacaba del % de
+// contaminación (calcLoteStats solo cuenta estado === 'contaminada').
+test('el triaje marca las bolsas afectadas como contaminadas, también al descartar', () => {
+  const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  const start = jsx.indexOf('const handleConfirmTriage = () => {');
+  assert.ok(start > 0, 'handleConfirmTriage debe existir');
+  const marking = jsx.slice(jsx.indexOf('bagsToMark.forEach', start), jsx.indexOf('const updatedEvents', start));
+  assert.match(marking, /estado:\s*'contaminada'/);
+  assert.doesNotMatch(marking, /'descartada'/);
+});

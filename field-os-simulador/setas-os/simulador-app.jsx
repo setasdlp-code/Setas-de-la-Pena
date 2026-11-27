@@ -17439,9 +17439,12 @@ interval:
             // cuentan como nuevas, o un segundo reporte re-marcaría las mismas.
             const loteBags = bitBolsas.filter(b => b.loteId === currentLote.id && b.estado !== 'descartada' && b.estado !== 'contaminada');
             const bagsToMark = loteBags.slice(0, triageAffectedBags);
+            // Las bolsas afectadas quedan contaminadas aunque la decisión sea
+            // descartar: el descarte lo registra la transición del lote. Marcarlas
+            // 'descartada' sacaba justo estas bolsas del % de contaminación.
             bagsToMark.forEach(b => {
               updateBitBolsa(b.id, {
-                estado: triageDecision === 'discard' ? 'descartada' : 'contaminada',
+                estado: 'contaminada',
                 obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
               });
             });
