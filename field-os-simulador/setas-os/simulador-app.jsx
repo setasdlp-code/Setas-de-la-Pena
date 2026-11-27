@@ -6470,7 +6470,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const harvests = bitCosechas.filter(c => c.loteId === lt.id);
       const bolsas = bitBolsas.filter(b => b.loteId === lt.id);
       try {
-        const res = await window.SetasPublicTraceDB.publicarLote(lt, harvests, bolsas);
+        const res = await window.SetasPublicTraceDB.publicarLote(lt, { cosechas: harvests, bolsas });
         if (res && res.ok) {
           successCount++;
         } else {
@@ -6766,7 +6766,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // distintos y cada uno debe reintentarse de forma independiente si falla.
     encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
     encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
-    window.SetasPublicTraceDB?.publicarLote(lote, [], bolsas).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+    window.SetasPublicTraceDB?.publicarLote(lote, { cosechas: [], bolsas }).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
@@ -6792,7 +6792,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(loteActual?.codigo){
       const cos=bitCosechas.filter(c=>c.loteId===loteId);
       const bol=bitBolsas.filter(b=>b.loteId===loteId);
-      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, cos, bol).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, { cosechas: cos, bolsas: bol }).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     }
   };
   const updateBitBolsa=(bolsaId,fields,options={})=>{

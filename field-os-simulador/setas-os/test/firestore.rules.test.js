@@ -22,6 +22,13 @@ const { doc, setDoc, deleteDoc } = require('firebase/firestore');
 const RULES_PATH = path.join(__dirname, '..', 'firebase', 'firestore.rules');
 const PROJECT_ID = 'setas-os-rules-test';
 
+// Las reglas exigen que la cuenta esté registrada en usuarios/{uid} (isMember):
+// iniciar sesión no basta. Cada bloque registra aquí a sus operadores de prueba.
+const OPERADORES = ['operador_1', 'operador_2', 'u1'];
+const registrarOperadores = (testEnv) => testEnv.withSecurityRulesDisabled(async (ctx) => {
+  for (const uid of OPERADORES) await setDoc(doc(ctx.firestore(), `usuarios/${uid}`), { rol: 'operario' });
+});
+
 const loteValido = {
   codigo: 'SDP-260904-SHI-R01',
   especie: 'Shiitake',
@@ -55,6 +62,10 @@ describe('firestore.rules · public_lotes', function () {
 
   after(async () => {
     if (testEnv) await testEnv.cleanup();
+  });
+
+  beforeEach(async () => {
+    await registrarOperadores(testEnv);
   });
 
   afterEach(async () => {
@@ -211,6 +222,10 @@ describe('firestore.rules · eventos_cultivo', function () {
     if (testEnv) await testEnv.cleanup();
   });
 
+  beforeEach(async () => {
+    await registrarOperadores(testEnv);
+  });
+
   afterEach(async () => {
     await testEnv.clearFirestore();
   });
@@ -283,7 +298,7 @@ describe('firestore.rules · inventory_consumptions', function () {
     });
   });
   after(async () => { await testEnv.cleanup(); });
-  beforeEach(async () => { await testEnv.clearFirestore(); });
+  beforeEach(async () => { await testEnv.clearFirestore(); await registrarOperadores(testEnv); });
 
   const rec = { schema: 'setas.inventory-consumption.v1', opId: 'BIT_1', loteId: 'BIT_1', codigo: 'C', allocations: [], shortfalls: [], createdAt: 1 };
 
@@ -321,7 +336,7 @@ describe('firestore.rules · bodega compartida (ADR-0009)', function () {
     });
   });
   after(async () => { await testEnv.cleanup(); });
-  beforeEach(async () => { await testEnv.clearFirestore(); });
+  beforeEach(async () => { await testEnv.clearFirestore(); await registrarOperadores(testEnv); });
 
   const asiento = { schema: 'setas.inventory-entry.v1', id: 'open_L1', kind: 'open', lotId: 'L1', at: '2026-10-06T10:00:00.000Z', deviceId: 'devA', kg: 10, fields: { ingredienteId: 'aserrin' } };
 
@@ -374,7 +389,7 @@ describe('firestore.rules · ciclo de aprendizaje de producción', function () {
     });
   });
   after(async () => { await testEnv.cleanup(); });
-  beforeEach(async () => { await testEnv.clearFirestore(); });
+  beforeEach(async () => { await testEnv.clearFirestore(); await registrarOperadores(testEnv); });
 
   it('un usuario autenticado guarda ciclos, evidencia y telemetría', async () => {
     const db = testEnv.authenticatedContext('u1').firestore();

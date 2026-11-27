@@ -90,7 +90,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               setSyncing(true);
               try {
                 const loteBolsas = bolsas.filter(b => b.loteId === lote.id);
-                const res = await window.SetasPublicTraceDB.publicarLote(lote, harvests, loteBolsas);
+                const res = await window.SetasPublicTraceDB.publicarLote(lote, { cosechas: harvests, bolsas: loteBolsas });
                 if (res && res.ok) {
                   setSyncResult({ status: 'synced', lastPublishedAt: new Date().toISOString(), lastError: null, publicSchemaVersion: 2 });
                 } else {
