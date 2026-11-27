@@ -3,7 +3,7 @@ title: Control Ambiental — ESP32 / ESPHome / Home Assistant
 document_id: DOC-0026
 category: equipment
 load_priority: selective
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-26
 confidence: high
 primary_sources:
   - ESPHome documentation
@@ -19,6 +19,7 @@ related_documents:
   - ../04_facility/fruiting.md
   - ../04_facility/incubation.md
   - ../09_research/active_research_knowledge.md
+  - ../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md
   - ../09_research/incubation_module_engineering_review_2026-08-05.md
   - ../10_ai_workflows/OAP-0001-modular-incubation-validation.md
   - ../00_project/current_state.md
@@ -99,6 +100,8 @@ Home Assistant no debe cerrar el lazo de control térmico primario. Una pérdida
 - Lectura Bluetooth independiente en campo. Comparación periódica contra SHT45 e informe de deriva.
 
 ## Actuadores de Fructificación
+
+Para CLOUDLAB 844, DEC-025 propone conexión comercial UIS del H4 y el humidificador T7, con medición independiente en ESP32. La propuesta sigue pendiente de aprobación. Aplicar los bloqueos de la decisión al comisionar; las descripciones siguientes de señal y relé son alternativas de diseño pendientes de una interfaz eléctrica verificada. Véase la [auditoría de clima e iluminación](../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md) para compatibilidad y pruebas.
 
 ### AC Infinity CloudForge T7 — humidificación
 - Control por relé o señal digital ON/OFF cuando el lote tenga banda y ciclo aprobados.

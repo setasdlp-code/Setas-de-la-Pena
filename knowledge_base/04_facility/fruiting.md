@@ -3,7 +3,7 @@ title: Cámaras de Fructificación — Comisionamiento para Shiitake
 document_id: DOC-0019
 category: facility
 load_priority: selective
-last_reviewed: 2026-07-24
+last_reviewed: 2026-11-26
 confidence: medium
 primary_sources:
   - Chang & Miles 2004 (book_007, capítulo 13)
@@ -15,6 +15,7 @@ related_documents:
   - ../05_equipment/environmental_control.md
   - ../01_species/lentinula_edodes.md
   - ../06_operations/quality_control.md
+  - ../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md
 ---
 
 # Executive Summary
@@ -24,6 +25,8 @@ CLOUDLAB 844 es el módulo principal y Terra Fungus Martha el módulo de I+D, cu
 # Arquitectura
 
 Cada cámara opera con control local en ESP32/ESPHome. Home Assistant supervisa y registra; una pérdida de red no debe eliminar las funciones locales aprobadas.
+
+[DEC-025](../DECISIONS.md#dec-025--controlador-comercial-uis-ac-infinity-controller-69-pro-para-h4-y-t7-de-fructificación-el-esp32-sigue-como-única-fuente-de-datos) propone actuación UIS para CLOUDLAB 844 con medición independiente en ESP32. Sigue pendiente de aprobación. La [auditoría de clima e iluminación](../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md) reúne el mapa de puertos propuesto, los límites de admisión y montaje para calefacción, y el ensayo de lux por estante.
 
 | Componente | Función | Estado requerido |
 |---|---|---|
