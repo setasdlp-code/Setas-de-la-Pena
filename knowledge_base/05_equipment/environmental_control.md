@@ -3,7 +3,7 @@ title: Control Ambiental — ESP32 / ESPHome / Home Assistant
 document_id: DOC-0026
 category: equipment
 load_priority: selective
-last_reviewed: 2026-11-26
+last_reviewed: 2026-11-27
 confidence: high
 primary_sources:
   - ESPHome documentation
@@ -111,6 +111,10 @@ Para CLOUDLAB 844, DEC-025 propone conexión comercial UIS del H4 y el humidific
 ### AC Infinity Cloudline H4 IP65 — extracción / FAE
 - Control ON/OFF o PWM. Caudal calibrado considerando contrapresión de ducto y menor densidad de aire en altitud.
 - Sincronizado con lectura compensada de CO₂ y control de humedad.
+
+### Iluminación LED de fructificación — propuesta 2026-11-27
+
+Ver [diseño y BOM de DOC-0150](../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md#actualización-de-diseño-lumínico--2026-11-27). Se propone PWM DC local con ESP32/ESPHome y etapa MOSFET compatible con 3,3 V, dimensionada y protegida; dimmer BTF C01W como alternativa. UIS Control Plug opcional exclusivamente para horario ON/OFF, sin regulación de intensidad. Fuente candidata de 24 V con capacidad ≥1,25 veces la carga instalada, sujeta a clasificación eléctrica del sitio y eventual límite de 12 V. Electrónica fuera de la zona húmeda; validar montaje, recuperación tras corte, control sin red y ausencia de horarios contradictorios. No implementado ni comisionado; no cambia DEC-025 ni las consignas pendientes del lote.
 
 ## Actuadores de Incubación
 
