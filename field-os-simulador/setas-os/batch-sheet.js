@@ -961,13 +961,16 @@
       };
     };
 
-    // Primer destino de la máquina de estados que sea un estado terminal
-    // (closed/discarded/failed): no todo estado tiene 'discarded' disponible
-    // como vecino directo (p.ej. incubation sólo llega a 'failed').
-    const firstValidTerminalTransition = () => {
+    // Terminal de FRACASO para un lote descartado: 'discarded' si la máquina
+    // de estados lo ofrece desde aquí, si no 'failed' (p.ej. incubation sólo
+    // llega a 'failed'). Nunca 'closed': es el cierre exitoso, y desde
+    // fructificación/descanso es el primer terminal de la lista, así que un
+    // lote descartado por contaminación entraba a la calibración como completado.
+    const DISCARD_TERMINALS = ['discarded', 'failed'];
+    const discardTerminalTransition = () => {
       if (!workflow) return null;
       const targets = workflow.DEFAULT_TRANSITIONS[sheet.state] || [];
-      return targets.find(t => workflow.isTerminalState(t)) || null;
+      return DISCARD_TERMINALS.find(t => targets.includes(t)) || null;
     };
 
     const explicitAdvanceTransition = () => {
@@ -996,10 +999,18 @@
       } else if (decision === 'descartar_bolsa') {
         bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.contaminada } }));
       } else if (decision === 'descartar_lote') {
+        // Las bolsas afectadas (bagIds) quedan contaminadas, como en
+        // descartar_bolsa, y las ya contaminadas no se tocan; el resto se
+        // descarta. Reescribirlas todas como descartada dejaba el % de
+        // contaminación del lote en 0 justo en los lotes que fallaron por eso.
+        const affected = new Set(bagIds);
         bagUpdates = bags
-          .filter(b => b.estado !== BAG_STATES.descartada)
-          .map(b => ({ bagId: b.id, fields: { estado: BAG_STATES.descartada } }));
-        transition = firstValidTerminalTransition();
+          .filter(b => b.estado !== BAG_STATES.descartada && b.estado !== BAG_STATES.contaminada)
+          .map(b => ({
+            bagId: b.id,
+            fields: { estado: affected.has(b.id) ? BAG_STATES.contaminada : BAG_STATES.descartada },
+          }));
+        transition = discardTerminalTransition();
       } else if (decision === 'observar') {
         bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.dudosa } }));
       }
