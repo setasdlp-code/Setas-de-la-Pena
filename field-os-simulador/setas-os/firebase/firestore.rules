@@ -32,6 +32,15 @@ service cloud.firestore {
       return signedIn() && role() == 'admin';
     }
 
+    // Autorización, no solo autenticación. Una cuenta de Firebase Auth — por
+    // ejemplo una creada con el registro público de email/contraseña, que usa
+    // la API key pública del cliente — no da acceso a nada hasta que un admin
+    // le crea `usuarios/{uid}`. Esa colección es la lista de operadores.
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
     // Tolerancia idéntica a MASS_BALANCE_TOL en simulador.html y db.js.
     // Recalcula la suma real de ingredientes[].pct en vez de confiar en un campo
     // `tot` autoreportado por el cliente — si solo se validara `tot`, cualquier
@@ -52,13 +61,15 @@ service cloud.firestore {
     }
 
     match /usuarios/{uid} {
-      allow read: if signedIn();
+      // Cada sesión lee solo su propio documento: el cliente lo necesita para
+      // saber su rol y si está registrado. La lista de operadores es del admin.
+      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
       allow write: if isAdmin();
     }
 
     match /recetas/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+      allow read: if isMember();
+      allow create, update: if isMember()
         && request.resource.data.ingredientes is list
         && masaBalanceada(request.resource.data.ingredientes);
       allow delete: if isAdmin();
@@ -66,8 +77,8 @@ service cloud.firestore {
 
     // Consumo de inventario por lote: registro append-only; la identidad es el loteId.
     match /inventory_consumptions/{opId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.opId == opId
         && request.resource.data.loteId == opId
         && request.resource.data.allocations is list;
@@ -78,8 +89,8 @@ service cloud.firestore {
     // se guarda como número: es la suma de estos asientos, que solo se crean.
     // Corregir un asiento es escribir otro.
     match /inventario_asientos/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.id == id
         && request.resource.data.schema == 'setas.inventory-entry.v1'
         && request.resource.data.kind in ['open', 'delta', 'patch']
@@ -92,18 +103,18 @@ service cloud.firestore {
     // Documentos de Bodega. Un borrado en la app es una lápida (deleted: true),
     // nunca un delete: los demás dispositivos tienen que verlo.
     match /inventario_movimientos/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if false;
     }
     match /inventario_compras/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if false;
     }
     match /inventario_proveedores/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if false;
     }
     // Una reserva solo avanza: held → expired/released/consumed. Un cliente
@@ -112,9 +123,9 @@ service cloud.firestore {
       return s == 'held' ? 0 : (s == 'expired' ? 1 : (s == 'released' ? 2 : (s == 'consumed' ? 3 : -1)));
     }
     match /inventario_reservas/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn();
-      allow update: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember();
+      allow update: if isMember()
         && rangoReserva(request.resource.data.get('status', null)) >= rangoReserva(resource.data.get('status', null));
       allow delete: if false;
     }
@@ -138,24 +149,24 @@ service cloud.firestore {
     // escritura y el puente la descartaba en silencio. Un ciclo borrado en la
     // app es una lápida (ADR-0009); la evidencia y la telemetría no se borran.
     match /room_cycles/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if false;
     }
     match /cycle_evidence/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if false;
     }
     match /telemetry_readings/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if isAdmin();
     }
 
     match /lotes_produccion/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.recetaSnapshot.ingredientes is list
         && masaBalanceada(request.resource.data.recetaSnapshot.ingredientes)
         // recetaSnapshot se escribe una sola vez, al crear el lote — nunca se edita.
@@ -163,7 +174,7 @@ service cloud.firestore {
         && !('lifecycleState' in request.resource.data)
         && !('revision' in request.resource.data)
         ;
-      allow update: if signedIn()
+      allow update: if isMember()
         && request.resource.data.recetaSnapshot == resource.data.recetaSnapshot
         && (!('status' in request.resource.data) || request.resource.data.status is string)
         && transicionIntacta();
@@ -177,39 +188,39 @@ service cloud.firestore {
     // Permitir una escritura directa dejaría entrar eventos sin recibo, que es
     // justamente el registro incompleto que la aceptación rechaza.
     match /field_events/{id} {
-      allow read: if signedIn();
+      allow read: if isMember();
       allow create, update, delete: if false;
     }
 
     match /inventario_lotes/{id} {
-      allow read: if signedIn();
-      allow write: if signedIn();
+      allow read: if isMember();
+      allow write: if isMember();
     }
 
     match /incidencias_climaticas/{id} {
-      allow read: if signedIn();
-      allow write: if signedIn();
+      allow read: if isMember();
+      allow write: if isMember();
     }
 
     match /telemetria_lecturas/{id} {
-      allow read: if signedIn();
+      allow read: if isMember();
       // `source` es un campo controlado por el cliente, no una credencial:
       // permitirlo como bypass hacía posible que cualquiera escribiera datos
       // climáticos falsos. El adaptador ESP32 usa el endpoint LAN; la
       // persistencia en Firestore ocurre desde la aplicación autenticada.
-      allow create: if signedIn();
+      allow create: if isMember();
       allow update, delete: if isAdmin();
     }
 
     match /telemetria_salas/{id} {
-      allow read: if signedIn();
-      allow write: if signedIn();
+      allow read: if isMember();
+      allow write: if isMember();
     }
 
     // Alertas e historial generados por la función programada (Admin SDK).
     // El cliente sólo consulta: ni siquiera administración modifica el registro.
     match /climate_alerts/{id} {
-      allow read: if signedIn();
+      allow read: if isMember();
       allow create, update, delete: if false;
     }
 
@@ -218,8 +229,8 @@ service cloud.firestore {
     // revisión nueva reemplaza a la anterior por fecha, nunca la edita. Por eso
     // solo se crean; corregir o borrar una dejaría sin rastro qué se declaró.
     match /production_readiness/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.schema == 'setas.production-readiness.v1'
         && request.resource.data.id == id
         && request.resource.data.requirementId in ['spawn', 'equipment', 'room', 'sensors', 'review']
@@ -233,8 +244,8 @@ service cloud.firestore {
     // sólo-anexar de eventos firmados. Corregir algo es un evento nuevo; editar
     // o borrar uno borraría la evidencia de G1–G5, así que solo se crean.
     match /autoclave_qualification/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.schema == 'setas.autoclave-qualification.v1'
         && request.resource.data.id == id
         && request.resource.data.type in ['protocol.drafted', 'protocol.approved', 'configuration.defined',
@@ -250,8 +261,8 @@ service cloud.firestore {
     // Mapa térmico de incubación (thermal-mapping.js): offsets y ensayos
     // inmutables con su responsable.
     match /thermal_mapping/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.schema == 'setas.thermal-mapping.v1'
         && request.resource.data.id == id
         && request.resource.data.kind in ['offsets', 'map']
@@ -269,11 +280,11 @@ service cloud.firestore {
     // sin etapa aceptada (planificado, o creado sin sesión) conserva `estado`
     // editable, que es de donde el servidor toma la primera etapa.
     match /bitacora_lotes/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && !('lifecycleState' in request.resource.data)
         && !('revision' in request.resource.data);
-      allow update: if signedIn()
+      allow update: if isMember()
         && transicionIntacta()
         && (!('lifecycleState' in resource.data)
             || request.resource.data.get('estado', null) == resource.data.get('estado', null))
@@ -286,15 +297,15 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /bitacora_bolsas/{id} {
-      allow read: if signedIn();
+      allow read: if isMember();
       // foto (data URL base64) debe eliminarse antes de guardar (ver bitacora-sync.js)
       // para no inflar la base de datos de Firestore.
-      allow create, update: if signedIn() && !('foto' in request.resource.data);
+      allow create, update: if isMember() && !('foto' in request.resource.data);
       allow delete: if false;
     }
     match /bitacora_cosechas/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow read: if isMember();
+      allow create, update: if isMember();
       allow delete: if false;
     }
 
@@ -310,8 +321,8 @@ service cloud.firestore {
     }
 
     match /eventos_cultivo/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isMember();
+      allow create: if isMember()
         && request.resource.data.operatorId == request.auth.uid
         && request.resource.data.batchId is string
         && tipoDeEventoCultivoValido(request.resource.data.tipo)
@@ -322,7 +333,7 @@ service cloud.firestore {
     // Catálogo de ingredientes — de solo lectura para todos los operadores,
     // solo un admin lo edita (evita que un error de captura rompa el formulador).
     match /ingredientes/{id} {
-      allow read: if signedIn();
+      allow read: if isMember();
       allow write: if isAdmin();
     }
 
@@ -368,8 +379,19 @@ service cloud.firestore {
         || (data[campo] is number && data[campo] >= minVal && data[campo] <= maxVal);
     }
 
+    // Listas de la ficha: las reglas no pueden recorrer sus elementos, así que
+    // solo exigen el tipo (el tamaño lo acota el límite de 1 MiB por documento).
+    // El saneo por campo lo hace public-trace-dto.js, y trace.html escapa todo
+    // lo que interpola: un valor anidado no puede inyectar HTML en la ficha.
+    function esListaOpcional(data, campo) {
+      return !(campo in data) || data[campo] is list;
+    }
+
     match /public_lotes/{codigo} {
-      allow read: if true;
+      // `get`, no `list`: quien escanea el QR ya tiene el código. Permitir
+      // consultas dejaba enumerar todos los lotes y cosechas de la granja.
+      allow get: if true;
+      allow list: if false;
 
       allow create, update: if puedeEscribirPublico()
         && camposPublicosSeguros(request.resource.data)
@@ -378,7 +400,9 @@ service cloud.firestore {
         && esStringOpcional(request.resource.data, 'especieCientifico', 128)
         && esStringOpcional(request.resource.data, 'fechaInoculacion', 32)
         && esStringOpcional(request.resource.data, 'estado', 32)
-        && esEnteroOpcionalEnRango(request.resource.data, 'numBolsas', 0, 100000);
+        && esEnteroOpcionalEnRango(request.resource.data, 'numBolsas', 0, 100000)
+        && esListaOpcional(request.resource.data, 'lifecycleEvents')
+        && esListaOpcional(request.resource.data, 'harvests');
 
       allow delete: if puedeEscribirPublico();
 
@@ -401,7 +425,7 @@ service cloud.firestore {
     // ni modificar/borrar el historial (evita que un error mal-intencionado
     // se use para tapar reportes previos).
     match /app_errors/{id} {
-      allow create: if signedIn();
+      allow create: if isMember();
       allow read: if isAdmin();
       allow update, delete: if false;
     }
@@ -411,9 +435,9 @@ service cloud.firestore {
     // reglas). Un cliente sólo puede sacar un correo de la bandeja:
     // nueva → importada | descartada, tocando estado, compraId y revisadoEn.
     match /correos_compra/{id} {
-      allow read: if signedIn();
+      allow read: if isMember();
       allow create, delete: if false;
-      allow update: if signedIn()
+      allow update: if isMember()
         && resource.data.estado == 'nueva'
         && request.resource.data.estado in ['importada', 'descartada']
         && request.resource.data.diff(resource.data).affectedKeys()
