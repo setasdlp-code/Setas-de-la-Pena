@@ -3,7 +3,7 @@ title: "CLOUDLAB 844 — auditoría de control, calefacción e iluminación"
 document_id: DOC-0150
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-26
+last_reviewed: 2026-11-27
 status: draft
 authority: advisory_research
 confidence: medium
@@ -71,6 +71,42 @@ Son objetivos exploratorios pendientes de inicio. Registrar fecha de inicio tras
 **Mapa por estante.** El [inventario de hardware](../05_equipment/hardware_inventory_august_2026.md) registra un estante Tujurich de cinco niveles y 92,5 cm de ancho previsto para CLOUDLAB. Confirmar instalación, niveles ocupados y espacio útil. Usar una línea de luz por nivel, bajo el estante superior o en el bastidor, regulable por nivel o zona. Montar por encima de la cara productiva, sin cruzar la descarga de niebla y con acceso para higiene. Con luxómetro, cerrar la carpa y medir fondo con luz apagada; encender, estabilizar y medir a altura y con orientación representativa del frente productivo. Anotar al menos izquierda/centro/derecha en filas anterior y posterior por nivel, primero vacío y luego con carga representativa y sombras reales. Registrar nivel, posición, lux, ajuste del dimmer, mínimo, mediana y máximo. Ajustar posición o intensidad hasta cubrir las posiciones de la cepa; repetir tras mover luminarias, estantes o carga. Confirmar horario y recuperación tras corte. Los lux sirven para comparar posiciones bajo la misma fuente; evitar equiparar espectros distintos mediante lux.
 
 **Límites de humedad.** Para toda parte que entre en la carpa, exigir ficha para la HR real y exposición prevista, incluidos terminales, empalmes y extremos sellados tras corte. Buscar IP65 como mínimo frente a salpicaduras y preferir IP67 si existe un montaje completo compatible. El código IP y la aptitud para condensación sostenida se comprueban por separado. Mantener fuente aislada, dimmer, temporizador, conexiones de red y tomas fuera de la zona húmeda; prever pasamuros, alivio de tensión y lazos antigoteo. Verificar la protección del montaje y que 24 V CC sea admisible bajo la clasificación eléctrica del sitio. El RETIE prevé un límite de 12 V para ciertas instalaciones húmedas. Si aplica a la carpa, seleccionar un montaje conforme antes de comprar. [RETIE compilado, Resolución 40284 de 2026, Libro 3 art. 3.27.2](https://minenergia.gov.co/documents/16522/Resolucion-40284-23062026-compilada.pdf) El IONBEAM S11 ofrece UIS y barras IP65, pero la ficha declara 35–85 % HR para el producto. El manual (p. 6, advertencia 5) prohíbe usarlo en atmósferas mojadas. Para el montaje interior propuesto, excluirlo por exposición a niebla o condensación. [Ficha IONBEAM S11](https://acinfinity.com/ionbeam-s11-supplemental-grow-light-bars-11-full-spectrum-led/) · [Manual IONBEAM](https://acinfinity.com/content/NE2501X1_250123_IONBEAM%20Manual.pdf)
+
+## Actualización de diseño lumínico — 2026-11-27
+
+Propuesta aportada por el propietario y adoptada como base documental del proto-piloto, no como consigna biológica aprobada ni autorización de compra/energización. Para la CLOUDLAB 844 de la caseta de Bogotá se prioriza LED blanco de baja intensidad, 5.000–6.500 K, regulable por PWM y distribuido verticalmente. Programa inicial de ensayo: 08:00–20:00 (hora local), 12 h luz/12 h oscuridad.
+
+| Especie | Ventana experimental propuesta |
+|---|---|
+| Hericium erinaceus (melena de león) | 150–250 lux; empezar por 150–200 lux, extender a 250 solo como hipótesis experimental |
+| Lentinula edodes (shiitake) | 300–500 lux |
+| Pleurotus ostreatus (orellana blanca, confirmar identidad) | 500–1.000 lux |
+| Pleurotus djamor (orellana rosada) | 500–1.000 lux |
+
+Las referencias científicas y límites de inferencia de la sección previa se mantienen. Comparar por cepa, con carga representativa; no publicar estos rangos como setpoints de producción.
+
+### BOM candidata por carpa (no adquirida)
+
+| Componente | Cantidad / especificación | Referencia de compra | USD orientativos |
+|---|---|---|---:|
+| BTF-LIGHTING FCOB blanco 6000 K | 1 rollo 5 m, 24 V CC, IP67, regulable; ASIN aportado por propietario sin verificar | [Amazon B0CNRBNQB1](https://www.amazon.com/dp/B0CNRBNQB1) | 27 |
+| Mean Well GST60A24-P1J | 1 fuente candidata 24 V/60 W | [Amazon](https://www.amazon.com/s?k=Mean+Well+GST60A24-P1J) | 30 |
+| BTF-LIGHTING C01W | 1 dimmer PWM monocromático, si no se usa ESPHome | [Amazon](https://www.amazon.com/s?k=BTF+LIGHTING+C01W) | 19 |
+| UNI-T UT383BT | 1 luxómetro compartido entre cámaras | [Amazon](https://www.amazon.com/s?k=UNI-T+UT383BT) | 36 |
+| Perfiles de aluminio, conectores, sellado | 3 m de perfil inicial, 4 conectores estancos de 2 pines, sellado de extremos con sistema compatible y RTV neutra apta para electrónica cuando proceda | Cotizar | 15 |
+| AC Infinity UIS Control Plug | 1 opcional para horario ON/OFF, no PWM | [Amazon](https://www.amazon.com/s?k=AC+Infinity+UIS+Control+Plug) | 30 |
+
+Presupuesto orientativo de referencia: USD 127 para sistema básico incluyendo luxómetro, USD 157 con UIS opcional; sin flete, impuestos ni verificación de precios. No duplicar luxómetro por cámara. Confirmar ASIN, variante, dimensiones, potencia W/m, corriente, compatibilidad del conector de fuente, protección y disponibilidad. La fuente de 60 W es candidata: seleccionar capacidad nominal ≥1,25 × potencia total instalada (para 60 W, carga objetivo ≤48 W), verificando derating y corriente del dimmer. No confundir esta fuente de iluminación con la calefacción de incubadora a 120 V.
+
+### Montaje y control propuestos
+
+- Dos tramos verticales de 1,5 m en lados opuestos del bastidor, fuera del chorro de niebla. Comparar contra distribución por estante si el mapa con bloques revela sombras; no presuponer uniformidad.
+- Preferir protección IP67/IP68 del conjunto instalado; IP por sí solo no acredita condensación sostenida. Confirmar aptitud explícita del fabricante, extremos cortados, empalmes, conectores, perfiles, sellos, disipación, pasamuros y limpieza. Fuente, dimmer y conexiones de red fuera de la carpa; revisión eléctrica competente, incluyendo si aplica el límite de 12 V del RETIE ya citado. Si aplica, rediseñar en 12 V con componentes compatibles antes de comprar.
+- Alternativa preferente para integración local: ESP32/ESPHome con etapa MOSFET PWM DC dimensionada para la tira, entrada compatible con 3,3 V, protección de circuito y comportamiento seguro al reinicio. Evitar dependencia de Tuya si se valida esta alternativa. C01W es opción independiente; UIS Control Plug es opcional y solo programa encendido/apagado. Probar recuperación de intensidad y horario tras corte, sin red, y evitar doble programación contradictoria.
+- Medir lux a la altura y orientación del frente productivo por nivel, vacío y cargado, con registro de intensidad, posiciones, mínimo/mediana/máximo, sombras y repetibilidad; ajustar y registrar el fotoperiodo antes de liberar el ensayo. Mantener el luxómetro seco.
+- No seleccionar IONBEAM S11/S16 para el interior húmedo en esta fase; límite de HR publicado de 85% para la familia según propuesta, verificar por SKU si se reconsideran. Mantener luz azul 450–470 nm como futura variable independiente para investigación en maduración/fructificación de shiitake, con blanco como referencia; para comparar espectros usar medición radiométrica apropiada y no equiparar lux.
+
+Sin cambios en firmware, inventario adquirido, DEC-025, CANON ni especificaciones de lote. Pendientes: confirmar fichas y precios de los candidatos, clasificación eléctrica, condensación, potencia, montaje y validación por cepa. Esta actualización no modifica la estrategia de calefacción nocturna independiente de la caseta ni autoriza traslado de equipos.
 
 ## Abastecimiento — referencias para cotizar
 

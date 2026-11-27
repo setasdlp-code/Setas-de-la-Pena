@@ -3,7 +3,7 @@ title: Cámaras de Fructificación — Comisionamiento para Shiitake
 document_id: DOC-0019
 category: facility
 load_priority: selective
-last_reviewed: 2026-11-26
+last_reviewed: 2026-11-27
 confidence: medium
 primary_sources:
   - Chang & Miles 2004 (book_007, capítulo 13)
@@ -53,6 +53,10 @@ La posición de extracción, entrada, humidificación y sensores se valida media
 | Criterio de cosecha | Pendiente | Especificación de calidad y comprador |
 
 No usar valores antiguos de *P. djamor* ni convertir un ciclo ON/OFF en ACH.
+
+# Iluminación experimental — CLOUDLAB 844 (2026-11-27)
+
+La [actualización de DOC-0150](../09_research/clima_iluminacion_cloudlab_844_2026-11-26.md#actualización-de-diseño-lumínico--2026-11-27) registra el diseño de LED blanco 5.000–6.500 K, 24 V CC candidato, PWM, dos tiras verticales de 1,5 m en lados opuestos y fotoperiodo experimental 08:00–20:00. Ventanas de ensayo: Hericium 150–250 lux (inicio 150–200), Lentinula 300–500 lux, Pleurotus ostreatus y P. djamor 500–1.000 lux. No son consignas aprobadas. Antes de comprar/energizar, comprobar aptitud del conjunto para condensación, clasificación eléctrica (incluido eventual límite de 12 V), potencia, sellado, horario y mapa de lux con carga. IONBEAM S11/S16 quedan fuera de la selección interior actual. La BOM y presupuesto candidatos constan en DOC-0150.
 
 # Comisionamiento por cámara
 
