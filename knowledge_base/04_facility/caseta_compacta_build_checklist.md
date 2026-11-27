@@ -3,11 +3,12 @@ title: Caseta Compacta (2× CloudLab 844) — Checklist de Construcción
 document_id: DOC-0103
 category: facility
 load_priority: selective
-last_reviewed: 2026-08-29
+last_reviewed: 2026-11-27
 confidence: LOW
-status: draft — pendiente de verificación en sitio
+status: construcción reportada por propietario — aislamiento ejecutado; calificación térmica pendiente
 primary_sources:
   - Sesión de diseño con Sebastián, 2026-08-29
+  - Declaración del propietario, 2026-11-27 (aislamiento ejecutado y comportamiento diurno)
   - home_rnd_lab.md (DOC-0020)
   - metadata/materials.yaml
   - 05_equipment/equipment_prototyping_report.md
@@ -29,7 +30,9 @@ Este documento consolida las decisiones y pendientes de la sesión de diseño de
 
 El diseño visual vive en un canvas publicado (`Main.dc.html` + `ZoneCrossSection.dc.html` + `canvas.json`, en este mismo directorio). Este documento es la lista de verificación en texto; el canvas es la referencia visual. Todo lo que ya no se puede resolver por diseño remoto — mediciones físicas, pesajes, llamadas de seguimiento — está reunido en `caseta_compacta_site_visit_checklist.md` (DOC-0105), pensado para llevar a la visita en sitio.
 
-**Estado (2026-08-29):** ninguna construcción ha iniciado. La capacidad estructural de la placa fue **aprobada** por un ingeniero estructural (ver DOC-0104) — ya no es un bloqueante. Los puntos restantes en "Bloquea la construcción" (sellado de panel, refuerzo de bloqueo) tienen especificación definida, pendiente solo de verificación de disponibilidad local antes de comprar.
+**Estado actualizado (2026-11-27):** el propietario informa que la caseta terminó con 100 mm (10 cm) de aislamiento total de poliestireno expandido (EPS, icopor) y que en general se mantiene bastante caliente durante el día. Observación cualitativa, sin temperaturas registradas. No se han confirmado espesores por superficie, continuidad, densidad del EPS, puentes térmicos, composición final del techo/piso ni estado de todos los demás elementos. El plan anterior de aislamiento sin EPS queda superado como base de dimensionamiento térmico. La calefacción se plantea para el recinto completo, no para cada carpa. Registrar T/HR interior y exterior día/noche, ventilación efectiva y máximas diurnas antes de seleccionar potencia o determinar necesidad de refrigeración.
+
+**Estado histórico (2026-08-29):** ninguna construcción ha iniciado. La capacidad estructural de la placa fue **aprobada** por un ingeniero estructural (ver DOC-0104) — ya no es un bloqueante. Los puntos restantes en "Bloquea la construcción" (sellado de panel, refuerzo de bloqueo) tienen especificación definida, pendiente solo de verificación de disponibilidad local antes de comprar.
 
 ---
 
@@ -43,6 +46,7 @@ El diseño visual vive en un canvas publicado (`Main.dc.html` + `ZoneCrossSectio
 | Arrangement de tiendas | Frente a frente, pasillo central de 1.0 m |
 | Estructura de muros | 7 paneles de set recuperados, cortados **por la mitad exacta** (1.20 m + 1.20 m cada uno, no en el punto asimétrico del diagrama de referencia original) |
 | Techo | Cabios + teja de PVC ondulada (cubierta rígida) + lona Toolcraft gris existente como piel secundaria (no paneles) |
+| Aislamiento ejecutado (reporte 2026-11-27) | EPS (icopor), 100 mm de espesor total; distribución por superficie pendiente de confirmar |
 | Ventilación | 2× AC Infinity CLOUDLINE H4 existentes (intake/extracción) |
 | Humidificación | AC Infinity CloudForge T7 (15 L) existente |
 | Sensores | SHT3x / SHT45 existentes, uno por tienda + pasillo |
@@ -121,7 +125,9 @@ El diseño visual vive en un canvas publicado (`Main.dc.html` + `ZoneCrossSectio
 
 ---
 
-# Plan de aislamiento (sin EPS disponible)
+# Plan de aislamiento histórico (sin EPS disponible; superado 2026-11-27)
+
+**Vigencia:** esta sección conserva el diseño de agosto para trazabilidad. El aislamiento ejecutado reportado es de 100 mm de EPS; no utilizar las cantidades de esta sección como lista de compras vigente ni sus supuestos para estimar la potencia del calefactor. No se infiere qué capas reflectivas se conservaron.
 
 **Confianza: BAJA — pendiente de validación térmica.**
 
