@@ -725,7 +725,8 @@
       const g = ingById.get(r.id);
       if (!g) return;
       const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
-      const dryFrac = r.p * (1 - Math.min(0.92, Math.max(0, Number(g.moisture || 0) / 100)));
+      // Los % de receta ya están en base seca: ponderar por p, igual que analyze() (D18).
+      const dryFrac = Number(r.p) || 0;
       if (Number(g.cn) > 0 && !esAditivoSeco) {
         anchorC += Number(g.c || 0) * dryFrac;
         anchorN += Number(g.n || 0) * dryFrac;

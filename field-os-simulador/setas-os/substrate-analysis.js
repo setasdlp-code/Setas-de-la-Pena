@@ -30,12 +30,12 @@ const EB_PENALTY_BALANCE_BAND={min:95,max:105}; // castigo de EB por balance muy
 const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
   if(!recipe.length) return null;
   const estimatedCompositionIds=recipe.filter(r=>Number(r.p)>0&&ings.find(g=>g.id===r.id)?.compositionStatus==='estimated').map(r=>r.id);
-  const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
-  let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
+  const tot=recipe.reduce((s,r)=>s+Math.max(0,parseFloat(r.p)||0),0);if(!tot) return null;
+  let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,kP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
   const DENSOS=['aserrin_roble','aserrin_eucalipto','aserrin_pino','aserrin_pino_compostado','borra_cafe','afrecho_cerveceria','chips_poda_urbana','guadua','carton_corrugado','pulpa_papel'];
   recipe.forEach(r=>{
     const g=ings.find(i=>i.id===r.id);if(!g) return;
-    const p=parseFloat(r.p)||0;
+    const p=Math.max(0,parseFloat(r.p)||0);kP+=p;
     // A · Aislamiento de la matriz nutritiva: los aditivos minerales/estructurales secos
     // (carbonato, yeso, zeolita, cascarilla de huevo, vermicompost…) NO entran en la
     // relación C:N — se usan solo como modificadores de pH y textura. Evita el sesgo de
@@ -56,20 +56,25 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     if(sKey&&!g.cs.includes(sKey)&&g.cn>0) incompat.push(g.name);
   });
   const avgN=nP?wN/nP:0,cn=avgN>0?(nP?wC/nP:0)/avgN:0;
-  const avgPh=tot?wPh/tot:7;
-  const avgDig=tot?wDig/tot:5;
-  const avgCra=tot?wCra/tot:3;
+  // pH/dig/cra sobre la masa reconocida: un id ausente del catálogo no diluye el promedio.
+  const avgPh=kP?wPh/kP:7;
+  const avgDig=kP?wDig/kP:5;
+  const avgCra=kP?wCra/kP:3;
   const suppTotalP=suppP+suppMedP;
   const suppEffectiveP=suppP+(suppMedP*0.6);
   // COP por kg de mezcla SECA: el precio de bodega es por kg tal cual se recibe (D6).
-  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);if(!g) return s;const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100));return s+(g.cost/(1-m))*(parseFloat(r.p)||0)/100;},0);
+  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);if(!g) return s;const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100));return s+(g.cost/(1-m))*Math.max(0,parseFloat(r.p)||0)/100;},0);
   const sp=spp[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
   if(sp){
-    const cF=Math.max(0,1-Math.pow(Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)/2),1.5));
-    const nF=Math.max(0,1-Math.pow(Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)/2),1.5));
+    // Valores por defecto para especies con parámetros incompletos (antes NaN o excepción).
+    const fin=Number.isFinite;
+    const cnI=fin(sp.cn_optimal?.ideal)?sp.cn_optimal.ideal:30,cnMin=fin(sp.cn_optimal?.min)?sp.cn_optimal.min:cnI-5,cnMax=fin(sp.cn_optimal?.max)?sp.cn_optimal.max:cnI+5;
+    const nI=fin(sp.n_optimal?.ideal)?sp.n_optimal.ideal:1.4,nMin=fin(sp.n_optimal?.min)?sp.n_optimal.min:nI-0.3,nMax=fin(sp.n_optimal?.max)?sp.n_optimal.max:nI+0.3;
+    const cF=Math.max(0,1-Math.pow(Math.abs(cn-cnI)/Math.max(0.1,(cnMax-cnMin)/2),1.5));
+    const nF=Math.max(0,1-Math.pow(Math.abs(avgN-nI)/Math.max(0.01,(nMax-nMin)/2),1.5));
     eb=sp.eb_baseline+(sp.eb_optimal-sp.eb_baseline)*(cF*.6+nF*.4);
     const needsAutoclave=suppEffectiveP>sp.supplementation_max;
-    const nThresh=needsAutoclave?sp.n_optimal.max*1.2:sp.n_optimal.max*1.15;
+    const nThresh=needsAutoclave?nMax*1.2:nMax*1.15;
     if(avgN>nThresh&&!needsAutoclave){trichoderma=true;eb*=.45;}
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
     else if(needsAutoclave) eb*=.85;
