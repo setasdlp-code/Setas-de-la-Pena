@@ -259,6 +259,10 @@
 
       if (outside) {
         track.recoveredAt = null;
+        // Recayó durante la recuperación: la alerta sigue viva. Sin esto el
+        // track se quedaba en 'recuperando' sin recoveredAt, dejaba de
+        // reportarse fuera de banda y ya nunca se resolvía.
+        if (track.status === 'recuperando') track.status = 'activa';
         if (track.status === 'ok') {
           track.status = 'pendiente';
           track.since = now;
@@ -309,7 +313,9 @@
           return buildAlert(roomId, metric, direction, track, value, band, now);
         }
         if (track.status === 'recuperando') {
-          if (now - (track.recoveredAt || now) >= clearDwellMs) {
+          // Defensa: un track en recuperación sin marca empieza a contar aquí.
+          if (track.recoveredAt == null) track.recoveredAt = now;
+          if (now - track.recoveredAt >= clearDwellMs) {
             const cleared = buildAlert(roomId, metric, direction, track, value, band, now);
             cleared.status = 'resuelta';
             state.tracks.set(trackKey, { status: 'ok', since: null, firedAt: null, recoveredAt: null, peak: null, severity: 'aviso' });
