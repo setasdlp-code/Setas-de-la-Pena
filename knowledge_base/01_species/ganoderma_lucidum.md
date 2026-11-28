@@ -74,7 +74,7 @@ Supported by:
 | HR — inducción de primordios | >90% |
 | HR — formación de sombrero | 70–80% |
 | HR — estadio final del carpóforo | 30–40% |
-| CO₂ | Bajar a ~350 ppm (abrir bolsa ~día 50) dispara el crecimiento del píleo |
+| CO₂ | Máximo <1,000 ppm para forma de sombrero (`KB_SPP.co2`); bajar a ~350 ppm (abrir bolsa ~día 50) dispara el crecimiento del píleo |
 | CO₂ — techo operativo (forma de sombrero) | <1,000 ppm (ver «Efecto CO₂ en Morfología»; >1,500 ppm induce antler) |
 | Luz | 50–450 lux (los sombreros se orientan a la luz) |
 | Duración total | 90–120 días a cosecha completa (2 recolecciones) |
