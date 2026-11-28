@@ -20,7 +20,7 @@
     const effectiveSPP = getEffectiveSPP(spp);
     const tot = recipe.reduce((s, r) => s + Math.max(0, parseFloat(r.p) || 0), 0);
     if (!tot) return null;
-    let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, kP = 0, suppP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
+    let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, kP = 0, suppP = 0, suppMedP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
     const DENSOS = ['aserrin_roble', 'aserrin_eucalipto', 'aserrin_pino', 'aserrin_pino_compostado', 'borra_cafe', 'afrecho_cerveceria', 'chips_poda_urbana', 'guadua', 'carton_corrugado', 'pulpa_papel'];
     recipe.forEach(r => {
       const g = effectiveINGS.find(i => i.id === r.id);
@@ -32,6 +32,7 @@
       if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
       wPh += g.ph * p; wDig += g.dig * p; wCra += g.cra * p;
       if (g.role === 'suplemento_n') suppP += p;
+      if (g.role === 'suplemento_medio') suppMedP += p;
       if (g.role === 'base_carbono') baseP += p;
       if (['aditivo_ph', 'aditivo_estructura', 'aditivo_micronutriente'].includes(g.role)) addP += p;
       if (g.role === 'aireador') airP += p;
@@ -53,6 +54,9 @@
       const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
       return s + (g.cost / (1 - m)) * Math.max(0, parseFloat(r.p) || 0) / 100;
     }, 0);
+    // Paridad con substrate-analysis.js: suplemento_medio cuenta al 60%.
+    const suppTotalP = suppP + suppMedP;
+    const suppEffectiveP = suppP + suppMedP * 0.6;
     const sp = effectiveSPP[sKey];
     let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
     let phF, aerF, digF, ebMods, ebCvVal, ebLow, ebHigh, ebIndex;
@@ -73,7 +77,7 @@
       const optimal = Number.isFinite(sp.eb_optimal) ? sp.eb_optimal : 95;
       eb = baseline + (optimal - baseline) * (cF * 0.6 + nF * 0.4);
       const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
-      const needsAutoclave = suppP > suppLimit;
+      const needsAutoclave = suppEffectiveP > suppLimit;
       const nThresh = needsAutoclave ? nMax * 1.2 : nMax * 1.15;
       if (avgN > nThresh && !needsAutoclave) { trichoderma = true; eb *= 0.45; }
       else if (avgN > nThresh && needsAutoclave) { eb *= 0.80; }
@@ -97,18 +101,18 @@
       if (ebMods.aerF < 0.95) ebCvVal += 0.05;
       if (ebMods.digF < 0.95) ebCvVal += 0.04;
       if (incompat.length) ebCvVal += 0.08;
-      if (suppP > sp.supplementation_max) ebCvVal += 0.10;
+      if (suppEffectiveP > sp.supplementation_max) ebCvVal += 0.10;
       if (trichoderma) ebCvVal = 0.50;
       ebCvVal = Math.min(trichoderma ? 0.50 : 0.40, ebCvVal);
       ebLow = Math.round(eb * (1 - ebCvVal));
       ebHigh = Math.round(eb * (1 + ebCvVal));
       ebIndex = Math.round(Math.max(0, Math.min(100, (eb - baseline) / Math.max(1, optimal - baseline) * 100)));
-      dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppP / 5));
+      dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppEffectiveP / 5));
     }
     const eucPct = recipe.reduce((s, r) => r.id === 'aserrin_eucalipto' ? s + (parseFloat(r.p) || 0) : s, 0);
     const pescPct = recipe.reduce((s, r) => r.id === 'harina_pescado' ? s + (parseFloat(r.p) || 0) : s, 0);
     return {
-      tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
+      tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, suppMedP, suppTotalP, suppEffectiveP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
       ebLow: ebLow !== undefined ? ebLow : Math.round(eb),
       ebHigh: ebHigh !== undefined ? ebHigh : Math.round(eb),
       ebIndex: ebIndex !== undefined ? ebIndex : 0,
@@ -806,7 +810,7 @@
       });
     }
     if (flags.ebWarn) {
-      const margen = sp.supplementation_max - an.suppP;
+      const margen = sp.supplementation_max - (an.suppEffectiveP ?? an.suppP);
       const ing = bestStock(g => g.n >= 2 && g.role === 'suplemento_n', (a, b) => a.cost - b.cost);
       const inRec = recipe?.find(r => ing && r.id === ing.id);
       if (ing) {
@@ -1221,7 +1225,8 @@
   const calcTreatment = (a, sKey, spp) => {
     if (!a) return null;
     const effectiveSPP = getEffectiveSPP(spp);
-    const { suppP, manP, cafeP, avgN, trichoderma, dynSpawn } = a; const sp = effectiveSPP[sKey];
+    const { manP, cafeP, avgN, trichoderma, dynSpawn } = a; const sp = effectiveSPP[sKey];
+    const suppP = Number.isFinite(a.suppEffectiveP) ? a.suppEffectiveP : (a.suppP || 0);
     let score = 0, reasons = [];
     if (trichoderma) { score += 3; reasons.push('⚠ Colapso Trichoderma — N crítico sin esterilización'); }
     if (suppP > (sp?.supplementation_max || 20)) { score += 2; reasons.push(`Supl ${suppP.toFixed(0)}% > máx`); }
@@ -1293,7 +1298,7 @@
       const realCost = useStock ? realCostFor(rec) : null;
       const an = realCost != null ? { ...an0, cost: realCost } : an0;
       if (profile.spawnOverride != null) an.dynSpawn = profile.spawnOverride;
-      const suppOverLimit = an.suppP > suppLimit;
+      const suppOverLimit = (an.suppEffectiveP ?? an.suppP) > suppLimit;
       if (suppOverLimit && profileKey === 'rescate') return;
       if (an.cafeP > cafeLimit) return;
       if (maxCost > 0 && an.cost > maxCost) return;

@@ -63,12 +63,18 @@ const scoreCost = (costDetail) => {
   return hit ? hit.score : 10;
 };
 
+// Carga de suplementación efectiva: suplemento_n cuenta completo y suplemento_medio al
+// 60% (mismo criterio que analyze() usa para needsAutoclave). Antes solo se leía suppP,
+// así que un suplemento medio pasaba los filtros de riesgo y de autoclave.
+const effectiveSupp = (an) => Number.isFinite(an?.suppEffectiveP) ? an.suppEffectiveP
+  : (Number.isFinite(an?.suppP) ? an.suppP : 0);
+
 const scoreRisk = (an, treatment) => {
   const sp = an?.sp;
   if (!sp) return 50;
   let pen = 0;
   if (an.trichoderma) pen += 35;
-  const suppP = Number.isFinite(an.suppP) ? an.suppP : 0;
+  const suppP = effectiveSupp(an);
   const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
   const suppOver = Math.max(0, suppP - suppLimit);
   if (suppOver > 0 && treatment && treatment.col !== 'autoclave') pen += 20 + suppOver * 3;
@@ -94,7 +100,7 @@ const scoreTreatment = (an, treatment) => {
   if (!treatment) return 50;
   if (an?.trichoderma) return treatment.col === 'autoclave' ? 100 : 10;
   const sp = an?.sp;
-  const suppP = Number.isFinite(an?.suppP) ? an.suppP : 0;
+  const suppP = effectiveSupp(an);
   const suppMax = Number.isFinite(sp?.supplementation_max) ? sp.supplementation_max : 20;
   if (sp && suppP >= suppMax && treatment.col === 'autoclave') return 95;
   if (suppP > 12 && treatment.col === 'cwlp') return 40;
@@ -289,7 +295,7 @@ const buildDimensions = (breakdown, ctx, an) => {
   const economyScore = Math.round(clamp01to100(
     breakdown.cost * 0.60 + breakdown.stock * 0.40
   ));
-  const suppP = Number.isFinite(an?.suppP) ? an.suppP : 0;
+  const suppP = effectiveSupp(an);
   const suppMax = Number.isFinite(an?.sp?.supplementation_max) ? an.sp.supplementation_max : 20;
   const suppUnsafe = !!(an?.sp && suppP > suppMax && ctx.treatment?.col !== 'autoclave');
   const nMin = an?.sp?.n_optimal?.min;
@@ -428,7 +434,7 @@ const detectSeverity = (an) => {
   const nInRange = an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max;
   const nDist = Math.abs(an.avgN - sp.n_optimal.ideal) / Math.max(0.01, sp.n_optimal.max - sp.n_optimal.min);
   const nWarn = nInRange && nDist > 0.06;
-  const ebWarn = an.eb < sp.eb_optimal * 0.95 && an.suppP < sp.supplementation_max - 3;
+  const ebWarn = an.eb < sp.eb_optimal * 0.95 && effectiveSupp(an) < sp.supplementation_max - 3;
   const cnWidth = Math.max(0.01, sp.cn_optimal.max - sp.cn_optimal.min);
   const cnOverDist = cnHigh ? (an.cn - sp.cn_optimal.max) / cnWidth : cnLow ? (sp.cn_optimal.min - an.cn) / cnWidth : 0;
   const nWidth = Math.max(0.01, sp.n_optimal.max - sp.n_optimal.min);

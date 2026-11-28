@@ -6,7 +6,10 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const SCORING_PATH = path.join(__dirname, 'scoring.js');
-const EXPECTED_SHA256 = 'e1178425d70c573e74a82bd7e3cc8f6506dc35a997f95b3928263bd1aad21f9d';
+// 2026-11-28: actualizado con aprobación explícita de Sebastián — corrección de bug
+// (suplemento_medio no contaba en riesgo/tratamiento/bloqueo). No introduce evidencia
+// de producción en el ranking; la frontera de ADR-0004 se mantiene.
+const EXPECTED_SHA256 = 'badc8886f3808fbd0298855edaae91e0d78b7440bb4456a13d89e99a53350ec6';
 
 test('ADR-0004: scoring.js es estrictamente inmutable y coincide con el hash SHA-256 de referencia', () => {
   assert.ok(fs.existsSync(SCORING_PATH), 'scoring.js debe existir en field-os-simulador/setas-os/');
