@@ -745,6 +745,20 @@
    * @param {object} event { batchId, action|type, operatorId, at, payload }
    * @returns {Array<object>} Historial nuevo con el evento añadido
    */
+  // Sufijo aleatorio para ids de documento. Date.now() solo no basta: dos
+  // eventos del mismo lote en el mismo milisegundo (un doble toque) daban el
+  // mismo id, y como eventos_cultivo solo admite crear, el segundo se rechazaba
+  // y quedaba atascado en la cola. __harness.html corre en file://, donde
+  // crypto puede faltar: entonces se usa Math.random.
+  const randomSuffix = () => {
+    const c = typeof globalThis !== 'undefined' ? globalThis.crypto : null;
+    if (c && typeof c.getRandomValues === 'function') {
+      const bytes = c.getRandomValues(new Uint8Array(4));
+      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+    return Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
+  };
+
   const appendBatchEvent = (log = [], event = {}) => {
     const action = event.action || event.type;
     if (!event.batchId) throw new Error('batchId es requerido para registrar un evento de lote');
@@ -763,7 +777,11 @@
     const prev = log.length ? log[log.length - 1] : null;
     const seq = prev ? prev.seq + 1 : 1;
     const base = {
-      id: event.id || `${event.batchId}-${seq}`,
+      // El sufijo hace único el id por defecto. `${batchId}-${seq}` solo no
+      // bastaba: dos dispositivos sin señal que añaden un evento al mismo lote
+      // creaban ambos L1-5, y sync-merge (unionList deduplica por id)
+      // descartaba uno de los dos sin aviso al fusionar.
+      id: event.id || `${event.batchId}-${seq}-${randomSuffix()}`,
       seq,
       batchId: event.batchId,
       type: event.type && event.type !== action ? event.type : 'batch_event',
@@ -842,7 +860,7 @@
       throw new Error('nota es requerida para un evento de tipo "observacion"');
     }
     return {
-      id: `EVC_${batchId}_${Date.now()}`,
+      id: `EVC_${batchId}_${Date.now()}_${randomSuffix()}`,
       batchId,
       bagId: bagId || null,
       tipo,

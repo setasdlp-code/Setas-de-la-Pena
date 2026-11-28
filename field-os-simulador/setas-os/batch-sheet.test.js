@@ -271,7 +271,7 @@ test('buildCultivoEvento construye el documento de un evento reportado por QR', 
   assert.equal(ev.nota, '');
   assert.equal(ev.at, '2026-09-07T09:00:00-05:00');
   assert.equal(ev.source, 'qr_scan');
-  assert.match(ev.id, /^EVC_LOTE_1_\d+$/);
+  assert.match(ev.id, /^EVC_LOTE_1_\d+_[0-9a-f]{8}$/);
 
   const withBag = sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', bagId: 'B2', tipo: 'contaminacion', operatorId: 'op-1', nota: '  moho visible  ' });
   assert.equal(withBag.bagId, 'B2');
@@ -734,4 +734,28 @@ test('un código que extiende un lote conocido resuelve al lote más específico
   assert.equal(r.reason, 'resolved_by_prefix');
   const r2 = sheetApi.resolveScan('SDP-L1-A-X9', { lotes: [...lotes].reverse(), bolsas: [] });
   assert.equal(r2.batchId, 'L1A', 'el orden de la lista no decide');
+});
+
+// Dos eventos del mismo lote en el mismo milisegundo (doble toque) no pueden
+// compartir id: eventos_cultivo solo admite crear y el segundo quedaba atascado.
+test('dos eventos de cultivo creados en el mismo milisegundo tienen ids distintos', () => {
+  const realNow = Date.now;
+  Date.now = () => 1767225600000;
+  try {
+    const a = sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', tipo: 'riego', operatorId: 'op-1' });
+    const b = sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', tipo: 'riego', operatorId: 'op-1' });
+    assert.notEqual(a.id, b.id);
+  } finally { Date.now = realNow; }
+});
+
+// Dos dispositivos sin señal que añaden un evento al mismo lote parten del
+// mismo historial. Con ids `${batchId}-${seq}` ambos creaban L1-2 y la fusión
+// (unionList, que deduplica por id) se quedaba con uno solo.
+test('eventos creados en paralelo sobre el mismo historial sobreviven a la fusión', () => {
+  const merge = require('./sync-merge.js');
+  const base = sheetApi.appendBatchEvent([], { batchId: 'L1', action: 'note', operatorId: 'a', at: '2026-11-28T10:00:00Z', payload: { nota: 'inicio' } });
+  const devA = sheetApi.appendBatchEvent(base, { batchId: 'L1', action: 'note', operatorId: 'a', at: '2026-11-28T10:05:00Z', payload: { nota: 'A' } });
+  const devB = sheetApi.appendBatchEvent(base, { batchId: 'L1', action: 'note', operatorId: 'b', at: '2026-11-28T10:06:00Z', payload: { nota: 'B' } });
+  const merged = merge.unionList(devA, devB);
+  assert.deepEqual(merged.map(e => e.payload.nota).sort(), ['A', 'B', 'inicio']);
 });
