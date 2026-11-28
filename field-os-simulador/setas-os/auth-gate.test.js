@@ -54,6 +54,6 @@ test('auth-gate.js maneja el flujo de login y captura de errores', () => {
 
 test('auth-gate.js expone window.__setasSignOut y vincula signOut con el botón', () => {
   const src = read('firebase/auth-gate.js');
-  assert.match(src, /window\.__setasSignOut\s*=\s*\(\)\s*=>\s*signOut\(auth\)/);
+  assert.match(src, /window\.__setasSignOut\s*=\s*\(\)\s*=>\s*cerrarSesion\(\)/);
   assert.match(src, /signOut\(auth\)/);
 });

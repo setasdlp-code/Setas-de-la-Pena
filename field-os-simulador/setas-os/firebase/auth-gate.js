@@ -110,6 +110,8 @@ const PROTECTED_APP_SCRIPTS = [
   "../sync-merge.js",
   "../inventory-entries.js",
   "../device-sync.js",
+  // Qué se puede borrar al cerrar sesión y cuándo hay que impedirlo.
+  "../signout-guard.js",
   // Excepciones de la Banda 1 de Hoy; resuelve flush-forecast-engine y
   // bitacora-model en cada llamada.
   "../today-exceptions.js",
@@ -378,6 +380,62 @@ export function buildGate() {
   };
 }
 
+// Entradas pendientes de la cola de eventos de campo de la cuenta actual.
+async function pendingFieldEntries() {
+  const queue = window.SetasFieldEventQueue;
+  const uid = auth.currentUser?.uid;
+  if (!queue?.initializeQueue || !queue?.recoverEventsByAccount || !uid) return [];
+  const db = await queue.initializeQueue();
+  try {
+    return (await queue.recoverEventsByAccount(db, uid)).map(r => r.queueEntry || {});
+  } finally {
+    try { db.close(); } catch (e) { /* ya cerrada */ }
+  }
+}
+
+// Cerrar sesión (signout-guard.js): no se permite con trabajo sin sincronizar,
+// y sin él se borran las copias locales de Firestore y su caché para que la
+// siguiente cuenta no herede los datos ni la cola de esta. Lo que solo existe
+// en el dispositivo (recetas, tareas, experimentos, fotos) se conserva.
+async function cerrarSesion() {
+  const guard = window.SetasSignoutGuard;
+  if (!guard) {
+    // El runtime de datos no cargó: no hay forma de saber qué está pendiente,
+    // así que se cierra la sesión sin borrar nada.
+    await signOut(auth);
+    return true;
+  }
+  let fieldEntries;
+  try {
+    fieldEntries = await pendingFieldEntries();
+  } catch (e) {
+    // Sin poder leer la cola de campo no se sabe si hay envíos pendientes.
+    fieldEntries = [{ status: "unknown" }];
+  }
+  const counts = guard.pendingWork({ storage: window.localStorage, fieldEntries });
+  if (counts.total) {
+    window.alert(guard.describeBlocked(counts));
+    return false;
+  }
+  const { db } = await import("./firebase-init.js");
+  await signOut(auth);
+  try {
+    const { terminate, clearIndexedDbPersistence } = await import("../vendor/firebase/firebase-firestore.js");
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch (e) {
+    console.warn("[auth-gate] No se pudo borrar la caché local de Firestore:", e);
+  }
+  try {
+    guard.clearSyncedLocal(window.localStorage, guard.syncedLocalKeys(window.SetasDeviceSync));
+  } catch (e) {
+    console.warn("[auth-gate] No se pudieron borrar las copias locales:", e);
+  }
+  // Firestore quedó terminado: se recarga para empezar limpio.
+  window.location.reload();
+  return true;
+}
+
 function init() {
   const el = buildGate();
   let busy = false;
@@ -447,11 +505,11 @@ function init() {
     busy = false;
   });
 
-  el.signoutBtn.addEventListener("click", () => signOut(auth));
+  el.signoutBtn.addEventListener("click", () => cerrarSesion());
 
   // Expuesto para que el menú de operador del shell (Setas OS v5.dc.html,
   // fuera de este módulo) pueda cerrar sesión sin duplicar el botón flotante.
-  window.__setasSignOut = () => signOut(auth);
+  window.__setasSignOut = () => cerrarSesion();
 }
 
 if (document.body) init();

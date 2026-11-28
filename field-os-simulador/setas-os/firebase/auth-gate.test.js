@@ -156,7 +156,7 @@ test('init function attaches gate and signout button to document.body', () => {
 
 test('init function exposes window.__setasSignOut', () => {
   const src = read('auth-gate.js');
-  assert.match(src, /window\.__setasSignOut\s*=\s*\(\)\s*=>\s*signOut\(auth\)/, 'debe exponer window.__setasSignOut como función que llama signOut');
+  assert.match(src, /window\.__setasSignOut\s*=\s*\(\)\s*=>\s*cerrarSesion\(\)/, 'debe exponer window.__setasSignOut como función que cierra sesión con cerrarSesion');
 });
 
 test('form submission handler prevents default and trims email', () => {
@@ -344,9 +344,10 @@ test('los motores operativos UMD esperan Auth y conservan su orden de dependenci
     .forEach((script) => assert.doesNotMatch(shell, new RegExp(`<script src="${script.replace('.', '\\.')}"></script>`), `${script} no debe descargar antes del login`));
 });
 
-test('signout button listener calls signOut(auth)', () => {
+test('signout button listener closes the session through cerrarSesion', () => {
   const src = read('auth-gate.js');
-  assert.match(src, /el\.signoutBtn\.addEventListener\("click",\s*\(\)\s*=>\s*signOut\(auth\)\)/, 'signout button debe llamar signOut');
+  assert.match(src, /el\.signoutBtn\.addEventListener\("click",\s*\(\)\s*=>\s*cerrarSesion\(\)\)/, 'el botón debe cerrar sesión con cerrarSesion');
+  assert.match(src, /await signOut\(auth\)/, 'cerrarSesion debe llamar signOut');
 });
 
 test('module auto-initializes on DOM ready', () => {
