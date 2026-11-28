@@ -716,3 +716,22 @@ test('advance_stage acepta un destino explícito cuando hay varios válidos, e i
     sheetApi.actionConsequences(sheet, 'advance_stage', { targetState: 'closed' }, { operatorId: 'op-1' }).transition,
     'maturation');
 });
+
+// El escaneo resolvía por prefijo en las dos direcciones. "Un lote empieza por
+// lo escaneado" mandaba SDP-L1 a SDP-L10 cuando L1 no estaba cargado, y con
+// varios candidatos tomaba el primero: una cosecha o una contaminación quedaba
+// registrada en el lote equivocado.
+test('un código que es solo el inicio de otro lote no resuelve a ese lote', () => {
+  const r = sheetApi.resolveScan('SDP-L1', { lotes: [{ id: 'L10', codigo: 'SDP-L10' }, { id: 'L11', codigo: 'SDP-L11' }], bolsas: [] });
+  assert.equal(r.kind, 'unknown');
+  assert.equal(r.batchId, null);
+});
+
+test('un código que extiende un lote conocido resuelve al lote más específico', () => {
+  const lotes = [{ id: 'L1', codigo: 'SDP-L1' }, { id: 'L1A', codigo: 'SDP-L1-A' }];
+  const r = sheetApi.resolveScan('SDP-L1-A-X9', { lotes, bolsas: [] });
+  assert.equal(r.batchId, 'L1A');
+  assert.equal(r.reason, 'resolved_by_prefix');
+  const r2 = sheetApi.resolveScan('SDP-L1-A-X9', { lotes: [...lotes].reverse(), bolsas: [] });
+  assert.equal(r2.batchId, 'L1A', 'el orden de la lista no decide');
+});

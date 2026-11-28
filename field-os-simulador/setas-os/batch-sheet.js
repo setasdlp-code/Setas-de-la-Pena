@@ -418,8 +418,14 @@
         return res;
       }
 
-      // Prefijo si algún lote coincide con el inicio del código
-      const prefixedLot = lotes.find(l => l.codigo && (batchNorm.startsWith(norm(l.codigo) + '-') || norm(l.codigo).startsWith(batchNorm)));
+      // Solo en un sentido: el código escaneado EXTIENDE un lote conocido
+      // (p.ej. la etiqueta de una bolsa aún sin registro). Nunca al revés: que
+      // un lote empiece por lo escaneado mandaba SDP-L1 a SDP-L10 cuando L1 no
+      // estaba cargado. Si varios lotes encajan gana el más específico (el
+      // código más largo), no el primero de la lista.
+      const prefixedLot = lotes
+        .filter(l => l.codigo && batchNorm.startsWith(norm(l.codigo) + '-'))
+        .sort((a, b) => norm(b.codigo).length - norm(a.codigo).length)[0];
       if (prefixedLot) {
         const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
         res.batchId = prefixedLot.id;
