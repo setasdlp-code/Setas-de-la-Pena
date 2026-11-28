@@ -20,12 +20,13 @@
     const effectiveSPP = getEffectiveSPP(spp);
     const tot = recipe.reduce((s, r) => s + Math.max(0, parseFloat(r.p) || 0), 0);
     if (!tot) return null;
-    let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, suppP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
+    let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, kP = 0, suppP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
     const DENSOS = ['aserrin_roble', 'aserrin_eucalipto', 'aserrin_pino', 'aserrin_pino_compostado', 'borra_cafe', 'afrecho_cerveceria', 'chips_poda_urbana', 'guadua', 'carton_corrugado', 'pulpa_papel'];
     recipe.forEach(r => {
       const g = effectiveINGS.find(i => i.id === r.id);
       if (!g) return;
       const p = Math.max(0, parseFloat(r.p) || 0);
+      kP += p;
       const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
       // % de receta en base seca: ponderar por p (D18).
       if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
@@ -41,9 +42,10 @@
     });
     const avgN = nP ? wN / nP : 0;
     const cn = avgN > 0 ? (nP ? wC / nP : 0) / avgN : 0;
-    const avgPh = tot ? wPh / tot : 7;
-    const avgDig = tot ? wDig / tot : 5;
-    const avgCra = tot ? wCra / tot : 3;
+    // Promedios sobre masa reconocida (paridad con substrate-analysis.js).
+    const avgPh = kP ? wPh / kP : 7;
+    const avgDig = kP ? wDig / kP : 5;
+    const avgCra = kP ? wCra / kP : 3;
     // COP por kg de mezcla seca (precio por kg tal cual se recibe) — D6.
     const cost = recipe.reduce((s, r) => {
       const g = effectiveINGS.find(i => i.id === r.id);

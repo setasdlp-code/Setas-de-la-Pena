@@ -7,12 +7,16 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { analyze: canon } = require('./substrate-analysis.js');
 const { analyze: opt } = require('./recipe-optimizer.js');
-const { SPP } = require('./substrate-catalog.js');
+const { INGS, SPP } = require('./substrate-catalog.js');
 
 const SP = 'p_ostreatus_gris';
-const engines = [['canónico', (r, s, spp) => canon(r, s, undefined, spp)], ['optimizador', (r, s, spp) => opt(r, s, undefined, spp)]];
+const engines = [['canónico', (r, s, spp) => canon(r, s, undefined, spp)], ['optimizador', (r, s, spp = SPP) => opt(r, s, INGS, spp)]];
 
 for (const [name, an] of engines) {
+  test(`${name}: el motor recibe el catálogo (guarda contra un pase vacío)`, () => {
+    assert.ok(an([{ id: 'paja_trigo', p: 100 }], SP).cn > 0);
+  });
+
   test(`${name}: un id desconocido no falsea pH/dig/cra ni la EB`, () => {
     const clean = an([{ id: 'paja_trigo', p: 100 }], SP);
     const dirty = an([{ id: 'paja_trigo', p: 50 }, { id: 'id_inexistente', p: 50 }], SP);
