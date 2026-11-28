@@ -13,6 +13,11 @@
   const getEffectiveINGS = (ings) => (ings && ings.length) ? ings : (typeof globalThis !== 'undefined' && globalThis.INGS ? globalThis.INGS : []);
   const getEffectiveSPP = (spp) => spp || (typeof globalThis !== 'undefined' && globalThis.SPP ? globalThis.SPP : {});
 
+  // C:N efectivo de un insumo: el que analyze() produce al mezclarlo (c/n), no el `cn`
+  // guardado en el catálogo, que en algunos insumos difiere >20% (auditoría 2026-11-28).
+  // Así la sugerencia promete el mismo efecto que luego muestra el análisis.
+  const ingCN = g => (g && g.n > 0 && Number.isFinite(g.c)) ? g.c / g.n : (g?.cn || 0);
+
   // ── analyze — análisis nutricional, fisicoquímico y estimación de EB ──
   const analyze = (recipe, sKey, ings, spp) => {
     if (!recipe || !recipe.length) return null;
@@ -710,12 +715,12 @@
       });
     }
     if (flags.cnLow) {
-      const best = bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+      const best = bestStock(g => ingCN(g) > 60 && g.role === 'base_carbono', (a, b) => ingCN(b) - ingCN(a));
       const inRec = recipe?.find(r => best && r.id === best.id);
       items.push({
         priority: 'critical', icon: '↑C:N',
         label: 'C:N demasiado bajo',
-        action: best ? `Aumentar <b>${best.name}</b> (C:N ${best.cn}:1)` : `Reducir suplementos N`,
+        action: best ? `Aumentar <b>${best.name}</b> (C:N ${Math.round(ingCN(best))}:1)` : `Reducir suplementos N`,
         effect: `C:N ${an.cn.toFixed(1)}:1 < mínimo ${sp.cn_optimal.min}:1 · exceso N → riesgo contaminación`,
         delta: `C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
         apply: best ? { mode: inRec ? 'increase' : 'add', id: best.id, delta: scaledDelta(8, flags.cnOverDist) } : null
@@ -734,7 +739,7 @@
       });
     }
     if (flags.nHigh) {
-      const base = bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+      const base = bestStock(g => ingCN(g) > 80 && g.role === 'base_carbono', (a, b) => ingCN(b) - ingCN(a));
       const suppInRec = recipe?.filter(r => { const g = effectiveINGS.find(i => i.id === r.id); return g && g.n >= 2 && g.role !== 'base_carbono'; }) || [];
       items.push({
         priority: 'critical', icon: '↓N',
@@ -782,7 +787,7 @@
       const subir = an.cn > sp.cn_optimal.ideal;
       const ing = subir
         ? bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n)
-        : bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+        : bestStock(g => ingCN(g) > 60 && g.role === 'base_carbono', (a, b) => ingCN(b) - ingCN(a));
       const inRec = recipe?.find(r => ing && r.id === ing.id);
       if (ing) items.push({
         priority: 'warning', icon: subir ? '→N' : '→C',
@@ -798,7 +803,7 @@
       const subir = an.avgN < sp.n_optimal.ideal;
       const ing = subir
         ? bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost)
-        : bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+        : bestStock(g => ingCN(g) > 60 && g.role === 'base_carbono', (a, b) => ingCN(b) - ingCN(a));
       const inRec = recipe?.find(r => ing && r.id === ing.id);
       if (ing) items.push({
         priority: 'warning', icon: subir ? '→N+' : '→N-',
@@ -1008,9 +1013,9 @@
     const phCenter = s => (s && s.ph_optimal ? (s.ph_optimal.min + s.ph_optimal.max) / 2 : null);
     const FLAG_FIX = {
       cnHigh: spC => ({ ing: bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n), metric: 'cn', target: spC.cn_optimal.ideal }),
-      cnLow: spC => ({ ing: bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'cn', target: spC.cn_optimal.ideal }),
+      cnLow: spC => ({ ing: bestStock(g => ingCN(g) > 60 && g.role === 'base_carbono', (a, b) => ingCN(b) - ingCN(a)), metric: 'cn', target: spC.cn_optimal.ideal }),
       nLow: spC => ({ ing: bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost), metric: 'n', target: spC.n_optimal.ideal }),
-      nHigh: spC => ({ ing: bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'n', target: spC.n_optimal.ideal }),
+      nHigh: spC => ({ ing: bestStock(g => ingCN(g) > 80 && g.role === 'base_carbono', (a, b) => ingCN(b) - ingCN(a)), metric: 'n', target: spC.n_optimal.ideal }),
       phLow: spC => ({ ing: bestStock(g => g.ph > 7.5, byDocumentedDoseThenPh), metric: 'ph', target: phCenter(spC) }),
       phHigh: spC => ({ ing: bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph), metric: 'ph', target: phCenter(spC) }),
     };
@@ -1033,7 +1038,7 @@
       // respecto de `floor` (y del veredicto actual).
       const searchMetricFix = ({ fromRecipe, metric, target, current, excludeIds, floor }) => {
         const down = target < current;
-        const potency = g => (metric === 'cn' ? g.cn : g.n);
+        const potency = g => (metric === 'cn' ? ingCN(g) : g.n);
         const useful = g => {
           if (!g || excludeIds.includes(g.id) || lockedIds.includes(g.id)) return false;
           if (!g.cs || !g.cs.includes(sKey) || String(g.role || '').startsWith('aditivo')) return false;
