@@ -252,3 +252,28 @@ test('los mensajes concuerdan en género con la métrica', () => {
   assert.match(co2.msg, /^CO₂ alto —/);
   assert.match(temp.msg, /^Temperatura alta —/);
 });
+
+// Una alerta en 'recuperando' que vuelve a salir de banda tiene que volver a
+// 'activa'. Antes se quedaba en 'recuperando' con recoveredAt = null: dejaba
+// de reportarse mientras la sala seguía fuera de banda, y al volver a banda
+// now - (null || now) daba siempre 0, así que nunca se resolvía.
+test('una alerta que recae fuera de banda durante la recuperación vuelve a activa y luego se resuelve', () => {
+  const clock = makeClock();
+  const engine = engineFor(clock);
+  const rh = v => engine.evaluate('martha_01', { temperature_c: 17, rh_pct: v, co2_ppm: 600 });
+  const rhStatus = () => (engine.activeAlerts().find(a => a.metric === 'rh_pct') || {}).status;
+  const rhReported = out => out.alerts.some(a => a.metric === 'rh_pct');
+
+  for (let i = 0; i < 7; i++) { clock.advance(60_000); rh(96); }
+  assert.equal(rhStatus(), 'activa');
+
+  clock.advance(60_000); rh(93);
+  assert.equal(rhStatus(), 'recuperando');
+
+  clock.advance(60_000);
+  assert.ok(rhReported(rh(97)), 'fuera de banda la alerta debe seguir reportándose');
+  assert.equal(rhStatus(), 'activa');
+
+  for (let i = 0; i < 20; i++) { clock.advance(120_000); rh(90); }
+  assert.equal(rhStatus(), undefined, 'tras 40 min en banda la alerta debe resolverse');
+});
