@@ -18,14 +18,14 @@
     if (!recipe || !recipe.length) return null;
     const effectiveINGS = getEffectiveINGS(ings);
     const effectiveSPP = getEffectiveSPP(spp);
-    const tot = recipe.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
+    const tot = recipe.reduce((s, r) => s + Math.max(0, parseFloat(r.p) || 0), 0);
     if (!tot) return null;
     let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, suppP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
     const DENSOS = ['aserrin_roble', 'aserrin_eucalipto', 'aserrin_pino', 'aserrin_pino_compostado', 'borra_cafe', 'afrecho_cerveceria', 'chips_poda_urbana', 'guadua', 'carton_corrugado', 'pulpa_papel'];
     recipe.forEach(r => {
       const g = effectiveINGS.find(i => i.id === r.id);
       if (!g) return;
-      const p = parseFloat(r.p) || 0;
+      const p = Math.max(0, parseFloat(r.p) || 0);
       const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
       // % de receta en base seca: ponderar por p (D18).
       if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
@@ -49,7 +49,7 @@
       const g = effectiveINGS.find(i => i.id === r.id);
       if (!g) return s;
       const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
-      return s + (g.cost / (1 - m)) * (parseFloat(r.p) || 0) / 100;
+      return s + (g.cost / (1 - m)) * Math.max(0, parseFloat(r.p) || 0) / 100;
     }, 0);
     const sp = effectiveSPP[sKey];
     let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
