@@ -130,6 +130,7 @@ Supported by:
 # Best Practices
 - Inspeccionar visualmente todos los bloques cada 48h durante incubación.
 - Registrar % de contaminación por batch — si supera 10%, revisar protocolo.
+- Alerta de contaminación en Setas OS (`KPI.contamAlert`): 15% por batch. Es un setpoint operativo de la finca, no un valor de literatura; el umbral de revisión de protocolo de arriba se mantiene.
 - Mantener HEPA o flujo positivo de aire filtrado en área de inoculación.
 - No reutilizar sustrato contaminado como compost sin compostaje adecuado (esporas sobreviven).
 

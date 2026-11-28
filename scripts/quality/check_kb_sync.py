@@ -592,7 +592,7 @@ KPI_SYNC_POINTS: list[SyncPoint] = [
     kpi_point("Umbral de contaminación", "%", "02_substrates/contamination.md",
               r"Best Practices", r"contaminaci", "contamMax"),
     kpi_point("Umbral de alerta de contaminación", "%", "02_substrates/contamination.md",
-              r"Best Practices", r"contaminaci", "contamAlert"),
+              r"Best Practices", r"contamAlert", "contamAlert"),
     # yieldPerBlock (800 g) sigue sin fuente, y su patrón de fila apunta a
     # propósito a una etiqueta que el KB no tiene: así cae por el camino normal
     # de candidatos vacíos y se reporta como present_in_app_absent_from_kb, en

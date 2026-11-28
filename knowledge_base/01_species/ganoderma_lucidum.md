@@ -74,7 +74,7 @@ Supported by:
 | HR — inducción de primordios | >90% |
 | HR — formación de sombrero | 70–80% |
 | HR — estadio final del carpóforo | 30–40% |
-| CO₂ | Bajar a ~350 ppm (abrir bolsa ~día 50) dispara el crecimiento del píleo |
+| CO₂ | Máximo <1,000 ppm para forma de sombrero; bajar a ~350 ppm (abrir bolsa ~día 50) dispara el crecimiento del píleo |
 | Luz | 50–450 lux (los sombreros se orientan a la luz) |
 | Duración total | 90–120 días a cosecha completa (2 recolecciones) |
 | Producto | Cuerpo fructífero seco (no fresco) |
